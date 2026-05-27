@@ -1,0 +1,154 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Test files and uploads (keep data directory structure)
+test_uploads/
+# uploads/ (needed for runtime)
+test_*.db
+# *.db (needed for runtime, but exclude test dbs)
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker (keep Dockerfile and docker-compose for deployment)
+# Dockerfile
+# docker-compose.yml
+.dockerignore
+
+# Documentation (keep essential docs)
+# docs/
+# README.md
+
+# Scripts
+run_tests.py
+run_tests.sh
+test_fixes.py
+pytest.ini
+
+# Test directories
+tests/
+**/tests/
+**/test_*.py
+**/*_test.py
+
+# Temporary files
+*.tmp
+*.temp
+
+# Frontend build artifacts (shouldn't be in source)
+Frontend/dist/
+Frontend/node_modules/
+Frontend/.vite/
+Frontend/coverage/
+Frontend/test-results/
+Frontend/playwright-report/
+
+# Documentation (keep only README)
+*.md
+!README.md
+!LOCAL_DEVELOPMENT.md
+
+# IDE and editor files
+*.sublime-*
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Development files
+*.bak
+*.swp
+*~
+
+# Logs and debug files
+*.log
+logs/
+*.debug
+.cursor/
+
+# Test and coverage files
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# Python cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Node cache
+.npm/
+.eslintcache
+.yarn/
+.pnp.*

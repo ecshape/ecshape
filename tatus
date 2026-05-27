@@ -1,0 +1,356 @@
+[1mdiff --git a/Frontend/src/pages/ExerciseBank.tsx b/Frontend/src/pages/ExerciseBank.tsx[m
+[1mindex ea5f7123..dd93e692 100644[m
+[1m--- a/Frontend/src/pages/ExerciseBank.tsx[m
+[1m+++ b/Frontend/src/pages/ExerciseBank.tsx[m
+[36m@@ -784,83 +784,44 @@[m [mconst ExerciseBank = () => {[m
+     <Layout currentPage="exercises">[m
+       <div className="container mx-auto p-4 md:p-6 space-y-6">[m
+         {/* Header */}[m
+[31m-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">[m
+[31m-          <div>[m
+[31m-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('exerciseBank.title')}</h1>[m
+[31m-            <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>[m
+[32m+[m[32m        <div className="flex flex-col gap-4">[m
+[32m+[m[32m          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">[m
+[32m+[m[32m            <div>[m
+[32m+[m[32m              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('exerciseBank.title')}</h1>[m
+[32m+[m[32m              <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>[m
+[32m+[m[32m            </div>[m
+           </div>[m
+[31m-          <div className="flex flex-col gap-2 w-full sm:w-auto">[m
+[31m-            {/* First row: Add Exercise button */}[m
+[31m-            <Button [m
+[31m-              onClick={() => setCreateDialogOpen(true)} [m
+[31m-              className="gradient-green w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-            >[m
+[31m-              <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-              <span className="truncate">{t('exerciseBank.addExercise')}</span>[m
+[31m-            </Button>[m
+[31m-            [m
+[31m-            {/* Second row: Export/Import buttons */}[m
+[31m-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">[m
+[31m-              <Button [m
+[31m-                onClick={handleExportExcel}[m
+[31m-                variant="outline"[m
+[31m-                className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-              >[m
+[31m-                <Download className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                <span className="truncate">{t('common.exportExcel')}</span>[m
+[31m-              </Button>[m
+[31m-              <label className="w-full sm:w-auto cursor-pointer">[m
+[31m-                <input[m
+[31m-                  type="file"[m
+[31m-                  id="exercise-import-file"[m
+[31m-                  accept=".xlsx,.xls"[m
+[31m-                  onChange={(e) => {[m
+[31m-                    const file = e.target.files?.[0];[m
+[31m-                    if (file) {[m
+[31m-                      setImportFile(file);[m
+[31m-                      // Import will be triggered after file is set[m
+[31m-                      setTimeout(() => handleImportExcel(), 100);[m
+[31m-                    }[m
+[31m-                  }}[m
+[31m-                  className="hidden"[m
+[31m-                  disabled={isImporting}[m
+[31m-                />[m
+[32m+[m
+[32m+[m[32m          {/* Action Buttons Card - Original buttons side by side */}[m
+[32m+[m[32m          <Card>[m
+[32m+[m[32m            <CardContent className="p-4">[m
+[32m+[m[32m              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">[m
+                 <Button [m
+[32m+[m[32m                  onClick={() => setCreateDialogOpen(true)}[m[41m [m
+[32m+[m[32m                  className="gradient-green flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                  <span className="truncate">{t('exerciseBank.addExercise')}</span>[m
+[32m+[m[32m                </Button>[m
+[32m+[m[32m                <Button[m[41m [m
+[32m+[m[32m                  onClick={() => navigate('/create-workout-plan-v2?createSplit=true')}[m[41m [m
+                   variant="outline"[m
+[31m-                  className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-                  disabled={isImporting}[m
+[31m-                  onClick={(e) => {[m
+[31m-                    e.preventDefault();[m
+[31m-                    document.getElementById('exercise-import-file')?.click();[m
+[31m-                  }}[m
+[32m+[m[32m                  className="flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+                 >[m
+[31m-                  <Upload className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                  <span className="truncate">{isImporting ? t('common.importing') : t('common.importExcel')}</span>[m
+[32m+[m[32m                  <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                  <span className="truncate">{t('exerciseBank.createWorkoutSplit', 'צור פיצול אימון')}</span>[m
+                 </Button>[m
+[31m-              </label>[m
+[31m-            </div>[m
+[31m-            [m
+[31m-            {/* Third row: Other action buttons */}[m
+[31m-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">[m
+[31m-              <Button [m
+[31m-                onClick={() => navigate('/create-workout-plan-v2?createSplit=true')} [m
+[31m-                variant="outline"[m
+[31m-                className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-              >[m
+[31m-                <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                <span className="truncate">{t('exerciseBank.createWorkoutSplit', 'צור פיצול אימון')}</span>[m
+[31m-              </Button>[m
+[31m-              <Dialog open={muscleGroupDialogOpen} onOpenChange={setMuscleGroupDialogOpen}>[m
+[31m-                <DialogTrigger asChild>[m
+[31m-                  <Button [m
+[31m-                    type="button" [m
+[31m-                    variant="outline"[m
+[31m-                    className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-                  >[m
+[31m-                    <Settings className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                    <span className="truncate">{t('exerciseBank.manageMuscleGroups')}</span>[m
+[31m-                  </Button>[m
+[31m-                </DialogTrigger>[m
+[32m+[m[32m                <Dialog open={muscleGroupDialogOpen} onOpenChange={setMuscleGroupDialogOpen}>[m
+[32m+[m[32m                  <DialogTrigger asChild>[m
+[32m+[m[32m                    <Button[m[41m [m
+[32m+[m[32m                      type="button"[m[41m [m
+[32m+[m[32m                      variant="outline"[m
+[32m+[m[32m                      className="flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      <Settings className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                      <span className="truncate">{t('exerciseBank.manageMuscleGroups')}</span>[m
+[32m+[m[32m                    </Button>[m
+[32m+[m[32m                  </DialogTrigger>[m
+                 <DialogContent className="sm:max-w-[500px]">[m
+                   <DialogHeader>[m
+                     <DialogTitle>{t('exerciseBank.manageMuscleGroups')}</DialogTitle>[m
+[36m@@ -970,8 +931,54 @@[m [mconst ExerciseBank = () => {[m
+                   </div>[m
+                 </DialogContent>[m
+               </Dialog>[m
+[31m-            </div>[m
+[31m-          </div>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </CardContent>[m
+[32m+[m[32m          </Card>[m
+[32m+[m
+[32m+[m[32m          {/* Excel Export/Import Card - Separate box that scales gracefully */}[m
+[32m+[m[32m          <Card>[m
+[32m+[m[32m            <CardContent className="p-4">[m
+[32m+[m[32m              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">[m
+[32m+[m[32m                <Button[m[41m [m
+[32m+[m[32m                  onClick={handleExportExcel}[m
+[32m+[m[32m                  variant="outline"[m
+[32m+[m[32m                  className="flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <Download className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                  <span className="truncate">{t('common.exportExcel')}</span>[m
+[32m+[m[32m                </Button>[m
+[32m+[m[32m                <label className="flex-1 sm:flex-initial cursor-pointer">[m
+[32m+[m[32m                  <input[m
+[32m+[m[32m                    type="file"[m
+[32m+[m[32m                    id="exercise-import-file"[m
+[32m+[m[32m                    accept=".xlsx,.xls"[m
+[32m+[m[32m                    onChange={(e) => {[m
+[32m+[m[32m                      const file = e.target.files?.[0];[m
+[32m+[m[32m                      if (file) {[m
+[32m+[m[32m                        setImportFile(file);[m
+[32m+[m[32m                        // Import will be triggered after file is set[m
+[32m+[m[32m                        setTimeout(() => handleImportExcel(), 100);[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                    }}[m
+[32m+[m[32m                    className="hidden"[m
+[32m+[m[32m                    disabled={isImporting}[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                  <Button[m[41m [m
+[32m+[m[32m                    variant="outline"[m
+[32m+[m[32m                    className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                    disabled={isImporting}[m
+[32m+[m[32m                    onClick={(e) => {[m
+[32m+[m[32m                      e.preventDefault();[m
+[32m+[m[32m                      document.getElementById('exercise-import-file')?.click();[m
+[32m+[m[32m                    }}[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    <Upload className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                    <span className="truncate">{isImporting ? t('common.importing') : t('common.importExcel')}</span>[m
+[32m+[m[32m                  </Button>[m
+[32m+[m[32m                </label>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </CardContent>[m
+[32m+[m[32m          </Card>[m
+         </div>[m
+ [m
+         {/* Search and Filter */}[m
+[1mdiff --git a/Frontend/src/pages/ExerciseBank.tsx b/Frontend/src/pages/ExerciseBank.tsx[m
+[1mindex ea5f7123..dd93e692 100644[m
+[1m--- a/Frontend/src/pages/ExerciseBank.tsx[m
+[1m+++ b/Frontend/src/pages/ExerciseBank.tsx[m
+[36m@@ -784,83 +784,44 @@[m [mconst ExerciseBank = () => {[m
+     <Layout currentPage="exercises">[m
+       <div className="container mx-auto p-4 md:p-6 space-y-6">[m
+         {/* Header */}[m
+[31m-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">[m
+[31m-          <div>[m
+[31m-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('exerciseBank.title')}</h1>[m
+[31m-            <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>[m
+[32m+[m[32m        <div className="flex flex-col gap-4">[m
+[32m+[m[32m          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">[m
+[32m+[m[32m            <div>[m
+[32m+[m[32m              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('exerciseBank.title')}</h1>[m
+[32m+[m[32m              <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>[m
+[32m+[m[32m            </div>[m
+           </div>[m
+[31m-          <div className="flex flex-col gap-2 w-full sm:w-auto">[m
+[31m-            {/* First row: Add Exercise button */}[m
+[31m-            <Button [m
+[31m-              onClick={() => setCreateDialogOpen(true)} [m
+[31m-              className="gradient-green w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-            >[m
+[31m-              <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-              <span className="truncate">{t('exerciseBank.addExercise')}</span>[m
+[31m-            </Button>[m
+[31m-            [m
+[31m-            {/* Second row: Export/Import buttons */}[m
+[31m-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">[m
+[31m-              <Button [m
+[31m-                onClick={handleExportExcel}[m
+[31m-                variant="outline"[m
+[31m-                className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-              >[m
+[31m-                <Download className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                <span className="truncate">{t('common.exportExcel')}</span>[m
+[31m-              </Button>[m
+[31m-              <label className="w-full sm:w-auto cursor-pointer">[m
+[31m-                <input[m
+[31m-                  type="file"[m
+[31m-                  id="exercise-import-file"[m
+[31m-                  accept=".xlsx,.xls"[m
+[31m-                  onChange={(e) => {[m
+[31m-                    const file = e.target.files?.[0];[m
+[31m-                    if (file) {[m
+[31m-                      setImportFile(file);[m
+[31m-                      // Import will be triggered after file is set[m
+[31m-                      setTimeout(() => handleImportExcel(), 100);[m
+[31m-                    }[m
+[31m-                  }}[m
+[31m-                  className="hidden"[m
+[31m-                  disabled={isImporting}[m
+[31m-                />[m
+[32m+[m
+[32m+[m[32m          {/* Action Buttons Card - Original buttons side by side */}[m
+[32m+[m[32m          <Card>[m
+[32m+[m[32m            <CardContent className="p-4">[m
+[32m+[m[32m              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">[m
+                 <Button [m
+[32m+[m[32m                  onClick={() => setCreateDialogOpen(true)}[m[41m [m
+[32m+[m[32m                  className="gradient-green flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                  <span className="truncate">{t('exerciseBank.addExercise')}</span>[m
+[32m+[m[32m                </Button>[m
+[32m+[m[32m                <Button[m[41m [m
+[32m+[m[32m                  onClick={() => navigate('/create-workout-plan-v2?createSplit=true')}[m[41m [m
+                   variant="outline"[m
+[31m-                  className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-                  disabled={isImporting}[m
+[31m-                  onClick={(e) => {[m
+[31m-                    e.preventDefault();[m
+[31m-                    document.getElementById('exercise-import-file')?.click();[m
+[31m-                  }}[m
+[32m+[m[32m                  className="flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+                 >[m
+[31m-                  <Upload className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                  <span className="truncate">{isImporting ? t('common.importing') : t('common.importExcel')}</span>[m
+[32m+[m[32m                  <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                  <span className="truncate">{t('exerciseBank.createWorkoutSplit', 'צור פיצול אימון')}</span>[m
+                 </Button>[m
+[31m-              </label>[m
+[31m-            </div>[m
+[31m-            [m
+[31m-            {/* Third row: Other action buttons */}[m
+[31m-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">[m
+[31m-              <Button [m
+[31m-                onClick={() => navigate('/create-workout-plan-v2?createSplit=true')} [m
+[31m-                variant="outline"[m
+[31m-                className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-              >[m
+[31m-                <Plus className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                <span className="truncate">{t('exerciseBank.createWorkoutSplit', 'צור פיצול אימון')}</span>[m
+[31m-              </Button>[m
+[31m-              <Dialog open={muscleGroupDialogOpen} onOpenChange={setMuscleGroupDialogOpen}>[m
+[31m-                <DialogTrigger asChild>[m
+[31m-                  <Button [m
+[31m-                    type="button" [m
+[31m-                    variant="outline"[m
+[31m-                    className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[31m-                  >[m
+[31m-                    <Settings className="w-4 h-4 me-2 flex-shrink-0" />[m
+[31m-                    <span className="truncate">{t('exerciseBank.manageMuscleGroups')}</span>[m
+[31m-                  </Button>[m
+[31m-                </DialogTrigger>[m
+[32m+[m[32m                <Dialog open={muscleGroupDialogOpen} onOpenChange={setMuscleGroupDialogOpen}>[m
+[32m+[m[32m                  <DialogTrigger asChild>[m
+[32m+[m[32m                    <Button[m[41m [m
+[32m+[m[32m                      type="button"[m[41m [m
+[32m+[m[32m                      variant="outline"[m
+[32m+[m[32m                      className="flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      <Settings className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                      <span className="truncate">{t('exerciseBank.manageMuscleGroups')}</span>[m
+[32m+[m[32m                    </Button>[m
+[32m+[m[32m                  </DialogTrigger>[m
+                 <DialogContent className="sm:max-w-[500px]">[m
+                   <DialogHeader>[m
+                     <DialogTitle>{t('exerciseBank.manageMuscleGroups')}</DialogTitle>[m
+[36m@@ -970,8 +931,54 @@[m [mconst ExerciseBank = () => {[m
+                   </div>[m
+                 </DialogContent>[m
+               </Dialog>[m
+[31m-            </div>[m
+[31m-          </div>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </CardContent>[m
+[32m+[m[32m          </Card>[m
+[32m+[m
+[32m+[m[32m          {/* Excel Export/Import Card - Separate box that scales gracefully */}[m
+[32m+[m[32m          <Card>[m
+[32m+[m[32m            <CardContent className="p-4">[m
+[32m+[m[32m              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">[m
+[32m+[m[32m                <Button[m[41m [m
+[32m+[m[32m                  onClick={handleExportExcel}[m
+[32m+[m[32m                  variant="outline"[m
+[32m+[m[32m                  className="flex-1 sm:flex-initial px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <Download className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                  <span className="truncate">{t('common.exportExcel')}</span>[m
+[32m+[m[32m                </Button>[m
+[32m+[m[32m                <label className="flex-1 sm:flex-initial cursor-pointer">[m
+[32m+[m[32m                  <input[m
+[32m+[m[32m                    type="file"[m
+[32m+[m[32m                    id="exercise-import-file"[m
+[32m+[m[32m                    accept=".xlsx,.xls"[m
+[32m+[m[32m                    onChange={(e) => {[m
+[32m+[m[32m                      const file = e.target.files?.[0];[m
+[32m+[m[32m                      if (file) {[m
+[32m+[m[32m                        setImportFile(file);[m
+[32m+[m[32m                        // Import will be triggered after file is set[m
+[32m+[m[32m                        setTimeout(() => handleImportExcel(), 100);[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                    }}[m
+[32m+[m[32m                    className="hidden"[m
+[32m+[m[32m                    disabled={isImporting}[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                  <Button[m[41m [m
+[32m+[m[32m                    variant="outline"[m
+[32m+[m[32m                    className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"[m
+[32m+[m[32m                    disabled={isImporting}[m
+[32m+[m[32m                    onClick={(e) => {[m
+[32m+[m[32m                      e.preventDefault();[m
+[32m+[m[32m                      document.getElementById('exercise-import-file')?.click();[m
+[32m+[m[32m                    }}[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    <Upload className="w-4 h-4 me-2 flex-shrink-0" />[m
+[32m+[m[32m                    <span className="truncate">{isImporting ? t('common.importing') : t('common.importExcel')}</span>[m
+[32m+[m[32m                  </Button>[m
+[32m+[m[32m                </label>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </CardContent>[m
+[32m+[m[32m          </Card>[m
+         </div>[m
+ [m
+         {/* Search and Filter */}[m

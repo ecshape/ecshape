@@ -1,0 +1,335 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Racing+Sans+One&display=swap');
+
+/* Airbolt Font */
+@font-face {
+  font-family: 'Airbolt';
+  src: url('/fonts/airbolt.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern fitness app color scheme with orange and matte black */
+
+@layer base {
+  :root {
+    --background: 20 20% 6%; /* Dark matte black */
+    --foreground: 30 100% 95%; /* Light cream */
+
+    --card: 20 20% 8%; /* Slightly lighter black */
+    --card-foreground: 30 100% 95%;
+
+    --popover: 20 20% 8%;
+    --popover-foreground: 30 100% 95%;
+
+    --primary: 24 95% 55%; /* Vibrant orange */
+    --primary-foreground: 20 20% 6%;
+
+    --secondary: 30 20% 15%; /* Dark gray */
+    --secondary-foreground: 30 100% 95%;
+
+    --muted: 30 20% 12%; /* Muted dark */
+    --muted-foreground: 30 20% 65%;
+
+    --accent: 24 95% 55%; /* Orange accent */
+    --accent-foreground: 20 20% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 30 100% 95%;
+
+    --border: 30 20% 20%; /* Subtle border */
+    --input: 30 20% 15%;
+    --ring: 24 95% 55%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 20 20% 6%;
+    --sidebar-foreground: 30 100% 95%;
+    --sidebar-primary: 24 95% 55%;
+    --sidebar-primary-foreground: 20 20% 6%;
+    --sidebar-accent: 30 20% 15%;
+    --sidebar-accent-foreground: 30 100% 95%;
+    --sidebar-border: 30 20% 20%;
+    --sidebar-ring: 24 95% 55%;
+  }
+
+  .light {
+    --background: 32 45% 88%; /* Warmer beige background - warmer tone */
+    --foreground: 25 25% 15%; /* Warm dark brown for text */
+    --primary-foreground: 255 255% 100%; /* White text on orange */
+
+    --card: 32 40% 95%; /* Very light warm beige for cards - slightly warmer */
+    --card-foreground: 25 25% 15%;
+
+    --popover: 32 40% 95%;
+    --popover-foreground: 25 25% 15%;
+
+    --secondary: 32 35% 80%; /* Warmer beige secondary */
+    --secondary-foreground: 25 25% 15%;
+
+    --muted: 32 38% 92%; /* Warmer light beige for card backgrounds */
+    --muted-foreground: 25 15% 45%;
+
+    --accent: 24 100% 50%; /* Vibrant orange */
+    --accent-foreground: 255 255% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 255 255% 100%;
+
+    --border: 32 25% 78%; /* Warmer subtle border */
+    --input: 32 35% 94%;
+    --ring: 24 100% 50%;
+
+    --sidebar-background: 32 45% 88%;
+    --sidebar-foreground: 25 25% 15%;
+    --sidebar-primary: 24 100% 50%;
+    --sidebar-primary-foreground: 255 255% 100%;
+    --sidebar-accent: 32 30% 85%;
+    --sidebar-accent-foreground: 25 25% 15%;
+    --sidebar-border: 32 25% 78%;
+    --sidebar-ring: 24 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent));
+}
+
+/* Mobile-first responsive design utilities */
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent;
+  }
+  
+  .gradient-orange {
+    @apply bg-gradient-to-r from-orange-500 to-orange-600;
+  }
+  
+  .gradient-orange-dark {
+    @apply bg-gradient-to-r from-orange-600 to-orange-700;
+  }
+
+  .glass-effect {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+
+  .mobile-safe {
+    @apply pb-safe-area-inset-bottom;
+  }
+
+  /* 3D Effects */
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+  }
+
+  .card-3d:hover {
+    transform: translateY(-5px) rotateX(5deg) rotateY(5deg);
+  }
+
+  .floating {
+    animation: floating 3s ease-in-out infinite;
+  }
+
+  .floating-delayed {
+    animation: floating 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
+  .pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .glow {
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+  }
+
+  .glow-hover:hover {
+    box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Enhanced Animations */
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Button enhancements */
+.btn-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-3d:hover {
+  transform: translateY(-2px);
+}
+
+.btn-3d:active {
+  transform: translateY(0px);
+}
+
+  .light .card-3d,
+  .light .card-3d:hover,
+  .light .btn-3d,
+  .light .btn-3d:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+/* Progress bar enhancements */
+.progress-glow {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.progress-glow .progress-fill {
+  box-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .card-3d:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid rgba(251, 146, 60, 0.3);
+  border-radius: 50%;
+  border-top: 2px solid rgba(251, 146, 60, 1);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,45 @@
+# ============================================================================
+# LOCAL DEVELOPMENT CONFIGURATION
+# ============================================================================
+# This docker-compose.yml is for LOCAL DEVELOPMENT ONLY.
+# Railway deployment uses Dockerfile and railway.json instead.
+# 
+# Local development is completely isolated from Railway:
+# - Uses local database in ./data/
+# - Uses local uploads in ./uploads/
+# - Uses local logs in ./logs/
+# - Uses development environment variables
+# 
+# To start local development:
+#   docker-compose up --build
+#
+# See LOCAL_DEVELOPMENT.md for full documentation.
+# ============================================================================
+
+services:
+  elior-fitness:
+    build: .
+    ports:
+      - "8000:8000"  # FastAPI accessible on port 8000 locally
+    volumes:
+      # Local volumes - these are gitignored and separate from Railway
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      # Local development configuration
+      # These settings are for local use only and don't affect Railway
+      - ENVIRONMENT=development
+      - DOMAIN=localhost
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8000
+      - LOG_LEVEL=INFO
+      - PORT=8000
+      - DATABASE_PATH=/app/data/elior_fitness.db
+      - DATABASE_URL=sqlite:////app/data/elior_fitness.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s 

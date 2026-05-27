@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: elior-fitness
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 8000
+      - key: DATABASE_PATH
+        value: /app/data/elior_fitness.db
+      - key: DATABASE_URL
+        value: sqlite:////app/data/elior_fitness.db
+      - key: LOG_LEVEL
+        value: INFO
+      - key: JWT_SECRET
+        sync: false  # Set this in Render dashboard
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 1440
+      - key: CORS_ORIGINS
+        sync: false  # Set this to your Render domain
+    healthCheckPath: /health
+    disk:
+      name: elior-fitness-data
+      mountPath: /app/data
+      sizeGB: 1
+

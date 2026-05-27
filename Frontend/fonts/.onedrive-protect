@@ -1,0 +1,5 @@
+# This file helps protect the fonts folder from OneDrive sync issues
+# If OneDrive keeps deleting fonts, exclude this folder from OneDrive sync:
+# 1. Right-click the fonts folder
+# 2. Choose "Always keep on this device" or exclude from sync
+

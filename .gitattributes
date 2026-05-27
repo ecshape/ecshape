@@ -1,0 +1,14 @@
+# Ensure font files are treated as binary and not modified by line ending conversions
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+# Protect font directories
+Frontend/fonts/** -text
+Frontend/public/fonts/** -text
+
+# Ensure PDFs are binary
+*.pdf binary
+

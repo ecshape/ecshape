@@ -1,0 +1,1000 @@
+2025-11-14T20:27:04.272538997Z [inf]  2025-11-14 20:27:04,266 - app.services.system_service - WARNING - Docker client initialization failed: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+2025-11-14T20:27:04.411397858Z [inf]  2025-11-14 20:27:04,405 - app.main - INFO - Including auth router...
+2025-11-14T20:27:04.411448747Z [inf]  2025-11-14 20:27:04,402 - app.main - INFO - ✅ Router modules imported successfully
+2025-11-14T20:27:04.411455991Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - 📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications
+2025-11-14T20:27:04.411461496Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - Importing model modules...
+2025-11-14T20:27:04.411467767Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - ✅ Model modules imported successfully
+2025-11-14T20:27:04.411473233Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - 📋 Available models: user, workout, nutrition, progress, notification
+2025-11-14T20:27:04.411481294Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - FastAPI application created with performance optimizations
+2025-11-14T20:27:04.411487951Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - ✅ Security middleware added
+2025-11-14T20:27:04.411494186Z [inf]  2025-11-14 20:27:04,403 - app.main - INFO - CORS middleware configured with frontend integration support
+2025-11-14T20:27:04.411502345Z [inf]  2025-11-14 20:27:04,404 - app.main - INFO - Static files mounted successfully from /app/persistent/uploads
+2025-11-14T20:27:04.411508679Z [inf]  2025-11-14 20:27:04,404 - app.main - INFO - Frontend assets mounted with performance optimizations
+2025-11-14T20:27:04.411514869Z [inf]  2025-11-14 20:27:04,404 - app.main - INFO - Frontend serving endpoints configured with performance optimizations
+2025-11-14T20:27:04.411521121Z [inf]  2025-11-14 20:27:04,405 - app.main - INFO - ========================================
+2025-11-14T20:27:04.411528210Z [inf]  2025-11-14 20:27:04,405 - app.main - INFO - INCLUDING ROUTERS
+2025-11-14T20:27:04.411534504Z [inf]  2025-11-14 20:27:04,405 - app.main - INFO - ========================================
+2025-11-14T20:27:04.421163029Z [inf]  2025-11-14 20:27:04,416 - app.main - INFO - ✅ Auth router included
+2025-11-14T20:27:04.421171066Z [inf]  2025-11-14 20:27:04,416 - app.main - INFO - Including users router...
+2025-11-14T20:27:04.431116522Z [inf]  2025-11-14 20:27:04,425 - app.main - INFO - ✅ Users router included
+2025-11-14T20:27:04.431124069Z [inf]  2025-11-14 20:27:04,425 - app.main - INFO - Including exercises router...
+2025-11-14T20:27:04.431130921Z [inf]  2025-11-14 20:27:04,429 - app.main - INFO - ✅ Exercises router included
+2025-11-14T20:27:04.431142124Z [inf]  2025-11-14 20:27:04,430 - app.main - INFO - Including muscle_groups router...
+2025-11-14T20:27:04.433996181Z [inf]  2025-11-14 20:27:04,432 - app.main - INFO - ✅ Muscle groups router included
+2025-11-14T20:27:04.434002373Z [inf]  2025-11-14 20:27:04,432 - app.main - INFO - Including workout_splits router...
+2025-11-14T20:27:04.437120621Z [inf]  2025-11-14 20:27:04,435 - app.main - INFO - ✅ Workout splits router included
+2025-11-14T20:27:04.437125246Z [inf]  2025-11-14 20:27:04,435 - app.main - INFO - Including workouts router...
+2025-11-14T20:27:04.467141598Z [inf]  2025-11-14 20:27:04,461 - app.main - INFO - ✅ Workouts router included
+2025-11-14T20:27:04.467150808Z [inf]  2025-11-14 20:27:04,461 - app.main - INFO - Including nutrition router...
+2025-11-14T20:27:04.496297854Z [inf]  2025-11-14 20:27:04,493 - app.main - INFO - Including meal_plans router...
+2025-11-14T20:27:04.496414438Z [inf]  2025-11-14 20:27:04,493 - app.main - INFO - ✅ Nutrition router included
+2025-11-14T20:27:04.520404541Z [inf]  2025-11-14 20:27:04,518 - app.main - INFO - ✅ Meal plans router included
+2025-11-14T20:27:04.520411169Z [inf]  2025-11-14 20:27:04,518 - app.main - INFO - Including meal_system router (v2)...
+2025-11-14T20:27:04.552639906Z [inf]  2025-11-14 20:27:04,541 - app.main - INFO - ✅ Meal system V2 router included
+2025-11-14T20:27:04.552645157Z [inf]  2025-11-14 20:27:04,542 - app.main - INFO - Including workout_system router (v2)...
+2025-11-14T20:27:04.570371831Z [inf]  2025-11-14 20:27:04,562 - app.main - INFO - ✅ Workout system V2 router included
+2025-11-14T20:27:04.570377746Z [inf]  2025-11-14 20:27:04,562 - app.main - INFO - Including progress router...
+2025-11-14T20:27:05.133211381Z [inf]  2025-11-14 20:27:04,635 - app.main - INFO - ✅ Files router included
+2025-11-14T20:27:05.133216441Z [inf]  2025-11-14 20:27:04,650 - app.main - INFO - ========================================
+2025-11-14T20:27:05.133222595Z [inf]  2025-11-14 20:27:04,635 - app.main - INFO - Including websocket router...
+2025-11-14T20:27:05.133227722Z [inf]  2025-11-14 20:27:04,637 - app.main - INFO - ✅ WebSocket router included
+2025-11-14T20:27:05.133233188Z [inf]  2025-11-14 20:27:04,637 - app.main - INFO - Including system router...
+2025-11-14T20:27:05.133238395Z [inf]  2025-11-14 20:27:04,649 - app.main - INFO - ========================================
+2025-11-14T20:27:05.133239780Z [inf]  2025-11-14 20:27:04,639 - app.main - INFO - ✅ System router included
+2025-11-14T20:27:05.133246185Z [inf]  2025-11-14 20:27:04,639 - app.main - INFO - Including notifications router...
+2025-11-14T20:27:05.133249694Z [inf]  2025-11-14 20:27:04,649 - app.main - INFO - ✅ ALL ROUTERS INCLUDED SUCCESSFULLY
+2025-11-14T20:27:05.133251609Z [inf]  2025-11-14 20:27:04,646 - app.main - INFO - ✅ Notifications router included
+2025-11-14T20:27:05.133257629Z [inf]  2025-11-14 20:27:04,646 - app.main - INFO - Including chat router...
+2025-11-14T20:27:05.133259583Z [inf]  2025-11-14 20:27:04,649 - app.main - INFO - ========================================
+2025-11-14T20:27:05.133263419Z [inf]  2025-11-14 20:27:04,649 - app.main - INFO - ✅ Chat router included
+2025-11-14T20:27:05.133267578Z [inf]  2025-11-14 20:27:04,650 - app.main - INFO - Elior Fitness API application startup completed successfully
+2025-11-14T20:27:05.133275147Z [err]  INFO:     Started server process [1]
+2025-11-14T20:27:05.133282188Z [err]  INFO:     Waiting for application startup.
+2025-11-14T20:27:05.133307323Z [inf]  2025-11-14 20:27:04,632 - app.main - INFO - ✅ Progress router included
+2025-11-14T20:27:05.133311395Z [inf]  2025-11-14 20:27:04,633 - app.main - INFO - Including files router...
+2025-11-14T20:27:05.136021418Z [inf]  2025-11-14 20:27:04,651 - app.main - INFO - APPLICATION STARTUP INITIATED
+2025-11-14T20:27:05.136025397Z [inf]  2025-11-14 20:27:04,651 - app.main - INFO - ========================================
+2025-11-14T20:27:05.136029184Z [inf]  2025-11-14 20:27:04,651 - app.main - INFO - Checking database connection...
+2025-11-14T20:27:05.136033775Z [inf]  2025-11-14 20:27:04,815 - app.main - INFO - ✅ Database connection successful
+2025-11-14T20:27:05.136037786Z [inf]  2025-11-14 20:27:04,815 - app.main - INFO - Initializing database tables...
+2025-11-14T20:27:05.136041853Z [inf]  2025-11-14 20:27:04,815 - app.database - INFO - Attempting to connect to: postgres.railway.internal:5432
+2025-11-14T20:27:05.136045592Z [inf]  2025-11-14 20:27:04,816 - app.database - INFO - ✓ DNS resolution successful: postgres.railway.internal -> 10.199.51.74
+2025-11-14T20:27:05.136049429Z [inf]  2025-11-14 20:27:04,817 - app.database - INFO - ✓ Network connectivity test passed - port is reachable
+2025-11-14T20:27:05.136053532Z [inf]  2025-11-14 20:27:04,817 - app.database - INFO - Initializing database tables... (attempt 1/5)
+2025-11-14T20:27:05.136057741Z [inf]  2025-11-14 20:27:04,817 - app.database - INFO - Testing database connection...
+2025-11-14T20:27:05.136061769Z [inf]  2025-11-14 20:27:04,820 - app.database - INFO - ✓ Connection test successful: (1,)
+2025-11-14T20:27:05.136065597Z [inf]  2025-11-14 20:27:04,821 - app.database - INFO - Creating database tables...
+2025-11-14T20:27:05.136069553Z [inf]  2025-11-14 20:27:04,895 - app.database - INFO - ✓ Database tables initialized successfully
+2025-11-14T20:27:05.136073581Z [inf]  2025-11-14 20:27:04,895 - app.main - INFO - ✅ Database tables initialized successfully
+2025-11-14T20:27:05.136077655Z [inf]  2025-11-14 20:27:05,004 - app.migrations.meal_system_migration - ERROR - Failed to run meal system migrations: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:05.138297434Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.138305449Z [inf]                                     ^
+2025-11-14T20:27:05.138313510Z [inf]  
+2025-11-14T20:27:05.138319907Z [inf]  [SQL: 
+2025-11-14T20:27:05.138326866Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:05.138339493Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.138347888Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:05.138353935Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:05.138360029Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:05.138366442Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:05.138372417Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:05.138379468Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:05.138389051Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:05.138395599Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:05.138401004Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:05.138406693Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:05.138417747Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:05.138424133Z [inf]  )
+2025-11-14T20:27:05.138434081Z [inf]  ]
+2025-11-14T20:27:05.138440730Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:05.138447208Z [inf]  2025-11-14 20:27:05,004 - app.main - ERROR - ❌ Database migrations failed: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:05.138453201Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.138458703Z [inf]                                     ^
+2025-11-14T20:27:05.138466070Z [inf]  
+2025-11-14T20:27:05.138473164Z [inf]  [SQL: 
+2025-11-14T20:27:05.140436741Z [err]      cursor.execute(statement, parameters)
+2025-11-14T20:27:05.140446564Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:05.140454428Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:05.140455979Z [err]  psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:05.140461296Z [inf]  )
+2025-11-14T20:27:05.140466466Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.140470938Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.140475531Z [inf]  ]
+2025-11-14T20:27:05.140477025Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:05.140484574Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:05.140485839Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:05.140492071Z [err]  ERROR:    Traceback (most recent call last):
+2025-11-14T20:27:05.140494428Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:05.140500369Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2025-11-14T20:27:05.140504301Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:05.140508970Z [err]      self.dialect.do_execute(
+2025-11-14T20:27:05.140511395Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:05.140516846Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+2025-11-14T20:27:05.140518465Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:05.140524684Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:05.140531385Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:05.140537500Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:05.140543364Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:05.142299296Z [err]  Traceback (most recent call last):
+2025-11-14T20:27:05.142307449Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 694, in lifespan
+2025-11-14T20:27:05.142314314Z [err]      async with self.lifespan_context(app) as maybe_state:
+2025-11-14T20:27:05.142319022Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.142324280Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.142330301Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.142335374Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.142340193Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.142344847Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.142350304Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.142352392Z [err]                                     ^
+2025-11-14T20:27:05.142357686Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.142358508Z [err]  
+2025-11-14T20:27:05.142364245Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.142364354Z [err]  
+2025-11-14T20:27:05.142370047Z [err]  The above exception was the direct cause of the following exception:
+2025-11-14T20:27:05.142372450Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.142375854Z [err]  
+2025-11-14T20:27:05.142381144Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.142387254Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.142393253Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.142398777Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.144901754Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.144919109Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.144925129Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.144933235Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.144935084Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.144940013Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.144942576Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.144944383Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.144954185Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.144954630Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.144963832Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.144964143Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.144970703Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.144973637Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.144976413Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.144987316Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.144987622Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.144990688Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.144999054Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.147621457Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.147627040Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.147632691Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.147637186Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.147639714Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.147649510Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.147649791Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.147657949Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.147659974Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.147661444Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.147672103Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.147676492Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.147685709Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.147689266Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.147696530Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.147703210Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.147709548Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.147715679Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.147721592Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.147728073Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.150249825Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.150262132Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.150283371Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.150290812Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.150298162Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.150304906Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.150311372Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.150317860Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.150325214Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.150337121Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.150345774Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.150351950Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.150362509Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.150369735Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.150372805Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.150379964Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.150386314Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.150392146Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.150398453Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.150408145Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.152636529Z [err]    File "/app/app/migrations/meal_system_migration.py", line 215, in _ensure_meal_completion_table
+2025-11-14T20:27:05.152650056Z [err]      connection.execute(
+2025-11-14T20:27:05.152660016Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+2025-11-14T20:27:05.152673426Z [err]      return meth(
+2025-11-14T20:27:05.152684288Z [err]             ^^^^^
+2025-11-14T20:27:05.152687471Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.152696620Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.152698379Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+2025-11-14T20:27:05.152707951Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.152711664Z [err]      return connection._execute_clauseelement(
+2025-11-14T20:27:05.152721184Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.152724697Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.152731246Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:05.152739984Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:05.152745835Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:05.152752575Z [err]      return await anext(self.gen)
+2025-11-14T20:27:05.152759487Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.152767800Z [err]    File "/app/app/main.py", line 202, in lifespan
+2025-11-14T20:27:05.152772889Z [err]      run_meal_system_migrations()
+2025-11-14T20:27:05.152777975Z [err]    File "/app/app/migrations/meal_system_migration.py", line 257, in run_meal_system_migrations
+2025-11-14T20:27:05.152784318Z [err]      _ensure_meal_completion_table()
+2025-11-14T20:27:05.155677098Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+2025-11-14T20:27:05.155693054Z [err]      return self._exec_single_context(
+2025-11-14T20:27:05.155700553Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.155707558Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+2025-11-14T20:27:05.155714592Z [err]      self._handle_dbapi_exception(
+2025-11-14T20:27:05.155722162Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+2025-11-14T20:27:05.155729721Z [err]      raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2025-11-14T20:27:05.155737057Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2025-11-14T20:27:05.155746746Z [err]      self.dialect.do_execute(
+2025-11-14T20:27:05.155753681Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+2025-11-14T20:27:05.155760035Z [err]      cursor.execute(statement, parameters)
+2025-11-14T20:27:05.155766461Z [err]  sqlalchemy.exc.ProgrammingError: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:05.155773711Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.155786880Z [err]                                     ^
+2025-11-14T20:27:05.155796987Z [err]  
+2025-11-14T20:27:05.155804261Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+2025-11-14T20:27:05.155813734Z [err]      ret = self._execute_context(
+2025-11-14T20:27:05.155815272Z [err]  [SQL: 
+2025-11-14T20:27:05.155820424Z [err]            ^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:05.155825665Z [err]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:05.159327598Z [err]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:05.159339645Z [err]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:05.159347482Z [err]  )
+2025-11-14T20:27:05.159354154Z [err]  ]
+2025-11-14T20:27:05.159361647Z [err]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:05.159370010Z [err]  
+2025-11-14T20:27:05.159378845Z [err]  ERROR:    Application startup failed. Exiting.
+2025-11-14T20:27:05.159412111Z [err]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:05.159416706Z [err]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:05.159422562Z [err]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:05.159427486Z [err]      date DATETIME NOT NULL,
+2025-11-14T20:27:05.159432307Z [err]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:05.159437243Z [err]      completion_method VARCHAR,
+2025-11-14T20:27:05.159443327Z [err]      completed_at DATETIME,
+2025-11-14T20:27:05.159449975Z [err]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:05.159455601Z [err]      updated_at DATETIME,
+2025-11-14T20:27:05.159460721Z [err]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:06.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/c57d5210-d23f-44bb-889b-4b1a4af73833/vol_43l9q9lyjx6317az
+2025-11-14T20:27:07.311718262Z [inf]  -rwxr-xr-x 1 root root 1105 Nov 14 20:04 index.html
+2025-11-14T20:27:07.311730027Z [inf]  -rwxr-xr-x 1 root root 3253 Nov 14 20:04 placeholder.svg
+2025-11-14T20:27:07.311744753Z [inf]  -rwxr-xr-x 1 root root  160 Nov 14 20:04 robots.txt
+2025-11-14T20:27:07.311758021Z [inf]  Setting up admin user...
+2025-11-14T20:27:07.311765468Z [err]  Internal Railway URL detected but DATABASE_PUBLIC_URL not set. If connection fails, set DATABASE_PUBLIC_URL in Railway variables.
+2025-11-14T20:27:07.311785888Z [inf]  === ELIOR FITNESS STARTUP ===
+2025-11-14T20:27:07.311787037Z [inf]  Checking static files...
+2025-11-14T20:27:07.311791782Z [inf]  Time: Fri Nov 14 20:27:06 UTC 2025
+2025-11-14T20:27:07.311796000Z [inf]  total 36
+2025-11-14T20:27:07.311798111Z [inf]  Environment: production
+2025-11-14T20:27:07.311805370Z [inf]  Port: 8080
+2025-11-14T20:27:07.311807677Z [inf]  drwxr-xr-x 1 root root 4096 Nov 14 20:04 .
+2025-11-14T20:27:07.311815154Z [inf]  drwxr-xr-x 1 root root 4096 Nov 14 20:22 ..
+2025-11-14T20:27:07.311822565Z [inf]  drwxr-xr-x 1 root root 4096 Nov 14 20:04 assets
+2025-11-14T20:27:07.311830528Z [inf]  -rwxr-xr-x 1 root root 7645 Nov 14 20:04 favicon.ico
+2025-11-14T20:27:08.128877784Z [err]      completion_method VARCHAR,
+2025-11-14T20:27:08.128881771Z [err]  Failed to run meal system migrations: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:08.128890585Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:08.128891643Z [err]      completed_at DATETIME,
+2025-11-14T20:27:08.128895782Z [err]                                     ^
+2025-11-14T20:27:08.128901559Z [err]  
+2025-11-14T20:27:08.128903809Z [err]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:08.128907343Z [err]  [SQL: 
+2025-11-14T20:27:08.128912190Z [err]      updated_at DATETIME,
+2025-11-14T20:27:08.128915397Z [err]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:08.128920739Z [err]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:08.128927806Z [err]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:08.128930108Z [err]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:08.128935821Z [err]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:08.128938501Z [err]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:08.128943351Z [err]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:08.128948580Z [err]      date DATETIME NOT NULL,
+2025-11-14T20:27:08.128955281Z [err]  )
+2025-11-14T20:27:08.128962586Z [err]  ]
+2025-11-14T20:27:08.128969838Z [err]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:08.128970043Z [err]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:08.546477406Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:08.546478096Z [inf]  === ELIOR FITNESS ADMIN CHECK ===
+2025-11-14T20:27:08.546487153Z [inf]  Initializing database tables if needed...
+2025-11-14T20:27:08.546492665Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:08.546494904Z [inf]  Running database migrations...
+2025-11-14T20:27:08.546501716Z [inf]  Warning: Some migrations may have failed: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:08.546509399Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:08.546511320Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:08.546516556Z [inf]                                     ^
+2025-11-14T20:27:08.546520436Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:08.546524206Z [inf]  
+2025-11-14T20:27:08.546528496Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:08.546531938Z [inf]  [SQL: 
+2025-11-14T20:27:08.546537872Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:08.546540135Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:08.546546548Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:08.546547724Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:08.546555845Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:08.546559676Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:08.546565026Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:08.546568460Z [inf]  )
+2025-11-14T20:27:08.546572714Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:08.546577514Z [inf]  ]
+2025-11-14T20:27:08.546584485Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:08.546591020Z [inf]  Admin user verified and password updated.
+2025-11-14T20:27:08.548751048Z [inf]  Admin setup completed successfully.
+2025-11-14T20:27:09.243622469Z [inf]  Starting FastAPI on port 8080...
+2025-11-14T20:27:09.243628158Z [inf]  === UNIVERSAL ENVIRONMENT DETECTION ===
+2025-11-14T20:27:09.243634206Z [inf]  Detected ENVIRONMENT: production
+2025-11-14T20:27:09.243640285Z [inf]  Detected DOMAIN: https://ecshape.org
+2025-11-14T20:27:09.243645799Z [inf]  Detected CORS_ORIGINS: ['https://ecshape.org', 'http://ecshape.org', 'https://www.ecshape.org', 'http://www.ecshape.org']
+2025-11-14T20:27:09.243650807Z [inf]  Raw ENVIRONMENT env var: production
+2025-11-14T20:27:09.243656458Z [inf]  Raw DOMAIN env var: https://ecshape.org
+2025-11-14T20:27:09.243661804Z [inf]  Raw CORS_ORIGINS env var: https://ecshape.org,http://ecshape.org,https://www.ecshape.org,http://www.ecshape.org
+2025-11-14T20:27:09.243667143Z [inf]  RAILWAY_PUBLIC_DOMAIN: ecshape.org
+2025-11-14T20:27:09.243672774Z [inf]  PORT: 8080
+2025-11-14T20:27:09.243679340Z [inf]  ==================================================
+2025-11-14T20:27:09.243685891Z [inf]  2025-11-14 20:27:09,206 - app.main - INFO - ============================================================
+2025-11-14T20:27:09.243690264Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - ELIOR FITNESS API STARTUP
+2025-11-14T20:27:09.243694248Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - ============================================================
+2025-11-14T20:27:09.243700911Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - Timestamp: 2025-11-14 20:27:09.208290
+2025-11-14T20:27:09.243705027Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - Environment: production
+2025-11-14T20:27:09.243709346Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - Log Level: INFO
+2025-11-14T20:27:09.243713185Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - Debug Logging: False
+2025-11-14T20:27:09.243717431Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - Domain: https://ecshape.org
+2025-11-14T20:27:09.243721392Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - CORS Origins: ['https://ecshape.org', 'http://ecshape.org', 'https://www.ecshape.org', 'http://www.ecshape.org']
+2025-11-14T20:27:09.243818220Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - ============================================================
+2025-11-14T20:27:09.243822873Z [inf]  2025-11-14 20:27:09,208 - app.main - INFO - Starting Elior Fitness API application...
+2025-11-14T20:27:09.412421216Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL starts with 'sqlite': False
+2025-11-14T20:27:09.412433109Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL length: 93
+2025-11-14T20:27:09.412440021Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_PUBLIC_URL: Not set
+2025-11-14T20:27:09.412448052Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ============================================================
+2025-11-14T20:27:09.412448080Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ============================================================
+2025-11-14T20:27:09.412455147Z [inf]  2025-11-14 20:27:09,404 - app.database - WARNING - Internal Railway URL detected but DATABASE_PUBLIC_URL not set. If connection fails, set DATABASE_PUBLIC_URL in Railway variables.
+2025-11-14T20:27:09.412460529Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL ENVIRONMENT VARIABLE CHECK
+2025-11-14T20:27:09.412464587Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - Production mode: Using PostgreSQL database (SQLite fallback disabled)
+2025-11-14T20:27:09.412468183Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ============================================================
+2025-11-14T20:27:09.412472410Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ============================================================
+2025-11-14T20:27:09.412475684Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ENVIRONMENT: production
+2025-11-14T20:27:09.412480833Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL received: postgresql://postgres:***@postgres.railway.internal:5432/railway
+2025-11-14T20:27:09.412486839Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL is None: False
+2025-11-14T20:27:09.412492772Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL is empty string: False
+2025-11-14T20:27:09.412499209Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - DATABASE_URL starts with 'postgresql': True
+2025-11-14T20:27:09.418255394Z [inf]  2025-11-14 20:27:09,415 - app.database - INFO - Using SSL mode 'disable' for internal Railway URL
+2025-11-14T20:27:09.418265137Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - FINAL DATABASE CONFIGURATION
+2025-11-14T20:27:09.418271925Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ============================================================
+2025-11-14T20:27:09.418278700Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - Final SQLALCHEMY_DATABASE_URL: postgresql://postgres:***@postgres.railway.internal:5432/railway
+2025-11-14T20:27:09.418284640Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - Database type: PostgreSQL
+2025-11-14T20:27:09.418290403Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - ============================================================
+2025-11-14T20:27:09.418296189Z [inf]  2025-11-14 20:27:09,404 - app.database - INFO - Configuring PostgreSQL database with connection pooling...
+2025-11-14T20:27:09.418301901Z [inf]  2025-11-14 20:27:09,415 - app.database - INFO - psycopg2 is available (version: 2.9.11 (dt dec pq3 ext lo64))
+2025-11-14T20:27:09.418307769Z [inf]  2025-11-14 20:27:09,415 - app.database - INFO - PostgreSQL connection details: host=postgres.railway.internal, port=5432, database=railway, user=postgres
+2025-11-14T20:27:09.450182559Z [inf]  2025-11-14 20:27:09,445 - app.database - INFO - PostgreSQL engine created with performance optimizations
+2025-11-14T20:27:09.450187064Z [inf]  2025-11-14 20:27:09,446 - app.database - INFO - SessionLocal class created with optimizations
+2025-11-14T20:27:09.450192913Z [inf]  2025-11-14 20:27:09,446 - app.database - INFO - Base class created
+2025-11-14T20:27:09.450198704Z [inf]  2025-11-14 20:27:09,446 - app.database - INFO - Database configuration completed successfully
+2025-11-14T20:27:09.450204315Z [inf]  2025-11-14 20:27:09,446 - app.main - INFO - Database module imported successfully
+2025-11-14T20:27:09.450209266Z [inf]  2025-11-14 20:27:09,446 - app.main - INFO - Importing router modules...
+2025-11-14T20:27:10.227570259Z [inf]  2025-11-14 20:27:10,062 - app.main - INFO - Frontend assets mounted with performance optimizations
+2025-11-14T20:27:10.227585290Z [inf]  2025-11-14 20:27:10,062 - app.main - INFO - Frontend serving endpoints configured with performance optimizations
+2025-11-14T20:27:10.227592525Z [inf]  2025-11-14 20:27:10,063 - app.main - INFO - ========================================
+2025-11-14T20:27:10.227601121Z [inf]  2025-11-14 20:27:10,063 - app.main - INFO - INCLUDING ROUTERS
+2025-11-14T20:27:10.227605821Z [inf]  2025-11-14 20:27:10,060 - app.main - INFO - ✅ Router modules imported successfully
+2025-11-14T20:27:10.227609502Z [inf]  2025-11-14 20:27:10,060 - app.main - INFO - FastAPI application created with performance optimizations
+2025-11-14T20:27:10.227612617Z [inf]  2025-11-14 20:27:10,060 - app.main - INFO - 📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications
+2025-11-14T20:27:10.227618858Z [inf]  2025-11-14 20:27:10,061 - app.main - INFO - ✅ Security middleware added
+2025-11-14T20:27:10.227619455Z [inf]  2025-11-14 20:27:10,060 - app.main - INFO - Importing model modules...
+2025-11-14T20:27:10.227625472Z [inf]  2025-11-14 20:27:10,060 - app.main - INFO - ✅ Model modules imported successfully
+2025-11-14T20:27:10.227627427Z [inf]  2025-11-14 20:27:10,061 - app.main - INFO - CORS middleware configured with frontend integration support
+2025-11-14T20:27:10.227630664Z [inf]  2025-11-14 20:27:10,060 - app.main - INFO - 📋 Available models: user, workout, nutrition, progress, notification
+2025-11-14T20:27:10.227634847Z [inf]  2025-11-14 20:27:10,061 - app.main - INFO - Static files mounted successfully from /app/persistent/uploads
+2025-11-14T20:27:10.227656382Z [inf]  2025-11-14 20:27:09,914 - app.services.system_service - WARNING - Docker client initialization failed: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+2025-11-14T20:27:10.230824141Z [inf]  2025-11-14 20:27:10,063 - app.main - INFO - ========================================
+2025-11-14T20:27:10.230829005Z [inf]  2025-11-14 20:27:10,063 - app.main - INFO - Including auth router...
+2025-11-14T20:27:10.230833759Z [inf]  2025-11-14 20:27:10,077 - app.main - INFO - ✅ Auth router included
+2025-11-14T20:27:10.230838104Z [inf]  2025-11-14 20:27:10,077 - app.main - INFO - Including users router...
+2025-11-14T20:27:10.230842921Z [inf]  2025-11-14 20:27:10,087 - app.main - INFO - ✅ Users router included
+2025-11-14T20:27:10.230846679Z [inf]  2025-11-14 20:27:10,087 - app.main - INFO - Including exercises router...
+2025-11-14T20:27:10.230851407Z [inf]  2025-11-14 20:27:10,092 - app.main - INFO - ✅ Exercises router included
+2025-11-14T20:27:10.230855609Z [inf]  2025-11-14 20:27:10,092 - app.main - INFO - Including muscle_groups router...
+2025-11-14T20:27:10.230860086Z [inf]  2025-11-14 20:27:10,095 - app.main - INFO - ✅ Muscle groups router included
+2025-11-14T20:27:10.230863915Z [inf]  2025-11-14 20:27:10,095 - app.main - INFO - Including workout_splits router...
+2025-11-14T20:27:10.230868396Z [inf]  2025-11-14 20:27:10,099 - app.main - INFO - ✅ Workout splits router included
+2025-11-14T20:27:10.230872148Z [inf]  2025-11-14 20:27:10,099 - app.main - INFO - Including workouts router...
+2025-11-14T20:27:10.230876026Z [inf]  2025-11-14 20:27:10,128 - app.main - INFO - ✅ Workouts router included
+2025-11-14T20:27:10.230880123Z [inf]  2025-11-14 20:27:10,128 - app.main - INFO - Including nutrition router...
+2025-11-14T20:27:10.230884674Z [inf]  2025-11-14 20:27:10,162 - app.main - INFO - ✅ Nutrition router included
+2025-11-14T20:27:10.230890053Z [inf]  2025-11-14 20:27:10,162 - app.main - INFO - Including meal_plans router...
+2025-11-14T20:27:10.230894963Z [inf]  2025-11-14 20:27:10,186 - app.main - INFO - ✅ Meal plans router included
+2025-11-14T20:27:10.230899684Z [inf]  2025-11-14 20:27:10,186 - app.main - INFO - Including meal_system router (v2)...
+2025-11-14T20:27:10.232021209Z [inf]  2025-11-14 20:27:10,208 - app.main - INFO - ✅ Meal system V2 router included
+2025-11-14T20:27:10.232028820Z [inf]  2025-11-14 20:27:10,208 - app.main - INFO - Including workout_system router (v2)...
+2025-11-14T20:27:10.234447191Z [inf]  2025-11-14 20:27:10,233 - app.main - INFO - ✅ Workout system V2 router included
+2025-11-14T20:27:10.234454809Z [inf]  2025-11-14 20:27:10,233 - app.main - INFO - Including progress router...
+2025-11-14T20:27:10.321507300Z [inf]  2025-11-14 20:27:10,314 - app.main - INFO - ✅ Progress router included
+2025-11-14T20:27:10.321514947Z [inf]  2025-11-14 20:27:10,314 - app.main - INFO - Including files router...
+2025-11-14T20:27:10.321520961Z [inf]  2025-11-14 20:27:10,316 - app.main - INFO - ✅ Files router included
+2025-11-14T20:27:10.321527600Z [inf]  2025-11-14 20:27:10,316 - app.main - INFO - Including websocket router...
+2025-11-14T20:27:10.321535059Z [inf]  2025-11-14 20:27:10,318 - app.main - INFO - ✅ WebSocket router included
+2025-11-14T20:27:10.321540692Z [inf]  2025-11-14 20:27:10,318 - app.main - INFO - Including system router...
+2025-11-14T20:27:10.323968309Z [inf]  2025-11-14 20:27:10,320 - app.main - INFO - ✅ System router included
+2025-11-14T20:27:10.323979988Z [inf]  2025-11-14 20:27:10,320 - app.main - INFO - Including notifications router...
+2025-11-14T20:27:10.332836497Z [inf]  2025-11-14 20:27:10,327 - app.main - INFO - ✅ Notifications router included
+2025-11-14T20:27:10.332847240Z [inf]  2025-11-14 20:27:10,328 - app.main - INFO - Including chat router...
+2025-11-14T20:27:10.332852999Z [inf]  2025-11-14 20:27:10,331 - app.main - INFO - ✅ Chat router included
+2025-11-14T20:27:10.332860834Z [inf]  2025-11-14 20:27:10,331 - app.main - INFO - ========================================
+2025-11-14T20:27:10.332865837Z [inf]  2025-11-14 20:27:10,331 - app.main - INFO - ✅ ALL ROUTERS INCLUDED SUCCESSFULLY
+2025-11-14T20:27:10.332871219Z [inf]  2025-11-14 20:27:10,331 - app.main - INFO - ========================================
+2025-11-14T20:27:10.332879327Z [inf]  2025-11-14 20:27:10,331 - app.main - INFO - Elior Fitness API application startup completed successfully
+2025-11-14T20:27:10.332883973Z [err]  INFO:     Started server process [1]
+2025-11-14T20:27:10.332890566Z [err]  INFO:     Waiting for application startup.
+2025-11-14T20:27:10.335311153Z [inf]  2025-11-14 20:27:10,332 - app.main - INFO - ========================================
+2025-11-14T20:27:10.335319829Z [inf]  2025-11-14 20:27:10,332 - app.main - INFO - APPLICATION STARTUP INITIATED
+2025-11-14T20:27:10.335326777Z [inf]  2025-11-14 20:27:10,332 - app.main - INFO - ========================================
+2025-11-14T20:27:10.335332843Z [inf]  2025-11-14 20:27:10,332 - app.main - INFO - Checking database connection...
+2025-11-14T20:27:10.502566516Z [inf]  2025-11-14 20:27:10,499 - app.main - INFO - ✅ Database connection successful
+2025-11-14T20:27:10.502574546Z [inf]  2025-11-14 20:27:10,499 - app.main - INFO - Initializing database tables...
+2025-11-14T20:27:10.502581393Z [inf]  2025-11-14 20:27:10,499 - app.database - INFO - Attempting to connect to: postgres.railway.internal:5432
+2025-11-14T20:27:10.502587794Z [inf]  2025-11-14 20:27:10,500 - app.database - INFO - ✓ DNS resolution successful: postgres.railway.internal -> 10.199.51.74
+2025-11-14T20:27:10.502595115Z [inf]  2025-11-14 20:27:10,501 - app.database - INFO - ✓ Network connectivity test passed - port is reachable
+2025-11-14T20:27:10.502601673Z [inf]  2025-11-14 20:27:10,501 - app.database - INFO - Initializing database tables... (attempt 1/5)
+2025-11-14T20:27:10.502607557Z [inf]  2025-11-14 20:27:10,501 - app.database - INFO - Testing database connection...
+2025-11-14T20:27:10.512100748Z [inf]  2025-11-14 20:27:10,504 - app.database - INFO - ✓ Connection test successful: (1,)
+2025-11-14T20:27:10.512106101Z [inf]  2025-11-14 20:27:10,505 - app.database - INFO - Creating database tables...
+2025-11-14T20:27:10.579797153Z [inf]  2025-11-14 20:27:10,573 - app.database - INFO - ✓ Database tables initialized successfully
+2025-11-14T20:27:10.579806433Z [inf]  2025-11-14 20:27:10,573 - app.main - INFO - ✅ Database tables initialized successfully
+2025-11-14T20:27:11.270868667Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:11.270880272Z [inf]  2025-11-14 20:27:10,659 - app.main - ERROR - ❌ Database migrations failed: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:11.270886959Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.270913565Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:11.270924078Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:11.270926978Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:11.270927458Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+2025-11-14T20:27:11.270933843Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:11.270934294Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:11.270936960Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:11.270939647Z [err]      cursor.execute(statement, parameters)
+2025-11-14T20:27:11.270944982Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:11.270946079Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:11.270947052Z [inf]  )
+2025-11-14T20:27:11.270955452Z [inf]  ]
+2025-11-14T20:27:11.270955987Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:11.270961033Z [err]  ERROR:    Traceback (most recent call last):
+2025-11-14T20:27:11.270964313Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:11.270965765Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:11.270972195Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2025-11-14T20:27:11.270979208Z [err]      self.dialect.do_execute(
+2025-11-14T20:27:11.270982414Z [inf]                                     ^
+2025-11-14T20:27:11.270989916Z [inf]  
+2025-11-14T20:27:11.270998130Z [inf]  [SQL: 
+2025-11-14T20:27:11.271005681Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:11.271018552Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.271025205Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:11.271328988Z [inf]  2025-11-14 20:27:10,659 - app.migrations.meal_system_migration - ERROR - Failed to run meal system migrations: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:11.271334555Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.271340047Z [inf]                                     ^
+2025-11-14T20:27:11.271345389Z [inf]  
+2025-11-14T20:27:11.271350801Z [inf]  [SQL: 
+2025-11-14T20:27:11.271356580Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:11.271362149Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.271367755Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:11.271374358Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:11.271385359Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:11.271395503Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:11.271401453Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:11.271407722Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:11.271413465Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:11.271420264Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:11.271426409Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:11.271435992Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:11.271441605Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:11.271447052Z [inf]  )
+2025-11-14T20:27:11.271453134Z [inf]  ]
+2025-11-14T20:27:11.274644250Z [err]  psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:11.274650729Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.274657128Z [err]                                     ^
+2025-11-14T20:27:11.274664296Z [err]  
+2025-11-14T20:27:11.274670937Z [err]  
+2025-11-14T20:27:11.274676802Z [err]  The above exception was the direct cause of the following exception:
+2025-11-14T20:27:11.274683089Z [err]  
+2025-11-14T20:27:11.274688805Z [err]  Traceback (most recent call last):
+2025-11-14T20:27:11.274694525Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 694, in lifespan
+2025-11-14T20:27:11.274701570Z [err]      async with self.lifespan_context(app) as maybe_state:
+2025-11-14T20:27:11.274707457Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.274713174Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.274718986Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.274728219Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.274733756Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.274744751Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.274750800Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.274756984Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.274763248Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.274769509Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.274779541Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.274785842Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.276212173Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.276226675Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.276237730Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.276248664Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.276260004Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.276265598Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.276275549Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.276277297Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.276285673Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.276294656Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.276296535Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.276306323Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.276311728Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.276321253Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.276332485Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.276345775Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.276358894Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.276368514Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.276380160Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.276393436Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.279503109Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.279515730Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.279525197Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.279565395Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.279569445Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.279573766Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.279577748Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.279581548Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.279585612Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.279591851Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.279596263Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.279600372Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.279604352Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.279608000Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.279611964Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.279616081Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.279620354Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.279624732Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.279629107Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.279632901Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.282671795Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.282696087Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.282703469Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.282711185Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.282719225Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.282726530Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.282732234Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.282737982Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.282746310Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.282754146Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.282760950Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.282768284Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.282774578Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.282780775Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.282792393Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.282796929Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.282804974Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.282809844Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.282814804Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.282819909Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.285129899Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.285138174Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.285145986Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.285154082Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.285162120Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.285170164Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.285178549Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:11.285204674Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:11.285213687Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:11.285221270Z [err]      return await anext(self.gen)
+2025-11-14T20:27:11.285262279Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.285270038Z [err]    File "/app/app/main.py", line 202, in lifespan
+2025-11-14T20:27:11.285278437Z [err]      run_meal_system_migrations()
+2025-11-14T20:27:11.285286028Z [err]    File "/app/app/migrations/meal_system_migration.py", line 257, in run_meal_system_migrations
+2025-11-14T20:27:11.285293318Z [err]      _ensure_meal_completion_table()
+2025-11-14T20:27:11.285299383Z [err]    File "/app/app/migrations/meal_system_migration.py", line 215, in _ensure_meal_completion_table
+2025-11-14T20:27:11.285306050Z [err]      connection.execute(
+2025-11-14T20:27:11.285312366Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+2025-11-14T20:27:11.285319741Z [err]      return meth(
+2025-11-14T20:27:11.285328105Z [err]             ^^^^^
+2025-11-14T20:27:11.285337841Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+2025-11-14T20:27:11.288337672Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+2025-11-14T20:27:11.288354189Z [err]      cursor.execute(statement, parameters)
+2025-11-14T20:27:11.288358314Z [err]            ^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.288362595Z [err]  sqlalchemy.exc.ProgrammingError: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:11.288370949Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.288373152Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+2025-11-14T20:27:11.288382257Z [err]                                     ^
+2025-11-14T20:27:11.288382440Z [err]      return self._exec_single_context(
+2025-11-14T20:27:11.288390348Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.288398957Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+2025-11-14T20:27:11.288407655Z [err]      self._handle_dbapi_exception(
+2025-11-14T20:27:11.288415118Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+2025-11-14T20:27:11.288422575Z [err]      return connection._execute_clauseelement(
+2025-11-14T20:27:11.288424398Z [err]      raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2025-11-14T20:27:11.288428679Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:11.288433599Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2025-11-14T20:27:11.288435306Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+2025-11-14T20:27:11.288442613Z [err]      self.dialect.do_execute(
+2025-11-14T20:27:11.288443525Z [err]      ret = self._execute_context(
+2025-11-14T20:27:11.290765180Z [err]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:11.290773973Z [err]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:11.290786006Z [err]  )
+2025-11-14T20:27:11.290791953Z [err]  ]
+2025-11-14T20:27:11.290797826Z [err]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:11.290804029Z [err]  
+2025-11-14T20:27:11.290810188Z [err]  ERROR:    Application startup failed. Exiting.
+2025-11-14T20:27:11.290813475Z [err]  
+2025-11-14T20:27:11.290817592Z [err]  [SQL: 
+2025-11-14T20:27:11.290821312Z [err]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:11.290825506Z [err]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:11.290829708Z [err]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:11.290834081Z [err]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:11.290838506Z [err]      date DATETIME NOT NULL,
+2025-11-14T20:27:11.290842593Z [err]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:11.290846724Z [err]      completion_method VARCHAR,
+2025-11-14T20:27:11.290850687Z [err]      completed_at DATETIME,
+2025-11-14T20:27:11.290854899Z [err]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:11.290858559Z [err]      updated_at DATETIME,
+2025-11-14T20:27:11.290862746Z [err]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:12.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/c57d5210-d23f-44bb-889b-4b1a4af73833/vol_43l9q9lyjx6317az
+2025-11-14T20:27:13.360588339Z [inf]  === ELIOR FITNESS STARTUP ===
+2025-11-14T20:27:13.360601974Z [inf]  Time: Fri Nov 14 20:27:12 UTC 2025
+2025-11-14T20:27:13.360612630Z [inf]  Port: 8080
+2025-11-14T20:27:13.360617390Z [inf]  Environment: production
+2025-11-14T20:27:13.360626046Z [inf]  Checking static files...
+2025-11-14T20:27:13.360634726Z [inf]  total 36
+2025-11-14T20:27:13.360643265Z [inf]  drwxr-xr-x 1 root root 4096 Nov 14 20:04 .
+2025-11-14T20:27:13.360760880Z [inf]  drwxr-xr-x 1 root root 4096 Nov 14 20:22 ..
+2025-11-14T20:27:13.360769190Z [inf]  drwxr-xr-x 1 root root 4096 Nov 14 20:04 assets
+2025-11-14T20:27:13.360777383Z [inf]  -rwxr-xr-x 1 root root 7645 Nov 14 20:04 favicon.ico
+2025-11-14T20:27:13.364342568Z [inf]  -rwxr-xr-x 1 root root 1105 Nov 14 20:04 index.html
+2025-11-14T20:27:13.364353084Z [inf]  -rwxr-xr-x 1 root root 3253 Nov 14 20:04 placeholder.svg
+2025-11-14T20:27:13.364358856Z [inf]  -rwxr-xr-x 1 root root  160 Nov 14 20:04 robots.txt
+2025-11-14T20:27:13.364363394Z [inf]  Setting up admin user...
+2025-11-14T20:27:13.364369011Z [err]  Internal Railway URL detected but DATABASE_PUBLIC_URL not set. If connection fails, set DATABASE_PUBLIC_URL in Railway variables.
+2025-11-14T20:27:14.310822201Z [err]      updated_at DATETIME,
+2025-11-14T20:27:14.310830899Z [err]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:14.310835952Z [err]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:14.310840247Z [err]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:14.310845889Z [err]  )
+2025-11-14T20:27:14.310850831Z [err]  ]
+2025-11-14T20:27:14.310856243Z [err]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:14.310906367Z [err]  Failed to run meal system migrations: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:14.310911997Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:14.310917933Z [err]                                     ^
+2025-11-14T20:27:14.310924429Z [err]  
+2025-11-14T20:27:14.310933048Z [err]  [SQL: 
+2025-11-14T20:27:14.310938829Z [err]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:14.310945473Z [err]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:14.310952216Z [err]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:14.310960257Z [err]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:14.310965677Z [err]      date DATETIME NOT NULL,
+2025-11-14T20:27:14.310970773Z [err]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:14.310975896Z [err]      completion_method VARCHAR,
+2025-11-14T20:27:14.310981111Z [err]      completed_at DATETIME,
+2025-11-14T20:27:14.310988807Z [err]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:15.208616429Z [inf]                                     ^
+2025-11-14T20:27:15.208625047Z [inf]  
+2025-11-14T20:27:15.208629908Z [inf]  [SQL: 
+2025-11-14T20:27:15.208634616Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:15.208639266Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:15.208644565Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:15.208649045Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:15.208653346Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:15.208657604Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:15.208662365Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:15.208667657Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:15.208673751Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:15.208680922Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:15.208686889Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:15.208693208Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:15.208698931Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:15.208704938Z [inf]  )
+2025-11-14T20:27:15.208711200Z [inf]  ]
+2025-11-14T20:27:15.208717707Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:15.208723629Z [inf]  Admin user verified and password updated.
+2025-11-14T20:27:15.209049665Z [inf]  === ELIOR FITNESS ADMIN CHECK ===
+2025-11-14T20:27:15.209055912Z [inf]  Initializing database tables if needed...
+2025-11-14T20:27:15.209063730Z [inf]  Running database migrations...
+2025-11-14T20:27:15.209070189Z [inf]  Warning: Some migrations may have failed: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:15.209076849Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:15.218959310Z [inf]  Admin setup completed successfully.
+2025-11-14T20:27:15.218963137Z [inf]  Starting FastAPI on port 8080...
+2025-11-14T20:27:15.401764550Z [inf]  === UNIVERSAL ENVIRONMENT DETECTION ===
+2025-11-14T20:27:15.401775699Z [inf]  Detected ENVIRONMENT: production
+2025-11-14T20:27:15.401784488Z [inf]  Detected DOMAIN: https://ecshape.org
+2025-11-14T20:27:15.401790396Z [inf]  Detected CORS_ORIGINS: ['https://ecshape.org', 'http://ecshape.org', 'https://www.ecshape.org', 'http://www.ecshape.org']
+2025-11-14T20:27:15.401796451Z [inf]  Raw ENVIRONMENT env var: production
+2025-11-14T20:27:15.401803098Z [inf]  Raw DOMAIN env var: https://ecshape.org
+2025-11-14T20:27:15.401808606Z [inf]  Raw CORS_ORIGINS env var: https://ecshape.org,http://ecshape.org,https://www.ecshape.org,http://www.ecshape.org
+2025-11-14T20:27:15.401814610Z [inf]  RAILWAY_PUBLIC_DOMAIN: ecshape.org
+2025-11-14T20:27:15.401820883Z [inf]  PORT: 8080
+2025-11-14T20:27:15.401826916Z [inf]  ==================================================
+2025-11-14T20:27:15.401839912Z [inf]  2025-11-14 20:27:15,392 - app.main - INFO - ============================================================
+2025-11-14T20:27:15.401846114Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - ELIOR FITNESS API STARTUP
+2025-11-14T20:27:15.401851631Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - ============================================================
+2025-11-14T20:27:15.401857203Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - Timestamp: 2025-11-14 20:27:15.393658
+2025-11-14T20:27:15.401863049Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - Environment: production
+2025-11-14T20:27:15.401869767Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - Log Level: INFO
+2025-11-14T20:27:15.401876351Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - Debug Logging: False
+2025-11-14T20:27:15.401883662Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - Domain: https://ecshape.org
+2025-11-14T20:27:15.401889901Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - CORS Origins: ['https://ecshape.org', 'http://ecshape.org', 'https://www.ecshape.org', 'http://www.ecshape.org']
+2025-11-14T20:27:15.403532138Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - ============================================================
+2025-11-14T20:27:15.403538953Z [inf]  2025-11-14 20:27:15,393 - app.main - INFO - Starting Elior Fitness API application...
+2025-11-14T20:27:15.600392669Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - ============================================================
+2025-11-14T20:27:15.600411070Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - ============================================================
+2025-11-14T20:27:15.600416512Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL ENVIRONMENT VARIABLE CHECK
+2025-11-14T20:27:15.600421796Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - ============================================================
+2025-11-14T20:27:15.600434869Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - ENVIRONMENT: production
+2025-11-14T20:27:15.600439657Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL received: postgresql://postgres:***@postgres.railway.internal:5432/railway
+2025-11-14T20:27:15.600444417Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL is None: False
+2025-11-14T20:27:15.600451917Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL is empty string: False
+2025-11-14T20:27:15.600458034Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL starts with 'postgresql': True
+2025-11-14T20:27:15.600466009Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL starts with 'sqlite': False
+2025-11-14T20:27:15.600473862Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_URL length: 93
+2025-11-14T20:27:15.600479378Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - DATABASE_PUBLIC_URL: Not set
+2025-11-14T20:27:15.600485514Z [inf]  2025-11-14 20:27:15,593 - app.database - INFO - ============================================================
+2025-11-14T20:27:15.600492778Z [inf]  2025-11-14 20:27:15,593 - app.database - WARNING - Internal Railway URL detected but DATABASE_PUBLIC_URL not set. If connection fails, set DATABASE_PUBLIC_URL in Railway variables.
+2025-11-14T20:27:15.600496925Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - Production mode: Using PostgreSQL database (SQLite fallback disabled)
+2025-11-14T20:27:15.602856235Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - FINAL DATABASE CONFIGURATION
+2025-11-14T20:27:15.602864953Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - ============================================================
+2025-11-14T20:27:15.602869976Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - Final SQLALCHEMY_DATABASE_URL: postgresql://postgres:***@postgres.railway.internal:5432/railway
+2025-11-14T20:27:15.602874757Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - Database type: PostgreSQL
+2025-11-14T20:27:15.602881529Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - ============================================================
+2025-11-14T20:27:15.602886757Z [inf]  2025-11-14 20:27:15,594 - app.database - INFO - Configuring PostgreSQL database with connection pooling...
+2025-11-14T20:27:15.605883432Z [inf]  2025-11-14 20:27:15,603 - app.database - INFO - psycopg2 is available (version: 2.9.11 (dt dec pq3 ext lo64))
+2025-11-14T20:27:15.605891998Z [inf]  2025-11-14 20:27:15,603 - app.database - INFO - PostgreSQL connection details: host=postgres.railway.internal, port=5432, database=railway, user=postgres
+2025-11-14T20:27:15.605898034Z [inf]  2025-11-14 20:27:15,603 - app.database - INFO - Using SSL mode 'disable' for internal Railway URL
+2025-11-14T20:27:15.637695914Z [inf]  2025-11-14 20:27:15,632 - app.database - INFO - PostgreSQL engine created with performance optimizations
+2025-11-14T20:27:15.637706808Z [inf]  2025-11-14 20:27:15,632 - app.database - INFO - SessionLocal class created with optimizations
+2025-11-14T20:27:15.637713053Z [inf]  2025-11-14 20:27:15,632 - app.database - INFO - Base class created
+2025-11-14T20:27:15.637718480Z [inf]  2025-11-14 20:27:15,632 - app.database - INFO - Database configuration completed successfully
+2025-11-14T20:27:15.637724223Z [inf]  2025-11-14 20:27:15,633 - app.main - INFO - Database module imported successfully
+2025-11-14T20:27:15.637735117Z [inf]  2025-11-14 20:27:15,633 - app.main - INFO - Importing router modules...
+2025-11-14T20:27:16.232567990Z [inf]  2025-11-14 20:27:16,093 - app.services.system_service - WARNING - Docker client initialization failed: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+2025-11-14T20:27:16.235648573Z [inf]  2025-11-14 20:27:16,234 - app.main - INFO - ========================================
+2025-11-14T20:27:16.235656932Z [inf]  2025-11-14 20:27:16,234 - app.main - INFO - INCLUDING ROUTERS
+2025-11-14T20:27:16.235662792Z [inf]  2025-11-14 20:27:16,234 - app.main - INFO - ========================================
+2025-11-14T20:27:16.235667642Z [inf]  2025-11-14 20:27:16,234 - app.main - INFO - Including auth router...
+2025-11-14T20:27:16.235677911Z [inf]  2025-11-14 20:27:16,233 - app.main - INFO - CORS middleware configured with frontend integration support
+2025-11-14T20:27:16.235684268Z [inf]  2025-11-14 20:27:16,233 - app.main - INFO - Static files mounted successfully from /app/persistent/uploads
+2025-11-14T20:27:16.235689666Z [inf]  2025-11-14 20:27:16,233 - app.main - INFO - Frontend assets mounted with performance optimizations
+2025-11-14T20:27:16.235689893Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - 📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications
+2025-11-14T20:27:16.235696105Z [inf]  2025-11-14 20:27:16,233 - app.main - INFO - Frontend serving endpoints configured with performance optimizations
+2025-11-14T20:27:16.235699077Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - Importing model modules...
+2025-11-14T20:27:16.235704801Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - ✅ Model modules imported successfully
+2025-11-14T20:27:16.235709299Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - 📋 Available models: user, workout, nutrition, progress, notification
+2025-11-14T20:27:16.235714823Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - FastAPI application created with performance optimizations
+2025-11-14T20:27:16.235721203Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - ✅ Security middleware added
+2025-11-14T20:27:16.235731789Z [inf]  2025-11-14 20:27:16,232 - app.main - INFO - ✅ Router modules imported successfully
+2025-11-14T20:27:16.247797416Z [inf]  2025-11-14 20:27:16,246 - app.main - INFO - ✅ Auth router included
+2025-11-14T20:27:16.247803700Z [inf]  2025-11-14 20:27:16,246 - app.main - INFO - Including users router...
+2025-11-14T20:27:16.255226153Z [inf]  2025-11-14 20:27:16,254 - app.main - INFO - ✅ Users router included
+2025-11-14T20:27:16.255232697Z [inf]  2025-11-14 20:27:16,254 - app.main - INFO - Including exercises router...
+2025-11-14T20:27:16.260381227Z [inf]  2025-11-14 20:27:16,259 - app.main - INFO - ✅ Exercises router included
+2025-11-14T20:27:16.260389444Z [inf]  2025-11-14 20:27:16,259 - app.main - INFO - Including muscle_groups router...
+2025-11-14T20:27:16.264388476Z [inf]  2025-11-14 20:27:16,262 - app.main - INFO - ✅ Muscle groups router included
+2025-11-14T20:27:16.264393087Z [inf]  2025-11-14 20:27:16,262 - app.main - INFO - Including workout_splits router...
+2025-11-14T20:27:16.275212862Z [inf]  2025-11-14 20:27:16,268 - app.main - INFO - ✅ Workout splits router included
+2025-11-14T20:27:16.275278683Z [inf]  2025-11-14 20:27:16,268 - app.main - INFO - Including workouts router...
+2025-11-14T20:27:16.303092412Z [inf]  2025-11-14 20:27:16,297 - app.main - INFO - ✅ Workouts router included
+2025-11-14T20:27:16.303101056Z [inf]  2025-11-14 20:27:16,297 - app.main - INFO - Including nutrition router...
+2025-11-14T20:27:16.331342735Z [inf]  2025-11-14 20:27:16,330 - app.main - INFO - ✅ Nutrition router included
+2025-11-14T20:27:16.331347976Z [inf]  2025-11-14 20:27:16,330 - app.main - INFO - Including meal_plans router...
+2025-11-14T20:27:16.359006902Z [inf]  2025-11-14 20:27:16,352 - app.main - INFO - ✅ Meal plans router included
+2025-11-14T20:27:16.359012871Z [inf]  2025-11-14 20:27:16,353 - app.main - INFO - Including meal_system router (v2)...
+2025-11-14T20:27:16.381082160Z [inf]  2025-11-14 20:27:16,377 - app.main - INFO - ✅ Meal system V2 router included
+2025-11-14T20:27:16.381092008Z [inf]  2025-11-14 20:27:16,377 - app.main - INFO - Including workout_system router (v2)...
+2025-11-14T20:27:16.415894517Z [inf]  2025-11-14 20:27:16,405 - app.main - INFO - ✅ Workout system V2 router included
+2025-11-14T20:27:16.415901940Z [inf]  2025-11-14 20:27:16,405 - app.main - INFO - Including progress router...
+2025-11-14T20:27:16.487998728Z [inf]  2025-11-14 20:27:16,486 - app.main - INFO - ✅ Progress router included
+2025-11-14T20:27:16.488004879Z [inf]  2025-11-14 20:27:16,486 - app.main - INFO - Including files router...
+2025-11-14T20:27:16.490413925Z [inf]  2025-11-14 20:27:16,488 - app.main - INFO - ✅ Files router included
+2025-11-14T20:27:16.490419961Z [inf]  2025-11-14 20:27:16,488 - app.main - INFO - Including websocket router...
+2025-11-14T20:27:16.493044170Z [inf]  2025-11-14 20:27:16,491 - app.main - INFO - ✅ WebSocket router included
+2025-11-14T20:27:16.493065530Z [inf]  2025-11-14 20:27:16,491 - app.main - INFO - Including system router...
+2025-11-14T20:27:16.494887860Z [inf]  2025-11-14 20:27:16,493 - app.main - INFO - ✅ System router included
+2025-11-14T20:27:16.494894500Z [inf]  2025-11-14 20:27:16,493 - app.main - INFO - Including notifications router...
+2025-11-14T20:27:16.502640868Z [inf]  2025-11-14 20:27:16,500 - app.main - INFO - ✅ Notifications router included
+2025-11-14T20:27:16.502649048Z [inf]  2025-11-14 20:27:16,500 - app.main - INFO - Including chat router...
+2025-11-14T20:27:16.504857600Z [inf]  2025-11-14 20:27:16,504 - app.main - INFO - ✅ Chat router included
+2025-11-14T20:27:16.504865165Z [inf]  2025-11-14 20:27:16,504 - app.main - INFO - ========================================
+2025-11-14T20:27:16.504870648Z [inf]  2025-11-14 20:27:16,504 - app.main - INFO - ✅ ALL ROUTERS INCLUDED SUCCESSFULLY
+2025-11-14T20:27:16.504876472Z [inf]  2025-11-14 20:27:16,504 - app.main - INFO - ========================================
+2025-11-14T20:27:16.507641648Z [inf]  2025-11-14 20:27:16,504 - app.main - INFO - Elior Fitness API application startup completed successfully
+2025-11-14T20:27:16.507649559Z [err]  INFO:     Started server process [1]
+2025-11-14T20:27:16.507655303Z [err]  INFO:     Waiting for application startup.
+2025-11-14T20:27:16.507660285Z [inf]  2025-11-14 20:27:16,505 - app.main - INFO - ========================================
+2025-11-14T20:27:16.507668040Z [inf]  2025-11-14 20:27:16,505 - app.main - INFO - APPLICATION STARTUP INITIATED
+2025-11-14T20:27:16.507673398Z [inf]  2025-11-14 20:27:16,505 - app.main - INFO - ========================================
+2025-11-14T20:27:16.507678838Z [inf]  2025-11-14 20:27:16,505 - app.main - INFO - Checking database connection...
+2025-11-14T20:27:17.227754884Z [inf]  [SQL: 
+2025-11-14T20:27:17.227770442Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:17.227773789Z [inf]  2025-11-14 20:27:16,676 - app.main - INFO - ✅ Database connection successful
+2025-11-14T20:27:17.227786659Z [inf]  2025-11-14 20:27:16,676 - app.main - INFO - Initializing database tables...
+2025-11-14T20:27:17.227786797Z [inf]  2025-11-14 20:27:16,682 - app.database - INFO - ✓ Connection test successful: (1,)
+2025-11-14T20:27:17.227794851Z [inf]  2025-11-14 20:27:16,684 - app.database - INFO - Creating database tables...
+2025-11-14T20:27:17.227803053Z [inf]  2025-11-14 20:27:16,744 - app.database - INFO - ✓ Database tables initialized successfully
+2025-11-14T20:27:17.227805735Z [inf]  2025-11-14 20:27:16,676 - app.database - INFO - Attempting to connect to: postgres.railway.internal:5432
+2025-11-14T20:27:17.227813252Z [inf]  2025-11-14 20:27:16,744 - app.main - INFO - ✅ Database tables initialized successfully
+2025-11-14T20:27:17.227814251Z [inf]  2025-11-14 20:27:16,677 - app.database - INFO - ✓ DNS resolution successful: postgres.railway.internal -> 10.199.51.74
+2025-11-14T20:27:17.227822085Z [inf]  2025-11-14 20:27:16,843 - app.migrations.meal_system_migration - ERROR - Failed to run meal system migrations: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:17.227823183Z [inf]  2025-11-14 20:27:16,678 - app.database - INFO - ✓ Network connectivity test passed - port is reachable
+2025-11-14T20:27:17.227830113Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.227836914Z [inf]  2025-11-14 20:27:16,678 - app.database - INFO - Initializing database tables... (attempt 1/5)
+2025-11-14T20:27:17.227838856Z [inf]                                     ^
+2025-11-14T20:27:17.227847297Z [inf]  
+2025-11-14T20:27:17.227847393Z [inf]  2025-11-14 20:27:16,678 - app.database - INFO - Testing database connection...
+2025-11-14T20:27:17.232896359Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.232900637Z [inf]  ]
+2025-11-14T20:27:17.232905361Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:17.232911441Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:17.232911457Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:17.232917573Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:17.232920448Z [inf]  2025-11-14 20:27:16,843 - app.main - ERROR - ❌ Database migrations failed: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:17.232927427Z [inf]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.232933570Z [inf]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.232934307Z [inf]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:17.232937854Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:17.232941756Z [inf]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:17.232948936Z [inf]      date DATETIME NOT NULL,
+2025-11-14T20:27:17.232952129Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:17.232954949Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:17.232961206Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:17.232961741Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:17.232967741Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:17.232972987Z [inf]                                     ^
+2025-11-14T20:27:17.232975986Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:17.232982709Z [inf]  
+2025-11-14T20:27:17.232988539Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:17.232992231Z [inf]  [SQL: 
+2025-11-14T20:27:17.232997620Z [inf]  )
+2025-11-14T20:27:17.233003919Z [inf]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:17.234976445Z [inf]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:17.234982303Z [inf]      completion_method VARCHAR,
+2025-11-14T20:27:17.234988240Z [inf]      completed_at DATETIME,
+2025-11-14T20:27:17.234994220Z [inf]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:17.234999771Z [inf]      updated_at DATETIME,
+2025-11-14T20:27:17.235004979Z [inf]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:17.235011658Z [inf]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:17.235017284Z [inf]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:17.235022833Z [inf]  )
+2025-11-14T20:27:17.235028105Z [inf]  ]
+2025-11-14T20:27:17.235033940Z [inf]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:17.235040419Z [err]  ERROR:    Traceback (most recent call last):
+2025-11-14T20:27:17.235048389Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2025-11-14T20:27:17.235053984Z [err]      self.dialect.do_execute(
+2025-11-14T20:27:17.235059701Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+2025-11-14T20:27:17.235065214Z [err]      cursor.execute(statement, parameters)
+2025-11-14T20:27:17.235071119Z [err]  psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:17.235076741Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.235082561Z [err]                                     ^
+2025-11-14T20:27:17.235088880Z [err]  
+2025-11-14T20:27:17.235094478Z [err]  
+2025-11-14T20:27:17.235100093Z [err]  The above exception was the direct cause of the following exception:
+2025-11-14T20:27:17.235105963Z [err]  
+2025-11-14T20:27:17.235112058Z [err]  Traceback (most recent call last):
+2025-11-14T20:27:17.237097656Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.237105854Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.237113163Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.237115819Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.237121133Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.237128597Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.237135760Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.237137145Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.237138227Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.237146784Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.237150855Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.237156583Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 694, in lifespan
+2025-11-14T20:27:17.237156598Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.237158685Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.237164073Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.237165952Z [err]      async with self.lifespan_context(app) as maybe_state:
+2025-11-14T20:27:17.237169119Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.237170133Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.237175169Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.237179503Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.239044449Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.239048115Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.239052608Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.239058736Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.239065726Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.239066678Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.239072890Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.239073201Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.239079801Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.239080784Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.239082653Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.239088785Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.239091254Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.239096148Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.239096419Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.239098847Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.239105055Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.239112102Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.239117524Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.239122151Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.241880663Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.241884435Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.241887886Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.241891476Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.241895033Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.241898397Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.241902092Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.241905877Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.241909490Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.241913126Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.241916549Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.241919986Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.241923645Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.241927351Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.241930882Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.241934326Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.241938678Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.241943630Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.241947570Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.241951206Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.244296008Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.244306572Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.244326532Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.244332826Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.244340025Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.244341451Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.244347416Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.244350662Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.244351933Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.244359288Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.244359415Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.244366667Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.244372198Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.244378282Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.244384309Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.244390292Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.244396756Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.244405529Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.244411929Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.244418051Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.247367654Z [err]    File "/app/app/main.py", line 202, in lifespan
+2025-11-14T20:27:17.247371205Z [err]            ^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.247378046Z [err]      run_meal_system_migrations()
+2025-11-14T20:27:17.247382177Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+2025-11-14T20:27:17.247385764Z [err]    File "/app/app/migrations/meal_system_migration.py", line 257, in run_meal_system_migrations
+2025-11-14T20:27:17.247392371Z [err]      _ensure_meal_completion_table()
+2025-11-14T20:27:17.247397709Z [err]    File "/app/app/migrations/meal_system_migration.py", line 215, in _ensure_meal_completion_table
+2025-11-14T20:27:17.247403180Z [err]      connection.execute(
+2025-11-14T20:27:17.247409424Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+2025-11-14T20:27:17.247409479Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 211, in merged_lifespan
+2025-11-14T20:27:17.247414905Z [err]      async with original_context(app) as maybe_original_state:
+2025-11-14T20:27:17.247417586Z [err]      return meth(
+2025-11-14T20:27:17.247422353Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+2025-11-14T20:27:17.247424992Z [err]             ^^^^^
+2025-11-14T20:27:17.247429477Z [err]      return await anext(self.gen)
+2025-11-14T20:27:17.247432569Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+2025-11-14T20:27:17.247437061Z [err]             ^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.247439988Z [err]      return connection._execute_clauseelement(
+2025-11-14T20:27:17.247445314Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.247450614Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+2025-11-14T20:27:17.247455950Z [err]      ret = self._execute_context(
+2025-11-14T20:27:17.249971196Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+2025-11-14T20:27:17.249983146Z [err]      cursor.execute(statement, parameters)
+2025-11-14T20:27:17.249990178Z [err]  sqlalchemy.exc.ProgrammingError: (psycopg2.errors.SyntaxError) syntax error at or near "AUTOINCREMENT"
+2025-11-14T20:27:17.249996878Z [err]  LINE 3:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.250003053Z [err]                                     ^
+2025-11-14T20:27:17.250010053Z [err]  
+2025-11-14T20:27:17.250015559Z [err]  [SQL: 
+2025-11-14T20:27:17.250021162Z [err]      return self._exec_single_context(
+2025-11-14T20:27:17.250021298Z [err]  CREATE TABLE IF NOT EXISTS meal_completion_status_v2 (
+2025-11-14T20:27:17.250028647Z [err]      id INTEGER PRIMARY KEY AUTOINCREMENT,
+2025-11-14T20:27:17.250031183Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-14T20:27:17.250034796Z [err]      client_id INTEGER NOT NULL,
+2025-11-14T20:27:17.250040290Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+2025-11-14T20:27:17.250040323Z [err]      meal_slot_id INTEGER NOT NULL,
+2025-11-14T20:27:17.250045581Z [err]      date DATETIME NOT NULL,
+2025-11-14T20:27:17.250049083Z [err]      self._handle_dbapi_exception(
+2025-11-14T20:27:17.250052958Z [err]      is_completed BOOLEAN NOT NULL DEFAULT 0,
+2025-11-14T20:27:17.250056869Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+2025-11-14T20:27:17.250060914Z [err]      completion_method VARCHAR,
+2025-11-14T20:27:17.250064268Z [err]      raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2025-11-14T20:27:17.250071674Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2025-11-14T20:27:17.250077531Z [err]      self.dialect.do_execute(
+2025-11-14T20:27:17.252751959Z [err]  ]
+2025-11-14T20:27:17.252757588Z [err]      completed_at DATETIME,
+2025-11-14T20:27:17.252758790Z [err]  (Background on this error at: https://sqlalche.me/e/20/f405)
+2025-11-14T20:27:17.252764564Z [err]  
+2025-11-14T20:27:17.252766210Z [err]      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+2025-11-14T20:27:17.252770432Z [err]  ERROR:    Application startup failed. Exiting.
+2025-11-14T20:27:17.252772597Z [err]      updated_at DATETIME,
+2025-11-14T20:27:17.252776899Z [err]      UNIQUE(client_id, meal_slot_id, date),
+2025-11-14T20:27:17.252781891Z [err]      FOREIGN KEY(client_id) REFERENCES users(id) ON DELETE CASCADE,
+2025-11-14T20:27:17.252787318Z [err]      FOREIGN KEY(meal_slot_id) REFERENCES meal_slots_v2(id) ON DELETE CASCADE
+2025-11-14T20:27:17.252791349Z [err]  )

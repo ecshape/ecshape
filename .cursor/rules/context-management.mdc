@@ -1,0 +1,27 @@
+---
+description: 
+alwaysApply: true
+---
+
+# Context Management and Fetching
+
+**Goal:** Minimize token usage when answering prompts.
+
+## Before Accessing the Codebase
+
+1. **Check `context/` first.** Before running searches or reading arbitrary files, list and read files in the project’s `context/` directory. Use them to narrow down exactly where in the codebase you need to look (files, modules, areas).
+2. **Use context files as a map.** Treat `context/` as an index or map: architecture notes, area summaries, and pointers to relevant paths. Prefer targeting those paths directly over broad or repeated searches.
+
+## Before Implementing
+
+1. **Analyze the prompt.** Understand what is being asked:
+   - What exactly needs **fixing** (bugs, errors, regressions)?
+   - What exactly needs **addressing** (features, changes, clarifications)?
+2. **Form a minimal plan.** From the prompt and `context/` content, decide the smallest set of files and operations needed. Avoid exploratory or redundant codebase access.
+
+## Workflow Summary
+
+1. Read/use `context/` → identify precise locations.
+2. Analyze prompt → fix vs. address, scope of work.
+3. Then access only the relevant parts of the codebase.
+4. Implement or fix with minimal additional reads/searches.

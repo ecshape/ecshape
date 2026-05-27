@@ -1,0 +1,132 @@
+---
+description: 
+alwaysApply: true
+---
+
+# Elior Fitness - Project Intelligence & Rules
+
+You are an expert Senior Full-Stack Developer specializing in **FastAPI (Python 3.11)**, **React 18 (Vite + TypeScript)**, and **Containerized Architectures**. You excel at building responsive, bilingual (Hebrew/English) applications with strict adherence to Docker-based workflows.
+
+---
+
+## 🛑 CRITICAL "DOCKER-ONLY" MANIFESTO
+
+**This project runs EXCLUSIVELY via Docker.**
+
+1.  **NEVER** suggest `npm install`, `pip install`, `yarn`, or `uvicorn` commands.
+2.  **NEVER** suggest creating a virtual environment (`venv`).
+3.  **NEVER** suggest running code on the host machine.
+4.  **ALWAYS** assume the environment is fully containerized.
+5.  **THE ONLY VALID COMMANDS** are:
+    * Start/Build: `docker-compose up --build`
+    * Stop: `docker-compose down`
+    * Reset DB: Delete `data/elior_fitness.db` and restart.
+    * Run Tests: `docker-compose exec elior-fitness python tests/run_tests.py`
+
+---
+
+## 🗺️ Context Management & Workflow
+
+**Goal:** Minimize token usage and avoid redundant searches.
+
+### Before Accessing the Codebase
+1.  **Check `context/` first:** List and read files in the project’s `context/` directory to understand architecture and locate relevant files.
+2.  **Use context as a map:** Prefer targeting specific paths found in context files over broad searches.
+
+### Before Implementing
+1.  **Analyze the Prompt:** Determine if you are fixing a bug or addressing a feature.
+2.  **Form a Minimal Plan:** Decide the smallest set of files needed based on `context/`.
+
+---
+
+## 🛠 Tech Stack
+
+### Backend (`app/`)
+* **Runtime:** Python 3.11 (Alpine Linux container)
+* **Framework:** FastAPI 0.110+
+* **Database:** SQLAlchemy 2.x (Async), SQLite (Local), PostgreSQL (Prod/Railway)
+* **Validation:** Pydantic 2.x (Strict schemas)
+* **Auth:** JWT (python-jose), Passlib/Bcrypt
+
+### Frontend (`frontend/`)
+* **Build:** Vite 5.x
+* **Framework:** React 18.3
+* **Language:** TypeScript 5.5 (Strict Mode)
+* **UI Library:** shadcn/ui, Radix UI primitives
+* **Styling:** Tailwind CSS 3.x
+* **State:** TanStack Query 5.x (Server state), React Hook Form (Form state)
+* **I18n:** `i18next`, `react-i18next` (Hebrew/English)
+
+---
+
+## 🌐 Internationalization (I18n) & RTL Rules
+
+**CRITICAL:** The app is bilingual (Hebrew/English). Failure to handle this leads to UI breaks.
+
+1.  **Translation Mandate:**
+    * Every user-facing text string **MUST** be localized.
+    * **NEVER** hardcode text. Use the `useTranslation` hook: `{t('key_name')}`.
+    * When adding new features, you **MUST** provide JSON entries for both `en` (English) and `he` (Hebrew) translation files.
+
+2.  **RTL & Layout Stability:**
+    * **Directionality:** Ensure layouts work in both LTR (`dir="ltr"`) and RTL (`dir="rtl"`).
+    * **Logical Properties:** Use logical CSS properties where possible (e.g., `ms-2` (margin-start) instead of `ml-2`) to support automatic flipping.
+    * **Overflow Prevention:**
+        * Always test containers for overflow. Use `break-words` or `truncate` for dynamic text.
+        * Avoid fixed widths (`w-[300px]`); use percentage or max-width (`w-full max-w-md`).
+    * **Mobile Scaling:** Ensure `meta viewport` is respected. Test flex items with `flex-shrink-0` if they are collapsing incorrectly in RTL on mobile.
+
+---
+
+## 🧠 Development Logic
+
+When asked to build a feature, **ALWAYS** follow this execution order:
+
+1.  **Database & Models (Backend):** Check `app/models`. Define SQLAlchemy models first. (Restart Docker if schema changes).
+2.  **Service Layer (Backend):** Create Pydantic schemas (`app/schemas`). Implement logic in `app/services` or routers using dependency injection.
+3.  **API & Routing (Backend):** Expose async endpoints in `app/routers`. Verify via Swagger (`http://localhost:8000/docs`).
+4.  **Frontend Integration:** Define strict TypeScript interfaces. Create fetcher functions and TanStack Query hooks.
+5.  **UI Implementation:** Build with **shadcn/ui** and **Tailwind**. Apply translations immediately.
+
+---
+
+## 📝 Coding Standards & Quality
+
+### Naming Conventions
+* **Variables/Functions:** `camelCase` (e.g., `getUserData`, `isLoading`).
+* **Components/Types:** `PascalCase` (e.g., `UserProfile`, `ApiResponse`).
+* **Constants:** `SCREAMING_SNAKE_CASE`.
+* **Boolean Props:** Use descriptive prefixes: `isLoading`, `hasError`, `canEdit`.
+
+### Function Design
+* Keep functions small and pure where possible.
+* **Early Returns:** Reduce nesting.
+    ```typescript
+    // Good
+    if (!user) return null;
+    return <div>{user.name}</div>;
+    ```
+
+### Error Handling
+* **Backend:** Use `HTTPException` for control flow errors.
+* **Frontend:** Use Error Boundaries for UI crashes. Handle async errors in `useQuery` or `try/catch` blocks.
+* **Forms:** Display validation errors clearly (Zod + React Hook Form).
+
+### Performance
+* **React:** Use `React.memo`, `useCallback`, and `useMemo` specifically for expensive operations or stability of references.
+* **Database:** Optimize SQLAlchemy queries (use `joinedload` to prevent N+1).
+
+### Accessibility (a11y)
+* **Semantic HTML:** Use `<main>`, `<article>`, `<header>`, `<button>`, etc.
+* **ARIA:** Ensure interactive elements have `aria-label` or `aria-describedby` if visual context is insufficient.
+* **Focus Management:** Ensure focus flows logically, especially in modals/drawers.
+
+---
+
+## ⚠️ Negative Constraints (DO NOT)
+
+* **DO NOT** modify `docker-compose.yml` unless explicitly asked.
+* **DO NOT** add new pip/npm packages without asking "Does this require a rebuild?".
+* **DO NOT** commit `.env` files.
+* **DO NOT** leave text untranslated.
+* **DO NOT** ignore RTL layout breakage; always consider how the UI flips.

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECshape — אליאור קרמיזי | מאמן כושר אישי</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#080a0f;--black2:#0d1018;--black3:#121620;--black4:#171c28;--black5:#1d2330;
+  --orange:#e8682a;--orange2:#f5793b;--orange-dim:rgba(232,104,42,0.12);
+  --gold:#d4a84b;--gold-l:#e8c068;
+  --white:#f2efe8;--wd:rgba(242,239,232,0.62);--wdd:rgba(242,239,232,0.35);--wf:rgba(242,239,232,0.07);
+  --border:rgba(232,104,42,0.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Heebo',sans-serif;font-weight:400;overflow-x:hidden;cursor:none;direction:rtl;line-height:1.6}
+.cursor{position:fixed;width:8px;height:8px;background:var(--orange);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s,height .25s}
+.cursor-ring{position:fixed;width:30px;height:30px;border:1.5px solid rgba(232,104,42,0.45);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .25s,height .25s}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:0 56px;height:70px;display:flex;align-items:center;justify-content:space-between;transition:background .5s,border-color .5s;border-bottom:1px solid transparent}
+nav.scrolled{background:rgba(8,10,15,.97);backdrop-filter:blur(24px);border-color:var(--border)}
+.nav-logo img{height:44px;filter:drop-shadow(0 0 14px rgba(232,104,42,.45))}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{font-size:.82rem;font-weight:500;text-decoration:none;color:var(--wd);letter-spacing:.04em;transition:color .25s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-3px;right:0;left:0;height:1px;background:var(--orange);transform:scaleX(0);transform-origin:right;transition:transform .3s}
+.nav-links a:hover{color:var(--white)}
+.nav-links a:hover::after{transform:scaleX(1)}
+.nav-cta{font-size:.82rem;font-weight:700;text-decoration:none;padding:10px 22px;background:var(--orange);color:#fff;border-radius:5px;letter-spacing:.04em;transition:all .3s;box-shadow:0 4px 18px rgba(232,104,42,.3)}
+.nav-cta:hover{background:var(--orange2);box-shadow:0 6px 26px rgba(232,104,42,.5);transform:translateY(-1px)}
+
+/* HERO */
+.hero{min-height:100vh;position:relative;display:grid;grid-template-columns:55% 45%;align-items:center;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 90% at 20% 60%,rgba(232,104,42,.06) 0%,transparent 55%),radial-gradient(ellipse 50% 70% at 80% 30%,rgba(212,168,75,.03) 0%,transparent 50%),linear-gradient(160deg,#080a0f 0%,#0a0e16 100%)}
+.hero-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(232,104,42,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(232,104,42,.035) 1px,transparent 1px);background-size:64px 64px}
+.hero-left{position:relative;z-index:2;padding:160px 48px 100px 60px;order:1}
+.hero-right{position:relative;height:100vh;overflow:hidden;order:0}
+.hero-right img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.hero-right::after{content:'';position:absolute;inset:0;background:linear-gradient(to left,var(--black) 0%,rgba(8,10,15,.05) 35%,rgba(8,10,15,.05) 65%,var(--black) 100%),linear-gradient(to top,var(--black) 0%,transparent 25%)}
+.hero-line{position:absolute;left:0;top:0;bottom:0;width:1px;z-index:3;background:linear-gradient(to bottom,transparent,var(--orange) 30%,var(--gold) 70%,transparent);opacity:.5}
+
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:700;color:var(--orange);letter-spacing:.14em;text-transform:uppercase;margin-bottom:26px;opacity:0;animation:fadeUp .7s .1s forwards}
+.badge::before{content:'';width:26px;height:1px;background:var(--orange);opacity:.7}
+.hero-title{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(3rem,6vw,6.8rem);line-height:1;margin-bottom:22px;text-align:right;opacity:0;animation:fadeUp .8s .25s forwards}
+.hero-title .l1{display:block;color:var(--white)}
+.hero-title .l2{display:block;background:linear-gradient(135deg,var(--orange2),var(--gold-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-div{width:52px;height:2px;background:linear-gradient(to left,var(--orange),transparent);margin:0 0 22px auto;opacity:0;animation:fadeUp .7s .4s forwards}
+.hero-sub{font-size:.94rem;font-weight:400;line-height:1.95;color:var(--wd);max-width:420px;margin-bottom:38px;text-align:right;opacity:0;animation:fadeUp .8s .45s forwards}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;flex-direction:row-reverse;justify-content:flex-end;opacity:0;animation:fadeUp .8s .6s forwards}
+.btn-o{font-size:.87rem;font-weight:700;text-decoration:none;padding:13px 28px;background:var(--orange);color:#fff;border-radius:5px;letter-spacing:.03em;transition:all .3s;box-shadow:0 4px 18px rgba(232,104,42,.3);display:inline-flex;align-items:center;gap:7px}
+.btn-o:hover{background:var(--orange2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(232,104,42,.45)}
+.btn-w{font-size:.87rem;font-weight:700;text-decoration:none;padding:13px 24px;background:#1fbe5e;color:#fff;border-radius:5px;transition:all .3s;display:inline-flex;align-items:center;gap:7px}
+.btn-w:hover{background:#18a852;transform:translateY(-2px);box-shadow:0 8px 28px rgba(31,190,94,.35)}
+.btn-ghost{font-size:.87rem;font-weight:600;text-decoration:none;padding:12px 22px;border:1px solid var(--border);color:var(--wd);border-radius:5px;transition:all .3s;display:inline-flex;align-items:center;gap:7px}
+.btn-ghost:hover{border-color:var(--orange);color:var(--white)}
+
+.hero-stats{display:flex;gap:0;margin-top:56px;opacity:0;animation:fadeUp .8s .75s forwards;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:rgba(13,16,24,.6);backdrop-filter:blur(10px);max-width:fit-content}
+.stat-i{padding:18px 30px;text-align:center;border-left:1px solid var(--border)}
+.stat-i:last-child{border-left:none}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:2.3rem;background:linear-gradient(135deg,var(--orange2),var(--gold-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.stat-l{font-size:.65rem;font-weight:600;color:var(--wdd);margin-top:3px;letter-spacing:.08em;text-transform:uppercase}
+
+/* MARQUEE */
+.marquee{padding:13px 0;overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--black2)}
+.m-track{display:flex;animation:marquee 28s linear infinite;width:max-content}
+.mi{font-size:.75rem;font-weight:600;color:var(--wdd);white-space:nowrap;padding:0 26px;letter-spacing:.1em;text-transform:uppercase}
+.mi.a{color:var(--orange)}
+
+/* SECTION */
+.shell{padding:88px 56px}
+.shell.alt{background:var(--black2)}
+.shell.dark{background:var(--black)}
+.eyebrow{font-size:.68rem;font-weight:700;color:var(--orange);letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-direction:row-reverse;justify-content:flex-end}
+.eyebrow::before{content:'';width:28px;height:1px;background:var(--orange);opacity:.7}
+.heading{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(2.2rem,4vw,4.2rem);line-height:1.08;text-align:right;margin-bottom:12px}
+.heading em{font-style:normal;color:var(--orange)}
+.subtext{font-size:.9rem;line-height:1.9;color:var(--wd);text-align:right;max-width:500px}
+
+/* STORY SECTION */
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center;margin-top:56px}
+.story-img-wrap{position:relative}
+.story-img-wrap img{width:100%;border-radius:8px;display:block;object-fit:contain;height:auto;max-height:680px;background:var(--black3);filter:brightness(.92) contrast(1.05)}
+.story-img-wrap::before{content:'';position:absolute;inset:-6px;border:1px solid var(--border);border-radius:10px;pointer-events:none}
+.story-img-wrap::after{content:'';position:absolute;bottom:-6px;right:-6px;width:100px;height:100px;background:linear-gradient(135deg,var(--orange),var(--gold));border-radius:4px;z-index:-1;opacity:.3}
+.story-content{text-align:right}
+.story-quote{
+  font-size:1.05rem;line-height:1.95;color:var(--wd);
+  margin-bottom:36px;
+  padding-right:24px;
+  border-right:3px solid var(--orange);
+}
+.story-values{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:36px}
+.story-val{background:var(--black3);padding:22px 24px;border-top:2px solid transparent;transition:border-color .3s}
+.story-val:hover{border-color:var(--orange)}
+.story-val-icon{font-size:1.4rem;margin-bottom:10px}
+.story-val-title{font-size:.92rem;font-weight:800;color:var(--white);margin-bottom:4px}
+.story-val-desc{font-size:.8rem;line-height:1.75;color:var(--wd)}
+.story-badge{display:inline-flex;align-items:center;gap:10px;background:var(--black3);border:1px solid var(--border);padding:14px 20px;border-radius:7px;margin-bottom:28px}
+.story-badge-icon{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1rem;color:#fff;flex-shrink:0}
+.story-badge-text{text-align:right}
+.story-badge-name{font-size:.9rem;font-weight:800;color:var(--white)}
+.story-badge-role{font-size:.72rem;color:var(--orange);margin-top:2px}
+
+/* TRANSFORMS */
+.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px}
+.tf-card{position:relative;overflow:hidden;background:var(--black3)}
+.tf-card img{width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:var(--black3);transition:transform .6s ease;min-height:300px}
+.tf-card:hover img{transform:scale(1.03)}
+.tf-card::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(8,10,15,.88) 0%,transparent 40%)}
+.tf-info{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:20px 18px;text-align:right}
+.tf-tag{font-size:.6rem;font-weight:700;color:var(--orange);border:1px solid rgba(232,104,42,.4);padding:3px 10px;border-radius:3px;display:inline-block;margin-bottom:7px;letter-spacing:.08em;text-transform:uppercase}
+.tf-title{font-size:1rem;font-weight:800;color:var(--white)}
+.tf-sub{font-size:.72rem;color:var(--gold-l);margin-top:3px}
+.tf-card.wide{grid-column:span 2}
+.tf-card.wide img{object-fit:cover;object-position:center 15%;min-height:380px}
+
+/* WHY */
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:40px}
+.why-card{padding:28px 32px;background:var(--black3);border-right:3px solid transparent;transition:border-color .3s,background .3s}
+.why-card:hover{border-color:var(--orange);background:var(--black4)}
+.why-label{font-size:.64rem;font-weight:700;color:var(--wdd);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}
+.why-title{font-size:.98rem;font-weight:800;color:var(--white);margin-bottom:6px}
+.why-desc{font-size:.84rem;line-height:1.8;color:var(--wd)}
+.why-tags{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:32px}
+.wtag{font-size:.78rem;font-weight:700;padding:9px 20px;border:1px solid var(--border);color:var(--wd);border-radius:24px;cursor:pointer;transition:all .3s}
+.wtag:hover,.wtag.on{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 4px 18px rgba(232,104,42,.3)}
+
+/* SERVICES */
+.svc-intro{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:end;margin-bottom:48px}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.svc-card{background:var(--black3);padding:44px 34px;position:relative;overflow:hidden;border-top:3px solid transparent;transition:border-color .35s,background .35s,transform .35s;text-align:right}
+.svc-card:hover{background:var(--black4);border-color:var(--orange);transform:translateY(-5px)}
+.svc-card.feat{background:linear-gradient(160deg,#1a1206,#101520);border-color:var(--orange)}
+.svc-badge{position:absolute;top:16px;left:16px;font-size:.6rem;font-weight:800;letter-spacing:.07em;padding:5px 13px;background:var(--orange);color:#fff;border-radius:20px}
+.svc-num{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:rgba(232,104,42,.28);letter-spacing:.2em;margin-bottom:20px}
+.svc-name{font-size:1.6rem;font-weight:900;color:var(--white);margin-bottom:18px}
+.svc-desc{font-size:.84rem;line-height:1.85;color:var(--wd);margin-bottom:24px}
+.svc-feats{list-style:none;margin-bottom:34px}
+.svc-feats li{font-size:.83rem;color:var(--wd);padding:7px 0;border-bottom:1px solid var(--wf);display:flex;align-items:center;gap:9px;flex-direction:row-reverse;justify-content:flex-end}
+.svc-feats li::before{content:'✓';color:var(--orange);font-weight:900;font-size:.78rem;flex-shrink:0}
+.svc-btn{display:block;text-align:center;text-decoration:none;font-size:.84rem;font-weight:700;padding:13px;border:1px solid rgba(232,104,42,.38);color:var(--orange);border-radius:5px;transition:all .3s;letter-spacing:.04em}
+.svc-btn:hover,.svc-card.feat .svc-btn{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 4px 22px rgba(232,104,42,.35)}
+
+/* TESTIMONIALS */
+.t-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.t-card{background:var(--black3);padding:30px 26px;border-radius:8px;border:1px solid var(--wf);transition:border-color .3s,transform .3s;text-align:right;position:relative;overflow:hidden}
+.t-card::before{content:'';position:absolute;top:0;right:0;left:0;height:2px;background:linear-gradient(to left,var(--orange),transparent);opacity:0;transition:opacity .3s}
+.t-card:hover{border-color:rgba(232,104,42,.22);transform:translateY(-4px)}
+.t-card:hover::before{opacity:1}
+.t-stars{display:flex;gap:2px;margin-bottom:12px;flex-direction:row-reverse;justify-content:flex-end}
+.t-star{color:var(--orange);font-size:.82rem}
+.t-text{font-size:.86rem;line-height:1.9;color:var(--wd);margin-bottom:20px;font-style:italic}
+.t-author{display:flex;align-items:center;gap:11px;flex-direction:row-reverse;justify-content:flex-end}
+.t-av{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--orange),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.88rem;color:#fff}
+.t-name{font-size:.86rem;font-weight:700;color:var(--white)}
+.t-role{font-size:.68rem;color:var(--orange);margin-top:2px}
+
+.wa-title{font-size:.9rem;font-weight:700;color:var(--wd);text-align:right;margin:40px 0 18px;display:flex;align-items:center;gap:10px;flex-direction:row-reverse;justify-content:flex-end}
+.wa-title::before{content:'💬'}
+.wa-mosaic{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.wa-item{border-radius:8px;overflow:hidden;border:1px solid var(--wf);transition:border-color .3s,transform .3s;cursor:pointer}
+.wa-item:hover{border-color:rgba(232,104,42,.35);transform:translateY(-3px)}
+.wa-item img{width:100%;display:block;object-fit:cover;max-height:255px}
+
+/* FAQ */
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:48px}
+.faq-item{background:var(--black3);border-bottom:1px solid var(--wf);overflow:hidden}
+.faq-q{
+  width:100%;text-align:right;padding:24px 28px;
+  background:none;border:none;color:var(--white);
+  font-family:'Heebo',sans-serif;font-size:.92rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;transition:color .3s;
+}
+.faq-q:hover{color:var(--orange)}
+.faq-icon{
+  width:26px;height:26px;border-radius:50%;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:.9rem;color:var(--orange);
+  transition:transform .3s,background .3s;
+}
+.faq-item.open .faq-icon{transform:rotate(45deg);background:var(--orange);color:#fff;border-color:var(--orange)}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .4s ease,padding .3s;
+  font-size:.87rem;line-height:1.9;color:var(--wd);
+  text-align:right;padding:0 28px;
+}
+.faq-item.open .faq-a{max-height:300px;padding:0 28px 24px}
+
+/* INSTAGRAM */
+.ig-bar{padding:40px 56px;background:var(--black2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse}
+.ig-info{text-align:right}
+.ig-handle{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:.1em;color:var(--white)}
+.ig-handle span{color:var(--orange)}
+.ig-desc{font-size:.8rem;color:var(--wd);margin-top:3px}
+.ig-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
+.ig-pill{font-size:.7rem;font-weight:600;padding:4px 12px;border:1px solid var(--border);color:var(--wdd);border-radius:20px}
+.btn-ig{font-size:.87rem;font-weight:800;text-decoration:none;padding:13px 28px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;border-radius:7px;transition:all .3s;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 22px rgba(253,29,29,.22);white-space:nowrap}
+.btn-ig:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(253,29,29,.38)}
+
+/* CTA */
+.cta{padding:110px 56px;background:var(--black);position:relative;overflow:hidden;text-align:center}
+.cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(232,104,42,.05),transparent 62%)}
+.cta-frame{position:absolute;inset:40px;border:1px solid rgba(232,104,42,.1);border-radius:6px;pointer-events:none}
+.cta-frame::before,.cta-frame::after{content:'';position:absolute;width:16px;height:16px;border-color:var(--orange);border-style:solid;opacity:.45}
+.cta-frame::before{top:-1px;right:-1px;border-width:2px 2px 0 0}
+.cta-frame::after{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
+.cta-inner{position:relative;z-index:1}
+.cta-title{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(2.8rem,7vw,7rem);line-height:1;margin-bottom:20px}
+.cta-title .l1{display:block;color:var(--white)}
+.cta-title .l2{display:block;color:var(--orange)}
+.cta-sub{font-size:.94rem;line-height:1.9;color:var(--wd);max-width:440px;margin:0 auto 40px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:44px}
+.trust-strip{display:flex;gap:0;justify-content:center;border:1px solid var(--border);border-radius:7px;overflow:hidden;max-width:460px;margin:0 auto;background:rgba(13,16,24,.5)}
+.trust-i{padding:16px 34px;text-align:center;border-left:1px solid var(--border)}
+.trust-i:last-child{border-left:none}
+.trust-n{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:var(--orange)}
+.trust-l{font-size:.6rem;font-weight:600;color:var(--wdd);margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+
+/* FOOTER */
+footer{padding:30px 56px;border-top:1px solid var(--border);background:var(--black2);display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;flex-wrap:wrap;gap:14px}
+.f-logo img{height:36px;filter:drop-shadow(0 0 10px rgba(232,104,42,.35))}
+.f-copy{font-size:.68rem;color:var(--wdd)}
+.f-links{display:flex;gap:18px}
+.f-links a{font-size:.73rem;font-weight:500;text-decoration:none;color:var(--wd);transition:color .25s}
+.f-links a:hover{color:var(--orange)}
+
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+.d1{transition-delay:.12s}.d2{transition-delay:.24s}.d3{transition-delay:.36s}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-links">
+    <a href="#story">עליי</a>
+    <a href="#transforms">תוצאות</a>
+    <a href="#services">תוכניות</a>
+    <a href="#testimonials">המלצות</a>
+    <a href="#faq">שאלות נפוצות</a>
+  </div>
+  <div class="nav-logo"><img src="photos/logo.png" alt="ECshape"></div>
+  <a href="https://wa.me/972546683867" target="_blank" class="nav-cta">💬 שיחת ייעוץ חינם</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-left">
+    <div class="badge">מאמן כושר אישי מוסמך</div>
+    <h1 class="hero-title">
+      <span class="l1">לא עוד מאמן,</span>
+      <span class="l2">שותף לדרך</span>
+    </h1>
+    <div class="hero-div"></div>
+    <p class="hero-sub">היי, שמי אליאור קרמיזי, מאמן כושר מוסמך ומייסד ECshape. אני מאמין בתוכניות שמותאמות בהתאם לבן אדם, היכולות שלו והזמינות שלו. מעטפת שלמה שבנויה בהתאם לחיים, מטרה והגוף שלך — ולא תוכנית גנרית, אלא שינוי הרגלים ויישום גם לאחר הליווי.</p>
+    <div class="hero-btns">
+      <a href="https://wa.me/972546683867" target="_blank" class="btn-w">💬 וואטסאפ</a>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdULftLjvTVreOuS6WehqzFBDKKCkKdjDFlnMLnqaAup-e4TQ/viewform" target="_blank" class="btn-o">📋 תיאום שיחת ייעוץ</a>
+      <a href="#services" class="btn-ghost">צפייה במסלולים ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-i"><div class="stat-n">135+</div><div class="stat-l">מתאמנים</div></div>
+      <div class="stat-i"><div class="stat-n">94%</div><div class="stat-l">הצלחה</div></div>
+      <div class="stat-i"><div class="stat-n">5+</div><div class="stat-l">שנות ניסיון</div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <img src="photos/trainer.jpeg" alt="אליאור קרמיזי">
+    <div class="hero-line"></div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="m-track">
+    <span class="mi">כוח <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi a">ECshape <span style="opacity:.4">✦</span></span><span class="mi">כושר <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi">אימון עילית <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi a">טרנספורמציה <span style="opacity:.4">✦</span></span><span class="mi">תזונה <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi">אחריות <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi a">תוצאות <span style="opacity:.4">✦</span></span><span class="mi">כוח <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi a">ECshape <span style="opacity:.4">✦</span></span><span class="mi">כושר <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi">אימון עילית <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi a">טרנספורמציה <span style="opacity:.4">✦</span></span><span class="mi">תזונה <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi">אחריות <span style="color:var(--orange);opacity:.4">✦</span></span><span class="mi a">תוצאות <span style="opacity:.4">✦</span></span>
+  </div>
+</div>
+
+<!-- STORY -->
+<section class="shell dark" id="story">
+  <div class="story-grid">
+    <div class="reveal">
+      <div class="story-img-wrap">
+        <img src="photos/trainer_story.jpg" alt="אליאור קרמיזי">
+      </div>
+    </div>
+    <div class="reveal d1">
+      <div class="eyebrow">הסיפור שלי</div>
+      <h2 class="heading">מי אני<br><em>אליאור קרמיזי?</em></h2>
+      <div class="story-badge" style="margin-top:24px">
+        <div class="story-badge-icon">א</div>
+        <div class="story-badge-text">
+          <div class="story-badge-name">אליאור קרמיזי</div>
+          <div class="story-badge-role">מאמן כושר מוסמך · מייסד ECshape</div>
+        </div>
+      </div>
+      <p class="story-quote">
+        לא התחלתי כמאמן — התחלתי כמישהו שחיפש שינוי אמיתי בגוף שלו ולא מצא מאמן שמבין אותו.<br><br>
+        הבנתי שרוב התוכניות גנריות, לא מותאמות לאדם האמיתי עם החיים האמיתיים שלו. אז הקמתי את ECshape עם תפיסה אחת: <strong style="color:var(--white)">כל מתאמן מגיע לתוכנית שבנויה בדיוק בשבילו.</strong>
+      </p>
+      <div class="story-values">
+        <div class="story-val">
+          <div class="story-val-icon">🎯</div>
+          <div class="story-val-title">תוכנית אישית</div>
+          <div class="story-val-desc">לא גנרי. בנוי בדיוק בשבילך</div>
+        </div>
+        <div class="story-val">
+          <div class="story-val-icon">🤝</div>
+          <div class="story-val-title">ליווי אמיתי</div>
+          <div class="story-val-desc">שותף לדרך, לא רק מאמן</div>
+        </div>
+        <div class="story-val">
+          <div class="story-val-icon">🧠</div>
+          <div class="story-val-title">שינוי הרגלים</div>
+          <div class="story-val-desc">יישום שנשאר גם אחרי הליווי</div>
+        </div>
+        <div class="story-val">
+          <div class="story-val-icon">📈</div>
+          <div class="story-val-title">תוצאות מוכחות</div>
+          <div class="story-val-desc">135+ מתאמנים. 91% הצלחה</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSFORMS -->
+<section class="shell alt" id="transforms">
+  <div class="reveal">
+    <div class="eyebrow">תוצאות מוכחות</div>
+    <h2 class="heading">שינויים אמיתיים.<br><em>תוצאות שמדברות.</em></h2>
+    <p class="subtext" style="margin-top:8px">אלה לא רק תמונות לפני/אחרי — אלה אנשים שהחליטו להשתנות ופעלו. כל שינוי התחיל מהחלטה אחת.</p>
+  </div>
+  <div class="tf-grid reveal d1">
+    <div class="tf-card">
+      <img src="photos/before_after_recomp.jpeg" alt="Body Recomp">
+      <div class="tf-info"><span class="tf-tag">Body Recomp</span><div class="tf-title">בניית שריר תוך ירידה בשומן</div></div>
+    </div>
+    <div class="tf-card">
+      <img src="photos/before_after_52days.jpeg" alt="52 ימים">
+      <div class="tf-info"><span class="tf-tag">52 ימים</span><div class="tf-title">−8 ק"ג</div><div class="tf-sub">98.3 ← 90.7 ק"ג</div></div>
+    </div>
+    <div class="tf-card">
+      <img src="photos/before_after_60days.jpeg" alt="60 ימים">
+      <div class="tf-info"><span class="tf-tag">60 ימים</span><div class="tf-title">−10 ק"ג</div></div>
+    </div>
+    <div class="tf-card wide">
+      <img src="photos/before_after_boom.jpeg" alt="Boom גבי">
+      <div class="tf-info"><span class="tf-tag">6 שבועות · Boom 🔥</span><div class="tf-title">גבי: 93kg → 88kg</div><div class="tf-sub">התמדה + איזון תזונתי = תוצאות</div></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:32px" class="reveal d2">
+    <a href="https://wa.me/972546683867" target="_blank" class="btn-o">💬 רוצה תוצאות כאלה? דבר איתי</a>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="shell dark">
+  <div class="reveal">
+    <div class="eyebrow">למה ECshape</div>
+    <h2 class="heading">אתם לא צריכים לגור במכון<br><em>כדי להגיע לגוף שחולמים.</em></h2>
+  </div>
+  <div class="why-grid reveal d1">
+    <div class="why-card">
+      <div class="why-label">במקום "אין לי זמן"</div>
+      <div class="why-title">נשנה את התפיסה שלך</div>
+      <div class="why-desc">ל"איך אני מייעל את הזמן שיש לי"</div>
+    </div>
+    <div class="why-card">
+      <div class="why-label">הכל עניין סדרי עדיפויות</div>
+      <div class="why-title">נביא סדר לחיים שלך</div>
+      <div class="why-desc">להציב עדיפויות זה להגיד לעצמך למה שמקדם אותך, לא למה שמשמר אותך.</div>
+    </div>
+  </div>
+  <div class="why-tags reveal d2">
+    <div class="wtag on">פרודוקטיבי/ת יותר</div>
+    <div class="wtag">מצליח/ה יותר</div>
+    <div class="wtag">חזק/ה יותר</div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="shell alt" id="services">
+  <div class="svc-intro">
+    <div class="reveal">
+      <div class="eyebrow">תוכניות אימון</div>
+      <h2 class="heading">בחר את הדרך<br><em>שמתאימה לך.</em></h2>
+    </div>
+    <div class="reveal d1">
+      <p class="subtext">שלוש מסגרות שונות, מטרה אחת: לבנות אותך טוב יותר. כל תוכנית כוללת שיחת אבחון, מערכת אימון מותאמת, ומעקב צמוד.</p>
+    </div>
+  </div>
+  <div class="svc-grid">
+    <div class="svc-card reveal">
+      <div class="svc-num">01 //</div>
+      <div class="svc-name">אימון אישי 1-על-1</div>
+      <p class="svc-desc">פגישות פנים-אל-פנים. הדרך הכי מהירה להתקדם עם ליווי מלא בכל רגע.</p>
+      <ul class="svc-feats">
+        <li>אבחון תנועה ומבנה גוף</li>
+        <li>תוכנית מותאמת אישית</li>
+        <li>תיקון טכניקה בזמן אמת</li>
+        <li>תזונה בסיסית כלולה</li>
+      </ul>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdULftLjvTVreOuS6WehqzFBDKKCkKdjDFlnMLnqaAup-e4TQ/viewform" target="_blank" class="svc-btn">פרטים נוספים ←</a>
+    </div>
+    <div class="svc-card feat reveal d1">
+      <div class="svc-badge">הכי פופולרי</div>
+      <div class="svc-num">02 //</div>
+      <div class="svc-name">ליווי אונליין</div>
+      <p class="svc-desc">תוכנית אישית, זום שבועי, ליווי יומי בוואטסאפ. בלי לצאת מהבית.</p>
+      <ul class="svc-feats">
+        <li>תוכנית אימון + תזונה</li>
+        <li>שיחת זום שבועית</li>
+        <li>מעקב משקל ומידות</li>
+        <li>גישה לאפליקציית האימונים</li>
+      </ul>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdULftLjvTVreOuS6WehqzFBDKKCkKdjDFlnMLnqaAup-e4TQ/viewform" target="_blank" class="svc-btn">פרטים נוספים ←</a>
+    </div>
+    <div class="svc-card reveal d2">
+      <div class="svc-num">03 //</div>
+      <div class="svc-name">קבוצות אימון</div>
+      <p class="svc-desc">קבוצות קטנות עד 6 משתתפים. אנרגיה, אווירה ותוצאות — יחד.</p>
+      <ul class="svc-feats">
+        <li>אימוני כוח ופונקציונלי</li>
+        <li>2-3 אימונים בשבוע</li>
+        <li>מדידות חודשיות</li>
+        <li>קהילה תומכת</li>
+      </ul>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdULftLjvTVreOuS6WehqzFBDKKCkKdjDFlnMLnqaAup-e4TQ/viewform" target="_blank" class="svc-btn">פרטים נוספים ←</a>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="shell dark" id="testimonials">
+  <div class="reveal">
+    <div class="eyebrow">תוצאות אמיתיות</div>
+    <h2 class="heading">המתאמנים שלי<br><em>מדברים בעצמם.</em></h2>
+    <p class="subtext" style="margin-top:8px">תוצאות הן לא רק מספרים — הן ביטחון עצמי, אנרגיה ותחושת שליטה בגוף שלך.</p>
+  </div>
+  <div class="t-grid reveal d1">
+    <div class="t-card">
+      <div class="t-stars"><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span></div>
+      <p class="t-text">"מתאמן בליווי אונליין כבר שנה. כל שבוע יש שיחה, כל יום יש מענה. הדבר היחיד שצריך לעשות זה להגיע לאימון — והוא דאג לכל השאר."</p>
+      <div class="t-author"><div class="t-av">י</div><div><div class="t-name">יונתן ב.</div><div class="t-role">ליווי אונליין · שנה</div></div></div>
+    </div>
+    <div class="t-card">
+      <div class="t-stars"><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span></div>
+      <p class="t-text">"חזרתי לאימונים אחרי לידה ופחדתי. אליאור בנה לי תוכנית עדינה ומתקדמת, ועכשיו אני חזקה יותר ממה שהייתי לפני ההיריון."</p>
+      <div class="t-author"><div class="t-av" style="background:linear-gradient(135deg,var(--gold),var(--orange))">ש</div><div><div class="t-name">שירה מ.</div><div class="t-role">חזרה לאימונים · 8 חודשים</div></div></div>
+    </div>
+    <div class="t-card">
+      <div class="t-stars"><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span><span class="t-star">★</span></div>
+      <p class="t-text">"עברתי 3 מאמנים לפני. אליאור הראשון שגרם לי להבין מה אני עושה ולמה. בחצי שנה ירדתי 12 קילו ועליתי בכוח פי 2."</p>
+      <div class="t-author"><div class="t-av" style="background:linear-gradient(135deg,#c9922a,#e8b455)">ע</div><div><div class="t-name">עומר ל.</div><div class="t-role">ירידה במשקל · 6 חודשים</div></div></div>
+    </div>
+  </div>
+  <div class="wa-title reveal">הודעות אמיתיות מהמתאמנים</div>
+  <div class="wa-mosaic reveal d1">
+    <div class="wa-item"><img src="photos/whatsapp_01.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_02.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_03.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_04.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_05.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_06.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_07.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_08.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_09.jpeg" alt=""></div>
+    <div class="wa-item"><img src="photos/whatsapp_10.png" alt=""></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="shell alt" id="faq">
+  <div class="reveal">
+    <div class="eyebrow">שאלות נפוצות</div>
+    <h2 class="heading">יש לך שאלות?<br><em>יש לנו תשובות.</em></h2>
+  </div>
+  <div class="faq-grid reveal d1">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>מה ההבדל בין ליווי אונליין לאימון אישי?</span>
+        <div class="faq-icon">+</div>
+      </button>
+      <div class="faq-a">ליווי אונליין מתאים למי שרוצה גמישות — תוכנית אישית, ליווי יומי בוואטסאפ וזום שבועי מכל מקום בעולם. אימון אישי הוא פגישות פנים-אל-פנים עם ליווי מלא בכל תנועה ותנועה.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>כמה זמן עד שאני רואה תוצאות?</span>
+        <div class="faq-icon">+</div>
+      </button>
+      <div class="faq-a">רוב המתאמנים מרגישים שינוי תוך 2-3 שבועות ורואים תוצאות ויזואליות תוך 4-8 שבועות. זה תלוי בהתמדה, בתזונה ובמטרה האישית שלך.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>האם אני צריך ניסיון קודם?</span>
+        <div class="faq-icon">+</div>
+      </button>
+      <div class="faq-a">בכלל לא. אני עובד עם מתאמנים מכל הרמות — מתחילים מוחלטים ועד מתאמנים מנוסים שרוצים לשבור תקרת זכוכית. התוכנית מותאמת בדיוק לרמה שלך.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>מה כולל הליווי האונליין?</span>
+        <div class="faq-icon">+</div>
+      </button>
+      <div class="faq-a">תוכנית אימון מלאה + תוכנית תזונה, שיחת זום שבועית, ליווי יומי בוואטסאפ, מעקב משקל ומידות, וגישה לאפליקציית האימונים שלי.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>איפה מתקיימים אימונים אישיים?</span>
+        <div class="faq-icon">+</div>
+      </button>
+      <div class="faq-a">ניתן להתאמן בסטודיו שלי, במכון שלך, או בשטח — לפי מה שנוח לך. נסגור יחד את הלוגיסטיקה בשיחת הייעוץ.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>איך מתחילים?</span>
+        <div class="faq-icon">+</div>
+      </button>
+      <div class="faq-a">פשוט מאוד — שולחים הודעה בוואטסאפ או ממלאים את טופס הייעוץ. נקבע שיחה קצרה חינם בה אבין מה המטרות שלך ונחליט יחד על הדרך הנכונה.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTAGRAM -->
+<div class="ig-bar">
+  <a href="https://www.instagram.com/ecshape" target="_blank" class="btn-ig">📸 עקוב @ecshape</a>
+  <div class="ig-info">
+    <div class="ig-handle">IG <span>@ecshape</span></div>
+    <div class="ig-desc">פיד אינסטגרם · עדכון יומי</div>
+    <div class="ig-pills">
+      <div class="ig-pill">REEL · 12K</div>
+      <div class="ig-pill">POST · TIPS</div>
+      <div class="ig-pill">STORIES · יומי</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta" id="contact">
+  <div class="cta-frame"></div>
+  <div class="cta-inner">
+    <div class="eyebrow reveal" style="justify-content:center;flex-direction:row">מקומות מוגבלים</div>
+    <h2 class="cta-title reveal"><span class="l1">הרגע שלך</span><span class="l2">הוא עכשיו</span></h2>
+    <p class="cta-sub reveal">הפסק לחכות לזמן הנכון. הזמן הנכון נבנה — לא נמצא. בוא נעצב יחד את הגוף והחיים שמגיעים לך.</p>
+    <div class="cta-btns reveal">
+      <a href="https://wa.me/972546683867" target="_blank" class="btn-w" style="font-size:.92rem;padding:16px 36px">💬 שלח הודעה בוואטסאפ</a>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdULftLjvTVreOuS6WehqzFBDKKCkKdjDFlnMLnqaAup-e4TQ/viewform" target="_blank" class="btn-o" style="font-size:.92rem;padding:16px 36px">📋 מלא טופס ייעוץ</a>
+    </div>
+    <div class="trust-strip reveal d1">
+      <div class="trust-i"><div class="trust-n">FREE</div><div class="trust-l">שיחת ייעוץ</div></div>
+      <div class="trust-i"><div class="trust-n">24HR</div><div class="trust-l">זמן תגובה</div></div>
+      <div class="trust-i"><div class="trust-n">100%</div><div class="trust-l">תוכנית אישית</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-links">
+    <a href="https://www.instagram.com/ecshape" target="_blank">📸 אינסטגרם</a>
+    <a href="https://wa.me/972546683867" target="_blank">💬 וואטסאפ</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdULftLjvTVreOuS6WehqzFBDKKCkKdjDFlnMLnqaAup-e4TQ/viewform" target="_blank">📋 טופס ייעוץ</a>
+  </div>
+  <span class="f-copy">© 2026 ECshape · אליאור קרמיזי. כל הזכויות שמורות.</span>
+  <div class="f-logo"><img src="photos/logo.png" alt="ECshape"></div>
+</footer>
+
+<script>
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function loop(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
+document.querySelectorAll('a,button,.svc-card,.tf-card,.t-card,.why-card,.wa-item,.story-val,.faq-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='15px';cur.style.height='15px';ring.style.width='44px';ring.style.height='44px'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='8px';cur.style.height='8px';ring.style.width='30px';ring.style.height='30px'});
+});
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>60));
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.07});
+document.querySelectorAll('.reveal').forEach(r=>obs.observe(r));
+document.querySelectorAll('.wtag').forEach(t=>t.addEventListener('click',function(){document.querySelectorAll('.wtag').forEach(x=>x.classList.remove('on'));this.classList.add('on')}));
+function toggleFaq(btn){
+  const item=btn.closest('.faq-item');
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
+</script>
+</body>
+</html>

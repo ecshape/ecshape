@@ -1097,12 +1097,19 @@ def get_set_completions(
     from datetime import datetime
     
     query = db.query(SetCompletion)
-    
+
     if current_user.role == UserRole.CLIENT:
         query = query.filter(SetCompletion.client_id == current_user.id)
+    elif current_user.role == UserRole.TRAINER:
+        if not client_id:
+            raise HTTPException(status_code=400, detail="client_id is required")
+        client = db.query(User).filter(User.id == client_id).first()
+        if not client or client.trainer_id != current_user.id:
+            raise HTTPException(status_code=403, detail="You can only view your clients' set completions")
+        query = query.filter(SetCompletion.client_id == client_id)
     elif client_id:
         query = query.filter(SetCompletion.client_id == client_id)
-    
+
     if workout_exercise_id:
         query = query.filter(SetCompletion.workout_exercise_id == workout_exercise_id)
     

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,6 @@ import { formatLocalTime } from '../lib/timezone';
 import { ClientCheckInSummary } from '../components/ClientCheckInSummary';
 import { ClientCheckInHistory } from '../components/ClientCheckInHistory';
 import { ClientCheckInDetail } from '../components/ClientCheckInDetail';
-import ClientExerciseHistoryMatrix from '../components/ClientExerciseHistoryMatrix';
 
 interface Client {
   id: number;
@@ -180,24 +179,6 @@ const ClientProfile = () => {
   const [notificationSettingLoading, setNotificationSettingLoading] = useState(false);
   const [notificationSettingSaving, setNotificationSettingSaving] = useState(false);
 
-  const historyExerciseOptions = useMemo(() => {
-    const activePlan = workoutPlans.length > 0 ? workoutPlans[0] : null;
-    if (!activePlan?.exercises) return [];
-    const seen = new Set<number>();
-    const options: { workout_exercise_id: number; exercise_id: number; exercise_name: string; workout_day_name?: string }[] = [];
-    for (const ex of activePlan.exercises as any[]) {
-      if (seen.has(ex.id)) continue;
-      seen.add(ex.id);
-      options.push({
-        workout_exercise_id: ex.id,
-        exercise_id: ex.exercise_id,
-        exercise_name: ex.exercise_name,
-        workout_day_name: ex.workout_day_name,
-      });
-    }
-    return options;
-  }, [workoutPlans]);
-
   // Get client from location state or fetch by ID
   const fetchClientData = async () => {
     try {
@@ -285,7 +266,6 @@ const ClientProfile = () => {
                     sets: ex.target_sets,
                     reps: ex.target_reps,
                     rest_time: ex.rest_seconds,
-                    workout_day_name: day.name,
                   })),
                 ) || [],
               sessions_count: plan.workout_days?.length || 0,
@@ -579,13 +559,10 @@ const ClientProfile = () => {
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="pt-4">
-            <TabsList className={`grid w-full gap-1 h-auto min-h-[3rem] p-2 min-w-0 ${(user?.role === 'TRAINER' || user?.role === 'ADMIN') ? 'grid-cols-2 sm:grid-cols-8' : 'grid-cols-2 sm:grid-cols-6'}`}>
+            <TabsList className={`grid w-full gap-1 h-auto min-h-[3rem] p-2 min-w-0 ${(user?.role === 'TRAINER' || user?.role === 'ADMIN') ? 'grid-cols-2 sm:grid-cols-7' : 'grid-cols-2 sm:grid-cols-6'}`}>
               <TabsTrigger value="profile" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('clientProfile.profile', 'Profile')}</TabsTrigger>
               <TabsTrigger value="progress" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('clientProfile.weightProgress')}</TabsTrigger>
               <TabsTrigger value="workouts" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('clientProfile.workoutPlans')}</TabsTrigger>
-              {(user?.role === 'TRAINER' || user?.role === 'ADMIN') && (
-                <TabsTrigger value="workoutHistory" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('clientProfile.workoutHistory')}</TabsTrigger>
-              )}
               <TabsTrigger value="meals" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('clientProfile.mealPlans')}</TabsTrigger>
               <TabsTrigger value="nutrition" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('clientProfile.nutritionHistory')}</TabsTrigger>
               <TabsTrigger value="checkins" className="min-w-0 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-3 !whitespace-normal break-words text-center">{t('checkIn.trainer.tabTitle')}</TabsTrigger>
@@ -858,27 +835,6 @@ const ClientProfile = () => {
               )}
             </div>
           </TabsContent>
-
-          {/* Workout History Tab */}
-          {(user?.role === 'TRAINER' || user?.role === 'ADMIN') && (
-            <TabsContent value="workoutHistory" className="space-y-4">
-              {activeWorkoutPlan ? (
-                <ClientExerciseHistoryMatrix
-                  clientId={Number(clientId)}
-                  exercises={historyExerciseOptions}
-                />
-              ) : (
-                <Card className="border-dashed" data-testid="workout-history-empty">
-                  <CardHeader>
-                    <CardTitle>{t('clientProfile.noWorkoutPlanTitle')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground space-y-2">
-                    <p>{t('clientProfile.noWorkoutPlanDescription')}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          )}
 
           {/* Meals Tab */}
           <TabsContent value="meals" className="space-y-4">

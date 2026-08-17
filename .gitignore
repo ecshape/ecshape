@@ -43,6 +43,7 @@ backups/
 
 # Python
 venv/
+venv
 __pycache__/
 *.pyc
 *.pyo
@@ -69,5 +70,3 @@ test-results/
 # Logs (keep directory, ignore files)
 logs/*.log
 logs/*.json 
-run_dev.sh
-data/elior_fitness.db

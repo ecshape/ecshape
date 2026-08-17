@@ -98,6 +98,8 @@ export interface V3MealSlotView {
 export interface V3DayViewResponse {
   date: string;
   meal_plan?: unknown | null;
+  /** Name of the plan version that applies to this day (shown in the menu header). */
+  meal_plan_name?: string | null;
   slots: V3MealSlotView[];
   daily_macros: V3DailyMacrosResponse;
   choices: V3ClientMealChoiceResponse[];

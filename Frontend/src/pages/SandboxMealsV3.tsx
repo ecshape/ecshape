@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Layout from "../components/Layout";
+import MacroRings, { MACRO_COLORS } from "../components/meals/MacroRings";
 import { API_BASE_URL } from "../config/api";
-import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Copy,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  StickyNote,
+  Trash2,
+} from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -17,6 +30,7 @@ import type {
   V3ClientMealChoiceResponse,
   V3DayViewResponse,
   V3FoodOption,
+  V3MacroTotals,
   V3MealCompletionStatusResponse,
   V3MealLogCreateRequest,
   V3MealSlotView,
@@ -39,6 +53,86 @@ const normalizeQuantityInstruction = (value?: string | null): string => {
 const clampToPercent = (percent: number): number => {
   if (!Number.isFinite(percent)) return 0;
   return Math.max(0, Math.min(100, percent));
+};
+
+const ZERO_TOTALS: V3MacroTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+const addTotals = (a: V3MacroTotals, b: V3MacroTotals): V3MacroTotals => ({
+  calories: a.calories + b.calories,
+  protein: a.protein + b.protein,
+  carbs: a.carbs + b.carbs,
+  fat: a.fat + b.fat,
+});
+
+/** Menu numbers show at most one decimal, and never a trailing ".0". */
+const formatMacro = (value: number): string => {
+  if (!Number.isFinite(value)) return "0";
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+};
+
+const percentOf = (consumed: number, target: number): number =>
+  target > 0 ? clampToPercent((consumed / target) * 100) : 0;
+
+const formatDayLabel = (isoDate: string, hebrew: boolean): string =>
+  new Date(`${isoDate}T12:00:00`).toLocaleDateString(hebrew ? "he-IL" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+/**
+ * The four numeric columns of the menu table, in fixed left-to-right order.
+ * Calories gets a wider column because its header carries the "kcal" suffix.
+ */
+const MACRO_COLUMNS = [
+  { key: "calories", color: MACRO_COLORS.calories, unit: "", width: "w-[4.25rem] sm:w-20" },
+  { key: "protein", color: MACRO_COLORS.protein, unit: "g", width: "w-[3.25rem] sm:w-16" },
+  { key: "carbs", color: MACRO_COLORS.carbs, unit: "g", width: "w-[3.25rem] sm:w-16" },
+  { key: "fat", color: MACRO_COLORS.fat, unit: "g", width: "w-[3.25rem] sm:w-16" },
+] as const;
+
+const COLUMN_CLASS = "shrink-0 text-center tabular-nums";
+
+/** One planned food line inside a meal (plan row, possibly swapped for another food). */
+type MealPlanRow = {
+  key: string;
+  macroType: MacroType;
+  planFood: V3FoodOption & { id: number };
+  rowChoice?: V3ClientMealChoiceResponse;
+  deselectionKey: string;
+  isDeselected: boolean;
+  displayName: string;
+  quantityLabel: string;
+  planned: V3MacroTotals;
+  consumed: V3MacroTotals;
+  hasLog: boolean;
+};
+
+/** A free-text food the trainee added to the meal via "Add Food". */
+type MealCustomRow = {
+  key: string;
+  choice: V3ClientMealChoiceResponse;
+  displayName: string;
+  quantityLabel: string;
+  consumed: V3MacroTotals;
+};
+
+type MealView = {
+  rows: MealPlanRow[];
+  customRows: MealCustomRow[];
+  planned: V3MacroTotals;
+  consumed: V3MacroTotals;
+};
+
+/** Which entry the swap dialog should pre-select for a row (plan food, or the food swapped in). */
+const swapEntryKeyForRow = (row: MealPlanRow): string => {
+  const { planFood, rowChoice } = row;
+  if (!rowChoice || rowChoice.food_option_id === planFood.id) return `p-${planFood.id}`;
+  const swapped = parseRowSwapCustom(rowChoice.custom_food_name);
+  if (swapped?.kind === "plan") return `p-${swapped.targetPlanFoodId}`;
+  if (swapped?.kind === "bank") return `b-${swapped.bankId}`;
+  return `p-${planFood.id}`;
 };
 
 const macroLabel = (t: ReturnType<typeof useTranslation>["t"], macroType: MacroType): string => {
@@ -165,6 +259,12 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
   const [swapCatalogLoading, setSwapCatalogLoading] = useState(false);
   const [swapRowPlanFoodId, setSwapRowPlanFoodId] = useState<number | null>(null);
   const swapSearchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [summaryPage, setSummaryPage] = useState(0);
+  const [daySummaryOpen, setDaySummaryOpen] = useState(false);
+  const [notesSlot, setNotesSlot] = useState<V3MealSlotView | null>(null);
+  const [resettingSlotId, setResettingSlotId] = useState<number | null>(null);
+  const summaryPagerRef = useRef<HTMLDivElement | null>(null);
 
   const isRtlHe = (i18n.language || "").toLowerCase().startsWith("he");
 
@@ -875,484 +975,640 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
     ]
   );
 
+  const formatQuantityLabel = useCallback(
+    (quantity: string | null | undefined, food?: V3FoodOption | null): string => {
+      const raw = normalizeQuantityInstruction(quantity);
+      const amount = parseGrams(raw);
+      if (amount <= 0) return raw;
+      if (food?.measurement_type !== "per_portion") {
+        return `${formatMacro(amount)} ${t("meals.gramsShort", "g")}`;
+      }
+      const unit = amount === 1 ? t("meals.qtyUnitOne", "Qty") : t("meals.qtyUnit", "Qty");
+      return `${formatMacro(amount)} ${unit}`;
+    },
+    [t]
+  );
+
+  /** Flattens a meal slot into printable table rows plus its planned/consumed totals. */
+  const buildMealView = useCallback(
+    (slot: V3MealSlotView): MealView => {
+      const rows: MealPlanRow[] = [];
+      let planned = ZERO_TOTALS;
+      let consumed = ZERO_TOTALS;
+
+      for (const cat of slot.categories) {
+        const planFoods = [...(cat.recommended_foods ?? [])]
+          .filter((f): f is V3FoodOption & { id: number } => typeof f.id === "number")
+          .sort((a, b) => a.id - b.id);
+
+        const quantityText = normalizeQuantityInstruction(cat.quantity_instruction);
+
+        for (const planFood of planFoods) {
+          const rowChoice = findChoiceForPlanFoodRow(dayView?.choices, slot.meal_slot_id, planFood.id);
+          const deselectionKey = `${selectedDate}:${slot.meal_slot_id}:${cat.macro_type}:${planFood.id}`;
+          const isDeselected = Boolean(deselectedMealCategoryKeys[deselectionKey]);
+
+          let displayName = getLocalizedFoodName(planFood);
+          let quantityLabel = formatQuantityLabel(quantityText, planFood);
+          let rowConsumed = ZERO_TOTALS;
+
+          if (rowChoice) {
+            const encoded = parseRowSwapCustom(rowChoice.custom_food_name);
+            if (encoded) {
+              displayName = encoded.displayName;
+              rowConsumed = {
+                calories: rowChoice.custom_calories ?? 0,
+                protein: rowChoice.custom_protein ?? 0,
+                carbs: rowChoice.custom_carbs ?? 0,
+                fat: rowChoice.custom_fat ?? 0,
+              };
+              quantityLabel = formatQuantityLabel(rowChoice.quantity ?? quantityText, planFood);
+            } else if (typeof rowChoice.food_option_id === "number") {
+              const targetFood = cat.recommended_foods.find((f) => f.id === rowChoice.food_option_id) ?? planFood;
+              displayName = getLocalizedFoodName(targetFood);
+              rowConsumed = computeRecommendedDisplayMacros(targetFood, rowChoice.quantity ?? quantityText);
+              quantityLabel = formatQuantityLabel(rowChoice.quantity ?? quantityText, targetFood);
+            }
+          }
+
+          const rowPlanned = isDeselected ? ZERO_TOTALS : computeRecommendedDisplayMacros(planFood, quantityText);
+
+          planned = addTotals(planned, rowPlanned);
+          consumed = addTotals(consumed, rowConsumed);
+
+          rows.push({
+            key: `${cat.macro_type}-${planFood.id}`,
+            macroType: cat.macro_type,
+            planFood,
+            rowChoice,
+            deselectionKey,
+            isDeselected,
+            displayName,
+            quantityLabel,
+            planned: rowPlanned,
+            consumed: rowConsumed,
+            hasLog: Boolean(rowChoice),
+          });
+        }
+      }
+
+      const customRows: MealCustomRow[] = (dayView?.choices ?? [])
+        .filter(
+          (c) =>
+            c.meal_slot_id === slot.meal_slot_id &&
+            c.food_option_id == null &&
+            Boolean((c.custom_food_name ?? "").trim()) &&
+            isOverallSlotCustomFoodName(c.custom_food_name)
+        )
+        .map((choice) => {
+          const macros: V3MacroTotals = {
+            calories: choice.custom_calories ?? 0,
+            protein: choice.custom_protein ?? 0,
+            carbs: choice.custom_carbs ?? 0,
+            fat: choice.custom_fat ?? 0,
+          };
+          consumed = addTotals(consumed, macros);
+          return {
+            key: `custom-${choice.id}`,
+            choice,
+            displayName: choice.custom_food_name ?? t("meals.custom", "Custom"),
+            quantityLabel: formatQuantityLabel(choice.quantity),
+            consumed: macros,
+          };
+        });
+
+      return { rows, customRows, planned, consumed };
+    },
+    [
+      computeRecommendedDisplayMacros,
+      dayView?.choices,
+      deselectedMealCategoryKeys,
+      formatQuantityLabel,
+      getLocalizedFoodName,
+      selectedDate,
+      t,
+    ]
+  );
+
+  /** Clears every logged line of a meal so the trainee can start the meal over. */
+  const resetMeal = useCallback(
+    async (slot: V3MealSlotView, view: MealView) => {
+      setResettingSlotId(slot.meal_slot_id);
+      try {
+        for (const row of view.rows) {
+          if (row.hasLog) {
+            await deleteMealLog(slot.meal_slot_id, row.macroType, row.planFood.id);
+          }
+        }
+        if (view.customRows.length > 0) {
+          await deleteMealLog(slot.meal_slot_id, "protein");
+        }
+        setDeselectedMealCategoryKeys((prev) => {
+          const next = { ...prev };
+          const prefix = `${selectedDate}:${slot.meal_slot_id}:`;
+          Object.keys(next).forEach((k) => {
+            if (k.startsWith(prefix)) delete next[k];
+          });
+          return next;
+        });
+        setCompletedMealSlotIds((prev) => ({ ...prev, [slot.meal_slot_id]: false }));
+      } finally {
+        setResettingSlotId(null);
+      }
+    },
+    [deleteMealLog, selectedDate]
+  );
+
+  const copyMeal = useCallback(
+    async (slot: V3MealSlotView, view: MealView) => {
+      const lines = [
+        `${slot.name} ג€” ${formatDayLabel(selectedDate, isRtlHe)}`,
+        ...view.rows
+          .filter((r) => !r.isDeselected)
+          .map((r) => `ג€¢ ${r.displayName} (${r.quantityLabel})`),
+        ...view.customRows.map((r) => `ג€¢ ${r.displayName} (${r.quantityLabel})`),
+        `${t("meals.calories", "Calories")}: ${formatMacro(view.consumed.calories)}/${formatMacro(view.planned.calories)}`,
+        `${t("meals.protein", "Protein")}: ${formatMacro(view.consumed.protein)}/${formatMacro(view.planned.protein)}g`,
+        `${t("meals.carbs", "Carbs")}: ${formatMacro(view.consumed.carbs)}/${formatMacro(view.planned.carbs)}g`,
+        `${t("meals.fats", "Fats")}: ${formatMacro(view.consumed.fat)}/${formatMacro(view.planned.fat)}g`,
+      ];
+
+      try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        toast({ title: t("meals.copied", "Copied to clipboard") });
+      } catch {
+        setError(t("meals.copyFailed", "Could not copy this meal"));
+      }
+    },
+    [isRtlHe, selectedDate, t, toast]
+  );
+
   const totals = useMemo(() => dayView?.daily_macros, [dayView]);
 
   const dateLabel = useMemo(() => {
-    const d = new Date(`${selectedDate}T12:00:00`);
-    return d.toLocaleDateString(isRtlHe ? "he-IL" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
-  }, [isRtlHe, selectedDate]);
+    const todayIso = new Date().toISOString().split("T")[0];
+    if (selectedDate === todayIso) return t("meals.today", "Today");
+    return formatDayLabel(selectedDate, isRtlHe);
+  }, [isRtlHe, selectedDate, t]);
+
+  const goToDay = useCallback(
+    (offsetDays: number) => {
+      const d = new Date(`${selectedDate}T12:00:00`);
+      d.setDate(d.getDate() + offsetDays);
+      setSelectedDate(d.toISOString().split("T")[0]);
+    },
+    [selectedDate]
+  );
+
+  const orderedSlots = useMemo(
+    () => (dayView?.slots ?? []).slice().sort((a, b) => a.order_index - b.order_index),
+    [dayView?.slots]
+  );
+
+  /** Day-summary dialog + per-meal headers read from the same computed views. */
+  const mealViews = useMemo(
+    () => orderedSlots.map((slot) => ({ slot, view: buildMealView(slot) })),
+    [buildMealView, orderedSlots]
+  );
+
+  const summaryLines = totals
+    ? ([
+        {
+          key: "calories" as const,
+          label: t("meals.kcalLabel", "Kcal"),
+          consumed: totals.consumed.calories,
+          target: totals.targets.calories,
+          unit: t("meals.kcalUnit", "kcal"),
+        },
+        {
+          key: "protein" as const,
+          label: t("meals.protein", "Protein"),
+          consumed: totals.consumed.protein,
+          target: totals.targets.protein,
+          unit: "g",
+        },
+        {
+          key: "carbs" as const,
+          label: t("meals.carbs", "Carbs"),
+          consumed: totals.consumed.carbs,
+          target: totals.targets.carbs,
+          unit: "g",
+        },
+        {
+          key: "fat" as const,
+          label: t("meals.fats", "Fats"),
+          consumed: totals.consumed.fat,
+          target: totals.targets.fat,
+          unit: "g",
+        },
+      ])
+    : [];
 
   const inner = (
-    <div className="pb-20 lg:pb-8">
-        <div className="bg-gradient-to-br from-card to-secondary px-4 lg:px-6 py-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gradient">{t("meals.myMealPlan", "My Meal Plan")}</h1>
-                <p className="text-muted-foreground mt-1">{t("meals.trackNutrition", "Track your nutrition and meals")}</p>
-              </div>
-              {/* dir=ltr: chevrons stay “earlier left / later right” under page RTL; date uses dir=auto for Hebrew label */}
-              <div
-                className="flex items-center gap-2 justify-between sm:justify-end"
-                dir="ltr"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const d = new Date(`${selectedDate}T12:00:00`);
-                    d.setDate(d.getDate() - 1);
-                    setSelectedDate(d.toISOString().split("T")[0]);
-                  }}
-                  aria-label={t("meals.prevDay", "Previous day")}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span dir="auto" className="text-sm font-medium min-w-[120px] text-center">
-                  {dateLabel}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const d = new Date(`${selectedDate}T12:00:00`);
-                    d.setDate(d.getDate() + 1);
-                    setSelectedDate(d.toISOString().split("T")[0]);
-                  }}
-                  aria-label={t("meals.nextDay", "Next day")}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+    <div className="pb-24 lg:pb-8 bg-background min-h-full">
+        {/* Menu title bar */}
+        <div className="relative flex items-center justify-center border-b border-border/60 px-3 py-3">
+          <h1 className="text-lg font-bold">{t("meals.menuTitle", "Menu")}</h1>
+          <button
+            type="button"
+            onClick={() => setDaySummaryOpen(true)}
+            aria-label={t("meals.daySummary", "Day summary")}
+            className="absolute end-2 p-2 rounded-lg transition-colors hover:bg-secondary"
+            style={{ color: MACRO_COLORS.calories }}
+          >
+            <ClipboardList className="h-6 w-6" />
+          </button>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6 space-y-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Day switcher + active plan name */}
+          <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+            {/* dir=ltr: chevrons stay "earlier left / later right" under page RTL */}
+            <div className="flex items-center gap-3" dir="ltr">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-10 w-10 rounded-xl"
+                onClick={() => goToDay(-1)}
+                aria-label={t("meals.prevDay", "Previous day")}
+              >
+                <ChevronLeft className="h-5 w-5" style={{ color: MACRO_COLORS.calories }} />
+              </Button>
+              <span dir="auto" className="text-xl font-semibold min-w-[84px] text-center">
+                {dateLabel}
+              </span>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-10 w-10 rounded-xl"
+                onClick={() => goToDay(1)}
+                aria-label={t("meals.nextDay", "Next day")}
+              >
+                <ChevronRight className="h-5 w-5" style={{ color: MACRO_COLORS.calories }} />
+              </Button>
+            </div>
+
+            {dayView?.meal_plan_name ? (
+              <span
+                dir="auto"
+                className="text-xl font-semibold truncate max-w-[45%] text-end"
+                style={{ color: MACRO_COLORS.calories }}
+              >
+                {dayView.meal_plan_name}
+              </span>
+            ) : null}
+          </div>
+
           {loading && (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">{t("common.loading", "Loading...")}</p>
-              </CardContent>
-            </Card>
+            <p className="px-4 py-3 text-sm text-muted-foreground">{t("common.loading", "Loading...")}</p>
           )}
 
-          {error && (
-            <Card className="border-destructive">
-              <CardContent className="pt-6">
-                <p className="text-center text-destructive">{error}</p>
-              </CardContent>
-            </Card>
-          )}
+          {error && <p className="px-4 py-3 text-sm text-destructive">{error}</p>}
 
+          {/* Daily macros: page 1 = rings, page 2 = remaining breakdown */}
           {totals && (
-            <Card className="bg-gradient-to-br from-card to-secondary border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>{t("meals.macros", "Macros")}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="rounded-lg border bg-background/60 p-3">
-                    <div className="text-sm text-muted-foreground">{t("meals.calories", "Calories")}</div>
-                    <div className="text-lg font-semibold tabular-nums leading-tight">
-                      {Math.round(totals.consumed.calories)}
-                      <span className="text-xs text-muted-foreground ms-1">/ {Math.round(totals.targets.calories)}</span>
+            <div className="border-b border-border/60 pb-3">
+              <div
+                ref={summaryPagerRef}
+                dir="ltr"
+                className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const page = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+                  if (page !== summaryPage) setSummaryPage(page);
+                }}
+              >
+                {/* Page 1 - totals list + concentric rings */}
+                <div className="w-full shrink-0 snap-center px-4 py-4">
+                  <div className="flex items-center justify-between gap-4" dir="ltr">
+                    <div className="min-w-0 space-y-1.5">
+                      {summaryLines.map((line) => (
+                        <div key={line.key} className="flex items-baseline gap-2 text-lg sm:text-xl">
+                          <span className="font-medium">{line.label}</span>
+                          <span className="font-semibold tabular-nums" style={{ color: MACRO_COLORS[line.key] }}>
+                            {formatMacro(line.consumed)}/{formatMacro(line.target)}
+                            {line.unit}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="mt-2 h-2 rounded bg-muted">
-                      <div className="bg-blue-500 h-2 rounded" style={{ width: `${clampToPercent(totals.percentages.calories)}%` }} />
-                    </div>
-                  </div>
-                  <div className="rounded-lg border bg-background/60 p-3">
-                    <div className="text-sm text-muted-foreground">{t("meals.protein", "Protein")}</div>
-                    <div className="text-lg font-semibold tabular-nums leading-tight">
-                      {Math.round(totals.consumed.protein)}g
-                      <span className="text-xs text-muted-foreground ms-1">/ {Math.round(totals.targets.protein)}g</span>
-                    </div>
-                    <div className="mt-2 h-2 rounded bg-muted">
-                      <div className="bg-emerald-500 h-2 rounded" style={{ width: `${clampToPercent(totals.percentages.protein)}%` }} />
-                    </div>
-                  </div>
-                  <div className="rounded-lg border bg-background/60 p-3">
-                    <div className="text-sm text-muted-foreground">{t("meals.carbs", "Carbs")}</div>
-                    <div className="text-lg font-semibold tabular-nums leading-tight">
-                      {Math.round(totals.consumed.carbs)}g
-                      <span className="text-xs text-muted-foreground ms-1">/ {Math.round(totals.targets.carbs)}g</span>
-                    </div>
-                    <div className="mt-2 h-2 rounded bg-muted">
-                      <div className="bg-red-500 h-2 rounded" style={{ width: `${clampToPercent(totals.percentages.carbs)}%` }} />
-                    </div>
-                  </div>
-                  <div className="rounded-lg border bg-background/60 p-3">
-                    <div className="text-sm text-muted-foreground">{t("meals.fats", "Fats")}</div>
-                    <div className="text-lg font-semibold tabular-nums leading-tight">
-                      {Math.round(totals.consumed.fat)}g
-                      <span className="text-xs text-muted-foreground ms-1">/ {Math.round(totals.targets.fat)}g</span>
-                    </div>
-                    <div className="mt-2 h-2 rounded bg-muted">
-                      <div className="bg-fuchsia-500 h-2 rounded" style={{ width: `${clampToPercent(totals.percentages.fat)}%` }} />
-                    </div>
+
+                    <MacroRings
+                      className="shrink-0 h-40 w-40 sm:h-48 sm:w-48"
+                      label={t("meals.macros", "Macros")}
+                      rings={summaryLines.map((line) => ({
+                        key: line.key,
+                        percent: percentOf(line.consumed, line.target),
+                      }))}
+                    />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Page 2 - what is still left for the day */}
+                <div className="w-full shrink-0 snap-center px-4 py-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-3">
+                    {t("meals.remainingToday", "Remaining today")}
+                  </div>
+                  <div className="space-y-3">
+                    {summaryLines.map((line) => {
+                      const left = Math.max(0, line.target - line.consumed);
+                      return (
+                        <div key={line.key}>
+                          <div className="flex items-baseline justify-between text-sm">
+                            <span className="font-medium">{line.label}</span>
+                            <span className="tabular-nums font-semibold" style={{ color: MACRO_COLORS[line.key] }}>
+                              {formatMacro(left)}
+                              {line.unit}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-[width] duration-500"
+                              style={{
+                                width: `${percentOf(line.consumed, line.target)}%`,
+                                backgroundColor: MACRO_COLORS[line.key],
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 pt-1" dir="ltr">
+                {[0, 1].map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    aria-label={t("meals.summaryPage", "Summary page {{n}}", { n: page + 1 })}
+                    aria-current={summaryPage === page}
+                    onClick={() => {
+                      const el = summaryPagerRef.current;
+                      if (el) el.scrollTo({ left: page * el.clientWidth, behavior: "smooth" });
+                    }}
+                    className="h-2 w-2 rounded-full transition-colors"
+                    style={{
+                      backgroundColor: summaryPage === page ? MACRO_COLORS.calories : "hsl(var(--muted-foreground) / 0.4)",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           )}
 
-          {dayView?.slots?.length ? (
-            <div className="space-y-4">
-              {dayView.slots
-                .slice()
-                .sort((a, b) => a.order_index - b.order_index)
-                .map((slot) => (
-                  <Card
+          {mealViews.length ? (
+            <div>
+              {mealViews.map(({ slot, view }) => {
+                const isCompleted = Boolean(completedMealSlotIds[slot.meal_slot_id]);
+                const isResetting = resettingSlotId === slot.meal_slot_id;
+
+                return (
+                  <section
                     key={slot.meal_slot_id}
-                    className={completedMealSlotIds[slot.meal_slot_id] ? "border-green-500/60 bg-green-500/10" : undefined}
+                    className={`border-b border-border/60 ${isCompleted ? "bg-emerald-500/[0.06]" : ""}`}
                   >
-                    <CardHeader className="space-y-1">
-                      <CardTitle className="flex items-center justify-between gap-3">
-                        <span>{slot.name}</span>
-                        {slot.time_suggestion && <Badge variant="outline">{slot.time_suggestion}</Badge>}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-4">
-                        {(() => {
-                          const overallCustomChoice = dayView?.choices.find(
-                            (c) =>
-                              c.meal_slot_id === slot.meal_slot_id &&
-                              c.food_option_id == null &&
-                              Boolean((c.custom_food_name ?? "").trim()) &&
-                              isOverallSlotCustomFoodName(c.custom_food_name)
-                          );
+                    <div className="px-4 pt-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 dir="auto" className="text-lg sm:text-xl font-bold leading-snug break-words">
+                            {slot.name}
+                          </h2>
+                          {slot.time_suggestion ? (
+                            <div className="text-xs text-muted-foreground mt-0.5">{slot.time_suggestion}</div>
+                          ) : null}
+                        </div>
 
-                          const swapEntryKeyForRow = (
-                            planFood: V3FoodOption,
-                            rowChoice: V3ClientMealChoiceResponse | undefined
-                          ): string => {
-                            if (!rowChoice) return `p-${planFood.id}`;
-                            if (rowChoice.food_option_id === planFood.id) return `p-${planFood.id}`;
-                            const sw = parseRowSwapCustom(rowChoice.custom_food_name);
-                            if (sw?.kind === "plan") return `p-${sw.targetPlanFoodId}`;
-                            if (sw?.kind === "bank") return `b-${sw.bankId}`;
-                            return `p-${planFood.id}`;
-                          };
+                        <div className="flex items-center gap-0.5 shrink-0" style={{ color: MACRO_COLORS.calories }}>
+                          <button
+                            type="button"
+                            className="p-2 rounded-lg transition-colors hover:bg-secondary disabled:opacity-40"
+                            aria-label={t("meals.resetMeal", "Reset meal")}
+                            disabled={loading || isResetting}
+                            onClick={() => void resetMeal(slot, view)}
+                          >
+                            <RefreshCw className={`h-[22px] w-[22px] ${isResetting ? "animate-spin" : ""}`} />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-2 rounded-lg transition-colors hover:bg-secondary"
+                            aria-label={t("meals.mealNotes", "Meal notes")}
+                            onClick={() => setNotesSlot(slot)}
+                          >
+                            <StickyNote className="h-[22px] w-[22px]" />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-2 rounded-lg transition-colors hover:bg-secondary"
+                            aria-label={t("meals.copyMeal", "Copy meal")}
+                            onClick={() => void copyMeal(slot, view)}
+                          >
+                            <Copy className="h-[22px] w-[22px]" />
+                          </button>
+                        </div>
+                      </div>
 
-                          return slot.categories.map((cat) => {
-                            const planFoods = [...(cat.recommended_foods ?? [])].filter(
-                              (f): f is V3FoodOption & { id: number } => typeof f.id === "number"
-                            );
-                            planFoods.sort((a, b) => a.id - b.id);
+                      {/* Meal totals: consumed / planned, aligned with the food columns below */}
+                      <div className="mt-3 flex items-end">
+                        <div className="flex-1 min-w-0" />
+                        <div className="flex" dir="ltr">
+                          {MACRO_COLUMNS.map((column) => (
+                            <div key={column.key} className={`${COLUMN_CLASS} ${column.width}`}>
+                              <div className="text-[10px] sm:text-xs font-medium tracking-tight whitespace-nowrap tabular-nums">
+                                {formatMacro(view.consumed[column.key])}/{formatMacro(view.planned[column.key])}
+                                {column.key === "calories" ? t("meals.kcalUnit", "kcal") : column.unit}
+                              </div>
+                              <div
+                                className="mt-1 mx-auto h-[3px] w-8 rounded-full"
+                                style={{ backgroundColor: column.color }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
 
-                            const quantityText = normalizeQuantityInstruction(cat.quantity_instruction);
+                    <div className="mt-2">
+                      {view.rows.map((row) => {
+                        const values = row.hasLog ? row.consumed : row.planned;
 
-                            const rowSummaries = planFoods.map((planFood) => {
-                              const rowChoice = findChoiceForPlanFoodRow(
-                                dayView?.choices,
-                                slot.meal_slot_id,
-                                planFood.id
-                              );
-                              const rowDeselectionKey = `${selectedDate}:${slot.meal_slot_id}:${cat.macro_type}:${planFood.id}`;
-                              const isDeselected = Boolean(deselectedMealCategoryKeys[rowDeselectionKey]);
+                        return (
+                          <div
+                            key={row.key}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={t("meals.swapFood", "Swap food")}
+                            className={`flex items-center gap-2 px-4 py-3 border-t border-border/40 text-start transition-colors ${
+                              isCompleted ? "" : "cursor-pointer hover:bg-secondary/40"
+                            } ${row.isDeselected ? "opacity-40" : ""}`}
+                            onClick={() => {
+                              if (isCompleted) return;
+                              setSwapSlot(slot);
+                              setSwapMacroType(row.macroType);
+                              setSwapRowPlanFoodId(row.planFood.id);
+                              setSwapSelectedEntryKey(swapEntryKeyForRow(row));
+                              setSwapQuery("");
+                              setSwapOpen(true);
+                            }}
+                            onKeyDown={(e) => {
+                              if (isCompleted) return;
+                              if (e.key !== "Enter" && e.key !== " ") return;
+                              e.preventDefault();
+                              setSwapSlot(slot);
+                              setSwapMacroType(row.macroType);
+                              setSwapRowPlanFoodId(row.planFood.id);
+                              setSwapSelectedEntryKey(swapEntryKeyForRow(row));
+                              setSwapQuery("");
+                              setSwapOpen(true);
+                            }}
+                            onTouchStart={(e) => {
+                              if (isCompleted || e.touches.length !== 1) return;
+                              touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                              swipeDeletingRef.current = false;
+                            }}
+                            onTouchEnd={(e) => {
+                              if (isCompleted) return;
+                              const start = touchStartRef.current;
+                              if (!start || swipeDeletingRef.current) return;
+                              if (e.changedTouches.length !== 1) return;
 
-                              let displayName = getLocalizedFoodName(planFood);
-                              let displayMacros = {
-                                calories: 0,
-                                protein: 0,
-                                carbs: 0,
-                                fat: 0,
-                              };
+                              const dx = e.changedTouches[0].clientX - start.x;
+                              const dy = e.changedTouches[0].clientY - start.y;
 
-                              if (rowChoice) {
-                                const encoded = parseRowSwapCustom(rowChoice.custom_food_name);
-                                if (encoded) {
-                                  displayName = encoded.displayName;
-                                  displayMacros = {
-                                    calories: rowChoice.custom_calories ?? 0,
-                                    protein: rowChoice.custom_protein ?? 0,
-                                    carbs: rowChoice.custom_carbs ?? 0,
-                                    fat: rowChoice.custom_fat ?? 0,
-                                  };
-                                } else if (typeof rowChoice.food_option_id === "number") {
-                                  const targetFood =
-                                    cat.recommended_foods.find((f) => f.id === rowChoice.food_option_id) ?? planFood;
-                                  displayName =
-                                    rowChoice.food_option_id === planFood.id
-                                      ? getLocalizedFoodName(planFood)
-                                      : getLocalizedFoodName(targetFood);
-                                  displayMacros = computeRecommendedDisplayMacros(
-                                    targetFood,
-                                    rowChoice.quantity ?? quantityText
-                                  );
+                              if (Math.abs(dx) > 70 && Math.abs(dy) < 60) {
+                                swipeDeletingRef.current = true;
+                                if (row.hasLog) {
+                                  void deleteMealLog(slot.meal_slot_id, row.macroType, row.planFood.id);
                                 }
-                              } else if (!isDeselected) {
-                                displayMacros = computeRecommendedDisplayMacros(planFood, quantityText);
+                                setDeselectedMealCategoryKeys((prev) => ({ ...prev, [row.deselectionKey]: true }));
                               }
 
-                              const hasLog = Boolean(rowChoice);
-
-                              return {
-                                planFood,
-                                rowChoice,
-                                rowDeselectionKey,
-                                isDeselected,
-                                displayName,
-                                displayMacros,
-                                hasLog,
-                              };
-                            });
-
-                            const categoryTotals = rowSummaries.reduce(
-                              (acc, r) => ({
-                                calories: acc.calories + r.displayMacros.calories,
-                                protein: acc.protein + r.displayMacros.protein,
-                                carbs: acc.carbs + r.displayMacros.carbs,
-                                fat: acc.fat + r.displayMacros.fat,
-                              }),
-                              { calories: 0, protein: 0, carbs: 0, fat: 0 }
-                            );
-
-                            return (
-                              <div key={cat.macro_type} className="space-y-3 rounded-lg border bg-background/50 p-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <h3 className="text-sm font-semibold">{macroLabel(t, cat.macro_type)}</h3>
-                                    <div className="mt-1 text-sm text-muted-foreground">
-                                      <span className="me-1">{t("meals.qty", "Qty")}:</span>
-                                      <span className="tabular-nums">{quantityText}</span>
-                                    </div>
-                                  </div>
-                                  <Badge variant="outline" className="shrink-0 tabular-nums">
-                                    {t("meals.plannedFoodsCount", "{{count}} foods", { count: planFoods.length })}
-                                  </Badge>
-                                </div>
-
-                                {rowSummaries.map(
-                                  ({ planFood, rowChoice, rowDeselectionKey, isDeselected, displayName, displayMacros, hasLog }) => (
-                                    <div
-                                      key={planFood.id}
-                                      className="space-y-2 rounded-md border border-border/60 bg-background/40 p-3"
-                                      onTouchStart={(e) => {
-                                        if (Boolean(completedMealSlotIds[slot.meal_slot_id])) return;
-                                        if (e.touches.length !== 1) return;
-                                        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                                        swipeDeletingRef.current = false;
-                                      }}
-                                      onTouchEnd={(e) => {
-                                        if (Boolean(completedMealSlotIds[slot.meal_slot_id])) return;
-                                        const start = touchStartRef.current;
-                                        if (!start || swipeDeletingRef.current) return;
-                                        if (e.changedTouches.length !== 1) return;
-
-                                        const dx = e.changedTouches[0].clientX - start.x;
-                                        const dy = e.changedTouches[0].clientY - start.y;
-                                        const absDx = Math.abs(dx);
-                                        const absDy = Math.abs(dy);
-
-                                        if (absDx > 70 && absDy < 60) {
-                                          swipeDeletingRef.current = true;
-
-                                          if (overallCustomChoice) {
-                                            void deleteMealLog(slot.meal_slot_id, "protein");
-                                            setDeselectedMealCategoryKeys((prev) => {
-                                              const next = { ...prev };
-                                              const prefix = `${selectedDate}:${slot.meal_slot_id}:`;
-                                              Object.keys(next).forEach((k) => {
-                                                if (k.startsWith(prefix)) delete next[k];
-                                              });
-                                              return next;
-                                            });
-                                          } else if (hasLog) {
-                                            void deleteMealLog(slot.meal_slot_id, cat.macro_type, planFood.id);
-                                            setDeselectedMealCategoryKeys((prev) => ({
-                                              ...prev,
-                                              [rowDeselectionKey]: true,
-                                            }));
-                                          } else {
-                                            setDeselectedMealCategoryKeys((prev) => ({
-                                              ...prev,
-                                              [rowDeselectionKey]: true,
-                                            }));
-                                          }
-                                        }
-
-                                        touchStartRef.current = null;
-                                        swipeDeletingRef.current = false;
-                                      }}
-                                    >
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="min-w-0 flex-1">
-                                          <div className="break-words text-base font-semibold leading-snug">
-                                            {isDeselected ? "" : hasLog ? displayName : getLocalizedFoodName(planFood)}
-                                          </div>
-                                        </div>
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          {hasLog ? (
-                                            <Badge variant="default" className="shrink-0">
-                                              {t("meals.eaten", "Eaten")}
-                                              <span className="ms-1 tabular-nums">
-                                                {(rowChoice?.quantity
-                                                  ? parseGrams(rowChoice.quantity)
-                                                  : parseGrams(quantityText)
-                                                ).toFixed(0)}
-                                                g
-                                              </span>
-                                            </Badge>
-                                          ) : isDeselected ? null : (
-                                            <Badge variant="secondary" className="shrink-0">
-                                              {t("meals.remaining", "Remaining")}
-                                            </Badge>
-                                          )}
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 shrink-0"
-                                            aria-label={t("meals.swapFood", "Swap food")}
-                                            disabled={loading || Boolean(completedMealSlotIds[slot.meal_slot_id])}
-                                            onClick={() => {
-                                              if (Boolean(completedMealSlotIds[slot.meal_slot_id])) return;
-                                              setSwapSlot(slot);
-                                              setSwapMacroType(cat.macro_type);
-                                              setSwapRowPlanFoodId(planFood.id);
-                                              setSwapSelectedEntryKey(swapEntryKeyForRow(planFood, rowChoice));
-                                              setSwapQuery("");
-                                              setSwapOpen(true);
-                                            }}
-                                          >
-                                            <ArrowLeftRight className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                                        <div>
-                                          <span className="text-muted-foreground">{t("meals.calories", "Calories")}</span>{" "}
-                                          <span className="font-semibold tabular-nums">{Math.round(displayMacros.calories)}</span>
-                                        </div>
-                                        <div>
-                                          <span className="text-muted-foreground">{t("meals.protein", "Protein")}</span>{" "}
-                                          <span className="font-semibold tabular-nums">{Math.round(displayMacros.protein)}g</span>
-                                        </div>
-                                        <div>
-                                          <span className="text-muted-foreground">{t("meals.carbs", "Carbs")}</span>{" "}
-                                          <span className="font-semibold tabular-nums">{Math.round(displayMacros.carbs)}g</span>
-                                        </div>
-                                        <div>
-                                          <span className="text-muted-foreground">{t("meals.fats", "Fats")}</span>{" "}
-                                          <span className="font-semibold tabular-nums">{Math.round(displayMacros.fat)}g</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )
-                                )}
-
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border/40">
-                                  {(
-                                    [
-                                      {
-                                        label: t("meals.calories", "Calories"),
-                                        value: categoryTotals.calories,
-                                        color: "bg-blue-500",
-                                        percent: totals
-                                          ? clampToPercent((categoryTotals.calories / (totals.targets.calories || 1)) * 100)
-                                          : 0,
-                                        unit: "",
-                                      },
-                                      {
-                                        label: t("meals.protein", "Protein"),
-                                        value: categoryTotals.protein,
-                                        color: "bg-emerald-500",
-                                        percent: totals
-                                          ? clampToPercent((categoryTotals.protein / (totals.targets.protein || 1)) * 100)
-                                          : 0,
-                                        unit: "g",
-                                      },
-                                      {
-                                        label: t("meals.carbs", "Carbs"),
-                                        value: categoryTotals.carbs,
-                                        color: "bg-red-500",
-                                        percent: totals
-                                          ? clampToPercent((categoryTotals.carbs / (totals.targets.carbs || 1)) * 100)
-                                          : 0,
-                                        unit: "g",
-                                      },
-                                      {
-                                        label: t("meals.fats", "Fats"),
-                                        value: categoryTotals.fat,
-                                        color: "bg-fuchsia-500",
-                                        percent: totals
-                                          ? clampToPercent((categoryTotals.fat / (totals.targets.fat || 1)) * 100)
-                                          : 0,
-                                        unit: "g",
-                                      },
-                                    ] as const
-                                  ).map((m) => (
-                                    <div key={m.label} className="rounded-md bg-background/60 p-2">
-                                      <div className="text-xs text-muted-foreground">{m.label}</div>
-                                      <div className="text-lg font-semibold tabular-nums leading-tight">
-                                        {Math.round(m.value)}
-                                        {m.unit}
-                                      </div>
-                                      <div className="mt-1 h-2 rounded bg-muted">
-                                        <div className={`${m.color} h-2 rounded`} style={{ width: `${m.percent}%` }} />
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
+                              touchStartRef.current = null;
+                              swipeDeletingRef.current = false;
+                            }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div
+                                dir="auto"
+                                className={`text-[15px] font-semibold leading-snug break-words ${
+                                  row.isDeselected ? "line-through" : ""
+                                }`}
+                              >
+                                {row.displayName}
                               </div>
-                            );
-                          });
-                        })()}
-                      </div>
+                              <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
+                                {row.quantityLabel}
+                              </div>
+                            </div>
 
-                      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => openAskTrainerDialog(slot)}
-                          disabled={loading}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          {t("meals.askTrainer", "Ask trainer")}
-                        </Button>
+                            <div className="flex items-center" dir="ltr">
+                              {MACRO_COLUMNS.map((column) => (
+                                <div
+                                  key={column.key}
+                                  className={`${COLUMN_CLASS} ${column.width} text-[15px] ${
+                                    row.hasLog ? "font-semibold" : "font-normal text-muted-foreground"
+                                  }`}
+                                >
+                                  {formatMacro(values[column.key])}
+                                  {column.unit}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
 
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 gradient-orange text-background"
-                          onClick={() => openCustomDialogForSlot(slot)}
-                          disabled={loading || Boolean(completedMealSlotIds[slot.meal_slot_id])}
+                      {view.customRows.map((row) => (
+                        <div
+                          key={row.key}
+                          className="flex items-center gap-2 px-4 py-3 border-t border-border/40"
                         >
-                          <Plus className="h-4 w-4" />
-                          {t("meals.addFood", "Add Food")}
-                        </Button>
+                          <div className="flex-1 min-w-0">
+                            <div dir="auto" className="text-[15px] font-semibold leading-snug break-words">
+                              {row.displayName}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                              <span className="tabular-nums">{row.quantityLabel}</span>
+                              <span>ֲ·</span>
+                              <span>{t("meals.custom", "Custom")}</span>
+                            </div>
+                          </div>
 
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="flex-1"
-                          onClick={async () => {
-                            if (mode === "mock") {
-                              setCompletedMealSlotIds((prev) => ({ ...prev, [slot.meal_slot_id]: true }));
-                            }
-                            await applyMealCompletion(slot);
-                          }}
-                          disabled={loading || Boolean(completedMealSlotIds[slot.meal_slot_id])}
-                        >
-                          {t("meals.complete", "Complete")}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                          <div className="flex items-center" dir="ltr">
+                            {MACRO_COLUMNS.map((column) => (
+                              <div key={column.key} className={`${COLUMN_CLASS} ${column.width} text-[15px] font-semibold`}>
+                                {formatMacro(row.consumed[column.key])}
+                                {column.unit}
+                              </div>
+                            ))}
+                          </div>
+
+                          <button
+                            type="button"
+                            className="p-2 -me-2 rounded-lg text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+                            aria-label={t("common.delete", "Delete")}
+                            disabled={isCompleted}
+                            onClick={() => void deleteMealLog(slot.meal_slot_id, "protein")}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-border/40" dir="ltr">
+                      <button
+                        type="button"
+                        className="text-lg font-medium disabled:opacity-40"
+                        style={{ color: MACRO_COLORS.calories }}
+                        disabled={loading || isCompleted}
+                        onClick={() => openCustomDialogForSlot(slot)}
+                      >
+                        <Plus className="inline h-5 w-5 align-[-3px]" /> {t("meals.addFood", "Add Food")}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="text-lg font-medium disabled:opacity-60"
+                        style={{ color: isCompleted ? "#22C55E" : MACRO_COLORS.calories }}
+                        disabled={loading || isCompleted}
+                        onClick={async () => {
+                          if (mode === "mock") {
+                            setCompletedMealSlotIds((prev) => ({ ...prev, [slot.meal_slot_id]: true }));
+                          }
+                          await applyMealCompletion(slot);
+                        }}
+                      >
+                        {isCompleted ? (
+                          <>
+                            <Check className="inline h-5 w-5 align-[-3px]" /> {t("meals.completed", "Completed")}
+                          </>
+                        ) : (
+                          t("meals.complete", "Complete")
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="px-4 pb-3">
+                      <button
+                        type="button"
+                        className="text-sm text-muted-foreground inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+                        onClick={() => openAskTrainerDialog(slot)}
+                        disabled={loading}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        {t("meals.askTrainer", "Ask trainer")}
+                      </button>
+                    </div>
+                  </section>
+                );
+              })}
             </div>
           ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">{t("meals.noMeals", "No meals")}</p>
-              </CardContent>
-            </Card>
+            !loading && (
+              <p className="px-4 py-10 text-center text-muted-foreground">{t("meals.noMeals", "No meals")}</p>
+            )
           )}
 
           <Dialog open={customDialogOpen} onOpenChange={setCustomDialogOpen}>
@@ -1578,7 +1834,7 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
                       <div className="flex flex-col p-1 gap-1">
                         {swapCatalogLoading ? (
                           <div className="px-2 py-1 text-xs text-muted-foreground text-center">
-                            {t("meals.loadingMealBank", "Loading full meal bank…")}
+                            {t("meals.loadingMealBank", "Loading full meal bankג€¦")}
                           </div>
                         ) : null}
                         {filtered.map((entry) => {
@@ -1614,7 +1870,7 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
                                   {isSelected ? <Check className="h-4 w-4 shrink-0" /> : null}
                                 </div>
                                 <div className="text-xs text-muted-foreground w-full">
-                                  {t("meals.calories", "Calories")}: {Math.round(display.calories)} ·{" "}
+                                  {t("meals.calories", "Calories")}: {Math.round(display.calories)} ֲ·{" "}
                                   {macroLabel(t, swapMacroType)}: {Math.round(macroValue)}g
                                 </div>
                               </div>
@@ -1628,6 +1884,123 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
 
                 <Button variant="outline" className="w-full" onClick={() => setSwapOpen(false)} disabled={swapSaving}>
                   {t("common.cancel", "Cancel")}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={Boolean(notesSlot)} onOpenChange={(open) => !open && setNotesSlot(null)}>
+            <DialogContent className="sm:max-w-md w-full max-w-md mx-auto rounded-xl overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>{t("meals.mealNotes", "Meal notes")}</DialogTitle>
+              </DialogHeader>
+
+              {(() => {
+                if (!notesSlot) return null;
+                const categoryNotes = notesSlot.categories
+                  .filter((c) => Boolean(c.notes?.trim()))
+                  .map((c) => ({ macroType: c.macro_type, notes: c.notes as string }));
+                const hasNotes = Boolean(notesSlot.notes?.trim()) || categoryNotes.length > 0;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="text-base font-semibold" dir="auto">
+                      {notesSlot.name}
+                    </div>
+
+                    {hasNotes ? (
+                      <div className="space-y-3">
+                        {notesSlot.notes?.trim() ? (
+                          <p className="text-sm whitespace-pre-wrap" dir="auto">
+                            {notesSlot.notes}
+                          </p>
+                        ) : null}
+                        {categoryNotes.map((entry) => (
+                          <div key={entry.macroType} className="rounded-md border bg-background/60 p-3">
+                            <div className="text-xs text-muted-foreground">{macroLabel(t, entry.macroType)}</div>
+                            <p className="text-sm whitespace-pre-wrap mt-1" dir="auto">
+                              {entry.notes}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t("meals.noNotes", "Your trainer did not add notes to this meal.")}
+                      </p>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const slot = notesSlot;
+                        setNotesSlot(null);
+                        openAskTrainerDialog(slot);
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4 me-2" />
+                      {t("meals.askTrainer", "Ask trainer")}
+                    </Button>
+                  </div>
+                );
+              })()}
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={daySummaryOpen} onOpenChange={setDaySummaryOpen}>
+            <DialogContent className="sm:max-w-md w-full max-w-md mx-auto rounded-xl overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>{t("meals.daySummary", "Day summary")}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3">
+                <div className="text-sm text-muted-foreground" dir="auto">
+                  {formatDayLabel(selectedDate, isRtlHe)}
+                </div>
+
+                <div className="max-h-[50vh] overflow-auto divide-y divide-border/60">
+                  {mealViews.map(({ slot, view }) => (
+                    <div key={slot.meal_slot_id} className="py-2 flex items-center gap-2">
+                      <div className="flex-1 min-w-0 text-sm font-medium truncate" dir="auto">
+                        {slot.name}
+                      </div>
+                      <div className="flex items-center" dir="ltr">
+                        {MACRO_COLUMNS.map((column) => (
+                          <div
+                            key={column.key}
+                            className={`${COLUMN_CLASS} ${column.width} text-xs font-semibold`}
+                            style={{ color: column.color }}
+                          >
+                            {formatMacro(view.consumed[column.key])}
+                            {column.unit}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {totals ? (
+                  <div className="rounded-md border bg-background/60 p-3 flex items-center gap-2">
+                    <div className="flex-1 text-sm font-semibold">{t("meals.dailyTargets", "Daily totals")}</div>
+                    <div className="flex items-center" dir="ltr">
+                      {MACRO_COLUMNS.map((column) => (
+                        <div
+                          key={column.key}
+                          className={`${COLUMN_CLASS} ${column.width} text-xs font-semibold`}
+                          style={{ color: column.color }}
+                        >
+                          {formatMacro(totals.consumed[column.key])}
+                          {column.unit}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <Button variant="outline" className="w-full" onClick={() => setDaySummaryOpen(false)}>
+                  {t("common.close", "Close")}
                 </Button>
               </div>
             </DialogContent>

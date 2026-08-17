@@ -582,6 +582,7 @@ def get_v3_day_view(
     return V3DayViewResponse(
         date=target_day.date().isoformat(),
         meal_plan=None,
+        meal_plan_name=plan.name,
         slots=slots,
         daily_macros=daily_macros,
         choices=choices_payload,

@@ -225,6 +225,8 @@ class V3MealSlotView(BaseModel):
 class V3DayViewResponse(BaseModel):
     date: str  # YYYY-MM-DD
     meal_plan: Optional[V3MealPlanResponse] = None
+    # Plan name only, so the trainee menu header can show it without shipping the whole plan.
+    meal_plan_name: Optional[str] = None
 
     slots: List[V3MealSlotView] = Field(default_factory=list)
     daily_macros: V3DailyMacrosResponse

@@ -219,6 +219,13 @@ class V3MealSlotView(BaseModel):
     notes: Optional[str] = None
     order_index: int
 
+    # Per-meal budget set by the trainer. Null when the trainer has not split
+    # the daily target across meals yet.
+    target_calories: Optional[int] = None
+    target_protein: Optional[float] = None
+    target_carbs: Optional[float] = None
+    target_fat: Optional[float] = None
+
     categories: List[V3MacroCategoryView] = Field(default_factory=list)
 
 

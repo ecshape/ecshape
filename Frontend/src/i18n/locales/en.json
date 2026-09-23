@@ -320,7 +320,17 @@
     "messageToTrainer": "Message",
     "typeMessage": "Type your question",
     "askTrainerLinkedTitle": "Sent to trainer (mock)",
-    "askTrainerLinkedDesc": "Saved locally in sandbox mode."
+    "askTrainerLinkedDesc": "Saved locally in sandbox mode.",
+    "targets": {
+      "title": "Daily targets",
+      "perMeal": "Per meal",
+      "recalcFromSplit": "Recalculate from split",
+      "drift": "Drift",
+      "save": "Save targets"
+    },
+    "favorites": {
+      "saved": "Saved"
+    }
   },
   "training": {
     "training": "Training",

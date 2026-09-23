@@ -52,20 +52,13 @@ from app.schemas.meal_tracking_v3 import (
 
 from app.services.meal_tracking_v3_service import (
     _parse_v3_date_to_day,
+    _parse_v3_date_to_choice_datetime,
     _compute_daily_macros_v3,
     build_v3_day_slots_view,
     _food_option_to_v3_food,
 )
 
 router = APIRouter(tags=["Meal Tracking V3"])
-
-
-def _parse_v3_date_to_choice_datetime(date_str: str) -> datetime:
-    """
-    Store a choice at mid-day UTC so it reliably belongs to the target calendar date.
-    """
-    day = _parse_v3_date_to_day(date_str)
-    return day.replace(hour=12, minute=0, second=0, microsecond=0)
 
 
 def _resolve_target_client_id(

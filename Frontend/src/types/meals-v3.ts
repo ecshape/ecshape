@@ -92,7 +92,37 @@ export interface V3MealSlotView {
   time_suggestion?: string | null;
   notes?: string | null;
   order_index: number;
+  target_calories?: number | null;
+  target_protein?: number | null;
+  target_carbs?: number | null;
+  target_fat?: number | null;
   categories: V3MacroCategoryView[];
+}
+
+export interface V3MealSlotTargets {
+  /** Identifies the slot these targets belong to, so matching never relies on position. */
+  meal_slot_id?: number | null;
+  target_calories: number;
+  target_protein: number;
+  target_carbs: number;
+  target_fat: number;
+}
+
+export interface V3DailyTargetsPayload {
+  total_calories: number;
+  protein_target: number;
+  carb_target: number;
+  fat_target: number;
+  meal_targets?: V3MealSlotTargets[];
+}
+
+export interface V3DailyTargetsResponse {
+  total_calories: number;
+  protein_target: number;
+  carb_target: number;
+  fat_target: number;
+  drift: number;
+  meal_targets: V3MealSlotTargets[];
 }
 
 export interface V3DayViewResponse {

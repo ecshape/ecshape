@@ -53,6 +53,14 @@ def _parse_v3_date_to_day(date_str: str) -> datetime:
     return parsed_day.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
+def _parse_v3_date_to_choice_datetime(date_str: str) -> datetime:
+    """
+    Store a choice at mid-day UTC so it reliably belongs to the target calendar date.
+    """
+    day = _parse_v3_date_to_day(date_str)
+    return day.replace(hour=12, minute=0, second=0, microsecond=0)
+
+
 def _parse_quantity_value(quantity: Optional[str]) -> float:
     """
     Extract numeric quantity from strings like `150g`, `150`, `2 slices`, `2`.
@@ -278,6 +286,10 @@ def build_v3_day_slots_view(
                 time_suggestion=slot.time_suggestion,
                 notes=slot.notes,
                 order_index=slot.order_index,
+                target_calories=slot.target_calories,
+                target_protein=slot.target_protein,
+                target_carbs=slot.target_carbs,
+                target_fat=slot.target_fat,
                 categories=categories,
             )
         )

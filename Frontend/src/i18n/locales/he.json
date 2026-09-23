@@ -330,7 +330,17 @@
     "messageToTrainer": "הודעה",
     "typeMessage": "הקלד הודעה...",
     "askTrainerLinkedTitle": "נשלח למאמן (דמו)",
-    "askTrainerLinkedDesc": "נשמר מקומית במצב Sandbox."
+    "askTrainerLinkedDesc": "נשמר מקומית במצב Sandbox.",
+    "targets": {
+      "title": "יעדים יומיים",
+      "perMeal": "לכל ארוחה",
+      "recalcFromSplit": "חשב מחדש לפי אחוזים",
+      "drift": "פער",
+      "save": "שמור יעדים"
+    },
+    "favorites": {
+      "saved": "נשמר"
+    }
   },
   "training": {
     "training": "אימון",

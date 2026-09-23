@@ -12,6 +12,11 @@ from app.models.notification import Notification
 from app.models.client_notification_setting import ClientNotificationSetting
 from app.models.chat import ChatMessage
 from app.models.check_in import DailyCheckIn
+from app.models.meal_variants import (
+    ClientFavoriteFood,
+    MealVariant,
+    MealVariantFood
+)
 
 # New meal and workout system models
 from app.models.meal_system import (
@@ -72,6 +77,9 @@ __all__ = [
     "MacroType",
     "DailyMealHistory",
     "MealBank",
+    "ClientFavoriteFood",
+    "MealVariant",
+    "MealVariantFood",
     "NewWorkoutPlan",
     "WorkoutDay",
     "NewWorkoutExercise",

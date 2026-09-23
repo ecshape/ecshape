@@ -877,6 +877,34 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
 
   const totals = useMemo(() => dayView?.daily_macros, [dayView]);
 
+  /**
+   * Consumed calories per meal slot.
+   *
+   * Plan-food choices carry no absolute macros (the backend scales them from the food's
+   * measurement_type), so they're read from the slot view's server-computed
+   * `chosen_food.display_calories`. Only genuinely custom rows are summed from `choices`,
+   * which would otherwise contribute 0 and make every slot read `0/<target>`.
+   */
+  const consumedCaloriesBySlot = useMemo(() => {
+    const acc: Record<number, number> = {};
+
+    for (const slot of dayView?.slots ?? []) {
+      let slotTotal = 0;
+      for (const category of slot.categories ?? []) {
+        slotTotal += category.chosen_food?.display_calories ?? 0;
+      }
+      acc[slot.meal_slot_id] = slotTotal;
+    }
+
+    for (const choice of dayView?.choices ?? []) {
+      if (choice.meal_slot_id == null) continue;
+      if (choice.food_option_id != null) continue; // already counted via chosen_food
+      acc[choice.meal_slot_id] = (acc[choice.meal_slot_id] ?? 0) + (choice.custom_calories ?? 0);
+    }
+
+    return acc;
+  }, [dayView]);
+
   const dateLabel = useMemo(() => {
     const d = new Date(`${selectedDate}T12:00:00`);
     return d.toLocaleDateString(isRtlHe ? "he-IL" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -1014,6 +1042,19 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
                         <span>{slot.name}</span>
                         {slot.time_suggestion && <Badge variant="outline">{slot.time_suggestion}</Badge>}
                       </CardTitle>
+                      {slot.target_calories != null ? (
+                        <div className="text-xs text-muted-foreground tabular-nums" dir="ltr">
+                          {Math.round(consumedCaloriesBySlot[slot.meal_slot_id] ?? 0)}/
+                          {Math.round(slot.target_calories)} kcal
+                          {slot.target_protein != null ? (
+                            <> · {Math.round(slot.target_protein)}g P</>
+                          ) : null}
+                          {slot.target_carbs != null ? (
+                            <> · {Math.round(slot.target_carbs)}g C</>
+                          ) : null}
+                          {slot.target_fat != null ? <> · {Math.round(slot.target_fat)}g F</> : null}
+                        </div>
+                      ) : null}
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-4">

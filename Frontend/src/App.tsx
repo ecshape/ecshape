@@ -96,7 +96,7 @@ const AppRoutes = () => {
       <Route 
         path="/client/:clientId" 
         element={
-          <ProtectedRoute requiredRole="TRAINER">
+          <ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}>
             <ClientProfile />
           </ProtectedRoute>
         } 
@@ -144,7 +144,7 @@ const AppRoutes = () => {
       <Route
         path="/trainer-weekly-meals-v3"
         element={
-          <ProtectedRoute requiredRole="TRAINER">
+          <ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}>
             <TrainerWeeklyMealsPlannerV3 />
           </ProtectedRoute>
         }

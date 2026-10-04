@@ -10,6 +10,7 @@ import Layout from "../components/Layout";
 import { API_BASE_URL } from "../config/api";
 import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
+import MacroRingChart from "../components/meals/MacroRingChart";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type {
@@ -980,7 +981,15 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
                   <span>{t("meals.macros", "Macros")}</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-center">
+                  <MacroRingChart
+                    calories={{ percent: clampToPercent(totals.percentages.calories), colorClassName: "stroke-blue-500" }}
+                    protein={{ percent: clampToPercent(totals.percentages.protein), colorClassName: "stroke-emerald-500" }}
+                    carbs={{ percent: clampToPercent(totals.percentages.carbs), colorClassName: "stroke-orange-500" }}
+                    fat={{ percent: clampToPercent(totals.percentages.fat), colorClassName: "stroke-fuchsia-500" }}
+                  />
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="rounded-lg border bg-background/60 p-3">
                     <div className="text-sm text-muted-foreground">{t("meals.calories", "Calories")}</div>

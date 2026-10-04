@@ -53,6 +53,9 @@ class V3FoodOption(BaseModel):
 
     notes: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
 
 # ============ Trainer plan request ============
 
@@ -111,6 +114,9 @@ class V3CompleteMacroCategoryResponse(V3CompleteMacroCategoryCreate):
     id: Optional[int] = None
     meal_slot_id: Optional[int] = None
     created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 
 class V3MealSlotResponse(BaseModel):

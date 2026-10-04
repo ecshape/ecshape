@@ -289,6 +289,10 @@ def list_plans(
             query = query.filter(MealPlanV2.client_id == client_id)
         else:
             query = query.filter(MealPlanV2.trainer_id == current_user.id)
+    elif current_user.role == UserRole.ADMIN and client_id:
+        # Without this, an admin's client_id filter was silently dropped and every
+        # plan in the database came back instead of just this client's.
+        query = query.filter(MealPlanV2.client_id == client_id)
 
     if active_only:
         query = query.filter(MealPlanV2.is_active == True)

@@ -3,9 +3,11 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotFound from '../pages/NotFound';
 
+type Role = 'ADMIN' | 'TRAINER' | 'CLIENT';
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'ADMIN' | 'TRAINER' | 'CLIENT';
+  requiredRole?: Role | Role[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
@@ -30,8 +32,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   }
 
   // If role is required and user doesn't have it, show 404 instead of redirect
-  if (requiredRole && user?.role !== requiredRole) {
-    return <NotFound />;
+  if (requiredRole) {
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!user?.role || !allowedRoles.includes(user.role as Role)) {
+      return <NotFound />;
+    }
   }
 
   return <>{children}</>;

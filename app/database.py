@@ -154,6 +154,13 @@ else:
     SQLALCHEMY_DATABASE_URL = DATABASE_URL_ENV or f"sqlite:///{DATABASE_PATH}"
     logger.info(f"Development mode: Database URL: {SQLALCHEMY_DATABASE_URL[:50]}...")
 
+# Normalize psycopg3-style URLs to psycopg2, since only psycopg2-binary is installed
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql+psycopg://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
+        "postgresql+psycopg://", "postgresql+psycopg2://", 1
+    )
+    logger.info("Rewrote postgresql+psycopg:// URL to use psycopg2 driver")
+
 # Log final DATABASE_URL being used (with password masked)
 logger.info("=" * 60)
 logger.info("FINAL DATABASE CONFIGURATION")

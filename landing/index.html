@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ECshape — אליאור קרמיזי | מאמן כושר אישי</title>
+<!-- Google tag (gtag.js) — loaded only after cookie consent is granted -->
+<script>
+  function loadGoogleAnalytics(){
+    if(window.__gaLoaded) return;
+    window.__gaLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-6QJ1G81SGP';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', 'G-6QJ1G81SGP');
+  }
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -341,6 +357,17 @@ footer{padding:30px 56px;border-top:1px solid var(--border);background:var(--bla
   .story-values{grid-template-columns:1fr}
   .wa-mosaic{grid-template-columns:1fr 1fr}
 }
+
+.cookie-banner{position:fixed;left:0;right:0;bottom:0;z-index:500;background:var(--black3);border-top:1px solid var(--border);padding:18px 56px;display:none;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;box-shadow:0 -8px 30px rgba(0,0,0,.35)}
+.cookie-banner.show{display:flex}
+.cookie-banner p{color:var(--wd);font-size:.88rem;line-height:1.6;margin:0;flex:1 1 320px}
+.cookie-banner .cb-actions{display:flex;gap:12px;flex-shrink:0}
+.cookie-banner button{font-family:'Heebo',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.04em;padding:10px 22px;border-radius:5px;border:none;cursor:pointer;transition:all .25s}
+.cb-accept{background:var(--orange);color:#fff;box-shadow:0 4px 18px rgba(232,104,42,.3)}
+.cb-accept:hover{background:var(--orange2)}
+.cb-decline{background:transparent;color:var(--wd);border:1px solid var(--border)}
+.cb-decline:hover{color:var(--white);border-color:var(--orange)}
+@media (max-width:600px){.cookie-banner{padding:16px 20px}}
 </style>
 </head>
 <body>
@@ -697,6 +724,35 @@ footer{padding:30px 56px;border-top:1px solid var(--border);background:var(--bla
   <span class="f-copy">© 2026 ECshape · אליאור קרמיזי. כל הזכויות שמורות.</span>
   <div class="f-logo"><img src="photos/logo.png" alt="ECshape"></div>
 </footer>
+
+<div class="cookie-banner" id="cookieBanner">
+  <p>האתר משתמש בעוגיות (cookies) לצורכי אנליטיקס כדי לשפר את החוויה שלך. ניתן לאשר או לדחות.</p>
+  <div class="cb-actions">
+    <button class="cb-decline" id="cbDecline">דחה</button>
+    <button class="cb-accept" id="cbAccept">מאשר</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var banner = document.getElementById('cookieBanner');
+  var consent = localStorage.getItem('cookie_consent');
+  if(consent === 'granted'){
+    loadGoogleAnalytics();
+  } else if(consent !== 'denied'){
+    banner.classList.add('show');
+  }
+  document.getElementById('cbAccept').addEventListener('click', function(){
+    localStorage.setItem('cookie_consent', 'granted');
+    banner.classList.remove('show');
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cbDecline').addEventListener('click', function(){
+    localStorage.setItem('cookie_consent', 'denied');
+    banner.classList.remove('show');
+  });
+})();
+</script>
 
 <script>
 // Mobile menu

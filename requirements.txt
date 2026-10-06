@@ -1,7 +1,7 @@
 # CORE DEPENDENCIES - MINIMAL SET FOR OPTIMAL PERFORMANCE
 fastapi>=0.110.0
 uvicorn[standard]>=0.27.0  # Standard includes uvloop for better performance
-sqlalchemy>=2.0.25
+sqlalchemy>=2.0.25,<2.1  # psycopg2 is the default driver in 2.0.x
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 bcrypt>=3.2.0,<4.0.0

@@ -155,11 +155,11 @@ else:
     logger.info(f"Development mode: Database URL: {SQLALCHEMY_DATABASE_URL[:50]}...")
 
 # Force the psycopg2 driver (the only PostgreSQL driver in requirements.txt).
-# Without this, a URL like postgresql+psycopg:// makes SQLAlchemy import psycopg (v3), which is not installed.
-if SQLALCHEMY_DATABASE_URL.startswith("postgresql+psycopg://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
-        "postgresql+psycopg://", "postgresql+psycopg2://", 1
-    )
+# SQLAlchemy 2.1+ may pick psycopg (v3) for bare postgresql:// URLs, which is not installed.
+for _prefix in ("postgresql+psycopg://", "postgresql://", "postgres://"):
+    if SQLALCHEMY_DATABASE_URL.startswith(_prefix):
+        SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://" + SQLALCHEMY_DATABASE_URL[len(_prefix):]
+        break
 
 # Log final DATABASE_URL being used (with password masked)
 logger.info("=" * 60)

@@ -16,6 +16,22 @@ export interface V3FoodOption {
   macro_type?: MacroType;
 }
 
+export interface V3FoodCatalogItem extends V3FoodOption {
+  id: number;
+  is_public?: boolean | null;
+  created_by?: number | null;
+}
+
+export interface V3FavoriteFood {
+  id: number;
+  client_id: number;
+  meal_bank_id: number;
+  /** 0=breakfast, 1=lunch, 2=dinner; keyed by slot order so favorites survive plan re-saves. */
+  meal_slot_order_index: number;
+  created_by: number;
+  created_at: string;
+}
+
 export interface V3ClientMealChoiceResponse {
   id: number;
   client_id: number;
@@ -147,3 +163,26 @@ export interface V3MealLogCreateRequest {
   photo_path?: string | null;
 }
 
+
+export interface V3NutritionProfile {
+  id: number;
+  client_id?: number | null;
+  email?: string | null;
+  full_name?: string | null;
+  food_preferences?: string | null;
+  training_times?: string | null;
+  extra_foods?: string | null;
+  must_keep_foods?: string | null;
+  raw_answers?: string | null;
+  source: "google_form" | "manual";
+  submitted_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface V3VariantGenerateSlotResult {
+  slot_id: number;
+  slot_name: string;
+  status: "generated" | "skipped" | "failed";
+  reason?: string;
+  variants?: { variant_id: number; variant_index: number; name_hebrew: string; fit_status: string }[];
+}

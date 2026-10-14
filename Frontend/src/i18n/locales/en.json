@@ -329,7 +329,45 @@
       "save": "Save targets"
     },
     "favorites": {
-      "saved": "Saved"
+      "saved": "Saved",
+      "title": "Favorite foods",
+      "subtitle": "Pick the foods you like to eat at each meal",
+      "button": "Favorites",
+      "selected": "Selected",
+      "empty": "No favorites yet for this meal",
+      "remove": "Remove",
+      "search": "Search foods",
+      "noResults": "No foods found",
+      "perPortion": "per portion",
+      "per100g": "per 100g",
+      "loadError": "Could not load favorites",
+      "saveError": "Could not save"
+    },
+    "questionnaire": {
+      "title": "Nutrition questionnaire",
+      "trainingTimes": "Training times",
+      "foodPreferences": "Food preferences",
+      "mustKeepFoods": "Foods they won't give up",
+      "extraFoods": "Extra foods (not in the list)",
+      "fromForm": "From Google Form",
+      "fillIn": "Fill in",
+      "empty": "No questionnaire yet. It will appear here when the client submits the Google Form, or you can fill it in.",
+      "extraFoodsHint": "Add the extra foods to the food bank with their macros, then select them as favorites so Claude can use them.",
+      "openFoodBank": "Food bank",
+      "generate": "Generate menu with Claude",
+      "generating": "Generating...",
+      "generateError": "Menu generation failed",
+      "noPlan": "The client has no active meal plan",
+      "noSlots": "The plan has no meals",
+      "approximate": "Approximate fit",
+      "skippedNoFavorites": "Skipped: no favorite foods for this meal",
+      "slotFailed": "Failed",
+      "unmatchedTitle": "Questionnaires waiting for a client",
+      "unmatchedSubtitle": "The email in these form responses doesn't match any client. Choose the right client to link each one.",
+      "chooseClient": "Choose client",
+      "link": "Link",
+      "linked": "Questionnaire linked",
+      "alreadyHasProfile": "This client already has a questionnaire"
     }
   },
   "training": {

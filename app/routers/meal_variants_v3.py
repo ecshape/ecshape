@@ -6,14 +6,16 @@ Handles favorite foods, variant generation (AI + fallback), and variant selectio
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_
 
 from app.database import get_db
 from app.auth.utils import get_current_user
@@ -30,6 +32,7 @@ from app.models.meal_variants import (
     ClientFavoriteFood,
     MealVariant,
     MealVariantFood,
+    ClientNutritionProfile,
 )
 from app.schemas.meal_variants_v3 import (
     FavoriteFoodCreate,
@@ -40,6 +43,10 @@ from app.schemas.meal_variants_v3 import (
     VariantGenerateRequest,
     VariantSelectRequest,
     VariantSelectResponse,
+    NutritionProfileUpdate,
+    NutritionProfileResponse,
+    QuestionnaireWebhookPayload,
+    QuestionnaireLinkRequest,
 )
 from app.services.meal_tracking_v3_service import (
     _parse_v3_date_to_choice_datetime,
@@ -349,6 +356,7 @@ def _generate_variants_for_slot(
     meal_slot: MealSlot,
     favorite_foods: List[MealBank],
     force: bool = False,
+    client_profile: Optional[dict] = None,
 ) -> List[MealVariant]:
     """
     Generate 3 variants for a meal slot, replacing any that already exist.
@@ -378,8 +386,9 @@ def _generate_variants_for_slot(
             "carbs": budget.carbs,
             "fat": budget.fat,
         },
+        "client_profile": client_profile or {},
         "algo_version": "v1",
-    }, sort_keys=True)
+    }, sort_keys=True, ensure_ascii=False)
     source_hash = hashlib.sha256(source_str.encode()).hexdigest()
 
     # Check cache
@@ -407,6 +416,7 @@ def _generate_variants_for_slot(
             carbs_target=budget.carbs,
             fat_target=budget.fat,
             slot_name=meal_slot.name,
+            client_profile=client_profile,
         )
     except Exception as e:
         logger.error(f"Claude call failed: {e}")
@@ -431,6 +441,7 @@ def _generate_variants_for_slot(
                 fat_target=budget.fat,
                 slot_name=meal_slot.name,
                 error_message=error,
+                client_profile=client_profile,
             )
             if retry_set:
                 validated_retry, retry_error = validate_and_clamp_variants(
@@ -629,25 +640,23 @@ def generate_variants(
     db: Session = Depends(get_db),
 ):
     """
-    Generate variants for a client's meal plan.
+    Generate variants for a client's meal plan. Coaches only: clients view and select
+    variants but never trigger generation (each run is a paid Claude call).
     Optionally specify meal_slot_id to generate only one slot.
     """
-    if current_user.role == UserRole.CLIENT:
-        if request.client_id and request.client_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot generate for other clients"
-            )
-        client_id = current_user.id
-    else:
-        _require_coach(current_user)
-        if not request.client_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="client_id required"
-            )
-        client_id = request.client_id
-        _assert_can_manage_client(db, current_user, client_id)
+    _require_coach(current_user)
+    if not request.client_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="client_id required"
+        )
+    client_id = request.client_id
+    _assert_can_manage_client(db, current_user, client_id)
+
+    profile = db.query(ClientNutritionProfile).filter(
+        ClientNutritionProfile.client_id == client_id
+    ).first()
+    client_profile = _profile_for_ai(profile)
 
     # Get active plan
     plan = db.query(MealPlanV2).filter(
@@ -688,7 +697,7 @@ def generate_variants(
 
         # Generate
         slot_variants = _generate_variants_for_slot(
-            db, meal_slot, favorites, force=request.force
+            db, meal_slot, favorites, force=request.force, client_profile=client_profile
         )
 
         if slot_variants:
@@ -845,3 +854,146 @@ def select_variant(
         variant_id=request.variant_id,
         daily_macros=daily_macros,
     )
+
+
+# ===== Nutrition questionnaire =====
+
+_AI_PROFILE_FIELDS = ("food_preferences", "training_times", "must_keep_foods", "extra_foods")
+
+
+def _profile_for_ai(profile: Optional[ClientNutritionProfile]) -> Optional[dict]:
+    if not profile:
+        return None
+    data = {
+        field: getattr(profile, field).strip()
+        for field in _AI_PROFILE_FIELDS
+        if getattr(profile, field) and getattr(profile, field).strip()
+    }
+    return data or None
+
+
+def _client_by_email(db: Session, email: str) -> Optional[User]:
+    return (
+        db.query(User)
+        .filter(func.lower(User.email) == email, User.role == UserRole.CLIENT)
+        .first()
+    )
+
+
+@router.post("/questionnaire/webhook", response_model=NutritionProfileResponse)
+def questionnaire_webhook(
+    payload: QuestionnaireWebhookPayload,
+    x_webhook_secret: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """
+    Receives a Google Form response from Apps Script. Authenticated by a shared secret
+    header instead of a user login. Matches the client by email; unmatched responses are
+    stored with client_id=NULL for a coach to link.
+    """
+    expected = os.getenv("QUESTIONNAIRE_WEBHOOK_SECRET")
+    if not expected:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Questionnaire import is not configured")
+    if not x_webhook_secret or not hmac.compare_digest(x_webhook_secret, expected):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook secret")
+
+    email = payload.email.strip().lower()
+    client = _client_by_email(db, email)
+
+    profile = None
+    if client:
+        profile = db.query(ClientNutritionProfile).filter(ClientNutritionProfile.client_id == client.id).first()
+    if not profile:
+        profile = db.query(ClientNutritionProfile).filter(
+            ClientNutritionProfile.client_id.is_(None),
+            ClientNutritionProfile.email == email,
+        ).first()
+    if not profile:
+        profile = ClientNutritionProfile()
+        db.add(profile)
+
+    profile.client_id = client.id if client else None
+    profile.email = email
+    for field, value in payload.model_dump(exclude={"email", "raw_answers"}).items():
+        setattr(profile, field, value)
+    profile.raw_answers = json.dumps(payload.raw_answers, ensure_ascii=False) if payload.raw_answers else None
+    profile.source = "google_form"
+    profile.submitted_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(profile)
+    logger.info(f"Questionnaire received for {'client ' + str(client.id) if client else 'unmatched email'}")
+    return NutritionProfileResponse.model_validate(profile)
+
+
+@router.get("/questionnaire", response_model=Optional[NutritionProfileResponse])
+def get_questionnaire(
+    client_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_coach(current_user)
+    _assert_can_manage_client(db, current_user, client_id)
+    profile = db.query(ClientNutritionProfile).filter(ClientNutritionProfile.client_id == client_id).first()
+    return NutritionProfileResponse.model_validate(profile) if profile else None
+
+
+@router.put("/questionnaire", response_model=NutritionProfileResponse)
+def update_questionnaire(
+    client_id: int,
+    body: NutritionProfileUpdate,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_coach(current_user)
+    client = _assert_can_manage_client(db, current_user, client_id)
+    profile = db.query(ClientNutritionProfile).filter(ClientNutritionProfile.client_id == client_id).first()
+    if not profile:
+        profile = ClientNutritionProfile(client_id=client_id, email=(client.email or "").lower(), source="manual")
+        db.add(profile)
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(profile, field, value)
+    db.commit()
+    db.refresh(profile)
+    return NutritionProfileResponse.model_validate(profile)
+
+
+@router.get("/questionnaire/unmatched", response_model=List[NutritionProfileResponse])
+def list_unmatched_questionnaires(
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_coach(current_user)
+    profiles = (
+        db.query(ClientNutritionProfile)
+        .filter(ClientNutritionProfile.client_id.is_(None))
+        .order_by(ClientNutritionProfile.submitted_at.desc())
+        .all()
+    )
+    return [NutritionProfileResponse.model_validate(p) for p in profiles]
+
+
+@router.post("/questionnaire/{profile_id}/link", response_model=NutritionProfileResponse)
+def link_questionnaire(
+    profile_id: int,
+    body: QuestionnaireLinkRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_coach(current_user)
+    _assert_can_manage_client(db, current_user, body.client_id)
+    profile = db.query(ClientNutritionProfile).filter(
+        ClientNutritionProfile.id == profile_id,
+        ClientNutritionProfile.client_id.is_(None),
+    ).first()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unmatched questionnaire not found")
+    if db.query(ClientNutritionProfile).filter(ClientNutritionProfile.client_id == body.client_id).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This client already has a questionnaire; edit it instead",
+        )
+    profile.client_id = body.client_id
+    db.commit()
+    db.refresh(profile)
+    return NutritionProfileResponse.model_validate(profile)

@@ -15,7 +15,8 @@ from app.models.check_in import DailyCheckIn
 from app.models.meal_variants import (
     ClientFavoriteFood,
     MealVariant,
-    MealVariantFood
+    MealVariantFood,
+    ClientNutritionProfile,
 )
 
 # New meal and workout system models
@@ -80,6 +81,7 @@ __all__ = [
     "ClientFavoriteFood",
     "MealVariant",
     "MealVariantFood",
+    "ClientNutritionProfile",
     "NewWorkoutPlan",
     "WorkoutDay",
     "NewWorkoutExercise",

@@ -83,6 +83,11 @@ Rules:
    - For `per_100g` foods: bands in grams (e.g., 50–150)
 6. Variant names in Hebrew only, ≤40 chars, style "בוקר - כריך" (meal type - food).
 7. Call the submit_meal_variants tool exactly once with your answer.
+8. If a `client_profile` is provided, use it (it is the client's own questionnaire, often in Hebrew):
+   - `must_keep_foods`: foods the client won't give up. Include any of them that appear in the provided list in at least one variant.
+   - `food_preferences`: respect stated likes and dislikes when choosing combinations.
+   - `training_times`: for the meal closest to training, favor carb-dominant foods and a lighter fat portion.
+   - `extra_foods`: context only. These foods are NOT in the list, so never reference them by id.
 
 For each variant:
 - Focus on realistic portion ranges that a client would actually eat.
@@ -136,6 +141,7 @@ def _build_payload(
     carbs_target: float,
     fat_target: float,
     slot_name: str,
+    client_profile: Optional[dict] = None,
 ) -> dict:
     foods_data = []
     for food in favorite_foods:
@@ -146,15 +152,15 @@ def _build_payload(
             "macro_type": food.macro_type.value if hasattr(food.macro_type, 'value') else food.macro_type,
             "measurement_type": food.measurement_type.value if hasattr(food.measurement_type, 'value') else food.measurement_type,
             "per_unit": {
-                "calories": float(food.calories),
-                "protein": float(food.protein),
-                "carbs": float(food.carbs),
-                "fat": float(food.fat),
+                "calories": float(food.calories or 0),
+                "protein": float(food.protein or 0),
+                "carbs": float(food.carbs or 0),
+                "fat": float(food.fat or 0),
             },
             "unit": food.serving_size,
         })
 
-    return {
+    payload = {
         "meal_slot": slot_name,
         "budget": {
             "calories": calories_target,
@@ -164,6 +170,9 @@ def _build_payload(
         },
         "foods": foods_data,
     }
+    if client_profile:
+        payload["client_profile"] = client_profile
+    return payload
 
 
 def compose_variants_with_claude(
@@ -173,13 +182,15 @@ def compose_variants_with_claude(
     carbs_target: float,
     fat_target: float,
     slot_name: str = "meal",
+    client_profile: Optional[dict] = None,
 ) -> Optional[AIVariantSet]:
     """
     Call Claude to compose 3 meal variants. Returns None on any error or missing key;
     caller falls back to the deterministic composer.
     """
     payload = _build_payload(
-        favorite_foods, calories_target, protein_target, carbs_target, fat_target, slot_name
+        favorite_foods, calories_target, protein_target, carbs_target, fat_target, slot_name,
+        client_profile,
     )
     return _call_claude([
         {"role": "user", "content": json.dumps(payload, ensure_ascii=False, sort_keys=True)}
@@ -274,6 +285,7 @@ def retry_with_error(
     fat_target: float,
     slot_name: str,
     error_message: str,
+    client_profile: Optional[dict] = None,
 ) -> Optional[AIVariantSet]:
     """
     Retry Claude call once with the validation error appended as a second user turn.
@@ -281,7 +293,8 @@ def retry_with_error(
     logger.info(f"Retrying Claude call with error context: {error_message}")
 
     payload = _build_payload(
-        favorite_foods, calories_target, protein_target, carbs_target, fat_target, slot_name
+        favorite_foods, calories_target, protein_target, carbs_target, fat_target, slot_name,
+        client_profile,
     )
     return _call_claude([
         {"role": "user", "content": json.dumps(payload, ensure_ascii=False, sort_keys=True)},

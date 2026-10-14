@@ -3,7 +3,7 @@ Schemas for meal variants API
 """
 
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from app.schemas.meal_tracking_v3 import V3DailyMacrosResponse
@@ -124,6 +124,40 @@ class VariantSelectResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class NutritionProfileFields(BaseModel):
+    full_name: Optional[str] = None
+    food_preferences: Optional[str] = None
+    training_times: Optional[str] = None
+    extra_foods: Optional[str] = None
+    must_keep_foods: Optional[str] = None
+
+
+class NutritionProfileUpdate(NutritionProfileFields):
+    pass
+
+
+class NutritionProfileResponse(NutritionProfileFields):
+    id: int
+    client_id: Optional[int] = None
+    email: Optional[str] = None
+    raw_answers: Optional[str] = None
+    source: str = "manual"
+    submitted_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class QuestionnaireWebhookPayload(NutritionProfileFields):
+    email: str
+    raw_answers: Optional[Dict[str, Any]] = None
+
+
+class QuestionnaireLinkRequest(BaseModel):
+    client_id: int
 
 
 # AI Service schemas (internal)

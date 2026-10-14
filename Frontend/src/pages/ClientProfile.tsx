@@ -32,6 +32,7 @@ import { ClientCheckInSummary } from '../components/ClientCheckInSummary';
 import { ClientCheckInHistory } from '../components/ClientCheckInHistory';
 import { ClientCheckInDetail } from '../components/ClientCheckInDetail';
 import ClientExerciseHistoryMatrix from '../components/ClientExerciseHistoryMatrix';
+import NutritionProfileCard from '../components/meals/NutritionProfileCard';
 
 interface Client {
   id: number;
@@ -894,6 +895,8 @@ const ClientProfile = () => {
                 </span>
               </Button>
             </div>
+
+            {clientId && <NutritionProfileCard clientId={clientId} />}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {activeMealPlan ? (

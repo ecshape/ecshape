@@ -34,6 +34,7 @@ import ChatPage from './pages/ChatPage';
 import MealsPageV3 from './pages/MealsPageV3';
 import SandboxMealsV3 from './pages/SandboxMealsV3';
 import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
+import ClientFavoritesPage from './pages/ClientFavoritesPage';
 import './i18n/config';
 const queryClient = new QueryClient();
 
@@ -101,8 +102,16 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/client/:clientId/edit" 
+      <Route
+        path="/client/:clientId/favorites"
+        element={
+          <ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}>
+            <ClientFavoritesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/client/:clientId/edit"
         element={
           <ProtectedRoute requiredRole="TRAINER">
             <EditClient />
@@ -188,6 +197,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MealsPageV3 />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/meals/favorites"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientFavoritesPage />
           </ProtectedRoute>
         }
       />

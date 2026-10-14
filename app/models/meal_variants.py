@@ -84,3 +84,22 @@ class MealVariantFood(Base):
 
     # Relationships
     meal_variant = relationship("MealVariant", back_populates="foods")
+
+
+class ClientNutritionProfile(Base):
+    """Client's nutrition questionnaire answers (Google Form import or trainer entry)."""
+    __tablename__ = "client_nutrition_profiles_v3"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # Nullable: a form response whose email matches no client is kept until a coach links it.
+    client_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, unique=True, index=True)
+    email = Column(String, index=True)
+    full_name = Column(String)
+    food_preferences = Column(Text)
+    training_times = Column(Text)
+    extra_foods = Column(Text)
+    must_keep_foods = Column(Text)
+    raw_answers = Column(Text)  # JSON of the full form response, so new form questions aren't lost
+    source = Column(String, default="manual")  # google_form|manual
+    submitted_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

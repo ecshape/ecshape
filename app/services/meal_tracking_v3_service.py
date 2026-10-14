@@ -25,11 +25,13 @@ from app.models.meal_system import (
     MacroType,
     MeasurementType,
 )
+from app.models.meal_variants import MealVariant
 from app.schemas.meal_system import ClientMealChoiceResponse
 from app.schemas.meal_tracking_v3 import (
     V3DailyMacrosResponse,
     V3MacroTotals,
     V3MealSlotView,
+    V3MealVariantView,
     V3MacroCategoryView,
     V3FoodOption,
     V3ChosenFood,
@@ -51,6 +53,14 @@ def _parse_v3_date_to_day(date_str: str) -> datetime:
 
     parsed_day = datetime.fromisoformat(date_str)
     return parsed_day.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _parse_v3_date_to_choice_datetime(date_str: str) -> datetime:
+    """
+    Store a choice at mid-day UTC so it reliably belongs to the target calendar date.
+    """
+    day = _parse_v3_date_to_day(date_str)
+    return day.replace(hour=12, minute=0, second=0, microsecond=0)
 
 
 def _parse_quantity_value(quantity: Optional[str]) -> float:
@@ -229,6 +239,32 @@ def build_v3_day_slots_view(
         if choice.food_option_id and choice.food_option_id in plan_foods_by_id:
             latest_choice_by_food_id[choice.food_option_id] = choice
 
+    variants_by_slot: Dict[int, List[MealVariant]] = {}
+    slot_ids = [slot.id for slot in plan.meal_slots]
+    if slot_ids:
+        variants = (
+            db.query(MealVariant)
+            .options(joinedload(MealVariant.foods))
+            .filter(MealVariant.meal_slot_id.in_(slot_ids))
+            .order_by(MealVariant.variant_index)
+            .all()
+        )
+        for variant in variants:
+            variants_by_slot.setdefault(variant.meal_slot_id, []).append(variant)
+
+    # A selected variant is recognised by the choices it wrote (one per variant food).
+    variant_id_by_food_id = {
+        food.id: variant.id
+        for slot_variants in variants_by_slot.values()
+        for variant in slot_variants
+        for food in variant.foods
+    }
+    selected_variant_by_slot: Dict[int, int] = {}
+    for choice in choices:
+        variant_id = variant_id_by_food_id.get(choice.meal_variant_food_id) if choice.meal_variant_food_id else None
+        if variant_id and choice.meal_slot_id is not None:
+            selected_variant_by_slot[choice.meal_slot_id] = variant_id
+
     slot_views: List[V3MealSlotView] = []
 
     for slot in plan.meal_slots:
@@ -278,7 +314,13 @@ def build_v3_day_slots_view(
                 time_suggestion=slot.time_suggestion,
                 notes=slot.notes,
                 order_index=slot.order_index,
+                target_calories=slot.target_calories,
+                target_protein=slot.target_protein,
+                target_carbs=slot.target_carbs,
+                target_fat=slot.target_fat,
                 categories=categories,
+                variants=[V3MealVariantView.model_validate(v) for v in variants_by_slot.get(slot.id, [])],
+                selected_variant_id=selected_variant_by_slot.get(slot.id),
             )
         )
 

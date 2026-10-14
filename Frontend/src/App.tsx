@@ -34,27 +34,21 @@ import ChatPage from './pages/ChatPage';
 import MealsPageV3 from './pages/MealsPageV3';
 import SandboxMealsV3 from './pages/SandboxMealsV3';
 import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
-import ShaderAnimationDemo from './pages/ShaderAnimationDemo';
+import ClientFavoritesPage from './pages/ClientFavoritesPage';
 import './i18n/config';
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Demo routes */}
-      <Route
-        path="/shader-demo"
-        element={<ShaderAnimationDemo />}
-      />
-
       {/* Public route - Login page */}
-      <Route
-        path="/login"
+      <Route 
+        path="/login" 
         element={
           <PublicRoute>
             <Login />
           </PublicRoute>
-        }
+        } 
       />
 
       {/* Admin routes */}
@@ -103,13 +97,21 @@ const AppRoutes = () => {
       <Route 
         path="/client/:clientId" 
         element={
-          <ProtectedRoute requiredRole="TRAINER">
+          <ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}>
             <ClientProfile />
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/client/:clientId/edit" 
+      <Route
+        path="/client/:clientId/favorites"
+        element={
+          <ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}>
+            <ClientFavoritesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/client/:clientId/edit"
         element={
           <ProtectedRoute requiredRole="TRAINER">
             <EditClient />
@@ -151,7 +153,7 @@ const AppRoutes = () => {
       <Route
         path="/trainer-weekly-meals-v3"
         element={
-          <ProtectedRoute requiredRole="TRAINER">
+          <ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}>
             <TrainerWeeklyMealsPlannerV3 />
           </ProtectedRoute>
         }
@@ -195,6 +197,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MealsPageV3 />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/meals/favorites"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientFavoritesPage />
           </ProtectedRoute>
         }
       />

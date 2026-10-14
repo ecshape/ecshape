@@ -193,7 +193,12 @@ class ClientMealChoice(Base):
     custom_protein = Column(Float)  # Total protein in grams
     custom_carbs = Column(Float)  # Total carbs in grams
     custom_fat = Column(Float)  # Total fat in grams
-    
+
+    # Links a variant-sourced choice to its MealVariantFood for UI discrimination.
+    # Deliberately not a ForeignKey: added via raw ALTER TABLE in
+    # meal_tracking_v3_migration.py since SQLite cannot add FKs post-hoc.
+    meal_variant_food_id = Column(Integer, nullable=True, index=True)
+
     # Relationships
     food_option = relationship("FoodOption", back_populates="client_choices")
 

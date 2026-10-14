@@ -160,7 +160,7 @@ except Exception as e:
 
 try:
     logger.info("Importing router modules...")
-    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, workout_system, muscle_groups, workout_splits, chat, check_in
+    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, workout_system, muscle_groups, workout_splits, chat, check_in
     logger.info("✅ Router modules imported successfully")
     logger.info("📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications")
 except Exception as e:
@@ -244,7 +244,7 @@ async def lifespan(app: FastAPI):
 
         logger.info("Running meal tracking v3 migration...")
         from app.migrations.meal_tracking_v3_migration import run_meal_tracking_v3_migrations
-        run_meal_tracking_v3_migrations()
+        run_meal_tracking_v3_migrations(engine)
         logger.info("✅ Meal tracking v3 migration completed")
         
         logger.info("Running progress measurements migration...")
@@ -757,7 +757,11 @@ try:
     logger.info("Including meal_tracking_v3_mock router (v3 mock)...")
     app.include_router(meal_tracking_v3_mock.router, prefix="/api/v3/meals-mock", tags=["Meal Tracking V3 Mock"])
     logger.info("✅ Meal Tracking V3 Mock router included")
-    
+
+    logger.info("Including meal_variants_v3 router (variants)...")
+    app.include_router(meal_variants_v3.router, prefix="/api/v3/meals", tags=["Meal Variants V3"])
+    logger.info("✅ Meal Variants V3 router included")
+
     logger.info("Including workout_system router (v2)...")
     app.include_router(workout_system.router, prefix="/api/v2/workouts", tags=["Workout System V2"])
     logger.info("✅ Workout system V2 router included")

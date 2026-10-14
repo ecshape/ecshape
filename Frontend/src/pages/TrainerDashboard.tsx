@@ -19,6 +19,7 @@ import { API_BASE_URL } from '../config/api';
 import ClientWeightProgress from '../components/ClientWeightProgress';
 import { useTranslation } from 'react-i18next';
 import { CheckInStatusBadge } from '../components/CheckInStatusBadge';
+import UnmatchedQuestionnaires from '../components/meals/UnmatchedQuestionnaires';
 
 interface Client {
   id: number;
@@ -211,6 +212,7 @@ const TrainerDashboard = () => {
     <Layout currentPage="dashboard">
       <div className="max-w-5xl mx-auto py-6 md:py-10 px-4">
         <h1 className="text-4xl font-bold mb-10 text-center">{t('trainerDashboard.title')}</h1>
+        <UnmatchedQuestionnaires clients={clients} />
         {/* Stats Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="rounded-xl shadow-xl border border-border bg-muted/90 transition-transform duration-300 animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl">

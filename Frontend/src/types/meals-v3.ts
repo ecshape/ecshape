@@ -16,6 +16,22 @@ export interface V3FoodOption {
   macro_type?: MacroType;
 }
 
+export interface V3FoodCatalogItem extends V3FoodOption {
+  id: number;
+  is_public?: boolean | null;
+  created_by?: number | null;
+}
+
+export interface V3FavoriteFood {
+  id: number;
+  client_id: number;
+  meal_bank_id: number;
+  /** 0=breakfast, 1=lunch, 2=dinner; keyed by slot order so favorites survive plan re-saves. */
+  meal_slot_order_index: number;
+  created_by: number;
+  created_at: string;
+}
+
 export interface V3ClientMealChoiceResponse {
   id: number;
   client_id: number;
@@ -32,6 +48,8 @@ export interface V3ClientMealChoiceResponse {
   custom_protein?: number | null;
   custom_carbs?: number | null;
   custom_fat?: number | null;
+  /** Set when the row was written by choosing a meal option. */
+  meal_variant_food_id?: number | null;
 }
 
 export interface V3MealCompletionStatusResponse {
@@ -92,7 +110,67 @@ export interface V3MealSlotView {
   time_suggestion?: string | null;
   notes?: string | null;
   order_index: number;
+  target_calories?: number | null;
+  target_protein?: number | null;
+  target_carbs?: number | null;
+  target_fat?: number | null;
   categories: V3MacroCategoryView[];
+  variants?: V3MealVariantView[];
+  selected_variant_id?: number | null;
+}
+
+export type V3VariantFitStatus = "ok" | "approximate" | "infeasible";
+
+export interface V3MealVariantFoodView {
+  id: number;
+  name: string;
+  name_hebrew: string;
+  measurement_type: MeasurementType;
+  quantity_label: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface V3MealVariantView {
+  id: number;
+  variant_index: number;
+  name_hebrew: string;
+  computed_calories: number;
+  computed_protein: number;
+  computed_carbs: number;
+  computed_fat: number;
+  fit_status: V3VariantFitStatus;
+  note_hebrew?: string | null;
+  generated_by: "ai" | "fallback";
+  foods: V3MealVariantFoodView[];
+}
+
+export interface V3MealSlotTargets {
+  /** Identifies the slot these targets belong to, so matching never relies on position. */
+  meal_slot_id?: number | null;
+  target_calories: number;
+  target_protein: number;
+  target_carbs: number;
+  target_fat: number;
+}
+
+export interface V3DailyTargetsPayload {
+  total_calories: number;
+  protein_target: number;
+  carb_target: number;
+  fat_target: number;
+  meal_targets?: V3MealSlotTargets[];
+}
+
+export interface V3DailyTargetsResponse {
+  total_calories: number;
+  protein_target: number;
+  carb_target: number;
+  fat_target: number;
+  drift: number;
+  meal_targets: V3MealSlotTargets[];
 }
 
 export interface V3DayViewResponse {
@@ -119,3 +197,26 @@ export interface V3MealLogCreateRequest {
   photo_path?: string | null;
 }
 
+
+export interface V3NutritionProfile {
+  id: number;
+  client_id?: number | null;
+  email?: string | null;
+  full_name?: string | null;
+  food_preferences?: string | null;
+  training_times?: string | null;
+  extra_foods?: string | null;
+  must_keep_foods?: string | null;
+  raw_answers?: string | null;
+  source: "google_form" | "manual";
+  submitted_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface V3VariantGenerateSlotResult {
+  slot_id: number;
+  slot_name: string;
+  status: "generated" | "skipped" | "failed";
+  reason?: string;
+  variants?: { variant_id: number; variant_index: number; name_hebrew: string; fit_status: string }[];
+}

@@ -240,6 +240,8 @@ class ClientMealChoiceResponse(BaseModel):
     custom_protein: Optional[float] = None
     custom_carbs: Optional[float] = None
     custom_fat: Optional[float] = None
+    # Set when the row was written by selecting a meal variant (UI hint, not an FK)
+    meal_variant_food_id: Optional[int] = None
     
     class Config:
         from_attributes = True

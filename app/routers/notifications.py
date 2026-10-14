@@ -159,9 +159,13 @@ async def get_notification_setting(
             detail="Only trainers can view notification settings",
         )
     client = db.query(User).filter(User.id == client_id).first()
-    if not client or client.trainer_id != current_user.id:
+    if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-    setting = client_notification_setting_service.get_setting(db, current_user.id, client_id)
+    if current_user.role == UserRole.TRAINER and client.trainer_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+    # An admin views/edits settings under the client's own trainer, not their own id.
+    settings_owner_id = client.trainer_id if current_user.role == UserRole.ADMIN else current_user.id
+    setting = client_notification_setting_service.get_setting(db, settings_owner_id, client_id)
     mode = setting.mode if setting else "WEEKLY_DIGEST"
     return ClientNotificationSettingWithClient(
         client_id=client_id,
@@ -184,9 +188,14 @@ async def update_notification_setting(
             detail="Only trainers can update notification settings",
         )
     client = db.query(User).filter(User.id == client_id).first()
-    if not client or client.trainer_id != current_user.id:
+    if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-    return client_notification_setting_service.upsert(db, current_user.id, client_id, body.mode)
+    if current_user.role == UserRole.TRAINER and client.trainer_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+    settings_owner_id = client.trainer_id if current_user.role == UserRole.ADMIN else current_user.id
+    if settings_owner_id is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Client has no assigned trainer")
+    return client_notification_setting_service.upsert(db, settings_owner_id, client_id, body.mode)
 
 
 @router.post("/system")

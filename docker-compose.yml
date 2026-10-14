@@ -36,6 +36,8 @@ services:
       - PORT=8000
       - DATABASE_PATH=/app/data/elior_fitness.db
       - DATABASE_URL=sqlite:////app/data/elior_fitness.db
+      # - ANTHROPIC_API_KEY=  # Optional: add your API key for meal variant AI composition
+      # - QUESTIONNAIRE_WEBHOOK_SECRET=  # Shared secret for the Google Form import webhook
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

@@ -10,7 +10,13 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../config/api";
 import { Trash2, Plus, Search, Save } from "lucide-react";
-import type { MacroType, MeasurementType, V3DayViewResponse, V3FoodOption, V3DailyMacrosResponse, V3MealSlotView } from "../types/meals-v3";
+import MealTargetsEditor from "../components/meals/MealTargetsEditor";
+import type { MacroType, MeasurementType, V3DayViewResponse, V3FoodOption, V3DailyMacrosResponse, V3MealSlotView, V3MealSlotTargets } from "../types/meals-v3";
+
+type MealTargetsState = {
+  daily: { calories: number; protein: number; carbs: number; fat: number };
+  perSlot: V3MealSlotTargets[];
+};
 import { formatDateForAPI } from "../utils/dashboard";
 import type { TFunction } from "i18next";
 
@@ -228,6 +234,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
   const [dayView, setDayView] = useState<V3DayViewResponse | null>(null);
   const [daySummary, setDaySummary] = useState<V3DailyMacrosResponse | null>(null);
+  const [targetsState, setTargetsState] = useState<MealTargetsState | null>(null);
 
   const [proteinCatalog, setProteinCatalog] = useState<V3FoodOption[]>([]);
   const [carbCatalog, setCarbCatalog] = useState<V3FoodOption[]>([]);
@@ -451,6 +458,19 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     [apiSlotsEffective, draftSlots]
   );
 
+  const orderedEditorSlots = useMemo(
+    () =>
+      slotsForEditor.map((slot) => ({
+        meal_slot_id: slot.meal_slot_id,
+        name: (slotCustomNames[slot.meal_slot_id] ?? slot.name).trim() || slot.name,
+        target_calories: slot.target_calories ?? null,
+        target_protein: slot.target_protein ?? null,
+        target_carbs: slot.target_carbs ?? null,
+        target_fat: slot.target_fat ?? null,
+      })),
+    [slotsForEditor, slotCustomNames]
+  );
+
   useEffect(() => {
     if (!clientId || !dayView || loading) return;
     const apiSlots = dayView.slots ?? [];
@@ -658,12 +678,18 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      if (!daySummary) return;
       if (!useV3MockBackend && !token) return;
 
-      const plansPayloadSlots: V3CompleteMealSlotCreate[] = slotsForEditor
-        .slice()
-        .sort((a, b) => a.order_index - b.order_index)
+      const orderedSlots = slotsForEditor.slice().sort((a, b) => a.order_index - b.order_index);
+      // Match target rows by slot id. Position would silently attach one meal's budget to
+      // another whenever the editor's rows are empty or stale relative to the slot list.
+      const targetsBySlotId = new Map(
+        (targetsState?.perSlot ?? [])
+          .filter((row) => row.meal_slot_id != null)
+          .map((row) => [row.meal_slot_id as number, row])
+      );
+
+      const plansPayloadSlots: V3CompleteMealSlotCreate[] = orderedSlots
         .map((slot) => {
           const slotPlan = mealSlotPlansById[slot.meal_slot_id];
           if (!slotPlan) {
@@ -723,14 +749,15 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
           };
 
           const displayName = (slotCustomNames[slot.meal_slot_id] ?? slot.name).trim();
+          const slotTargets = targetsBySlotId.get(slot.meal_slot_id);
           return {
             name: displayName || t("meals.weeklyMeals.unnamedMeal", "Meal"),
             time_suggestion: slot.time_suggestion ?? null,
             notes: slot.notes ?? null,
-            target_calories: null,
-            target_protein: null,
-            target_carbs: null,
-            target_fat: null,
+            target_calories: slotTargets?.target_calories ?? slot.target_calories ?? null,
+            target_protein: slotTargets?.target_protein ?? slot.target_protein ?? null,
+            target_carbs: slotTargets?.target_carbs ?? slot.target_carbs ?? null,
+            target_fat: slotTargets?.target_fat ?? slot.target_fat ?? null,
             macro_categories: ["protein", "carb", "fat"].map((m) => slotMacroCreate(m as MacroType)),
           };
         });
@@ -740,10 +767,10 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
         name: t("meals.weeklyMeals.planName", "Client meal plan"),
         description: null,
         number_of_meals: slotsForEditor.length,
-        total_calories: Math.round(daySummary.targets.calories),
-        protein_target: Math.round(daySummary.targets.protein),
-        carb_target: Math.round(daySummary.targets.carbs),
-        fat_target: Math.round(daySummary.targets.fat),
+        total_calories: Math.round(targetsState?.daily.calories ?? daySummary?.targets.calories ?? 0),
+        protein_target: Math.round(targetsState?.daily.protein ?? daySummary?.targets.protein ?? 0),
+        carb_target: Math.round(targetsState?.daily.carbs ?? daySummary?.targets.carbs ?? 0),
+        fat_target: Math.round(targetsState?.daily.fat ?? daySummary?.targets.fat ?? 0),
         start_date: `${planLoadDate}T00:00:00`,
         end_date: null,
         meal_slots: plansPayloadSlots,
@@ -779,6 +806,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     API_BASE_URL,
     clientId,
     daySummary,
+    targetsState,
     fetchDayForWeek,
     slotsForEditor,
     slotCustomNames,
@@ -1119,31 +1147,22 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
             </div>
 
             <div className="col-span-12 xl:col-span-4 space-y-3 order-1 xl:order-2">
-              {daySummary ? (
-                <Card className="rounded-xl">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">{t("meals.weeklyMeals.dailyTargets", "Daily targets")}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t("meals.calories", "Calories")}</span>
-                      <span className="font-semibold tabular-nums">{Math.round(daySummary.targets.calories)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t("meals.protein", "Protein")}</span>
-                      <span className="font-semibold tabular-nums">{Math.round(daySummary.targets.protein)}g</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t("meals.carbs", "Carbs")}</span>
-                      <span className="font-semibold tabular-nums">{Math.round(daySummary.targets.carbs)}g</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t("meals.fats", "Fats")}</span>
-                      <span className="font-semibold tabular-nums">{Math.round(daySummary.targets.fat)}g</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
+              <MealTargetsEditor
+                planId={null}
+                showSave={false}
+                slots={orderedEditorSlots}
+                initialDaily={
+                  daySummary
+                    ? {
+                        calories: daySummary.targets.calories,
+                        protein: daySummary.targets.protein,
+                        carbs: daySummary.targets.carbs,
+                        fat: daySummary.targets.fat,
+                      }
+                    : null
+                }
+                onChange={setTargetsState}
+              />
 
               <Button
                 type="button"

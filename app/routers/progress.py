@@ -193,18 +193,19 @@ async def get_progress_entries(
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get progress entries (trainers can get their clients' entries)"""
+    """Get progress entries (trainers can get their clients' entries, admins can get anyone's)"""
     from app.models.user import User
-    
-    # If trainer, they can query their clients' progress
-    if current_user.role == UserRole.TRAINER and client_id:
+
+    if current_user.role == UserRole.ADMIN and client_id:
+        query_client_id = client_id
+    elif current_user.role == UserRole.TRAINER and client_id:
         # Check if the client belongs to this trainer
         client = db.query(User).filter(User.id == client_id).first()
         if not client or client.trainer_id != current_user.id:
             raise HTTPException(status_code=403, detail="You can only view your clients' progress")
         query_client_id = client_id
     else:
-        # Clients can only see their own progress
+        # Clients can only see their own progress; same for a trainer/admin with no client_id
         query_client_id = current_user.id
     
     entries = db.query(ProgressEntry).filter(

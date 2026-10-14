@@ -806,9 +806,9 @@ def select_variant(
     else:
         _assert_can_manage_client(db, current_user, plan.client_id)
 
-    # Use today's date, stored at 12:00 UTC
+    # The day the client is viewing (defaults to today), stored at 12:00 UTC
     choice_datetime = _parse_v3_date_to_choice_datetime(
-        datetime.now(timezone.utc).date().isoformat()
+        request.date or datetime.now(timezone.utc).date().isoformat()
     )
 
     # Clear the whole calendar day for this slot. The macro rollup reads choices over a

@@ -368,6 +368,12 @@
       "link": "Link",
       "linked": "Questionnaire linked",
       "alreadyHasProfile": "This client already has a questionnaire"
+    },
+    "variants": {
+      "select": "Choose a meal option",
+      "choosePrompt": "Choose one of the options your trainer prepared for this meal",
+      "portions": "portions",
+      "selectError": "Could not choose this option"
     }
   },
   "training": {

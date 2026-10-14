@@ -218,6 +218,38 @@ class V3MacroCategoryView(BaseModel):
     chosen_food: Optional[V3ChosenFood] = None
 
 
+class V3MealVariantFoodView(BaseModel):
+    id: int
+    name: str
+    name_hebrew: str
+    measurement_type: str
+    quantity_label: str
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+
+    class Config:
+        from_attributes = True
+
+
+class V3MealVariantView(BaseModel):
+    id: int
+    variant_index: int
+    name_hebrew: str
+    computed_calories: float
+    computed_protein: float
+    computed_carbs: float
+    computed_fat: float
+    fit_status: str
+    note_hebrew: Optional[str] = None
+    generated_by: str
+    foods: List[V3MealVariantFoodView] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
 class V3MealSlotView(BaseModel):
     meal_slot_id: int
     name: str
@@ -233,6 +265,10 @@ class V3MealSlotView(BaseModel):
     target_fat: Optional[float] = None
 
     categories: List[V3MacroCategoryView] = Field(default_factory=list)
+
+    # Trainer-generated meal options (empty when none were generated for this slot).
+    variants: List[V3MealVariantView] = Field(default_factory=list)
+    selected_variant_id: Optional[int] = None
 
 
 class V3DayViewResponse(BaseModel):

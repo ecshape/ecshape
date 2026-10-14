@@ -48,6 +48,8 @@ export interface V3ClientMealChoiceResponse {
   custom_protein?: number | null;
   custom_carbs?: number | null;
   custom_fat?: number | null;
+  /** Set when the row was written by choosing a meal option. */
+  meal_variant_food_id?: number | null;
 }
 
 export interface V3MealCompletionStatusResponse {
@@ -113,6 +115,36 @@ export interface V3MealSlotView {
   target_carbs?: number | null;
   target_fat?: number | null;
   categories: V3MacroCategoryView[];
+  variants?: V3MealVariantView[];
+  selected_variant_id?: number | null;
+}
+
+export type V3VariantFitStatus = "ok" | "approximate" | "infeasible";
+
+export interface V3MealVariantFoodView {
+  id: number;
+  name: string;
+  name_hebrew: string;
+  measurement_type: MeasurementType;
+  quantity_label: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface V3MealVariantView {
+  id: number;
+  variant_index: number;
+  name_hebrew: string;
+  computed_calories: number;
+  computed_protein: number;
+  computed_carbs: number;
+  computed_fat: number;
+  fit_status: V3VariantFitStatus;
+  note_hebrew?: string | null;
+  generated_by: "ai" | "fallback";
+  foods: V3MealVariantFoodView[];
 }
 
 export interface V3MealSlotTargets {

@@ -114,6 +114,7 @@ class VariantGenerateRequest(BaseModel):
 class VariantSelectRequest(BaseModel):
     variant_id: int
     client_id: Optional[int] = None
+    date: Optional[str] = None  # YYYY-MM-DD; defaults to today (UTC)
 
 
 class VariantSelectResponse(BaseModel):

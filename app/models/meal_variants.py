@@ -58,7 +58,12 @@ class MealVariant(Base):
 
     # Relationships
     meal_slot = relationship("MealSlot")
-    foods = relationship("MealVariantFood", back_populates="meal_variant", cascade="all, delete-orphan")
+    foods = relationship(
+        "MealVariantFood",
+        back_populates="meal_variant",
+        cascade="all, delete-orphan",
+        order_by="MealVariantFood.order_index",
+    )
 
 
 class MealVariantFood(Base):

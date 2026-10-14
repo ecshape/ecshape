@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Layout from "../components/Layout";
 import { API_BASE_URL } from "../config/api";
-import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import MacroRingChart from "../components/meals/MacroRingChart";
 import { useAuth } from "../contexts/AuthContext";
@@ -647,6 +648,137 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
     [accessToken, deselectedMealCategoryKeys, fetchDayView, mode, selectedDate, v3MealsBase, dayView]
   );
 
+  const [selectingVariantSlotId, setSelectingVariantSlotId] = useState<number | null>(null);
+
+  const selectVariant = useCallback(
+    async (slot: V3MealSlotView, variantId: number) => {
+      if (mode !== "real" || !accessToken) return;
+      setSelectingVariantSlotId(slot.meal_slot_id);
+      try {
+        const res = await fetch(`${API_BASE_URL}/v3/meals/variants/select`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ variant_id: variantId, date: selectedDate }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await fetchDayView();
+      } catch {
+        toast({ title: t("meals.variants.selectError", "Could not choose this option"), variant: "destructive" });
+      } finally {
+        setSelectingVariantSlotId(null);
+      }
+    },
+    [accessToken, fetchDayView, mode, selectedDate, t, toast]
+  );
+
+  const deleteChoiceById = useCallback(
+    async (choiceId: number) => {
+      if (mode !== "real" || !accessToken) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/v3/meals/logs/${choiceId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await fetchDayView();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to delete log");
+      }
+    },
+    [accessToken, fetchDayView, mode]
+  );
+
+  const renderVariantOptions = (slot: V3MealSlotView) => {
+    const variants = slot.variants ?? [];
+    const selected = variants.find((v) => v.id === slot.selected_variant_id) ?? null;
+    const isCompleted = Boolean(completedMealSlotIds[slot.meal_slot_id]);
+    const variantFoodName = (f: { name: string; name_hebrew: string }) => (isRtlHe ? f.name_hebrew || f.name : f.name);
+    // Foods the client added by hand on top of the chosen option.
+    const extraChoices = (dayView?.choices ?? []).filter(
+      (c) =>
+        c.meal_slot_id === slot.meal_slot_id &&
+        c.meal_variant_food_id == null &&
+        c.food_option_id == null &&
+        Boolean((c.custom_food_name ?? "").trim())
+    );
+
+    return (
+      <div className="space-y-3">
+        <Select
+          value={selected ? String(selected.id) : ""}
+          onValueChange={(value) => selectVariant(slot, Number(value))}
+          disabled={isCompleted || loading || selectingVariantSlotId === slot.meal_slot_id || mode !== "real"}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={t("meals.variants.select", "Choose a meal option")} />
+          </SelectTrigger>
+          <SelectContent>
+            {variants.map((v) => (
+              <SelectItem key={v.id} value={String(v.id)}>
+                {v.name_hebrew} · <span dir="ltr">{Math.round(v.computed_calories)} kcal</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {!selected && (
+          <p className="text-sm text-muted-foreground">
+            {t("meals.variants.choosePrompt", "Choose one of the options your trainer prepared for this meal")}
+          </p>
+        )}
+
+        {selected && selected.fit_status !== "ok" && selected.note_hebrew && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            <span>{selected.note_hebrew}</span>
+          </div>
+        )}
+
+        {selected && (
+          <div className="rounded-lg border bg-background/50 divide-y">
+            {selected.foods.map((f) => (
+              <div key={f.id} className="flex items-center justify-between gap-3 p-3">
+                <span className="font-medium min-w-0 truncate">{variantFoodName(f)}</span>
+                <span className="text-sm text-muted-foreground tabular-nums shrink-0" dir="ltr">
+                  {f.measurement_type === "per_portion"
+                    ? `${f.quantity_label} ${t("meals.variants.portions", "portions")}`
+                    : f.quantity_label}
+                  {" · "}
+                  {Math.round(f.calories)} kcal
+                </span>
+              </div>
+            ))}
+            <div className="p-3 text-xs text-muted-foreground tabular-nums" dir="ltr">
+              {Math.round(selected.computed_calories)} kcal · {Math.round(selected.computed_protein)}g P ·{" "}
+              {Math.round(selected.computed_carbs)}g C · {Math.round(selected.computed_fat)}g F
+            </div>
+          </div>
+        )}
+
+        {extraChoices.map((c) => (
+          <div key={c.id} className="flex items-center justify-between gap-3 rounded-md border border-border/60 p-3">
+            <div className="min-w-0">
+              <div className="font-medium truncate">{c.custom_food_name}</div>
+              <div className="text-xs text-muted-foreground tabular-nums" dir="ltr">
+                {Math.round(c.custom_calories ?? 0)} kcal
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => deleteChoiceById(c.id)}
+              disabled={isCompleted || loading}
+              aria-label={t("common.delete", "Delete")}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const openCustomDialogForSlot = useCallback((slot: V3MealSlotView) => {
     setCustomDialogSlot(slot);
 
@@ -1067,7 +1199,7 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-4">
-                        {(() => {
+                        {slot.variants?.length ? renderVariantOptions(slot) : (() => {
                           const overallCustomChoice = dayView?.choices.find(
                             (c) =>
                               c.meal_slot_id === slot.meal_slot_id &&

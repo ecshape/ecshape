@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Layout from "../components/Layout";
 import { API_BASE_URL } from "../config/api";
 import { AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
@@ -693,6 +693,9 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
     const selected = variants.find((v) => v.id === slot.selected_variant_id) ?? null;
     const isCompleted = Boolean(completedMealSlotIds[slot.meal_slot_id]);
     const variantFoodName = (f: { name: string; name_hebrew: string }) => (isRtlHe ? f.name_hebrew || f.name : f.name);
+    const selectionDisabled = isCompleted || loading || selectingVariantSlotId === slot.meal_slot_id || mode !== "real";
+    const contentFor = (v: typeof variants[number]) =>
+      v.foods.map((f) => (f.quantity_label ? `${variantFoodName(f)} (${f.quantity_label})` : variantFoodName(f))).join(", ");
     // Foods the client added by hand on top of the chosen option.
     const extraChoices = (dayView?.choices ?? []).filter(
       (c) =>
@@ -704,22 +707,76 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
 
     return (
       <div className="space-y-3">
-        <Select
-          value={selected ? String(selected.id) : ""}
-          onValueChange={(value) => selectVariant(slot, Number(value))}
-          disabled={isCompleted || loading || selectingVariantSlotId === slot.meal_slot_id || mode !== "real"}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={t("meals.variants.select", "Choose a meal option")} />
-          </SelectTrigger>
-          <SelectContent>
-            {variants.map((v) => (
-              <SelectItem key={v.id} value={String(v.id)}>
-                {v.name_hebrew} · <span dir="ltr">{Math.round(v.computed_calories)} kcal</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Desktop/tablet: comparison table, all options at once */}
+        <div className="hidden sm:block rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("meals.variants.option", "Option")}</TableHead>
+                <TableHead>{t("meals.variants.content", "Content")}</TableHead>
+                <TableHead className="text-end" dir="ltr">{t("meals.calories", "Calories")}</TableHead>
+                <TableHead className="text-end" dir="ltr">{t("meals.protein", "Protein")}</TableHead>
+                <TableHead className="text-end" dir="ltr">{t("meals.carbs", "Carbs")}</TableHead>
+                <TableHead className="text-end" dir="ltr">{t("meals.fats", "Fat")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {variants.map((v) => {
+                const isSelected = v.id === slot.selected_variant_id;
+                return (
+                  <TableRow
+                    key={v.id}
+                    onClick={() => !selectionDisabled && selectVariant(slot, v.id)}
+                    aria-disabled={selectionDisabled}
+                    className={`${selectionDisabled ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:bg-muted/50"} ${
+                      isSelected ? "bg-primary/10 hover:bg-primary/10" : ""
+                    }`}
+                  >
+                    <TableCell className="font-medium align-top whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                        {v.name_hebrew}
+                      </div>
+                    </TableCell>
+                    <TableCell className="align-top text-sm text-muted-foreground max-w-xs">{contentFor(v)}</TableCell>
+                    <TableCell className="align-top text-end tabular-nums" dir="ltr">{Math.round(v.computed_calories)}</TableCell>
+                    <TableCell className="align-top text-end tabular-nums" dir="ltr">{Math.round(v.computed_protein)}g</TableCell>
+                    <TableCell className="align-top text-end tabular-nums" dir="ltr">{Math.round(v.computed_carbs)}g</TableCell>
+                    <TableCell className="align-top text-end tabular-nums" dir="ltr">{Math.round(v.computed_fat)}g</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Phone: stacked, tappable blocks - no horizontal scrolling */}
+        <div className="sm:hidden space-y-2">
+          {variants.map((v) => {
+            const isSelected = v.id === slot.selected_variant_id;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                disabled={selectionDisabled}
+                onClick={() => selectVariant(slot, v.id)}
+                className={`w-full text-start rounded-lg border p-3 space-y-1 transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${
+                  isSelected ? "border-primary bg-primary/10" : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-medium">
+                  {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                  {v.name_hebrew}
+                </div>
+                <div className="text-sm text-muted-foreground">{contentFor(v)}</div>
+                <div className="text-xs text-muted-foreground tabular-nums" dir="ltr">
+                  {Math.round(v.computed_calories)} kcal · {Math.round(v.computed_protein)}g P ·{" "}
+                  {Math.round(v.computed_carbs)}g C · {Math.round(v.computed_fat)}g F
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
         {!selected && (
           <p className="text-sm text-muted-foreground">
@@ -731,27 +788,6 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
           <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
             <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
             <span>{selected.note_hebrew}</span>
-          </div>
-        )}
-
-        {selected && (
-          <div className="rounded-lg border bg-background/50 divide-y">
-            {selected.foods.map((f) => (
-              <div key={f.id} className="flex items-center justify-between gap-3 p-3">
-                <span className="font-medium min-w-0 truncate">{variantFoodName(f)}</span>
-                <span className="text-sm text-muted-foreground tabular-nums shrink-0" dir="ltr">
-                  {f.measurement_type === "per_portion"
-                    ? `${f.quantity_label} ${t("meals.variants.portions", "portions")}`
-                    : f.quantity_label}
-                  {" · "}
-                  {Math.round(f.calories)} kcal
-                </span>
-              </div>
-            ))}
-            <div className="p-3 text-xs text-muted-foreground tabular-nums" dir="ltr">
-              {Math.round(selected.computed_calories)} kcal · {Math.round(selected.computed_protein)}g P ·{" "}
-              {Math.round(selected.computed_carbs)}g C · {Math.round(selected.computed_fat)}g F
-            </div>
           </div>
         )}
 

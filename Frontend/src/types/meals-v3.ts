@@ -143,8 +143,72 @@ export interface V3MealVariantView {
   computed_fat: number;
   fit_status: V3VariantFitStatus;
   note_hebrew?: string | null;
-  generated_by: "ai" | "fallback";
+  generated_by: "manual";
   foods: V3MealVariantFoodView[];
+}
+
+export interface V3ManualVariantFoodInput {
+  name: string;
+  name_hebrew: string;
+  measurement_type: MeasurementType;
+  quantity_amount: number;
+  quantity_label: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface V3ManualVariantInput {
+  name_hebrew: string;
+  foods: V3ManualVariantFoodInput[];
+}
+
+export interface V3ManualVariantSlotInput {
+  meal_slot_id: number;
+  variants: V3ManualVariantInput[];
+}
+
+export interface V3ManualVariantsRequest {
+  slots: V3ManualVariantSlotInput[];
+}
+
+export interface V3ParsedFoodPlaceholder {
+  name: string;
+  name_hebrew: string;
+  measurement_type: MeasurementType;
+  quantity_amount: number;
+  quantity_label: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface V3ParsedVariant {
+  option_index: number;
+  name_hebrew: string;
+  raw_ingredient_text: string;
+  /** Auto-resolved macro split; null only when the PDF option had no parseable macro line. */
+  resolved_protein: number | null;
+  resolved_carbs: number | null;
+  resolved_fat: number | null;
+  resolved_calories: number | null;
+  macro_blob_raw: string | null;
+  foods: V3ParsedFoodPlaceholder[];
+}
+
+export interface V3ParsedSlot {
+  raw_meal_name: string;
+  matched_meal_slot_id: number | null;
+  match_confidence: "exact" | "fuzzy" | "none";
+  candidate_meal_slot_ids: number[];
+  variants: V3ParsedVariant[];
+}
+
+export interface V3ParsedMenuPdfResponse {
+  slots: V3ParsedSlot[];
+  warnings: string[];
 }
 
 export interface V3MealSlotTargets {
@@ -211,12 +275,4 @@ export interface V3NutritionProfile {
   source: "google_form" | "manual";
   submitted_at?: string | null;
   updated_at?: string | null;
-}
-
-export interface V3VariantGenerateSlotResult {
-  slot_id: number;
-  slot_name: string;
-  status: "generated" | "skipped" | "failed";
-  reason?: string;
-  variants?: { variant_id: number; variant_index: number; name_hebrew: string; fit_status: string }[];
 }

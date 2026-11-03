@@ -60,7 +60,7 @@ class MealVariantBase(BaseModel):
     computed_fat: float
     fit_status: str = "ok"  # ok|approximate|infeasible
     note_hebrew: Optional[str] = None
-    generated_by: str = "ai"  # ai|fallback
+    generated_by: str = "manual"  # manual (trainer-authored)
 
 
 class MealVariantResponse(MealVariantBase):
@@ -105,10 +105,76 @@ class DailyTargetsResponse(BaseModel):
         from_attributes = True
 
 
-class VariantGenerateRequest(BaseModel):
-    client_id: Optional[int] = None
-    meal_slot_id: Optional[int] = None
-    force: bool = False
+class ManualVariantFoodInput(BaseModel):
+    name: str
+    name_hebrew: str
+    measurement_type: str  # per_100g|per_portion
+    quantity_amount: float
+    quantity_label: str  # e.g. "135 ג'" or "2 ביצים"
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+
+
+class ManualVariantInput(BaseModel):
+    name_hebrew: str  # e.g. "חביתה וקוטג'"
+    foods: List[ManualVariantFoodInput]
+
+
+class ManualVariantSlotInput(BaseModel):
+    meal_slot_id: int
+    variants: List[ManualVariantInput]
+
+
+class ManualVariantsRequest(BaseModel):
+    slots: List[ManualVariantSlotInput]
+
+
+class ParsedFoodPlaceholder(BaseModel):
+    """
+    A single blank/pre-filled food row per parsed option. Ingredient text in a PDF table
+    export comes out word-scrambled with no safe way to reconstruct individual foods, so
+    this is not an attempt at that - it exists so the option's macro totals (if parsed)
+    are visible immediately, pending the trainer replacing/splitting it into real foods.
+    """
+    name: str = ""
+    name_hebrew: str = ""
+    measurement_type: str = "per_100g"
+    quantity_amount: float = 100
+    quantity_label: str = ""
+    calories: float = 0
+    protein: float = 0
+    carbs: float = 0
+    fat: float = 0
+
+
+class ParsedVariant(BaseModel):
+    option_index: int  # 1-based, as printed ("1.", "2." ...)
+    name_hebrew: str  # from the option header line, as-is (may have minor PDF artifacts)
+    raw_ingredient_text: str  # the garbled ingredient lines, joined - read-only reference
+    # The single best-guess macro split (resolve_macro_blob picks automatically between
+    # multiple valid digit splits via a calorie-sanity check). Null only when the option
+    # had no parseable macro line at all - the trainer then types these in from scratch.
+    resolved_protein: Optional[float] = None
+    resolved_carbs: Optional[float] = None
+    resolved_fat: Optional[float] = None
+    resolved_calories: Optional[float] = None
+    macro_blob_raw: Optional[str] = None  # the original glued digit string, for trust/debugging
+    foods: List[ParsedFoodPlaceholder] = []
+
+
+class ParsedSlot(BaseModel):
+    raw_meal_name: str  # e.g. "ארוחת בוקר", straight from the PDF
+    matched_meal_slot_id: Optional[int] = None
+    match_confidence: str = "none"  # "exact" | "fuzzy" | "none"
+    candidate_meal_slot_ids: List[int] = []  # plan slots the trainer could pick from
+    variants: List[ParsedVariant] = []
+
+
+class ParsedMenuPdfResponse(BaseModel):
+    slots: List[ParsedSlot] = []
+    warnings: List[str] = []
 
 
 class VariantSelectRequest(BaseModel):
@@ -159,19 +225,3 @@ class QuestionnaireWebhookPayload(NutritionProfileFields):
 
 class QuestionnaireLinkRequest(BaseModel):
     client_id: int
-
-
-# AI Service schemas (internal)
-class AIVariantFood(BaseModel):
-    food_id: int
-    min_amount: float
-    max_amount: float
-
-
-class AIVariant(BaseModel):
-    name_hebrew: str
-    foods: List[AIVariantFood]
-
-
-class AIVariantSet(BaseModel):
-    variants: List[AIVariant]

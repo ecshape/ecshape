@@ -5,7 +5,7 @@ End-to-end checks for the meal variants feature, driving the endpoint functions 
     DATABASE_URL="sqlite:////tmp/mv_e2e.db" python test_meal_variants_e2e.py
 
 Seeds a trainer, a client, a meal bank and a 3-slot plan, then exercises targets,
-favorites, generation (fallback composer - no API key needed), and variant selection.
+favorites, trainer-authored manual variants, and client variant selection.
 """
 
 import os, sys, logging
@@ -96,7 +96,8 @@ def check(n, cond, d=""):
 # --- targets ---
 as_trainer()
 from app.schemas.meal_variants_v3 import (DailyTargetsUpdate, MealSlotTargetsUpdate,
-    FavoriteFoodCreate, VariantGenerateRequest, VariantSelectRequest)
+    FavoriteFoodCreate, VariantSelectRequest,
+    ManualVariantsRequest, ManualVariantSlotInput, ManualVariantInput, ManualVariantFoodInput)
 r = call(mv.update_plan_targets, plan_id=plan.id, targets=DailyTargetsUpdate(
     total_calories=2200, protein_target=165, carb_target=220, fat_target=70,
     meal_targets=[
@@ -119,22 +120,46 @@ check("favorites added", call(mv.get_favorites, client_id=None, slot_order=1).st
 dup = call(mv.add_favorite, favorite=FavoriteFoodCreate(meal_bank_id=food_ids[0], meal_slot_order_index=0), client_id=None)
 check("duplicate favorite is idempotent 200", dup.status_code == 200, f"{dup.status_code}")
 
-# --- generate (no API key -> fallback) ---
-r = call(mv.generate_variants, request=VariantGenerateRequest(force=False))
-check("POST generate 200", r.status_code == 200, r.text[:400])
-if r.status_code == 200:
-    res = r.json()["results"]
-    gen = [x for x in res if x["status"] == "generated"]
-    check("all 3 slots generated", len(gen) == 3, str([x['status'] for x in res]))
-    check("3 variants per slot", all(len(x["variants"]) == 3 for x in gen), str([len(x['variants']) for x in gen]))
+# --- manual variant entry (trainer-only; client is 403'd) ---
+def manual_request_for_slot(slot_id, n_variants=3):
+    foods_by_type = {
+        "p": ManualVariantFoodInput(name="Chicken", name_hebrew="חזה עוף", measurement_type="per_100g",
+                                     quantity_amount=150, quantity_label="150g", calories=247.5, protein=46.5, carbs=0, fat=5.4),
+        "c": ManualVariantFoodInput(name="Rice", name_hebrew="אורז", measurement_type="per_100g",
+                                     quantity_amount=180, quantity_label="180g", calories=234, protein=4.9, carbs=50.4, fat=0.5),
+        "f": ManualVariantFoodInput(name="Olive oil", name_hebrew="שמן זית", measurement_type="per_100g",
+                                     quantity_amount=10, quantity_label="10g", calories=88.4, protein=0, carbs=0, fat=10),
+    }
+    variants = [
+        ManualVariantInput(name_hebrew=f"אפשרות {i+1}", foods=[foods_by_type["p"], foods_by_type["c"], foods_by_type["f"]])
+        for i in range(n_variants)
+    ]
+    return ManualVariantsRequest(slots=[ManualVariantSlotInput(meal_slot_id=slot_id, variants=variants)])
 
-# regenerate must not blow up on the unique constraint
-r2 = call(mv.generate_variants, request=VariantGenerateRequest(force=True))
-check("REGENERATE with force 200 (unique constraint)", r2.status_code == 200, r2.text[:400])
-r3 = call(mv.generate_variants, request=VariantGenerateRequest(force=True))
-check("REGENERATE twice 200", r3.status_code == 200, r3.text[:300])
+as_client()
+r_denied = call(mv.create_manual_variants, plan_id=plan.id, request=manual_request_for_slot(slot_ids[0]))
+check("client CANNOT create manual variants (403)", r_denied.status_code == 403, f"{r_denied.status_code} {r_denied.text[:150]}")
 
-# --- list + macro sanity ---
+as_trainer()
+for sid in slot_ids:
+    r = call(mv.create_manual_variants, plan_id=plan.id, request=manual_request_for_slot(sid))
+    if r.status_code != 200:
+        check(f"POST manual variants for slot {sid}", False, r.text[:400])
+check("POST manual variants 200 (all slots)", True)
+
+created = call(mv.list_variants, client_id=cid, plan_id=plan.id)
+check("manual variants: 3 slots x 3 options", len(created.json()) == 9, f"got {len(created.json())}")
+
+# re-submitting a slot must replace, not violate the unique constraint
+r2 = call(mv.create_manual_variants, plan_id=plan.id, request=manual_request_for_slot(slot_ids[0], n_variants=2))
+check("RESUBMIT slot replaces existing options (200)", r2.status_code == 200, r2.text[:400])
+after_resubmit = call(mv.list_variants, client_id=cid, plan_id=plan.id)
+check("resubmit: slot now has 2 options, total 8", len(after_resubmit.json()) == 8, f"got {len(after_resubmit.json())}")
+# restore 3 options for the rest of the test
+call(mv.create_manual_variants, plan_id=plan.id, request=manual_request_for_slot(slot_ids[0]))
+
+# --- list + macro sanity (client reading their own generated variants) ---
+as_client()
 r = call(mv.list_variants, client_id=None, plan_id=None)
 check("GET variants 200", r.status_code == 200, r.text[:200])
 variants = r.json() if r.status_code == 200 else []

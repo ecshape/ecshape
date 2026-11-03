@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, ClipboardList, Pencil, Sparkles } from "lucide-react";
+import { AlertTriangle, ClipboardList, NotebookPen, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { API_BASE_URL } from "../../config/api";
 import { useToast } from "../../hooks/use-toast";
-import type { V3NutritionProfile, V3VariantGenerateSlotResult } from "../../types/meals-v3";
+import type { V3NutritionProfile } from "../../types/meals-v3";
 
 type ProfileField = "food_preferences" | "training_times" | "must_keep_foods" | "extra_foods";
 
@@ -46,8 +46,6 @@ export default function NutritionProfileCard({ clientId }: NutritionProfileCardP
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [results, setResults] = useState<V3VariantGenerateSlotResult[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,34 +89,6 @@ export default function NutritionProfileCard({ clientId }: NutritionProfileCardP
       toast({ title: t("meals.favorites.saveError", "Could not save"), variant: "destructive" });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const generate = async () => {
-    setGenerating(true);
-    setResults(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/v3/meals/variants/generate`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ client_id: Number(clientId), force: true }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        const noPlan = res.status === 404;
-        toast({
-          title: noPlan
-            ? t("meals.questionnaire.noPlan", "The client has no active meal plan")
-            : t("meals.questionnaire.generateError", "Menu generation failed"),
-          variant: "destructive",
-        });
-        return;
-      }
-      setResults(data?.results ?? []);
-    } catch {
-      toast({ title: t("meals.questionnaire.generateError", "Menu generation failed"), variant: "destructive" });
-    } finally {
-      setGenerating(false);
     }
   };
 
@@ -194,7 +164,7 @@ export default function NutritionProfileCard({ clientId }: NutritionProfileCardP
             <span className="flex-1 min-w-0">
               {t(
                 "meals.questionnaire.extraFoodsHint",
-                "Add the extra foods to the food bank with their macros, then select them as favorites so Claude can use them."
+                "Keep these extra foods in mind when you build the client's meal options."
               )}
             </span>
             <Button variant="outline" size="sm" onClick={() => navigate("/meal-bank")}>
@@ -207,42 +177,11 @@ export default function NutritionProfileCard({ clientId }: NutritionProfileCardP
           <Button variant="outline" onClick={() => navigate(`/client/${clientId}/favorites`)}>
             {t("meals.favorites.button", "Favorites")}
           </Button>
-          <Button onClick={generate} disabled={generating || editing} className="gradient-orange">
-            <Sparkles className="h-4 w-4 me-2" />
-            {generating
-              ? t("meals.questionnaire.generating", "Generating...")
-              : t("meals.questionnaire.generate", "Generate menu with Claude")}
+          <Button onClick={() => navigate(`/client/${clientId}/menu-builder`)} className="gradient-orange">
+            <NotebookPen className="h-4 w-4 me-2" />
+            {t("meals.menuBuilder.button", "Build meal options")}
           </Button>
         </div>
-
-        {results && (
-          <ul className="space-y-1.5 text-sm">
-            {results.length === 0 && (
-              <li className="text-muted-foreground">{t("meals.questionnaire.noSlots", "The plan has no meals")}</li>
-            )}
-            {results.map((r) => (
-              <li key={r.slot_id} className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{r.slot_name}:</span>
-                {r.status === "generated" ? (
-                  <>
-                    <span>{(r.variants ?? []).map((v) => v.name_hebrew).join(" · ")}</span>
-                    {r.variants?.some((v) => v.fit_status !== "ok") && (
-                      <Badge variant="outline" className="border-amber-500/40 text-amber-600">
-                        {t("meals.questionnaire.approximate", "Approximate fit")}
-                      </Badge>
-                    )}
-                  </>
-                ) : r.reason === "no_favorites" ? (
-                  <span className="text-muted-foreground">
-                    {t("meals.questionnaire.skippedNoFavorites", "Skipped: no favorite foods for this meal")}
-                  </span>
-                ) : (
-                  <span className="text-destructive">{t("meals.questionnaire.slotFailed", "Failed")}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
       </CardContent>
     </Card>
   );

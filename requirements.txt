@@ -28,6 +28,7 @@ openpyxl>=3.1.2  # For Excel file export/import
 # ESSENTIAL UTILITIES
 email-validator>=2.1.0
 typing-extensions>=4.0.0
+httpx>=0.25.2  # Instagram Graph API calls
 anthropic>=0.70,<2.0  # Claude API for meal variant composition (lazy-imported)
 
 # DATABASE

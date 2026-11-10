@@ -48,7 +48,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # Allow static file extensions (images, fonts, etc.)
         static_extensions = ['.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.css', '.js', '.json', '.xml', '.txt']
         is_static_file = (
-            request.url.path in ["/health", "/test", "/api/test"] or 
+            request.url.path in ["/health", "/test", "/api/test", "/api/instagram/webhook"] or 
             request.url.path.startswith("/static/") or
             request.url.path.startswith("/assets/") or
             any(request.url.path.lower().endswith(ext) for ext in static_extensions)

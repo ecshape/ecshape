@@ -160,7 +160,7 @@ except Exception as e:
 
 try:
     logger.info("Importing router modules...")
-    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, workout_system, muscle_groups, workout_splits, chat, check_in
+    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook
     logger.info("✅ Router modules imported successfully")
     logger.info("📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications")
 except Exception as e:
@@ -793,6 +793,10 @@ try:
     logger.info("Including check_in router...")
     app.include_router(check_in.router, prefix="/api/check-ins", tags=["Check-Ins"])
     logger.info("✅ Check-Ins router included")
+
+    logger.info("Including instagram_webhook router...")
+    app.include_router(instagram_webhook.router, prefix="/api/instagram", tags=["Instagram"])
+    logger.info("✅ Instagram webhook router included")
     
     logger.info("=" * 40)
     logger.info("✅ ALL ROUTERS INCLUDED SUCCESSFULLY")

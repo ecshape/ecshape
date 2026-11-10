@@ -49,6 +49,8 @@ plan_id, cid, tid, t2id = plan.id, client_u.id, trainer.id, other_trainer.id
 slot_ids = [s.id for s in slots]
 db.close()
 
+from app.schemas.meal_variants_v3 import EnsurePlanRequest, DailyTargetsFields, EnsurePlanSlotInput
+
 current = {"u": None}
 
 class Resp:
@@ -69,6 +71,17 @@ def call_async(fn, **kwargs):
     d = SessionLocal()
     try:
         out = asyncio.run(fn(current_user=current["u"], db=d, **kwargs))
+        return Resp(200, norm(out))
+    except HTTPException as e:
+        return Resp(e.status_code, {"detail": e.detail})
+    finally:
+        d.close()
+
+def call_sync(fn, **kwargs):
+    """Invoke a sync endpoint function directly with a fresh session."""
+    d = SessionLocal()
+    try:
+        out = fn(current_user=current["u"], db=d, **kwargs)
         return Resp(200, norm(out))
     except HTTPException as e:
         return Resp(e.status_code, {"detail": e.detail})
@@ -100,35 +113,35 @@ def count_variants():
 
 # --- auth: client cannot call the endpoint ---
 as_client()
-r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(b"%PDF-1.4 fake", "menu.pdf", "application/pdf"))
+r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(b"%PDF-1.4 fake", "menu.pdf", "application/pdf"))
 check("client CANNOT parse-pdf (403)", r.status_code == 403, f"{r.status_code} {r.text[:150]}")
 
 # --- auth: a different trainer (not this client's coach) cannot call it ---
 as_other_trainer()
-r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(b"%PDF-1.4 fake", "menu.pdf", "application/pdf"))
+r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(b"%PDF-1.4 fake", "menu.pdf", "application/pdf"))
 check("unrelated trainer CANNOT parse-pdf (403)", r.status_code == 403, f"{r.status_code} {r.text[:150]}")
 
 # --- validation: non-PDF content type/extension rejected ---
 as_trainer()
-r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(b"hello", "notes.txt", "text/plain"))
+r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(b"hello", "notes.txt", "text/plain"))
 check("non-PDF file rejected (400)", r.status_code == 400, f"{r.status_code} {r.text[:150]}")
 
 # --- validation: empty file rejected ---
-r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(b"", "menu.pdf", "application/pdf"))
+r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(b"", "menu.pdf", "application/pdf"))
 check("empty file rejected (400)", r.status_code == 400, f"{r.status_code} {r.text[:150]}")
 
 # --- validation: oversized file rejected ---
 oversized = b"%PDF-1.4" + b"0" * (16 * 1024 * 1024)
-r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(oversized, "menu.pdf", "application/pdf"))
+r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(oversized, "menu.pdf", "application/pdf"))
 check("oversized file rejected (400)", r.status_code == 400, f"{r.status_code} {r.text[:150]}")
 
 # --- validation: unreadable/corrupt PDF bytes -> 422, not a 500 ---
-r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(b"not actually a pdf file", "menu.pdf", "application/pdf"))
+r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(b"not actually a pdf file", "menu.pdf", "application/pdf"))
 check("corrupt PDF rejected (422, not 500)", r.status_code == 422, f"{r.status_code} {r.text[:150]}")
 
-# --- unknown plan ---
-r = call_async(mv.parse_menu_pdf, plan_id=999999, file=make_upload(b"%PDF-1.4 fake", "menu.pdf", "application/pdf"))
-check("unknown plan_id (404)", r.status_code == 404, f"{r.status_code} {r.text[:150]}")
+# --- unknown client ---
+r = call_async(mv.parse_menu_pdf, client_id=999999, file=make_upload(b"%PDF-1.4 fake", "menu.pdf", "application/pdf"))
+check("unknown client_id (403/404)", r.status_code in (403, 404), f"{r.status_code} {r.text[:150]}")
 
 # --- real PDF: use the actual file if present on this machine, else build a minimal one ---
 REAL_PDF_PATH = os.path.expanduser("~/Downloads/תפריט תזונה עימאד עלושי 20.10.26.pdf")
@@ -137,10 +150,11 @@ before_count = count_variants()
 if os.path.exists(REAL_PDF_PATH):
     with open(REAL_PDF_PATH, "rb") as f:
         pdf_bytes = f.read()
-    r = call_async(mv.parse_menu_pdf, plan_id=plan_id, file=make_upload(pdf_bytes, "menu.pdf", "application/pdf"))
+    r = call_async(mv.parse_menu_pdf, client_id=cid, file=make_upload(pdf_bytes, "menu.pdf", "application/pdf"))
     check("real PDF parses 200", r.status_code == 200, r.text[:300])
     if r.status_code == 200:
         data = r.json()
+        check("real PDF: has_plan is True (plan already exists)", data["has_plan"] is True)
         check("real PDF: 4 slots found", len(data["slots"]) == 4, f"got {len(data['slots'])}")
         total_options = sum(len(s["variants"]) for s in data["slots"])
         check("real PDF: 14 options total", total_options == 14, f"got {total_options}")
@@ -148,6 +162,10 @@ if os.path.exists(REAL_PDF_PATH):
         check("real PDF: breakfast slot matched exactly (seeded slot name matches)",
               breakfast is not None and breakfast["match_confidence"] == "exact",
               str(breakfast.get("match_confidence") if breakfast else None))
+        snack = next((s for s in data["slots"] if s["raw_meal_name"] == "ארוחת ביניים"), None)
+        check("real PDF: snack (no seeded slot) has no match but a proposed_target",
+              snack is not None and snack["matched_meal_slot_id"] is None and snack["proposed_target"] is not None,
+              str(snack))
 else:
     print("SKIP  real PDF not present on this machine, skipping full-parse assertions")
 
@@ -155,6 +173,63 @@ else:
 after_count = count_variants()
 check("parse-pdf wrote ZERO MealVariant rows", after_count == before_count,
       f"before={before_count} after={after_count}")
+
+# --- no-plan client: parse-pdf reports has_plan=False with proposed targets, never a 404 ---
+noplan_client = User(username="np", email="np@x.com", hashed_password="x", full_name="NP", role="CLIENT",
+                      is_active=True, trainer_id=tid)
+d = SessionLocal()
+d.add(noplan_client); d.commit(); d.refresh(noplan_client)
+npid = noplan_client.id
+d.close()
+
+if os.path.exists(REAL_PDF_PATH):
+    r = call_async(mv.parse_menu_pdf, client_id=npid, file=make_upload(pdf_bytes, "menu.pdf", "application/pdf"))
+    check("no-plan client: parse-pdf returns 200 (not 404)", r.status_code == 200, f"{r.status_code} {r.text[:150]}")
+    if r.status_code == 200:
+        data = r.json()
+        check("no-plan client: has_plan is False", data["has_plan"] is False)
+        check("no-plan client: daily_targets parsed from PDF",
+              data["daily_targets"] == {"total_calories": 2120, "protein_target": 170.0, "carb_target": 180.0, "fat_target": 80.0},
+              str(data["daily_targets"]))
+        check("no-plan client: all 4 sections have matched_meal_slot_id=None",
+              all(s["matched_meal_slot_id"] is None for s in data["slots"]))
+        check("no-plan client: all 4 sections have a proposed_target",
+              all(s["proposed_target"] is not None for s in data["slots"]))
+
+        # --- POST /plans/ensure: creates the plan + all 4 slots in one additive call ---
+        as_trainer()
+        ensure_req = EnsurePlanRequest(
+            client_id=npid,
+            daily_targets=DailyTargetsFields(**data["daily_targets"]),
+            new_slots=[
+                EnsurePlanSlotInput(raw_name=s["raw_meal_name"], order_index=i,
+                                    target_calories=s["proposed_target"]["target_calories"],
+                                    target_protein=s["proposed_target"]["target_protein"],
+                                    target_carbs=s["proposed_target"]["target_carbs"],
+                                    target_fat=s["proposed_target"]["target_fat"])
+                for i, s in enumerate(data["slots"])
+            ],
+        )
+        r2 = call_sync(mv.ensure_plan, request=ensure_req)
+        check("ensure_plan creates a plan with 4 slots", r2.status_code == 200 and len(r2.json()["meal_slots"]) == 4,
+              f"{r2.status_code} {r2.text[:200]}")
+
+        # --- calling /plans/ensure AGAIN with the same payload must NOT duplicate slots ---
+        r3 = call_sync(mv.ensure_plan, request=ensure_req)
+        check("ensure_plan called twice does not duplicate slots",
+              r3.status_code == 200 and len(r3.json()["meal_slots"]) == 4,
+              f"{r3.status_code} got {len(r3.json().get('meal_slots', [])) if r3.status_code == 200 else '?'} slots")
+
+        # --- GET-equivalent: re-parsing the same client now matches every section exactly ---
+        r4 = call_async(mv.parse_menu_pdf, client_id=npid, file=make_upload(pdf_bytes, "menu.pdf", "application/pdf"))
+        if r4.status_code == 200:
+            data4 = r4.json()
+            check("after ensure_plan: has_plan is now True", data4["has_plan"] is True)
+            check("after ensure_plan: all 4 sections now match exactly",
+                  all(s["match_confidence"] == "exact" for s in data4["slots"]),
+                  str([(s["raw_meal_name"], s["match_confidence"]) for s in data4["slots"]]))
+else:
+    print("SKIP  real PDF not present on this machine, skipping no-plan/ensure assertions")
 
 print()
 print("ALL PASSED" if not fails else f"{len(fails)} FAILED: {fails}")

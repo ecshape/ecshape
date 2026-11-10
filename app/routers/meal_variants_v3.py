@@ -49,7 +49,11 @@ from app.schemas.meal_variants_v3 import (
     ParsedSlot,
     ParsedVariant,
     ParsedFoodPlaceholder,
+    DailyTargetsFields,
+    MealSlotTargetFields,
+    EnsurePlanRequest,
 )
+from app.schemas.meal_tracking_v3 import V3MealPlanResponse
 from app.services.meal_tracking_v3_service import (
     _parse_v3_date_to_choice_datetime,
     _compute_daily_macros_v3,
@@ -341,6 +345,78 @@ def delete_favorite(
 
 # ===== Trainer-authored variants & selection =====
 
+@router.post("/plans/ensure", response_model=V3MealPlanResponse)
+def ensure_plan(
+    request: EnsurePlanRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Additive plan/slot creation for the PDF-import flow. Deliberately narrower than
+    POST /v3/meals/plans (create_or_update_complete_plan), which always clears and
+    rebuilds every slot on an existing plan - that would silently wipe other meals'
+    saved options. This endpoint only ever ADDS:
+      - creates a MealPlanV2 if the client has none, using daily_targets if given;
+      - appends one new MealSlot per entry in new_slots, after the plan's current max
+        order_index.
+    An existing plan's own fields (name, daily targets, etc.) and existing slots are
+    never read for modification and never touched.
+    """
+    _require_coach(current_user)
+    _assert_can_manage_client(db, current_user, request.client_id)
+
+    plan = db.query(MealPlanV2).filter(
+        MealPlanV2.client_id == request.client_id,
+        MealPlanV2.is_active == True,
+    ).first()
+
+    if plan is None:
+        dt = request.daily_targets
+        plan = MealPlanV2(
+            client_id=request.client_id,
+            trainer_id=current_user.id,
+            name="Imported plan",
+            number_of_meals=len(request.new_slots),
+            total_calories=dt.total_calories if dt else None,
+            protein_target=dt.protein_target if dt else None,
+            carb_target=dt.carb_target if dt else None,
+            fat_target=dt.fat_target if dt else None,
+            is_active=True,
+        )
+        db.add(plan)
+        db.flush()
+
+    # Guards a double-submit (double-click, retry) from creating a second slot with
+    # the same name - the only identity a caller provides for "this meal already
+    # exists on the plan". Existing slots are still never modified, only skipped.
+    existing_names = {s.name for s in plan.meal_slots}
+    next_order_index = (max((s.order_index for s in plan.meal_slots), default=-1)) + 1
+    i = 0
+    for slot_input in request.new_slots:
+        if slot_input.raw_name in existing_names:
+            continue
+        db.add(MealSlot(
+            meal_plan_id=plan.id,
+            name=slot_input.raw_name,
+            order_index=next_order_index + i,
+            target_calories=slot_input.target_calories,
+            target_protein=slot_input.target_protein,
+            target_carbs=slot_input.target_carbs,
+            target_fat=slot_input.target_fat,
+        ))
+        existing_names.add(slot_input.raw_name)
+        i += 1
+
+    # number_of_meals is a trainer-chosen display figure elsewhere in the app; keep it
+    # at least as large as the plan's real slot count so it's never understated.
+    db.flush()
+    plan.number_of_meals = max(plan.number_of_meals, len(plan.meal_slots))
+
+    db.commit()
+    db.refresh(plan)
+    return V3MealPlanResponse.model_validate(plan)
+
+
 @router.post("/plans/{plan_id}/variants/manual", response_model=List[MealVariantResponse])
 def create_manual_variants(
     plan_id: int,
@@ -430,9 +506,9 @@ def create_manual_variants(
 MAX_PDF_BYTES = 15 * 1024 * 1024  # 15MB
 
 
-@router.post("/plans/{plan_id}/variants/parse-pdf", response_model=ParsedMenuPdfResponse)
+@router.post("/variants/parse-pdf", response_model=ParsedMenuPdfResponse)
 async def parse_menu_pdf(
-    plan_id: int,
+    client_id: int,
     file: UploadFile = File(...),
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -441,16 +517,22 @@ async def parse_menu_pdf(
     Upload a trainer-authored nutrition-plan PDF and get back a DRAFT of meal options for
     review. This never writes to the database - it only parses and returns a best-effort
     structure for the trainer to review, edit, and then submit via the existing
-    POST /plans/{plan_id}/variants/manual endpoint. Ambiguous macro splits are resolved
-    automatically (see resolve_macro_blob); unmatched meal slots are still surfaced as a
-    choice, since there's no safe way to guess which plan slot a PDF section belongs to.
+    POST /plans/{plan_id}/variants/manual endpoint (and, when a meal has no matching
+    slot yet, POST /plans/ensure first). Ambiguous macro splits are resolved
+    automatically (see resolve_macro_blob); unmatched meal slots are surfaced as either
+    a slot the trainer picks from, or - when the PDF's own breakdown table has a target
+    for that meal - an offer to create a new slot for it, never a silent guess.
+
+    Takes client_id rather than plan_id so this can be called before any plan exists at
+    all (the client-id-keyed lookup pattern already used by list_variants/favorites).
     """
     _require_coach(current_user)
+    _assert_can_manage_client(db, current_user, client_id)
 
-    plan = db.query(MealPlanV2).filter(MealPlanV2.id == plan_id).first()
-    if not plan:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal plan not found")
-    _assert_can_manage_client(db, current_user, plan.client_id)
+    plan = db.query(MealPlanV2).filter(
+        MealPlanV2.client_id == client_id,
+        MealPlanV2.is_active == True,
+    ).first()
 
     is_pdf = (file.content_type == "application/pdf") or (file.filename or "").lower().endswith(".pdf")
     if not is_pdf:
@@ -466,6 +548,7 @@ async def parse_menu_pdf(
         parse_menu_pdf_bytes,
         match_parsed_slots_to_plan,
         PdfParseError,
+        SlotMatch,
     )
 
     try:
@@ -473,8 +556,16 @@ async def parse_menu_pdf(
     except PdfParseError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e))
 
-    plan_slots = [{"id": s.id, "name": s.name, "order_index": s.order_index} for s in plan.meal_slots]
-    slot_matches = match_parsed_slots_to_plan(parsed.slots, plan_slots)
+    has_plan = plan is not None
+    if has_plan:
+        plan_slots = [{"id": s.id, "name": s.name, "order_index": s.order_index} for s in plan.meal_slots]
+        slot_matches = match_parsed_slots_to_plan(parsed.slots, plan_slots)
+    else:
+        # Nothing to match against yet - every section proposes a brand new slot below.
+        slot_matches = [
+            SlotMatch(raw_name=ps.raw_name, matched_meal_slot_id=None, match_confidence="none")
+            for ps in parsed.slots
+        ]
 
     response_slots: List[ParsedSlot] = []
     for ps, match in zip(parsed.slots, slot_matches):
@@ -492,11 +583,25 @@ async def parse_menu_pdf(
                 macro_blob_raw=opt.macro_blob,
                 foods=[ParsedFoodPlaceholder()],
             ))
+
+        proposed_target = None
+        if match.matched_meal_slot_id is None:
+            meal_target = parsed.meal_targets.get(ps.raw_name)
+            if meal_target:
+                mt_protein, mt_carbs, mt_fat, mt_calories = meal_target
+                proposed_target = MealSlotTargetFields(
+                    target_calories=mt_calories,
+                    target_protein=mt_protein,
+                    target_carbs=mt_carbs,
+                    target_fat=mt_fat,
+                )
+
         response_slots.append(ParsedSlot(
             raw_meal_name=ps.raw_name,
             matched_meal_slot_id=match.matched_meal_slot_id,
             match_confidence=match.match_confidence,
             candidate_meal_slot_ids=match.candidate_meal_slot_ids,
+            proposed_target=proposed_target,
             variants=response_variants,
         ))
 
@@ -504,7 +609,22 @@ async def parse_menu_pdf(
     if not response_slots or all(len(s.variants) == 0 for s in response_slots):
         warnings.append("No meal options could be found in this PDF.")
 
-    return ParsedMenuPdfResponse(slots=response_slots, warnings=warnings)
+    daily_targets = None
+    if not has_plan and parsed.daily_targets:
+        dt_protein, dt_carbs, dt_fat, dt_calories = parsed.daily_targets
+        daily_targets = DailyTargetsFields(
+            total_calories=dt_calories,
+            protein_target=dt_protein,
+            carb_target=dt_carbs,
+            fat_target=dt_fat,
+        )
+
+    return ParsedMenuPdfResponse(
+        slots=response_slots,
+        warnings=warnings,
+        has_plan=has_plan,
+        daily_targets=daily_targets,
+    )
 
 
 @router.get("/variants", response_model=List[MealVariantResponse])

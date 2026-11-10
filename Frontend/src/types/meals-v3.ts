@@ -198,17 +198,41 @@ export interface V3ParsedVariant {
   foods: V3ParsedFoodPlaceholder[];
 }
 
+export interface V3ProposedSlotTarget {
+  target_calories: number;
+  target_protein: number;
+  target_carbs: number;
+  target_fat: number;
+}
+
 export interface V3ParsedSlot {
   raw_meal_name: string;
   matched_meal_slot_id: number | null;
   match_confidence: "exact" | "fuzzy" | "none";
   candidate_meal_slot_ids: number[];
+  /** Set only when matched_meal_slot_id is null and the PDF's own breakdown table had
+   * a target for this meal - lets the trainer create a brand new slot for it instead
+   * of being hard-blocked with nowhere to put this meal's options. */
+  proposed_target: V3ProposedSlotTarget | null;
   variants: V3ParsedVariant[];
+}
+
+export interface V3ProposedDailyTargets {
+  total_calories: number;
+  protein_target: number;
+  carb_target: number;
+  fat_target: number;
 }
 
 export interface V3ParsedMenuPdfResponse {
   slots: V3ParsedSlot[];
   warnings: string[];
+  /** False when the client had no active meal plan at parse time - every slot then
+   * has matched_meal_slot_id=null and the review screen should offer to create the
+   * whole plan. */
+  has_plan: boolean;
+  /** The PDF's own daily totals; only set when has_plan is false. */
+  daily_targets: V3ProposedDailyTargets | null;
 }
 
 export interface V3MealSlotTargets {

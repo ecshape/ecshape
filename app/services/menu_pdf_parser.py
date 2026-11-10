@@ -19,7 +19,7 @@ from __future__ import annotations
 import io
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class PdfParseError(Exception):
@@ -60,6 +60,15 @@ class ParsedSlot:
 class ParsedMenu:
     slots: List[ParsedSlot] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    # (protein, carbs, fat, calories) for the whole day, from the PDF's header line.
+    # None when that line isn't found/parseable - the caller must not guess a plan's
+    # daily targets, only ever offer what the PDF actually stated.
+    daily_targets: Optional[Tuple[int, int, int, int]] = None
+    # Per-meal (protein, carbs, fat, calories) from the חלוקה יומית breakdown table,
+    # keyed by the same raw meal name used in ParsedSlot.raw_name (e.g. "ארוחת בוקר").
+    # Only the 4 option-bearing meals are included - קפה בוקר and the סה"כ יומי grand
+    # total are deliberately not parsed (different digit shapes, out of scope).
+    meal_targets: Dict[str, Tuple[int, int, int, int]] = field(default_factory=dict)
 
 
 MEAL_HEADER_RE = re.compile(r"^(ארוחת (?:בוקר|צהריים|ביניים|ערב))\s*$")
@@ -127,6 +136,57 @@ def resolve_macro_blob(blob: str) -> Optional[Tuple[int, int, int, int]]:
         candidates,
         key=lambda c: abs(4 * c[0] + 4 * c[1] + 9 * c[2] - c[3]),
     )
+
+
+# Matches the daily-targets header line, e.g. (as actually extracted from a real file):
+# "2120 קלוריות   חלבון |   170    פחמימה|   ' ג180    שומן|   ' ג80' ג" - garbled
+# spacing/punctuation, but each number is directly labeled rather than glued, so each
+# value is found independently instead of trying to parse the line as one structure.
+_DAILY_CALORIES_RE = re.compile(r"(\d+)\s*קלוריות")
+_DAILY_PROTEIN_RE = re.compile(r"חלבון\D*?(\d+)")
+_DAILY_CARBS_RE = re.compile(r"פחמימה\D*?(\d+)")
+_DAILY_FAT_RE = re.compile(r"שומן\D*?(\d+)")
+
+# A חלוקה יומית table row: meal name immediately followed by its glued macro digits,
+# e.g. "ארוחת בוקר434617510" (no space, unlike the bare MEAL_HEADER_RE match used while
+# walking meal-option content). Reuses the same 4 meal names and the same digit-length
+# bounds as MACRO_BLOB_RE/split_macro_blob.
+_DAILY_MEAL_ROW_RE = re.compile(r"^(ארוחת (?:בוקר|צהריים|ביניים|ערב))(\d{6,9})$")
+
+
+def _parse_daily_targets(full_text: str) -> Optional[Tuple[int, int, int, int]]:
+    """
+    Extracts (protein, carbs, fat, calories) for the whole day from the PDF's header
+    line. Searches the full text once rather than line-by-line, since the extractor can
+    wrap this header across more than one line. Returns None if any of the four values
+    isn't found - never guesses a partial result.
+    """
+    cal = _DAILY_CALORIES_RE.search(full_text)
+    protein = _DAILY_PROTEIN_RE.search(full_text)
+    carbs = _DAILY_CARBS_RE.search(full_text)
+    fat = _DAILY_FAT_RE.search(full_text)
+    if not (cal and protein and carbs and fat):
+        return None
+    return (int(protein.group(1)), int(carbs.group(1)), int(fat.group(1)), int(cal.group(1)))
+
+
+def _parse_meal_targets(full_text: str) -> Dict[str, Tuple[int, int, int, int]]:
+    """
+    Extracts per-meal (protein, carbs, fat, calories) from the חלוקה יומית breakdown
+    table, keyed by raw meal name. Only matches the 4 option-bearing meal names; קפה
+    בוקר (different row shape) and סה"כ יומי (12-digit blob, doesn't fit the 3-digit-
+    calories assumption) are intentionally not parsed.
+    """
+    targets: Dict[str, Tuple[int, int, int, int]] = {}
+    for raw_line in full_text.split("\n"):
+        line = raw_line.strip()
+        match = _DAILY_MEAL_ROW_RE.match(line)
+        if not match:
+            continue
+        resolved = resolve_macro_blob(match.group(2))
+        if resolved:
+            targets[match.group(1)] = resolved
+    return targets
 
 
 def _finalize_option(
@@ -230,7 +290,12 @@ def parse_menu_text(full_text: str) -> ParsedMenu:
             current_option = None
 
     _finalize_option(current_option, current_slot, warnings)  # flush a trailing option
-    return ParsedMenu(slots=slots, warnings=warnings)
+    return ParsedMenu(
+        slots=slots,
+        warnings=warnings,
+        daily_targets=_parse_daily_targets(full_text),
+        meal_targets=_parse_meal_targets(full_text),
+    )
 
 
 def _extract_lines(raw: bytes) -> str:

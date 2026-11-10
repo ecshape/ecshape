@@ -86,66 +86,68 @@ const ClientMenuBuilderPage: React.FC = () => {
   const [draftsBySlot, setDraftsBySlot] = useState<Record<number, DraftVariant[]>>({});
   const [showPdfImport, setShowPdfImport] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/v3/meals/plans?client_id=${clientId}`, {
-          headers: authHeaders(),
-        });
-        if (!res.ok) throw new Error();
-        const plans = await res.json();
-        const plan = plans?.[0];
-        if (cancelled) return;
-        if (!plan) {
-          setSlots([]);
-          setPlanId(null);
-          return;
-        }
-        setPlanId(plan.id);
-        const planSlots: PlanSlot[] = (plan.meal_slots ?? [])
-          .map((s: PlanSlot) => ({
-            id: s.id,
-            name: s.name,
-            order_index: s.order_index,
-            target_calories: s.target_calories ?? null,
-            target_protein: s.target_protein ?? null,
-            target_carbs: s.target_carbs ?? null,
-            target_fat: s.target_fat ?? null,
-          }))
-          .sort((a: PlanSlot, b: PlanSlot) => a.order_index - b.order_index);
-        setSlots(planSlots);
-
-        const variantsRes = await fetch(`${API_BASE_URL}/v3/meals/variants?client_id=${clientId}`, {
-          headers: authHeaders(),
-        });
-        const existingVariants = variantsRes.ok ? await variantsRes.json() : [];
-        const bySlot: Record<number, DraftVariant[]> = {};
-        for (const slot of planSlots) {
-          const forSlot = existingVariants
-            .filter((v: { meal_slot_id: number }) => v.meal_slot_id === slot.id)
-            .sort((a: { variant_index: number }, b: { variant_index: number }) => a.variant_index - b.variant_index);
-          bySlot[slot.id] = forSlot.length
-            ? forSlot.map((v: { name_hebrew: string; foods: V3ManualVariantFoodInput[] }) => ({
-                key: nextKey(),
-                name_hebrew: v.name_hebrew,
-                foods: v.foods.map((f) => ({ ...f, key: nextKey() })),
-              }))
-            : [emptyVariant(0)];
-        }
-        if (!cancelled) setDraftsBySlot(bySlot);
-      } catch {
-        if (!cancelled) {
-          toast({ title: t("meals.menuBuilder.loadError", "Could not load the meal plan"), variant: "destructive" });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+  const loadPlan = useCallback(async (cancelledRef?: { cancelled: boolean }) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/v3/meals/plans?client_id=${clientId}`, {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error();
+      const plans = await res.json();
+      const plan = plans?.[0];
+      if (cancelledRef?.cancelled) return;
+      if (!plan) {
+        setSlots([]);
+        setPlanId(null);
+        return;
       }
-    };
-    load();
+      setPlanId(plan.id);
+      const planSlots: PlanSlot[] = (plan.meal_slots ?? [])
+        .map((s: PlanSlot) => ({
+          id: s.id,
+          name: s.name,
+          order_index: s.order_index,
+          target_calories: s.target_calories ?? null,
+          target_protein: s.target_protein ?? null,
+          target_carbs: s.target_carbs ?? null,
+          target_fat: s.target_fat ?? null,
+        }))
+        .sort((a: PlanSlot, b: PlanSlot) => a.order_index - b.order_index);
+      setSlots(planSlots);
+
+      const variantsRes = await fetch(`${API_BASE_URL}/v3/meals/variants?client_id=${clientId}`, {
+        headers: authHeaders(),
+      });
+      const existingVariants = variantsRes.ok ? await variantsRes.json() : [];
+      const bySlot: Record<number, DraftVariant[]> = {};
+      for (const slot of planSlots) {
+        const forSlot = existingVariants
+          .filter((v: { meal_slot_id: number }) => v.meal_slot_id === slot.id)
+          .sort((a: { variant_index: number }, b: { variant_index: number }) => a.variant_index - b.variant_index);
+        bySlot[slot.id] = forSlot.length
+          ? forSlot.map((v: { name_hebrew: string; foods: V3ManualVariantFoodInput[] }) => ({
+              key: nextKey(),
+              name_hebrew: v.name_hebrew,
+              foods: v.foods.map((f) => ({ ...f, key: nextKey() })),
+            }))
+          : [emptyVariant(0)];
+      }
+      if (!cancelledRef?.cancelled) setDraftsBySlot(bySlot);
+    } catch {
+      if (!cancelledRef?.cancelled) {
+        toast({ title: t("meals.menuBuilder.loadError", "Could not load the meal plan"), variant: "destructive" });
+      }
+    } finally {
+      if (!cancelledRef?.cancelled) setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
+
+  useEffect(() => {
+    const cancelledRef = { cancelled: false };
+    loadPlan(cancelledRef);
     return () => {
-      cancelled = true;
+      cancelledRef.cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
@@ -273,7 +275,7 @@ const ClientMenuBuilderPage: React.FC = () => {
                 <NotebookPen className="h-5 w-5 text-primary" />
                 {t("meals.menuBuilder.title", "Build meal options")}
               </h1>
-              {planId && (
+              {clientId && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowPdfImport(true)}>
                   <FileUp className="h-3.5 w-3.5 me-1" />
                   {t("meals.menuBuilder.importPdf", "Import from PDF")}
@@ -289,13 +291,15 @@ const ClientMenuBuilderPage: React.FC = () => {
           </div>
         </div>
 
-        {planId && (
+        {clientId && (
           <MenuPdfImportDialog
             open={showPdfImport}
             onOpenChange={setShowPdfImport}
+            clientId={Number(clientId)}
             planId={planId}
             planSlots={slots}
             onImport={handlePdfImport}
+            onPlanChanged={() => loadPlan()}
           />
         )}
 

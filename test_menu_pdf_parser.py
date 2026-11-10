@@ -14,7 +14,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app.services.menu_pdf_parser import parse_menu_text, split_macro_blob, resolve_macro_blob, match_parsed_slots_to_plan
+from app.services.menu_pdf_parser import (
+    parse_menu_text, split_macro_blob, resolve_macro_blob, match_parsed_slots_to_plan,
+    _parse_daily_targets, _parse_meal_targets,
+)
 
 # Real text extracted via pypdf's PdfReader(...).pages[i].extract_text() from an actual
 # client PDF, joined the same way the endpoint joins pages (newline-separated).
@@ -234,6 +237,30 @@ matches2 = match_parsed_slots_to_plan(parsed.slots, plan_slots_unknown)
 check("no confident match -> candidates offered, not a guess",
       all(m.match_confidence == "none" and m.matched_meal_slot_id is None for m in matches2),
       str(matches2))
+
+# --- daily and per-meal targets, parsed from the same real PDF text ---
+check("parsed.daily_targets == (protein, carbs, fat, calories)",
+      parsed.daily_targets == (170, 180, 80, 2120), f"got {parsed.daily_targets}")
+check("_parse_daily_targets standalone matches", _parse_daily_targets(FULL_TEXT) == (170, 180, 80, 2120))
+
+EXPECTED_MEAL_TARGETS = {
+    "ארוחת בוקר": (43, 46, 17, 510),
+    "ארוחת צהריים": (49, 55, 20, 600),
+    "ארוחת ביניים": (26, 38, 8, 325),
+    "ארוחת ערב": (47, 38, 25, 570),
+}
+check("meal_targets has exactly the 4 option-bearing meals",
+      set(parsed.meal_targets.keys()) == set(EXPECTED_MEAL_TARGETS.keys()),
+      str(sorted(parsed.meal_targets.keys())))
+for name, expected in EXPECTED_MEAL_TARGETS.items():
+    got = parsed.meal_targets.get(name)
+    check(f"meal_targets[{name!r}] == {expected}", got == expected, f"got {got}")
+
+check("_parse_meal_targets standalone matches", _parse_meal_targets(FULL_TEXT) == EXPECTED_MEAL_TARGETS)
+check("קפה בוקר (fixed coffee row) is NOT included in meal_targets",
+      "קפה בוקר" not in parsed.meal_targets)
+check("סה\"כ יומי (grand total row) is NOT included in meal_targets",
+      "סה\"כ יומי" not in parsed.meal_targets)
 
 print()
 print(f"{len(fails)} failing check(s): {fails}" if fails else "ALL PASSED")

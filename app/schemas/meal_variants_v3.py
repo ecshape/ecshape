@@ -131,6 +131,20 @@ class ManualVariantsRequest(BaseModel):
     slots: List[ManualVariantSlotInput]
 
 
+class DailyTargetsFields(BaseModel):
+    total_calories: int
+    protein_target: float
+    carb_target: float
+    fat_target: float
+
+
+class MealSlotTargetFields(BaseModel):
+    target_calories: int
+    target_protein: float
+    target_carbs: float
+    target_fat: float
+
+
 class ParsedFoodPlaceholder(BaseModel):
     """
     A single blank/pre-filled food row per parsed option. Ingredient text in a PDF table
@@ -169,12 +183,39 @@ class ParsedSlot(BaseModel):
     matched_meal_slot_id: Optional[int] = None
     match_confidence: str = "none"  # "exact" | "fuzzy" | "none"
     candidate_meal_slot_ids: List[int] = []  # plan slots the trainer could pick from
+    # Populated only when matched_meal_slot_id is null AND the PDF's own breakdown table
+    # had a target for this meal - lets the trainer create a brand new slot (via
+    # POST /plans/ensure) instead of being hard-blocked with nowhere to put this meal's
+    # options. Never auto-applied; the trainer confirms before anything is created.
+    proposed_target: Optional[MealSlotTargetFields] = None
     variants: List[ParsedVariant] = []
 
 
 class ParsedMenuPdfResponse(BaseModel):
     slots: List[ParsedSlot] = []
     warnings: List[str] = []
+    # True when the client already had an active meal plan at parse time. False means
+    # every slot in `slots` necessarily has matched_meal_slot_id=None - there was nothing
+    # to match against - and the review screen should offer to create the whole plan.
+    has_plan: bool = True
+    # The PDF's own daily totals, only set when has_plan is False (an existing plan
+    # already has its own real targets via PUT /plans/{id}/targets - irrelevant here).
+    daily_targets: Optional[DailyTargetsFields] = None
+
+
+class EnsurePlanSlotInput(BaseModel):
+    raw_name: str  # becomes the new MealSlot's name, e.g. "ארוחת בוקר"
+    order_index: int
+    target_calories: int
+    target_protein: float
+    target_carbs: float
+    target_fat: float
+
+
+class EnsurePlanRequest(BaseModel):
+    client_id: int
+    daily_targets: Optional[DailyTargetsFields] = None
+    new_slots: List[EnsurePlanSlotInput] = []
 
 
 class VariantSelectRequest(BaseModel):

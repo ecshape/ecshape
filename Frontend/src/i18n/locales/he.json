@@ -420,13 +420,18 @@
       "chooseSlot": "בחר ארוחה…",
       "suggested": "מוצע",
       "noSlotMatch": "לא נמצאה התאמה אוטומטית לארוחה — יש לבחור אחת למעלה.",
+      "noSlotAvailable": "לתפריט של הלקוח הזה אין ארוחה פנויה בשביל {{meal}}. יש להוסיף ארוחה מתאימה בעמוד בניית התפריט ואז להעלות את ה-PDF הזה שוב.",
       "pdfReferenceText": "טקסט מה-PDF (לעיון בלבד)",
       "macrosNotFound": "לא נמצאו ערכים תזונתיים — יש להזין למטה",
       "chooseMacroSplit": "בחר/י את החלוקה הנכונה של חלבון/פחמימה/שומן:",
       "useTheseOptions": "השתמש באפשרויות אלו",
-      "importAll": "ייבא הכל לטופס",
-      "imported": "יובא לטופס למטה",
-      "importedSlot": "יובאו {{count}} אפשרויות"
+      "importAll": "ייבא ושמור הכל",
+      "imported": "יובא ונשמר בהצלחה",
+      "importedSlot": "יובאו ונשמרו {{count}} אפשרויות",
+      "proposedDailyTargets": "ללקוח הזה אין עדיין תפריט — יעד יומי מוצע",
+      "createSlotFor": "צור ארוחה בשביל {{meal}}",
+      "slotCreationSkipped": "לא מסומן — האפשרויות של הארוחה הזו לא ייובאו.",
+      "ensureSlotFailed": "לא ניתן ליצור את הארוחה"
     }
   },
   "training": {

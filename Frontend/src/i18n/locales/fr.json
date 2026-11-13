@@ -1469,7 +1469,8 @@
       "agent": "Agent EC",
       "site": "Mon site",
       "seo": "COM / SEO",
-      "qa": "Atelier QA"
+      "qa": "Atelier QA",
+      "preferences": "Préférences"
     },
     "prospects": {
       "title": "Prospects",
@@ -1558,7 +1559,12 @@
         "form": "Formulaire de contact",
         "cookie": "Cookies",
         "contact": "Coordonnées"
-      }
+      },
+      "customize": "Personnaliser",
+      "studioTitle": "Studio du site",
+      "hubTitle": "Votre site public",
+      "hubBody": "Ouvrez le studio pour éditer textes et médias à côté d’un aperçu live — Agent EC reste ancré pour que le site reste visible.",
+      "livePreview": "Aperçu live"
     },
     "seo": {
       "title": "COM / SEO",
@@ -1613,6 +1619,20 @@
         "high": "Haute"
       },
       "all": "Tous"
+    },
+    "prefs": {
+      "title": "Préférences",
+      "subtitle": "Réglages du studio coach — les clés restent privées à votre compte",
+      "aiKeys": "Clés API IA",
+      "aiKeysHint": "Collez une clé Anthropic / OpenAI / Google. Seuls les 4 derniers caractères seront réaffichés.",
+      "apiKey": "Clé API",
+      "label": "Libellé",
+      "addKeys": "Ajouter une clé",
+      "emptyKeys": "Aucune clé pour l’instant.",
+      "prefer": "Préférer",
+      "preferred": "Préférée",
+      "deleteConfirm": "Supprimer cette clé ?",
+      "keySaved": "Clé enregistrée"
     }
   }
 }

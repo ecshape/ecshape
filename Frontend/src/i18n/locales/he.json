@@ -1456,7 +1456,8 @@
       "agent": "Agent EC",
       "site": "האתר שלי",
       "seo": "תקשורת / SEO",
-      "qa": "סדנת QA"
+      "qa": "סדנת QA",
+      "preferences": "הגדרות"
     },
     "prospects": {
       "title": "לידים",
@@ -1545,7 +1546,12 @@
         "form": "טופס ייעוץ",
         "cookie": "עוגיות",
         "contact": "פרטי קשר"
-      }
+      },
+      "customize": "התאמה אישית",
+      "studioTitle": "סטודיו האתר",
+      "hubTitle": "האתר הציבורי שלכם",
+      "hubBody": "פתחו את הסטודיו כדי לערוך טקסטים ומדיה ליד תצוגה חיה — Agent EC נשאר בצד והאתר נשאר גלוי.",
+      "livePreview": "תצוגה חיה"
     },
     "seo": {
       "title": "תקשורת / SEO",
@@ -1600,6 +1606,20 @@
         "high": "גבוהה"
       },
       "all": "הכל"
+    },
+    "prefs": {
+      "title": "הגדרות",
+      "subtitle": "הגדרות סטודיו המאמן — המפתחות נשארים פרטיים לחשבון שלך",
+      "aiKeys": "מפתחות AI",
+      "aiKeysHint": "הדביקו מפתח Anthropic / OpenAI / Google. רק 4 תווים אחרונים יוצגו שוב.",
+      "apiKey": "מפתח API",
+      "label": "תווית",
+      "addKeys": "הוספת מפתח",
+      "emptyKeys": "אין מפתחות עדיין.",
+      "prefer": "העדף",
+      "preferred": "מועדף",
+      "deleteConfirm": "למחוק את המפתח?",
+      "keySaved": "המפתח נשמר"
     }
   }
 }

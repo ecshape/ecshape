@@ -96,7 +96,17 @@ export const studioApi = {
   commentTicket: (id: number, body: string) => request<QaTicket>(`/qa/${id}/comments`, { method: 'POST', body: JSON.stringify({ body }) }),
   deleteTicket: (id: number) => request<void>(`/qa/${id}`, { method: 'DELETE' }),
 
-  agentStatus: () => request<{ configured: boolean }>('/agent/status'),
+  agentStatus: () => request<{ configured: boolean; has_user_keys?: boolean }>('/agent/status'),
   agentChat: (messages: AgentTurn[], lang: string, page?: string) =>
     request<AgentReply>('/agent/chat', { method: 'POST', body: JSON.stringify({ messages, lang, page }) }),
+
+  aiKeys: () =>
+    request<{ id: number; provider: string; label: string; last4: string; is_preferred: boolean; created_at?: string | null }[]>('/ai-keys'),
+  addAiKey: (data: { api_key: string; label?: string; provider?: string }) =>
+    request<{ id: number; provider: string; label: string; last4: string; is_preferred: boolean }>('/ai-keys', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  preferAiKey: (id: number) => request<{ ok: boolean }>(`/ai-keys/${id}/prefer`, { method: 'POST' }),
+  deleteAiKey: (id: number) => request<void>(`/ai-keys/${id}`, { method: 'DELETE' }),
 };

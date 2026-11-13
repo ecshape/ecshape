@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dumbbell, Home, Utensils, Target, TrendingUp, LogOut, User, Settings, MessageSquare, ChevronDown,
-  Users2, Sparkles, Globe2, Megaphone, Bug, LayoutGrid, X, ExternalLink,
+  Users2, Sparkles, Globe2, Megaphone, Bug, LayoutGrid, X, ExternalLink, SlidersHorizontal,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -10,7 +10,9 @@ import { cn } from '@/lib/utils';
 import LanguageSelector from './LanguageSelector';
 import ThemeToggle from './ThemeToggle';
 import LiquidNav, { type LiquidItem } from './LiquidNav';
-import AgentChat from './studio/AgentChat';
+import AgentSidekick from './studio/AgentSidekick';
+import { AgentSidekickProvider } from '@/contexts/AgentSidekickContext';
+import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -35,18 +37,21 @@ const Brand = ({ compact = false }: { compact?: boolean }) => (
 
 type NavEntry = { id: string; label: string; icon: React.ElementType; href: string; badge?: number };
 
-const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
+const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const dir = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
   const [moreOpen, setMoreOpen] = useState(false);
-  const [agentOpen, setAgentOpen] = useState(false);
   const [newLeads, setNewLeads] = useState(0);
+  const mainRef = useRef<HTMLElement>(null);
 
   const isTrainer = user?.role === 'TRAINER';
   const isAdmin = user?.role === 'ADMIN';
+
+  usePortalRoot(true);
+  usePortalMotion(mainRef);
 
   useEffect(() => {
     if (!isTrainer) return;
@@ -58,7 +63,6 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
 
   const go = (href: string) => navigate(href);
 
-  // ---- Navigation per role
   const clientNav: NavEntry[] = [
     { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/' },
     { id: 'meals', label: t('navigation.meals'), icon: Utensils, href: '/meals' },
@@ -94,6 +98,7 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
         { id: 'site', label: t('studio.nav.site'), icon: Globe2, href: '/studio/site' },
         { id: 'seo', label: t('studio.nav.seo'), icon: Megaphone, href: '/studio/seo' },
         { id: 'qa', label: t('studio.nav.qa'), icon: Bug, href: '/studio/qa' },
+        { id: 'preferences', label: t('studio.nav.preferences'), icon: SlidersHorizontal, href: '/studio/preferences' },
       ],
     },
   ];
@@ -127,6 +132,12 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           <ExternalLink className="h-4 w-4" />
           {t('studio.site.open')}
         </DropdownMenuItem>
+        {isTrainer && (
+          <DropdownMenuItem onClick={() => go('/studio/preferences')} className="gap-2">
+            <SlidersHorizontal className="h-4 w-4" />
+            {t('studio.nav.preferences')}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={logout} className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive">
           <LogOut className="h-4 w-4" />
           {t('auth.logout')}
@@ -135,13 +146,11 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
     </DropdownMenu>
   );
 
-  // ================================================================ TRAINER: sidebar studio
   if (isTrainer) {
     const mobilePrimary = ['dashboard', 'prospects', 'agent', 'chat'].map((id) => trainerAll.find((i) => i.id === id)!) as NavEntry[];
     return (
-      <div className="flex h-screen overflow-hidden bg-background" dir={dir}>
-        {/* Sidebar (desktop) */}
-        <aside className="ec-glass relative z-40 m-3 hidden w-[264px] flex-none flex-col rounded-[1.75rem] p-4 lg:flex">
+      <div className="ec-portal-shell flex h-screen overflow-hidden bg-background" dir={dir}>
+        <aside className="ec-glass relative z-40 m-3 hidden w-[264px] flex-none flex-col rounded-[1.75rem] p-4 lg:flex" data-ec-enter>
           <button onClick={() => go('/trainer-dashboard')} className="mb-6 flex items-center justify-between rounded-2xl px-2 py-1 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Brand compact />
             <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">{t('studio.name')}</span>
@@ -163,8 +172,7 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* Mobile top bar */}
+        <div className="ec-portal-main flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-border/50 bg-background/70 px-3 backdrop-blur-xl lg:hidden">
             <button onClick={() => go('/trainer-dashboard')}><Brand compact /></button>
             <div className="flex items-center gap-1.5">
@@ -174,12 +182,11 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
             </div>
           </header>
 
-          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
-            <div className="animate-fade-in">{children}</div>
+          <main ref={mainRef} className="ec-portal-body min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
+            <div className="ec-page-enter">{children}</div>
           </main>
         </div>
 
-        {/* Mobile tab bar */}
         <nav className="fixed inset-x-3 z-50 lg:hidden" style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <div className="ec-glass flex items-stretch justify-between gap-1 rounded-[1.6rem] p-1.5">
             {mobilePrimary.map((item) => {
@@ -201,7 +208,6 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           </div>
         </nav>
 
-        {/* Mobile "more" sheet */}
         <div className={cn('fixed inset-0 z-[60] lg:hidden', moreOpen ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!moreOpen}>
           <div className={cn('absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300', moreOpen ? 'opacity-100' : 'opacity-0')} onClick={() => setMoreOpen(false)} />
           <div className={cn('ec-glass absolute inset-x-3 bottom-3 rounded-[1.75rem] p-4 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]', moreOpen ? 'translate-y-0' : 'translate-y-[110%]')}>
@@ -225,37 +231,16 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           </div>
         </div>
 
-        {/* Agent EC sidekick (everywhere except its own page) */}
-        {currentPage !== 'agent' && (
-          <>
-            <button
-              onClick={() => setAgentOpen(true)}
-              className="fixed bottom-28 end-4 z-50 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[0_18px_40px_-14px_hsl(var(--primary)/.9)] transition-transform duration-300 hover:-translate-y-0.5 lg:bottom-6 lg:end-6"
-              aria-label={t('studio.agent.open')}
-            >
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('studio.agent.open')}</span>
-            </button>
-            <div className={cn('fixed inset-0 z-[70]', agentOpen ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!agentOpen}>
-              <div className={cn('absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300', agentOpen ? 'opacity-100' : 'opacity-0')} onClick={() => setAgentOpen(false)} />
-              <div className={cn('ec-glass absolute bottom-3 end-3 top-3 flex w-[min(440px,calc(100vw-24px))] flex-col overflow-hidden rounded-[1.75rem] transition-[transform,opacity] duration-500 ease-[cubic-bezier(.22,1,.36,1)]', agentOpen ? 'translate-x-0 opacity-100' : (dir === 'rtl' ? '-translate-x-[110%]' : 'translate-x-[110%]') + ' opacity-0')}>
-                <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-                  <span className="flex items-center gap-2 font-display text-3xl"><Sparkles className="h-5 w-5 text-primary" />{t('studio.agent.title')}</span>
-                  <button onClick={() => setAgentOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-muted"><X className="h-4 w-4" /></button>
-                </div>
-                {agentOpen && <AgentChat compact page={location.pathname} className="min-h-0 flex-1" />}
-              </div>
-            </div>
-          </>
-        )}
+        {/* Docked beside the portal — site/studio stay visible */}
+        {currentPage !== 'agent' && <AgentSidekick />}
       </div>
     );
   }
 
-  // ================================================================ CLIENT / ADMIN: top bar
+  // CLIENT / ADMIN
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background" dir={dir}>
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/70 backdrop-blur-xl">
+    <div className="ec-portal-shell flex h-screen flex-col overflow-hidden bg-background" dir={dir}>
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/70 backdrop-blur-xl" data-ec-enter>
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-3 px-3 sm:px-5 lg:h-[76px] lg:px-8">
           <button onClick={() => go(topNav[0].href)} className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <span className="lg:hidden"><Brand compact /></span>
@@ -273,8 +258,8 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
-        <div className="animate-fade-in">{children}</div>
+      <main ref={mainRef} className="ec-portal-body flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
+        <div className="ec-page-enter">{children}</div>
       </main>
 
       <nav className="fixed inset-x-3 z-50 lg:hidden" style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }} aria-label={t('navigation.menu')}>
@@ -293,6 +278,16 @@ const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
         </div>
       </nav>
     </div>
+  );
+};
+
+const Layout = (props: LayoutProps) => {
+  const { user } = useAuth();
+  const isTrainer = user?.role === 'TRAINER';
+  return (
+    <AgentSidekickProvider enabled={!!isTrainer}>
+      <LayoutInner {...props} />
+    </AgentSidekickProvider>
   );
 };
 

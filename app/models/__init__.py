@@ -93,4 +93,4 @@ __all__ = [
 ]
 
 # Trainer studio (prospects, site content, QA)
-from app.models.studio import Lead, SiteSetting, QaTicket, QaComment
+from app.models.studio import Lead, SiteSetting, QaTicket, QaComment, TrainerAiKey

@@ -40,10 +40,12 @@ import AgentPage from './pages/studio/AgentPage';
 import MySitePage from './pages/studio/MySitePage';
 import SeoPage from './pages/studio/SeoPage';
 import QaPage from './pages/studio/QaPage';
+import PreferencesPage from './pages/studio/PreferencesPage';
 import QaCaptureWidget from './components/studio/QaCaptureWidget';
 import { useAuth } from './contexts/AuthContext';
 import './i18n/config';
 import './styles/qa-capture.css';
+import './styles/portal-chrome.css';
 
 // Public site (gsap + lenis) is code-split so the portal bundle stays lean.
 const SitePage = lazy(() => import('./pages/SitePage'));
@@ -220,6 +222,7 @@ const AppRoutes = () => {
       <Route path="/studio/site" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><MySitePage /></ProtectedRoute>} />
       <Route path="/studio/seo" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><SeoPage /></ProtectedRoute>} />
       <Route path="/studio/qa" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><QaPage /></ProtectedRoute>} />
+      <Route path="/studio/preferences" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><PreferencesPage /></ProtectedRoute>} />
 
       {/* Trainer/Client routes */}
       <Route path="/" element={<HomeRoute />} />

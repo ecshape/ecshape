@@ -1,6 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ExternalLink, Plus, RotateCcw, Save, Trash2, Eye, EyeOff } from 'lucide-react';
+import {
+  ChevronDown, ExternalLink, Monitor, Plus, RotateCcw, Save, Smartphone, Tablet, Trash2, X, Paintbrush,
+} from 'lucide-react';
 import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -16,7 +19,6 @@ const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'objec
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 const humanize = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/\d+$/, (n) => ` ${n}`);
 
-/** Only what differs from the defaults is stored, so future default improvements still reach the site. */
 function diff(base: Json, value: Json): Json | undefined {
   if (Array.isArray(base) || Array.isArray(value)) return JSON.stringify(base) === JSON.stringify(value) ? undefined : value;
   if (isObj(base) && isObj(value)) {
@@ -47,7 +49,6 @@ interface FieldProps {
   t: (k: string) => string;
 }
 
-/** Renders an editor for any JSON value shape found in the site content. */
 const Field: React.FC<FieldProps> = ({ name, value, base, path, onChange, t }) => {
   const changed = JSON.stringify(value) !== JSON.stringify(base);
   const labelEl = (
@@ -137,6 +138,9 @@ const Field: React.FC<FieldProps> = ({ name, value, base, path, onChange, t }) =
   return null;
 };
 
+type Viewport = 'desktop' | 'tablet' | 'mobile';
+const VIEW_W: Record<Viewport, number> = { desktop: 1280, tablet: 768, mobile: 390 };
+
 const MySitePage = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
@@ -145,9 +149,9 @@ const MySitePage = () => {
   const [saved, setSaved] = useState<string>('');
   const [open, setOpen] = useState<string | null>('hero');
   const [busy, setBusy] = useState(false);
-  const [showPreview, setShowPreview] = useState(true);
+  const [studio, setStudio] = useState(false);
+  const [viewport, setViewport] = useState<Viewport>('desktop');
   const [previewKey, setPreviewKey] = useState(0);
-  const frame = useRef<HTMLIFrameElement>(null);
 
   const defaults = DEFAULT_CONTENT[lang] as unknown as Record<string, Json>;
 
@@ -164,6 +168,11 @@ const MySitePage = () => {
         setSaved(JSON.stringify(defaults));
       });
   }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('ec-site-studio-open', studio);
+    return () => document.documentElement.classList.remove('ec-site-studio-open');
+  }, [studio]);
 
   const dirty = JSON.stringify(draft) !== saved;
   const sections = useMemo(() => Object.keys(defaults), [defaults]);
@@ -192,84 +201,154 @@ const MySitePage = () => {
     setPreviewKey((k) => k + 1);
   };
 
+  const previewSrc = `/home?lang=${lang}`;
+  const editor = (
+    <div className="space-y-3" dir={lang === 'he' ? 'rtl' : 'ltr'}>
+      {sections.map((key) => {
+        const isOpen = open === key;
+        const sectionChanged = JSON.stringify(draft[key]) !== JSON.stringify(defaults[key]);
+        return (
+          <div key={key} className={cn('ec-card overflow-hidden rounded-[1.25rem] border bg-card transition-colors', isOpen ? 'border-primary/40' : 'border-border/60')}>
+            <button onClick={() => setOpen(isOpen ? null : key)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-start">
+              <span className="flex items-center gap-2">
+                <span className="font-display text-3xl leading-none">{t(`studio.site.sections.${key}`, humanize(key))}</span>
+                {sectionChanged && <span className="h-2 w-2 rounded-full bg-primary" />}
+              </span>
+              <ChevronDown className={cn('h-5 w-5 text-muted-foreground transition-transform duration-500', isOpen && 'rotate-180')} />
+            </button>
+            <div className={cn('grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(.22,1,.36,1)]', isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
+              <div className="overflow-hidden">
+                <div className="border-t border-border/60 px-5 pb-6 pt-5">
+                  {isOpen && <Field name={key} value={draft[key]} base={defaults[key]} path={[key]} onChange={onChange} t={t} />}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const studioUi = studio
+    ? createPortal(
+        <div className="ec-site-studio" data-qa-ignore>
+          <header className="ec-site-studio-bar">
+            <div className="flex min-w-0 items-center gap-3">
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-full bg-muted" onClick={() => setStudio(false)} aria-label={t('common.close')}>
+                <X className="h-4 w-4" />
+              </button>
+              <div className="min-w-0">
+                <p className="truncate font-display text-2xl leading-none">{t('studio.site.studioTitle')}</p>
+                <p className="truncate text-xs text-muted-foreground">{dirty ? t('studio.site.unsaved') : t('studio.site.livePreview')}</p>
+              </div>
+            </div>
+            <div className="ec-glass flex rounded-full p-1">
+              {([
+                ['desktop', Monitor],
+                ['tablet', Tablet],
+                ['mobile', Smartphone],
+              ] as const).map(([id, Icon]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setViewport(id)}
+                  className={cn('grid h-9 w-9 place-items-center rounded-full transition-colors', viewport === id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="ec-glass hidden rounded-full p-1 sm:inline-flex">
+                {SITE_LANGS.map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => {
+                      if (dirty && !window.confirm(t('studio.site.unsaved') + ' — ' + t('common.confirm') + '?')) return;
+                      setLang(l);
+                    }}
+                    className={cn('rounded-full px-3 py-1.5 text-xs font-bold', lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
+                  >
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <Button variant="ghost" size="sm" onClick={reset}><RotateCcw />{t('studio.site.reset')}</Button>
+              <Button size="sm" onClick={save} disabled={!dirty || busy}><Save />{t('studio.site.save')}</Button>
+            </div>
+          </header>
+
+          <div className="ec-site-studio-grid">
+            <aside className="ec-site-studio-inspector overflow-y-auto p-4">{editor}</aside>
+            <div className="ec-site-studio-stage">
+              <div className="ec-site-studio-device" style={{ width: `min(100%, ${VIEW_W[viewport]}px)` }}>
+                <iframe key={`${lang}-${previewKey}-${viewport}`} title={t('studio.site.preview')} src={previewSrc} className="h-full w-full bg-[#0b0a08]" />
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
+
   return (
     <Layout currentPage="site">
-      <div className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 md:py-10">
+      <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 md:py-10">
         <PageHeader
           eyebrow={t('studio.groupStudio')}
           title={t('studio.site.title')}
           description={t('studio.site.subtitle')}
           actions={
             <>
-              <Button variant="outline" onClick={() => window.open(`/home?lang=${lang}`, '_blank')}><ExternalLink />{t('studio.site.open')}</Button>
-              <Button variant="ghost" onClick={reset}><RotateCcw />{t('studio.site.reset')}</Button>
-              <Button onClick={save} disabled={!dirty || busy}><Save />{t('studio.site.save')}</Button>
+              <Button variant="outline" onClick={() => window.open(previewSrc, '_blank')}><ExternalLink />{t('studio.site.open')}</Button>
+              <Button onClick={() => setStudio(true)}><Paintbrush />{t('studio.site.customize')}</Button>
             </>
           }
         />
 
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="ec-glass inline-flex rounded-full p-1">
-            {SITE_LANGS.map((l) => (
-              <button
-                key={l}
-                onClick={() => {
-                  if (dirty && !window.confirm(t('studio.site.unsaved') + ' — ' + t('common.confirm') + '?')) return;
-                  setLang(l);
-                }}
-                className={cn('rounded-full px-4 py-2 text-sm font-bold transition-all duration-300', lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}
-              >
-                {l === 'he' ? 'עברית' : l === 'en' ? 'English' : 'Français'}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            {dirty && <span className="animate-fade-in rounded-full bg-[hsl(var(--gold)/.15)] px-3 py-1 text-xs font-bold text-[hsl(var(--gold))]">{t('studio.site.unsaved')}</span>}
-            <Button variant="ghost" size="sm" className="hidden xl:inline-flex" onClick={() => setShowPreview((s) => !s)}>
-              {showPreview ? <EyeOff /> : <Eye />}{t('studio.site.preview')}
-            </Button>
-          </div>
-        </div>
-
-        <div className={cn('grid gap-6', showPreview && 'xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]')}>
-          <div className="space-y-3" dir={lang === 'he' ? 'rtl' : 'ltr'}>
-            {sections.map((key) => {
-              const isOpen = open === key;
-              const sectionChanged = JSON.stringify(draft[key]) !== JSON.stringify(defaults[key]);
-              return (
-                <div key={key} className={cn('ec-card overflow-hidden rounded-[1.25rem] border bg-card transition-colors', isOpen ? 'border-primary/40' : 'border-border/60')}>
-                  <button onClick={() => setOpen(isOpen ? null : key)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-start">
-                    <span className="flex items-center gap-2">
-                      <span className="font-display text-3xl leading-none">{t(`studio.site.sections.${key}`, humanize(key))}</span>
-                      {sectionChanged && <span className="h-2 w-2 rounded-full bg-primary" />}
-                    </span>
-                    <ChevronDown className={cn('h-5 w-5 text-muted-foreground transition-transform duration-500', isOpen && 'rotate-180')} />
-                  </button>
-                  <div className={cn('grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(.22,1,.36,1)]', isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-                    <div className="overflow-hidden">
-                      <div className="border-t border-border/60 px-5 pb-6 pt-5">
-                        {isOpen && <Field name={key} value={draft[key]} base={defaults[key]} path={[key]} onChange={onChange} t={t} />}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {showPreview && (
-            <div className="hidden xl:block">
-              <div className="ec-glass sticky top-6 overflow-hidden rounded-[1.75rem] p-2">
-                <div className="flex items-center gap-1.5 px-3 py-2">
-                  <i className="h-2.5 w-2.5 rounded-full bg-red-400/70" /><i className="h-2.5 w-2.5 rounded-full bg-amber-400/70" /><i className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-                  <span className="ms-3 truncate text-xs text-muted-foreground" dir="ltr">ecshape.org/?lang={lang}</span>
-                </div>
-                <iframe key={`${lang}-${previewKey}`} ref={frame} title={t('studio.site.preview')} src={`/home?lang=${lang}`} className="h-[calc(100vh-10rem)] w-full rounded-[1.25rem] bg-[#0b0a08]" />
-              </div>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_.9fr]" data-ec-enter>
+          <button
+            type="button"
+            onClick={() => setStudio(true)}
+            className="ec-card group relative overflow-hidden rounded-[1.75rem] border border-border/60 bg-[#0b0a08] text-start shadow-[0_30px_80px_-40px_rgba(0,0,0,.8)] transition-transform duration-500 hover:-translate-y-1"
+          >
+            <div className="flex items-center gap-1.5 px-4 py-3">
+              <i className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+              <i className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+              <i className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
+              <span className="ms-2 truncate text-xs text-white/50" dir="ltr">ecshape.org</span>
             </div>
-          )}
+            <div className="relative aspect-[16/11] overflow-hidden">
+              <iframe key={`hub-${lang}-${previewKey}`} title="preview" src={previewSrc} className="pointer-events-none absolute inset-0 h-[180%] w-[180%] origin-top-left scale-[0.555]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <span className="absolute bottom-4 start-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-black shadow-lg">
+                <Paintbrush className="h-4 w-4" />
+                {t('studio.site.customize')}
+              </span>
+            </div>
+          </button>
+
+          <div className="ec-card flex flex-col justify-between rounded-[1.75rem] border border-border/60 bg-card p-6">
+            <div>
+              <p className="ec-eyebrow">{t('studio.site.livePreview')}</p>
+              <h2 className="mt-3 font-display text-4xl leading-none">{t('studio.site.hubTitle')}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t('studio.site.hubBody')}</p>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {SITE_LANGS.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={cn('rounded-full px-4 py-2 text-sm font-bold transition-colors', lang === l ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}
+                >
+                  {l === 'he' ? 'עברית' : l === 'en' ? 'English' : 'Français'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      {studioUi}
     </Layout>
   );
 };

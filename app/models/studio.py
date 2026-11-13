@@ -56,3 +56,17 @@ class QaComment(Base):
     author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     body = Column(Text, nullable=False)
     created_at = Column(DateTime, default=func.now())
+
+
+class TrainerAiKey(Base):
+    """Trainer-owned AI API keys (ciphertext only — never return the raw secret)."""
+    __tablename__ = "studio_trainer_ai_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider = Column(String(40), nullable=False, default="anthropic")
+    label = Column(String(80), nullable=False, default="default")
+    key_ciphertext = Column(Text, nullable=False)
+    key_last4 = Column(String(8), nullable=False)
+    is_preferred = Column(Integer, nullable=False, default=0)  # 0/1 for SQLite friendliness
+    created_at = Column(DateTime, default=func.now())

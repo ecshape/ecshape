@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowUp, Sparkles, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowUp, Sparkles, RotateCcw, CheckCircle2, KeyRound } from 'lucide-react';
 import { studioApi, type AgentTurn, type AgentReply } from '@/lib/studioApi';
 import { cn } from '@/lib/utils';
 
@@ -39,13 +40,15 @@ const RichText = ({ text }: { text: string }) => (
 interface AgentChatProps {
   page?: string;
   seed?: string | null;
+  onSeedConsumed?: () => void;
   compact?: boolean;
   className?: string;
 }
 
 /** Conversation with Agent EC. Used full-page (Studio → Agent EC) and in the floating sidekick. */
-export const AgentChat: React.FC<AgentChatProps> = ({ page, seed, compact, className }) => {
+export const AgentChat: React.FC<AgentChatProps> = ({ page, seed, onSeedConsumed, compact, className }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Msg[]>(loadHistory);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -65,8 +68,11 @@ export const AgentChat: React.FC<AgentChatProps> = ({ page, seed, compact, class
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' });
   }, [messages, busy]);
   useEffect(() => {
-    if (seed) setInput(seed);
-  }, [seed]);
+    if (seed) {
+      setInput(seed);
+      onSeedConsumed?.();
+    }
+  }, [seed, onSeedConsumed]);
 
   const send = async (text: string) => {
     const content = text.trim();
@@ -91,10 +97,20 @@ export const AgentChat: React.FC<AgentChatProps> = ({ page, seed, compact, class
     <div className={cn('flex min-h-0 flex-col', className)}>
       <div ref={scroller} className={cn('min-h-0 flex-1 overflow-y-auto', compact ? 'px-4 py-4' : 'px-1 py-2')}>
         {configured === false && (
-          <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-200">{t('studio.agent.notConfigured')}</div>
+          <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-200">
+            <p>{t('studio.agent.notConfigured')}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/studio/preferences#ai-keys')}
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold underline-offset-2 hover:underline"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              {t('studio.prefs.addKeys')}
+            </button>
+          </div>
         )}
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center" data-ec-enter>
             <div className="relative grid h-16 w-16 place-items-center rounded-[1.4rem] bg-primary text-primary-foreground shadow-[0_18px_40px_-14px_hsl(var(--primary)/.9)]">
               <Sparkles className="h-7 w-7" />
               <span className="absolute inset-0 animate-ping rounded-[1.4rem] bg-primary/30" style={{ animationDuration: '2.6s' }} />
@@ -103,13 +119,24 @@ export const AgentChat: React.FC<AgentChatProps> = ({ page, seed, compact, class
               <p className="font-display text-4xl">{t('studio.agent.title')}</p>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">{t('studio.agent.subtitle')}</p>
             </div>
-            <div className="flex max-w-xl flex-wrap justify-center gap-2">
-              {suggestions.map((s) => (
-                <button key={s} onClick={() => send(s)} className="rounded-full border border-border/70 bg-card/70 px-3.5 py-2 text-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:text-primary">
-                  {s}
-                </button>
-              ))}
-            </div>
+            {configured === false ? (
+              <button
+                type="button"
+                onClick={() => navigate('/studio/preferences#ai-keys')}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+              >
+                <KeyRound className="h-4 w-4" />
+                {t('studio.prefs.addKeys')}
+              </button>
+            ) : (
+              <div className="flex max-w-xl flex-wrap justify-center gap-2">
+                {suggestions.map((s) => (
+                  <button key={s} onClick={() => send(s)} className="rounded-full border border-border/70 bg-card/70 px-3.5 py-2 text-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:text-primary">
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">

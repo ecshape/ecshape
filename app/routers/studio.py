@@ -336,6 +336,49 @@ def agent_chat(payload: AgentChatIn, user: UserResponse = Depends(require_studio
 
 
 @router.get("/agent/status")
-def agent_status(user: UserResponse = Depends(require_studio)):
-    import os
-    return {"configured": bool(os.getenv("ANTHROPIC_API_KEY"))}
+def agent_status(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.ai_keys import has_any_key, resolve_anthropic_key
+    return {
+        "configured": bool(resolve_anthropic_key(db, user.id)),
+        "has_user_keys": has_any_key(db, user.id),
+    }
+
+
+class AiKeyIn(BaseModel):
+    api_key: str = Field(..., min_length=12, max_length=500)
+    label: Optional[str] = Field(None, max_length=80)
+    provider: Optional[str] = Field(None, max_length=40)
+
+
+@router.get("/ai-keys")
+def list_ai_keys(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.ai_keys import list_keys
+    return list_keys(db, user.id)
+
+
+@router.post("/ai-keys", status_code=201)
+def create_ai_key(payload: AiKeyIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.ai_keys import add_key
+    try:
+        return add_key(db, user.id, payload.api_key, payload.label, payload.provider)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/ai-keys/{key_id}/prefer")
+def prefer_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.ai_keys import set_preferred
+    try:
+        set_preferred(db, user.id, key_id)
+        return {"ok": True}
+    except LookupError:
+        raise HTTPException(status_code=404, detail="Key not found")
+
+
+@router.delete("/ai-keys/{key_id}", status_code=204)
+def remove_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.ai_keys import delete_key
+    try:
+        delete_key(db, user.id, key_id)
+    except LookupError:
+        raise HTTPException(status_code=404, detail="Key not found")

@@ -1469,7 +1469,8 @@
       "agent": "Agent EC",
       "site": "My site",
       "seo": "COM / SEO",
-      "qa": "QA workshop"
+      "qa": "QA workshop",
+      "preferences": "Preferences"
     },
     "prospects": {
       "title": "Prospects",
@@ -1511,7 +1512,7 @@
       "placeholder": "Ask Agent EC… e.g. who missed their check-in this week?",
       "send": "Send",
       "thinking": "Agent EC is thinking…",
-      "notConfigured": "Agent EC is not connected: set ANTHROPIC_API_KEY on the server.",
+      "notConfigured": "Agent EC needs an API key. Add one in Preferences, or set ANTHROPIC_API_KEY on the server.",
       "error": "Agent EC is unavailable right now. Try again in a moment.",
       "clear": "New conversation",
       "actions": "Actions taken",
@@ -1558,7 +1559,12 @@
         "form": "Consultation form",
         "cookie": "Cookies",
         "contact": "Contact details"
-      }
+      },
+      "customize": "Customize",
+      "studioTitle": "Site studio",
+      "hubTitle": "Your public site",
+      "hubBody": "Open the studio to edit copy and media beside a live preview — Agent EC stays docked so the page stays visible.",
+      "livePreview": "Live preview"
     },
     "seo": {
       "title": "COM / SEO",
@@ -1613,6 +1619,20 @@
         "high": "High"
       },
       "all": "All"
+    },
+    "prefs": {
+      "title": "Preferences",
+      "subtitle": "Trainer studio settings — keys stay private to your account",
+      "aiKeys": "AI API keys",
+      "aiKeysHint": "Paste your Anthropic / OpenAI / Google key. Only the last 4 characters are shown again.",
+      "apiKey": "API key",
+      "label": "Label",
+      "addKeys": "Add API key",
+      "emptyKeys": "No keys yet.",
+      "prefer": "Prefer",
+      "preferred": "Preferred",
+      "deleteConfirm": "Remove this key?",
+      "keySaved": "Key saved"
     }
   }
 }

@@ -261,14 +261,17 @@ WRITE_TOOLS = {"update_prospect", "create_qa_ticket", "set_site_text"}
 
 # ------------------------------------------------------------------ loop
 def run_agent(db: Session, user: UserResponse, turns: List[Dict[str, str]], lang: str = "he", page: Optional[str] = None) -> Dict[str, Any]:
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        raise AgentUnavailable("ANTHROPIC_API_KEY is not configured on the server.")
+    from app.services.ai_keys import resolve_anthropic_key
+
+    api_key = resolve_anthropic_key(db, user.id)
+    if not api_key:
+        raise AgentUnavailable("No Anthropic API key configured. Add one in Studio → Preferences.")
     try:
         import anthropic
     except ImportError as e:  # pragma: no cover
         raise AgentUnavailable("The anthropic package is not installed.") from e
 
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(api_key=api_key)
     messages: List[Dict[str, Any]] = [{"role": t["role"], "content": t["content"]} for t in turns]
     context = f"Trainer: {user.full_name}. Interface language: {lang}. Today: {datetime.now().date().isoformat()}."
     if page:

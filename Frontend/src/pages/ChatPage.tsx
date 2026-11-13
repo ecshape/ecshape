@@ -28,7 +28,7 @@ const ChatPage: React.FC = () => {
   }, []);
 
   return (
-    <Layout>
+    <Layout currentPage="chat">
       <div className="w-full h-full overflow-hidden flex flex-col">
         <Chat
           selectedClientId={clientId ? parseInt(clientId) : null}

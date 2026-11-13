@@ -55,7 +55,7 @@ export default function MacroRingChart({
               r={radius}
               fill="none"
               strokeWidth={STROKE_WIDTH}
-              className="stroke-muted/30"
+              className="stroke-foreground/10"
             />
             <circle
               cx={center}

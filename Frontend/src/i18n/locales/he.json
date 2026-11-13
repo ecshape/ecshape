@@ -539,7 +539,9 @@
     },
     "history": "היסטוריה",
     "allSetsHistory": "כל הסטים והחזרות",
-    "noHistory": "אין היסטוריה זמינה"
+    "noHistory": "אין היסטוריה זמינה",
+    "repsShort": "חזרות",
+    "weightShort": "ק״ג"
   },
   "progress": {
     "progress": "התקדמות",

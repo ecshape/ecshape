@@ -542,7 +542,9 @@
     },
     "history": "History",
     "allSetsHistory": "All sets and reps",
-    "noHistory": "No history available"
+    "noHistory": "No history available",
+    "repsShort": "Reps",
+    "weightShort": "kg"
   },
   "progress": {
     "progress": "Progress",

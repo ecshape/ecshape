@@ -4,6 +4,9 @@
  *   APP_URL=http://localhost:5174 SHOT_USER=client1 SHOT_PASS=client123 SHOT_LANG=he \
  *     node scripts/capture-app-shots.mjs
  *
+ * Or, against a dev backend with DEV_DEMO_SEED=1, sign in through the demo shortcut (no password):
+ *   APP_URL=http://localhost:5180 SHOT_DEMO_API=http://localhost:8010/api node scripts/capture-app-shots.mjs
+ *
  * Writes public/site/photos/app/<lang>/{1..4}.jpg (training, meals, progress, chat), in the order
  * of the site's app section items. Run against a local backend seeded with demo data — never production.
  */
@@ -32,17 +35,23 @@ for (const lang of LANGS) {
     colorScheme: 'dark',
     locale: lang === 'he' ? 'he-IL' : lang === 'fr' ? 'fr-FR' : 'en-US',
   });
-  await context.addInitScript((l) => {
+  const demoToken = process.env.SHOT_DEMO_API
+    ? (await (await fetch(`${process.env.SHOT_DEMO_API}/auth/demo-login/client`, { method: 'POST' })).json()).access_token
+    : null;
+  await context.addInitScript(([l, token]) => {
     localStorage.setItem('i18nextLng', l);
     localStorage.setItem('theme', 'dark');
     localStorage.setItem('cookie_consent', 'denied');
-  }, lang);
+    if (token) localStorage.setItem('access_token', token);
+  }, [lang, demoToken]);
   const page = await context.newPage();
-  await page.goto(`${APP_URL}/login`);
-  await page.fill('#username', USER);
-  await page.fill('#password', PASS);
-  await page.click('button[type="submit"]');
-  await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 15000 });
+  if (!demoToken) {
+    await page.goto(`${APP_URL}/login`);
+    await page.fill('#username', USER);
+    await page.fill('#password', PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 15000 });
+  }
 
   const out = join(root, 'public/site/photos/app', lang);
   mkdirSync(out, { recursive: true });

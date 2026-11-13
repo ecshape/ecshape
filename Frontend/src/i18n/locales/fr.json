@@ -636,7 +636,9 @@
     },
     "history": "Historique",
     "allSetsHistory": "Toutes les séries et répétitions",
-    "noHistory": "Aucun historique"
+    "noHistory": "Aucun historique",
+    "repsShort": "Rép.",
+    "weightShort": "kg"
   },
   "exerciseBank": {
     "title": "Banque d’exercices",

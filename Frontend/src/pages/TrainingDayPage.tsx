@@ -1098,7 +1098,8 @@ const TrainingDayPage: React.FC = () => {
                                 type="number"
                                 inputMode="numeric"
                                 min={0}
-                                placeholder={suggestionSet ? String(suggestionSet.reps_completed) : t('training.enterReps')}
+                                placeholder={suggestionSet ? String(suggestionSet.reps_completed) : t('training.repsShort')}
+                                aria-label={t('training.enterReps')}
                                 value={tempSets[currentKey]?.reps ?? ''}
                                 onChange={(e) => updateTempSet(exercise.id, setNumber, 'reps', e.target.value)}
                                 className="h-10 md:h-9 rounded-lg border-border/50 bg-background/90 text-sm"
@@ -1110,7 +1111,8 @@ const TrainingDayPage: React.FC = () => {
                                 inputMode="decimal"
                                 min={0}
                                 step="0.5"
-                                placeholder={suggestionSet ? String(suggestionSet.weight_used) : t('training.enterWeight')}
+                                placeholder={suggestionSet ? String(suggestionSet.weight_used) : t('training.weightShort')}
+                                aria-label={t('training.enterWeight')}
                                 value={tempSets[currentKey]?.weight ?? ''}
                                 onChange={(e) => updateTempSet(exercise.id, setNumber, 'weight', e.target.value)}
                                 className="h-10 md:h-9 rounded-lg border-border/50 bg-background/90 text-sm disabled:opacity-60"

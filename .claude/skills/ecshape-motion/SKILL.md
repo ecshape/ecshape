@@ -1,13 +1,15 @@
 ---
 name: ecshape-motion
-description: Design system and motion rules for the ECshape marketing site in landing/ (not the Frontend/ portal). Use when adding or changing any section, button, or animation on the landing page so it stays consistent with the scroll-driven "Kinetic Editorial" style.
+description: Design system and motion rules for the ECshape platform — the public site (Frontend/src/site) and the trainer/client portal (Frontend/src). Use when adding or changing any page, section, button, or animation so everything stays consistent with the "Kinetic Editorial" style.
 ---
 
 # ECshape landing — design & motion system
 
-The landing site is static (nginx) — `landing/index.html`, `landing/assets/css/site.css`, `landing/assets/js/site.js`.
-Hebrew, `dir="rtl"`. No build step. Free libraries only, from CDN with pinned versions:
-GSAP 3.13 + ScrollTrigger (cdnjs), Lenis 1.1.13 (unpkg).
+ECshape is one React app (`Frontend/`). `/` shows the public site to visitors and the dashboard to signed-in users; `/home` always shows the site.
+- Public site: `Frontend/src/site/markup.html` (markup), `site.css` (all rules scoped under `.ec-site`), `siteMotion.js` (`initSite()` → cleanup), mounted by `src/pages/SitePage.tsx`. Photos in `Frontend/public/site/photos/`.
+- Portal: theme tokens in `src/index.css`, UI kit in `src/components/ui/`, shell in `src/components/Layout.tsx`, page headers/stat tiles in `src/components/PageHeader.tsx`.
+- Libraries (npm, free): gsap 3.13 + ScrollTrigger, lenis 1.1.13 — only loaded on the public site (code-split).
+- `landing/` is the older standalone copy of the site; the app version is the source of truth.
 
 References this style was derived from: scroll-driven template sites (scrolltide.co, jiro.build),
 landing galleries (land-book, landdding, recent.design), button libraries (details.so). Nothing is copied

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,7 +35,30 @@ import MealsPageV3 from './pages/MealsPageV3';
 import SandboxMealsV3 from './pages/SandboxMealsV3';
 import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
 import ClientFavoritesPage from './pages/ClientFavoritesPage';
+import { useAuth } from './contexts/AuthContext';
 import './i18n/config';
+
+// Public site (gsap + lenis) is code-split so the portal bundle stays lean.
+const SitePage = lazy(() => import('./pages/SitePage'));
+const SiteFallback = () => <div className="min-h-screen" style={{ background: '#0b0a08' }} />;
+
+/** "/" is the public site for visitors and the dashboard for signed-in users. */
+const HomeRoute = () => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <SiteFallback />;
+  if (isAuthenticated) {
+    return (
+      <ProtectedRoute>
+        <Index />
+      </ProtectedRoute>
+    );
+  }
+  return (
+    <Suspense fallback={<SiteFallback />}>
+      <SitePage />
+    </Suspense>
+  );
+};
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -184,13 +207,15 @@ const AppRoutes = () => {
       />
 
       {/* Trainer/Client routes */}
-      <Route 
-        path="/" 
+      <Route path="/" element={<HomeRoute />} />
+      {/* Public site, reachable also when signed in */}
+      <Route
+        path="/home"
         element={
-          <ProtectedRoute>
-            <Index />
-          </ProtectedRoute>
-        } 
+          <Suspense fallback={<SiteFallback />}>
+            <SitePage />
+          </Suspense>
+        }
       />
       <Route
         path="/meals"

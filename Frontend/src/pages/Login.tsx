@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,10 +57,10 @@ const Login = () => {
       {/* ---------- Form side ---------- */}
       <section className="relative z-10 flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-16">
         <header className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5" dir="ltr">
+          <Link to="/" className="flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" dir="ltr" aria-label="ECshape">
             <img src="/logonavbar.png" alt="ECshape" className="h-11 w-auto" />
             <span className="font-num text-xl tracking-wide">EC<span className="text-primary">SHAPE</span></span>
-          </div>
+          </Link>
           <div className="flex items-center gap-2">
             <LanguageSelector />
             <ThemeToggle />
@@ -139,6 +139,13 @@ const Login = () => {
           </div>
         </div>
 
+        <Link
+          to="/"
+          className="group mx-auto mb-6 inline-flex w-full max-w-[420px] items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Arrow className="h-4 w-4 rotate-180 transition-transform duration-300 group-hover:-translate-x-0.5" />
+          {isRtl ? 'חזרה לאתר ECshape' : 'Back to the ECshape site'}
+        </Link>
         <footer className="text-xs text-muted-foreground">© {new Date().getFullYear()} ECshape · Elior Karmizi</footer>
       </section>
 

@@ -279,7 +279,7 @@
       .from('.hero__scroll', { autoAlpha: 0, duration: 1 }, 0.9);
     if (mqDesktop.matches) {
       tl.fromTo('.hero__media', { clipPath: 'inset(15% 58% 89% 6% round 28px)' }, { clipPath: 'inset(15% 58% 11% 6% round 28px)', duration: 1.6, ease: 'expo.inOut' }, 0)
-        .from('.hero__media img', { scale: 1.5, duration: 2 }, 0);
+        .fromTo('.hero__media img', { scale: 1.5, xPercent: -30 }, { scale: 1.15, xPercent: -30, duration: 2 }, 0);
     } else {
       tl.from('.hero__media', { y: 40, autoAlpha: 0, duration: 1.2 }, 0.3);
     }

@@ -230,3 +230,35 @@ html[dir='rtl'] { --ec-travel-origin: right; }
   100% { transform: translate(calc(var(--ec-dir) * (100% - 20px)), -50%); }
 }
 @keyframes ec-edge-shine { 0%, 72% { inset-inline-start: -60%; } 100% { inset-inline-start: 130%; } }
+
+/* ── Settings → AI keys (LE "Mes clés IA") ─────────────────────────── */
+.ec-settings-card {
+  position: relative;
+  background:
+    radial-gradient(120% 80% at 100% 0%, hsl(var(--primary) / .10), transparent 55%),
+    hsl(var(--card));
+  border: 1px solid hsl(var(--border) / .6);
+  box-shadow: 0 30px 80px -40px hsl(var(--primary) / .35);
+  scroll-margin-top: 2rem;
+}
+.ec-engine-line { background: hsl(var(--muted) / .45); }
+.ec-engine-dot { width: .6rem; height: .6rem; border-radius: 999px; flex: none; background: hsl(var(--muted-foreground)); }
+.ec-engine-line.is-on .ec-engine-dot { background: hsl(var(--success)); box-shadow: 0 0 0 0 hsl(var(--success) / .5); animation: ec-engine-pulse 2.4s ease-out infinite; }
+@keyframes ec-engine-pulse { 0% { box-shadow: 0 0 0 0 hsl(var(--success) / .5); } 70%, 100% { box-shadow: 0 0 0 .55rem hsl(var(--success) / 0); } }
+.ec-key-row { background: hsl(var(--background) / .35); transition: transform .45s cubic-bezier(.22,1,.36,1), border-color .3s, background .3s; }
+.ec-key-row:hover { transform: translateY(-2px); background: hsl(var(--background) / .6); }
+.ec-key-row.is-preferred { background: linear-gradient(90deg, hsl(var(--primary) / .09), transparent 70%); }
+.ec-key-pill { background: var(--ec-grad, hsl(var(--primary))); color: hsl(var(--primary-foreground)); }
+.ec-key-form {
+  background: hsl(var(--muted) / .3);
+  border: 1px dashed hsl(var(--border));
+  animation: ec-key-form-in .55s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes ec-key-form-in { from { opacity: 0; transform: translateY(10px) scale(.985); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.ec-chip.is-active { background: var(--ec-grad, hsl(var(--primary))); color: hsl(var(--primary-foreground)); box-shadow: 0 8px 22px -10px hsl(var(--primary) / .7); }
+.ec-pmark { transition: transform .5s cubic-bezier(.22,1,.36,1); }
+.ec-key-row:hover .ec-pmark { transform: rotate(-6deg) scale(1.06); }
+@media (prefers-reduced-motion: reduce) {
+  .ec-engine-line.is-on .ec-engine-dot, .ec-key-form { animation: none; }
+  .ec-key-row, .ec-key-row:hover { transform: none; }
+}

@@ -2342,7 +2342,7 @@
     "cancelMode": "Quitter le mode QA",
     "fabTitle": "Signaler une modification (glisser pour déplacer)",
     "mode": "Mode QA",
-    "pickHint": "Clique sur le texte, l’icône ou le bloc à signaler",
+    "pickHint": "Cliquez sur n'importe quel élément · ↑↓ plus grand / plus petit · Tab couche suivante · ou sélectionnez du texte avant",
     "cancel": "Annuler",
     "close": "Fermer",
     "created": "Ticket créé",
@@ -2356,7 +2356,12 @@
     "describe": "Décris la modification…",
     "saving": "Enregistrement…",
     "create": "Créer le ticket",
-    "defaultTitle": "Modifier : {{label}}"
+    "defaultTitle": "Modifier : {{label}}",
+    "touchHint": "Ajustez avec les boutons, puis « Choisir »",
+    "larger": "Élément plus grand",
+    "smaller": "Élément plus petit",
+    "layer": "Couche suivante",
+    "selectThis": "Choisir"
   },
   "foodBankPro": {
     "eyebrow": "Nutrition",

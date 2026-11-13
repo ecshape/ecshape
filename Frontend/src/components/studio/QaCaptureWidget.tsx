@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Crosshair, X } from 'lucide-react';
+import { ChevronsDown, ChevronsUp, Crosshair, Layers, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { studioApi, type QaPriority } from '@/lib/studioApi';
 import { spotlight } from '@/lib/agentOps';
@@ -172,74 +172,191 @@ const QaCaptureWidget = () => {
     closeForm();
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Text the trainer selected just before opening QA mode (the capture layer would block selecting it later).
+  const lastSelection = useRef<{ text: string; el: Element | null; at: number } | null>(null);
+  useEffect(() => {
+    const onSel = () => {
+      const sel = window.getSelection();
+      const text = sel?.toString().replace(/\s+/g, ' ').trim() || '';
+      if (text.length < 2) return;
+      const node = sel?.anchorNode || null;
+      const el = node instanceof Element ? node : node?.parentElement || null;
+      if (el?.closest('[data-qa-ignore]')) return;
+      lastSelection.current = { text, el, at: Date.now() };
+    };
+    document.addEventListener('selectionchange', onSel);
+    return () => document.removeEventListener('selectionchange', onSel);
+  }, []);
+
+  /* Picking: a transparent layer takes every pointer event (links, disabled buttons, site handlers never fire),
+     and a hit test goes through the layers under the pointer, including pointer-events:none content.
+     Up / Down = larger / smaller (parent / child), Tab = the next layer at that point, Enter = select. */
+  const layerRef = useRef<HTMLDivElement | null>(null);
+  const pick = useRef<{ layers: Element[]; layer: number; depth: number; x: number; y: number }>({ layers: [], layer: 0, depth: 0, x: 0, y: 0 });
+  const [box, setBox] = useState<{ top: number; left: number; width: number; height: number; label: string } | null>(null);
+  const [touchPicked, setTouchPicked] = useState(false);
+
+  const currentTarget = useCallback((): Element | null => {
+    const st = pick.current;
+    let el: Element | null = st.layers[st.layer] || null;
+    for (let i = 0; el && i < st.depth; i++) {
+      const parent: Element | null = el.parentElement;
+      if (!parent || parent === document.body || parent === document.documentElement) break;
+      el = parent;
+    }
+    return el;
+  }, []);
+
+  const showTarget = useCallback(() => {
+    const el = currentTarget();
+    hoverRef.current = el;
+    setHoverEl(el);
+    if (!el) return setBox(null);
+    const r = el.getBoundingClientRect();
+    const name = el.tagName.toLowerCase();
+    const text = (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    setBox({ top: r.top, left: r.left, width: r.width, height: r.height, label: text ? `${name} · ${text}` : name });
+  }, [currentTarget]);
+
+  const selectTarget = useCallback(() => {
+    const el = currentTarget();
+    if (!el) return;
+    const info = describeElement(el);
+    setTarget(info);
+    setTitle(t('qaWidget.defaultTitle', { label: info.label.slice(0, 48) }));
+    clearHover();
+    setBox(null);
+    setTouchPicked(false);
+    document.body.classList.remove('ec-qa-picking');
+    setMode('form');
+  }, [currentTarget, clearHover, t]);
+
   useEffect(() => {
     if (mode !== 'picking') return;
+
+    // Text selected right before: report that text directly.
+    const sel = lastSelection.current;
+    if (sel && Date.now() - sel.at < 8000) {
+      lastSelection.current = null;
+      const info = sel.el ? describeElement(sel.el) : null;
+      setTarget({ kind: 'text', label: sel.text.slice(0, 80), text: sel.text.slice(0, 240), selector: info?.selector || '', tag: 'text' });
+      setTitle(`${t('qaWidget.text')}: ${sel.text.slice(0, 48)}`);
+      setMode('form');
+      return;
+    }
+
     document.body.classList.add('ec-qa-picking');
-
-    const ignored = (el: EventTarget | null) =>
-      el instanceof Element && Boolean(el.closest('[data-qa-ignore]'));
-
-    const onMove = (e: MouseEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || ignored(el) || el === document.documentElement || el === document.body) {
-        clearHover();
-        return;
+    const layer = layerRef.current;
+    const skip = (el: Element) =>
+      el === layer || el === document.documentElement || el === document.body || !!el.closest('[data-qa-ignore]');
+    const visible = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return null;
+      const cs = getComputedStyle(el);
+      return cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0' ? null : r;
+    };
+    /** Deepest visible descendant under the point, even when it ignores pointer events. */
+    const descend = (start: Element, x: number, y: number) => {
+      let el = start;
+      for (let guard = 0; guard < 40; guard++) {
+        const kids = Array.from(el.children).reverse();
+        const next = kids.find((k) => {
+          if (k.closest('[data-qa-ignore]')) return false;
+          const r = visible(k);
+          return !!r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        });
+        if (!next) return el;
+        el = next;
       }
-      if (hoverRef.current === el) return;
-      clearHover();
-      el.classList.add('ec-qa-pick-hover');
-      hoverRef.current = el;
-      setHoverEl(el);
+      return el;
+    };
+    const layersAt = (x: number, y: number) => {
+      const out: Element[] = [];
+      for (const hit of document.elementsFromPoint(x, y)) {
+        if (skip(hit)) continue;
+        const deep = descend(hit, x, y);
+        if (!out.includes(deep) && !out.some((o) => deep.contains(o))) out.push(deep);
+      }
+      return out;
+    };
+    const aim = (x: number, y: number) => {
+      pick.current = { layers: layersAt(x, y), layer: 0, depth: 0, x, y };
+      showTarget();
     };
 
-    const onClick = (e: MouseEvent) => {
-      if (ignored(e.target)) return;
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+      aim(e.clientX, e.clientY);
+    };
+    const onDown = (e: PointerEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      let el = hoverRef.current;
-      if (!el) {
-        const hit = document.elementFromPoint(e.clientX, e.clientY);
-        if (hit instanceof Element && !ignored(hit)) el = hit;
-      }
-      if (!el || ignored(el)) return;
-      const info = describeElement(el);
-      const selection = window.getSelection()?.toString().replace(/\s+/g, ' ').trim();
-      if (selection && selection.length > 1) {
-        setTarget({
-          kind: 'text',
-          label: selection.slice(0, 80),
-          text: selection.slice(0, 240),
-          selector: info.selector,
-          tag: 'text',
-        });
-        setTitle(`Text: ${selection.slice(0, 48)}`);
-      } else {
-        setTarget(info);
-        setTitle(t('qaWidget.defaultTitle', { label: info.label.slice(0, 48) }));
-      }
-      clearHover();
-      document.body.classList.remove('ec-qa-picking');
-      setMode('form');
     };
-
+    const onUp = (e: PointerEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+        // Touch: the tap shows the target; the bar's buttons adjust it and confirm.
+        aim(e.clientX, e.clientY);
+        setTouchPicked(true);
+        return;
+      }
+      if (!hoverRef.current) aim(e.clientX, e.clientY);
+      selectTarget();
+    };
     const onKey = (e: KeyboardEvent) => {
+      const st = pick.current;
       if (e.key === 'Escape') {
         e.preventDefault();
         stopPicking();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        st.depth += 1;
+        showTarget();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        st.depth = Math.max(0, st.depth - 1);
+        showTarget();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        if (st.layers.length) st.layer = (st.layer + (e.shiftKey ? st.layers.length - 1 : 1)) % st.layers.length;
+        st.depth = 0;
+        showTarget();
+      } else if (e.key === 'Enter' && hoverRef.current) {
+        e.preventDefault();
+        selectTarget();
       }
     };
+    const onScroll = () => showTarget();
 
-    document.addEventListener('mousemove', onMove, true);
-    document.addEventListener('click', onClick, true);
+    layer?.addEventListener('pointermove', onMove);
+    layer?.addEventListener('pointerdown', onDown);
+    layer?.addEventListener('pointerup', onUp);
     document.addEventListener('keydown', onKey, true);
+    window.addEventListener('scroll', onScroll, true);
     return () => {
-      document.removeEventListener('mousemove', onMove, true);
-      document.removeEventListener('click', onClick, true);
+      layer?.removeEventListener('pointermove', onMove);
+      layer?.removeEventListener('pointerdown', onDown);
+      layer?.removeEventListener('pointerup', onUp);
       document.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('scroll', onScroll, true);
       document.body.classList.remove('ec-qa-picking');
+      setBox(null);
+      setTouchPicked(false);
       clearHover();
     };
-  }, [mode, clearHover, stopPicking]);
+  }, [mode, clearHover, stopPicking, showTarget, selectTarget, t]);
+
+  const adjust = (kind: 'up' | 'down' | 'layer') => {
+    const st = pick.current;
+    if (kind === 'up') st.depth += 1;
+    else if (kind === 'down') st.depth = Math.max(0, st.depth - 1);
+    else if (st.layers.length) {
+      st.layer = (st.layer + 1) % st.layers.length;
+      st.depth = 0;
+    }
+    showTarget();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,17 +474,37 @@ const QaCaptureWidget = () => {
       </div>
 
       {mode === 'picking' ? (
-        <div className="ec-qa-pick-bar" data-qa-ignore>
-          <Crosshair className="h-4 w-4" />
-          <strong>{t('qaWidget.mode')}</strong>
-          <span>
-            {t('qaWidget.pickHint')}
-            {hoverEl ? ` · <${hoverEl.tagName.toLowerCase()}>` : ''}
-          </span>
-          <button type="button" className="ec-qa-pick-cancel" onClick={stopPicking}>
-            {t('qaWidget.cancel')}
-          </button>
-        </div>
+        <>
+          {/* The capture layer sits under the widget's own UI (bar, button), above the page */}
+          <div ref={layerRef} className="ec-qa-pick-layer" aria-hidden />
+          {box ? (
+            <div className="ec-qa-pick-box" style={{ top: box.top, left: box.left, width: box.width, height: box.height }} aria-hidden>
+              <span className={cn('ec-qa-pick-tag', box.top < 34 && 'is-inside')} dir="auto">{box.label}</span>
+            </div>
+          ) : null}
+          <div className="ec-qa-pick-bar" data-qa-ignore>
+            <Crosshair className="h-4 w-4 flex-none" />
+            <strong>{t('qaWidget.mode')}</strong>
+            <span className="ec-qa-pick-hint">{touchPicked ? t('qaWidget.touchHint') : t('qaWidget.pickHint')}</span>
+            <span className="ec-qa-pick-tools">
+              <button type="button" onClick={() => adjust('up')} disabled={!hoverEl} title={t('qaWidget.larger')} aria-label={t('qaWidget.larger')}>
+                <ChevronsUp className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => adjust('down')} disabled={!hoverEl} title={t('qaWidget.smaller')} aria-label={t('qaWidget.smaller')}>
+                <ChevronsDown className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => adjust('layer')} disabled={pick.current.layers.length < 2} title={t('qaWidget.layer')} aria-label={t('qaWidget.layer')}>
+                <Layers className="h-4 w-4" />
+              </button>
+              {touchPicked && hoverEl ? (
+                <button type="button" className="is-primary" onClick={selectTarget}>{t('qaWidget.selectThis')}</button>
+              ) : null}
+            </span>
+            <button type="button" className="ec-qa-pick-cancel" onClick={stopPicking}>
+              {t('qaWidget.cancel')}
+            </button>
+          </div>
+        </>
       ) : null}
 
       {mode === 'form' || mode === 'done' ? (

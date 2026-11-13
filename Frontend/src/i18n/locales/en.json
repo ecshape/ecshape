@@ -2342,7 +2342,7 @@
     "cancelMode": "Cancel QA mode",
     "fabTitle": "Report a change (drag to move)",
     "mode": "QA mode",
-    "pickHint": "Click the text, icon or block to flag",
+    "pickHint": "Click any element · ↑↓ larger / smaller · Tab next layer · or select text first",
     "cancel": "Cancel",
     "close": "Close",
     "created": "Ticket created",
@@ -2356,7 +2356,12 @@
     "describe": "Describe the change…",
     "saving": "Saving…",
     "create": "Create ticket",
-    "defaultTitle": "Change: {{label}}"
+    "defaultTitle": "Change: {{label}}",
+    "touchHint": "Adjust with the buttons, then \"Select\"",
+    "larger": "Larger element",
+    "smaller": "Smaller element",
+    "layer": "Next layer",
+    "selectThis": "Select"
   },
   "foodBankPro": {
     "eyebrow": "Nutrition",

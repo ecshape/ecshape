@@ -241,3 +241,62 @@ body[data-scroll-locked] .ec-qa-fab-stack { opacity: 0; pointer-events: none; }
 .ec-qa-prio-btn.is-high i { background: hsl(var(--destructive)); }
 .ec-qa-prio-btn.is-on { background: hsl(var(--foreground)); color: hsl(var(--background)); }
 @media (prefers-reduced-motion: reduce) { .ec-qa-sheet, .ec-qa-sheet-backdrop { animation: none; } .ec-qa-col.is-over { transform: none; } }
+
+/* Picking: transparent capture layer under the widget UI, highlight box that is never clipped by the page */
+.ec-qa-pick-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482990;
+  cursor: crosshair;
+  touch-action: pan-y;
+  background: transparent;
+}
+.ec-qa-pick-box {
+  position: fixed;
+  z-index: 2147482995;
+  pointer-events: none;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 6px;
+  background: hsl(var(--primary) / 0.08);
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15);
+  transition: top 0.12s ease, left 0.12s ease, width 0.12s ease, height 0.12s ease;
+}
+.ec-qa-pick-tag {
+  position: absolute;
+  bottom: 100%;
+  inset-inline-start: -2px;
+  margin-bottom: 4px;
+  max-width: min(70vw, 28rem);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ec-qa-pick-tag.is-inside { bottom: auto; top: 2px; inset-inline-start: 2px; margin: 0; }
+.ec-qa-pick-hint { min-width: 0; }
+.ec-qa-pick-tools { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.ec-qa-pick-tools button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: hsl(var(--background) / 0.14);
+  color: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.ec-qa-pick-tools button:disabled { opacity: 0.35; cursor: default; }
+.ec-qa-pick-tools button.is-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+@media (max-width: 640px) {
+  .ec-qa-pick-bar { flex-wrap: wrap; border-radius: 18px; top: auto; bottom: 1rem; }
+  .ec-qa-pick-hint { order: 3; width: 100%; white-space: normal !important; }
+}
+@media (prefers-reduced-motion: reduce) { .ec-qa-pick-box { transition: none; } }

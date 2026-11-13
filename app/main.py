@@ -382,8 +382,8 @@ def is_allowed_origin(origin: str) -> bool:
     if re.match(r"^https?://([a-zA-Z0-9-]+\.)*up\.railway\.app(:\d+)?$", origin):
         return True
     
-    # Allow ecshape.org and its subdomains
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*ecshape\.org(:\d+)?$", origin):
+    # Allow ecshape.com / ecshape.org and their subdomains
+    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*ecshape\.(com|org)(:\d+)?$", origin):
         return True
     
     return False

@@ -246,4 +246,14 @@ class MealBank(Base):
     is_public = Column(Boolean, default=False)  # Share with other trainers?
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    # Food library metadata (all optional, additive - see meal_system_migration)
+    image_url = Column(String, nullable=True)      # Photo URL (Open Food Facts / Wikimedia Commons)
+    image_credit = Column(Text, nullable=True)     # JSON: {provider, author, license, url}
+    source = Column(String(32), nullable=True)     # "manual" (NULL), "openfoodfacts", "staple"
+    source_id = Column(String(64), nullable=True)  # barcode or staple key
+    brand = Column(String, nullable=True)
+    fiber = Column(Float, nullable=True)           # grams per 100g or per portion
+    tags = Column(Text, nullable=True)             # JSON list of property tags (vegan, kosher, ...)
+    nutriscore = Column(String(1), nullable=True)  # a-e
+    nova_group = Column(Integer, nullable=True)    # 1-4
 

@@ -2,8 +2,9 @@
 Pydantic schemas for the new meal system
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Any, Dict, List, Optional
+import json
 from datetime import datetime
 from enum import Enum
 
@@ -332,6 +333,38 @@ class MealBankBase(BaseModel):
     measurement_type: MeasurementType = MeasurementType.PER_100G
     serving_size: Optional[str] = None
     is_public: bool = False
+    # Food library metadata (optional, additive)
+    image_url: Optional[str] = None
+    image_credit: Optional[Dict[str, Any]] = None
+    source: Optional[str] = None
+    source_id: Optional[str] = None
+    brand: Optional[str] = None
+    fiber: Optional[float] = None
+    tags: Optional[List[str]] = None
+    nutriscore: Optional[str] = None
+    nova_group: Optional[int] = None
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _parse_tags(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+            except (TypeError, ValueError):
+                parsed = [t.strip() for t in value.split(",") if t.strip()]
+            return parsed if isinstance(parsed, list) else None
+        return value
+
+    @field_validator("image_credit", mode="before")
+    @classmethod
+    def _parse_credit(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+            except (TypeError, ValueError):
+                return {"provider": value}
+            return parsed if isinstance(parsed, dict) else None
+        return value
 
 class MealBankCreate(MealBankBase):
     pass
@@ -347,6 +380,13 @@ class MealBankUpdate(BaseModel):
     measurement_type: Optional[MeasurementType] = None
     serving_size: Optional[str] = None
     is_public: Optional[bool] = None
+    image_url: Optional[str] = None
+    image_credit: Optional[Dict[str, Any]] = None
+    brand: Optional[str] = None
+    fiber: Optional[float] = None
+    tags: Optional[List[str]] = None
+    nutriscore: Optional[str] = None
+    nova_group: Optional[int] = None
 
 class MealBankResponse(MealBankBase):
     id: int

@@ -275,6 +275,28 @@ def _ensure_measurement_type_columns() -> None:
         )
 
 
+def _ensure_meal_bank_library_columns() -> None:
+    """Additive, nullable food-library columns on meal_bank (photos, source, properties).
+
+    Types are written in SQLite flavour; _ensure_columns maps TEXT -> VARCHAR for
+    PostgreSQL. INTEGER and REAL are valid on both.
+    """
+    _ensure_columns(
+        "meal_bank",
+        {
+            "image_url": "TEXT",
+            "image_credit": "TEXT",
+            "source": "TEXT",
+            "source_id": "TEXT",
+            "brand": "TEXT",
+            "fiber": "REAL",
+            "tags": "TEXT",
+            "nutriscore": "TEXT",
+            "nova_group": "INTEGER",
+        },
+    )
+
+
 def _ensure_meal_completion_table() -> None:
     with engine.begin() as connection:
         if IS_POSTGRESQL:
@@ -345,6 +367,7 @@ def run_meal_system_migrations() -> None:
         _ensure_meal_slot_targets()
         _ensure_meal_completion_table()
         _ensure_measurement_type_columns()
+        _ensure_meal_bank_library_columns()
     except Exception as exc:
         logger.error("Failed to run meal system migrations: %s", exc)
         raise

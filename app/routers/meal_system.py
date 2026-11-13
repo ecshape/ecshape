@@ -1162,6 +1162,41 @@ def upsert_meal_completion(
 
 # ============ Meal Bank Endpoints ============
 
+_MEAL_BANK_LIBRARY_KEYS = (
+    "image_url", "image_credit", "source", "source_id", "brand",
+    "fiber", "tags", "nutriscore", "nova_group",
+)
+
+
+def _meal_bank_library_fields(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert optional food-library fields from the API shape to DB columns.
+
+    Only keys present in ``data`` are returned, so partial updates stay partial.
+    """
+    import json as _json
+
+    out: Dict[str, Any] = {}
+    for key in _MEAL_BANK_LIBRARY_KEYS:
+        if key not in data:
+            continue
+        value = data[key]
+        if key == "tags":
+            value = _json.dumps([str(t) for t in value][:30]) if value else None
+        elif key == "image_credit":
+            value = _json.dumps(value, ensure_ascii=False) if value else None
+        elif key == "image_url":
+            value = value.strip() if isinstance(value, str) else None
+            if value and not value.startswith("https://"):
+                raise HTTPException(status_code=400, detail="image_url must be an https URL")
+            value = value or None
+        elif key == "nutriscore":
+            value = value.lower()[:1] if value and value.lower()[:1] in "abcde" else None
+        elif key == "nova_group":
+            value = value if value in (1, 2, 3, 4) else None
+        out[key] = value
+    return out
+
+
 @router.post("/meal-bank", response_model=MealBankResponse, status_code=status.HTTP_201_CREATED)
 def create_meal_bank_item(
     item_data: MealBankCreate,
@@ -1196,7 +1231,8 @@ def create_meal_bank_item(
         measurement_type=item_data.measurement_type if hasattr(item_data, 'measurement_type') and item_data.measurement_type else MeasurementType.PER_100G,
         serving_size=item_data.serving_size if hasattr(item_data, 'serving_size') else None,
         created_by=current_user.id,
-        is_public=item_data.is_public
+        is_public=item_data.is_public,
+        **_meal_bank_library_fields(item_data.model_dump(exclude_unset=True)),
     )
     
     db.add(meal_bank_item)
@@ -1319,6 +1355,11 @@ def update_meal_bank_item(
         # Remove processed fields so they are not set again
         update_data.pop("name", None)
         update_data.pop("name_hebrew", None)
+
+    library_fields = _meal_bank_library_fields(update_data)
+    for key in _MEAL_BANK_LIBRARY_KEYS:
+        update_data.pop(key, None)
+    update_data.update(library_fields)
 
     for field, value in update_data.items():
         setattr(meal_bank_item, field, value)
@@ -2075,3 +2116,9 @@ async def import_meal_plan_excel(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to import meal plan: {str(e)}"
         )
+
+
+# ============ Food Library (Open Food Facts + staples) ============
+from app.routers.food_library import router as food_library_router  # noqa: E402
+
+router.include_router(food_library_router)

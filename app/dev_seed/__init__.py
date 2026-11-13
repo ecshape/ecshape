@@ -44,11 +44,35 @@ def _backfill_library_links(engine) -> None:
         logger.error("dev seed backfill failed: %s", e)
 
 
+def _backfill_food_photos(engine) -> None:
+    """Idempotent: foods with no photo and a matching staple get its photo, credit and property tags.
+    The trainer's own nutrition values are left untouched."""
+    from app.services.food_library_service import match_staple, normalize_staple
+
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(text("select id, name, name_hebrew from meal_bank where image_url is null and source is null")).fetchall()
+            for row in rows:
+                staple = match_staple(row.name, row.name_hebrew)
+                if not staple:
+                    continue
+                item = normalize_staple(staple, "en")
+                conn.execute(
+                    text("update meal_bank set image_url = :img, image_credit = :credit, tags = :tags, fiber = coalesce(fiber, :fiber), "
+                         "source = 'staple', source_id = :sid where id = :id"),
+                    {"img": item["image_url"], "credit": json.dumps(item["image_credit"], ensure_ascii=False) if item["image_credit"] else None,
+                     "tags": json.dumps(item["tags"]), "fiber": item["fiber"], "sid": item["source_id"], "id": row.id},
+                )
+    except Exception as e:
+        logger.error("dev seed food photo backfill failed: %s", e)
+
+
 def run_if_enabled(engine) -> None:
     if os.getenv("DEV_DEMO_SEED") != "1":
         return
     _run_seed(engine)
     _backfill_library_links(engine)
+    _backfill_food_photos(engine)
 
 
 def _run_seed(engine) -> None:

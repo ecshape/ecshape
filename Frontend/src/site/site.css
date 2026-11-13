@@ -338,7 +338,7 @@ html.lenis, html.lenis body { height: auto; }
 /* =========================================================================
    MARQUEE — velocity reactive
    ========================================================================= */
-.ec-site .marquee { position: relative; padding: 28px 0; overflow: hidden; background: var(--bg); }
+.ec-site .marquee { position: relative; padding: 28px 0; overflow: hidden; background: var(--bg); direction: ltr; }
 .ec-site .marquee__row { display: flex; width: max-content; will-change: transform; direction: ltr; }
 .ec-site .marquee__row + .marquee__row { margin-top: 8px; }
 .ec-site .marquee__item {

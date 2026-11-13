@@ -85,7 +85,14 @@
     "logoutSuccess": "Déconnexion réussie",
     "sessionExpired": "Session expirée",
     "unauthorized": "Non autorisé",
-    "accessDenied": "Accès refusé"
+    "accessDenied": "Accès refusé",
+    "demoAccess": "Accès démo",
+    "demo": {
+      "trainer": "Coach",
+      "trainerHint": "Studio et clients",
+      "client": "Client",
+      "clientHint": "L’app de l’élève"
+    }
   },
   "navigation": {
     "dashboard": "Tableau de bord",

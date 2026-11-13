@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Lock, Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Dumbbell, UserRound } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../components/LanguageSelector';
@@ -15,12 +16,37 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, demoLogin } = useAuth();
+  const [demoRoles, setDemoRoles] = useState<string[]>([]);
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/auth/demo-accounts`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setDemoRoles(d?.enabled ? d.roles : []))
+      .catch(() => setDemoRoles([]));
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === 'he';
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
+
+  const goHome = (role?: string) => {
+    if (role === 'ADMIN') navigate('/admin', { replace: true });
+    else if (role === 'TRAINER') navigate('/trainer-dashboard', { replace: true });
+    else navigate(location.state?.from?.pathname || '/', { replace: true });
+  };
+
+  const handleDemo = async (role: 'trainer' | 'client') => {
+    setLoading(true);
+    setError('');
+    try {
+      const u = await demoLogin(role);
+      if (u) goHome(u.role);
+      else setError(t('messages.error.general'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +162,38 @@ const Login = () => {
                 </span>
               </Button>
             </form>
+
+            {demoRoles.length > 0 && (
+              <div className="mt-8">
+                <div className="mb-3 flex items-center gap-3 text-xs font-bold uppercase tracking-[.2em] text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
+                  {t('auth.demoAccess')}
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {(['trainer', 'client'] as const).filter((r) => demoRoles.includes(r)).map((r) => {
+                    const Icon = r === 'trainer' ? Dumbbell : UserRound;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        disabled={loading}
+                        onClick={() => handleDemo(r)}
+                        className="ec-demo-btn group flex items-center gap-3 rounded-2xl border border-border/70 bg-card/60 p-3 text-start transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/[.06] disabled:opacity-50"
+                      >
+                        <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-primary/12 text-primary transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold">{t(`auth.demo.${r}`)}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{t(`auth.demo.${r}Hint`)}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

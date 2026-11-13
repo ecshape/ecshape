@@ -133,7 +133,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
     };
     loop();
     $$('[data-cursor]').forEach((el) => {
-      on(el, 'pointerenter', () => { label.textContent = el.getAttribute('data-cursor'); cursor.classList.add('is-label'); });
+      on(el, 'pointerenter', () => { label.textContent = ''; cursor.classList.add('is-label'); });
       on(el, 'pointerleave', () => cursor.classList.remove('is-label'));
     });
     $$('a, button').forEach((el) => {
@@ -339,7 +339,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
   // Marquee rows: duplicate content for a seamless loop
   $$('[data-marquee]').forEach((row) => {
     const item = row.firstElementChild;
-    for (let i = 0; i < 3; i++) row.appendChild(item.cloneNode(true));
+    for (let i = 0; i < 7; i++) row.appendChild(item.cloneNode(true)); // 8 copies: two equal halves for the -50% loop
   });
 
   const mqDesktop = window.matchMedia('(min-width: 901px)');

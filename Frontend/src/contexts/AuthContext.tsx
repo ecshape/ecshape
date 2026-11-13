@@ -18,6 +18,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<User | null>;
+  /** Dev environment only: one-click demo trainer / client. */
+  demoLogin: (role: 'trainer' | 'client') => Promise<User | null>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -146,6 +148,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const demoLogin = async (role: 'trainer' | 'client'): Promise<User | null> => {
+    const response = await fetch(`${API_BASE_URL}/auth/demo-login/${role}`, { method: 'POST' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    setToken(data.access_token);
+    const userData = await fetchCurrentUser();
+    if (userData) setUser(userData);
+    return userData;
+  };
+
   const login = async (username: string, password: string): Promise<User | null> => {
     try {
       // Attempting login
@@ -259,6 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextType = {
     user,
     login,
+    demoLogin,
     logout,
     isAuthenticated: !!user,
     loading,

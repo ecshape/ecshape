@@ -85,7 +85,14 @@
     "logoutSuccess": "Logout successful",
     "sessionExpired": "Session expired",
     "unauthorized": "Unauthorized",
-    "accessDenied": "Access denied"
+    "accessDenied": "Access denied",
+    "demoAccess": "Demo access",
+    "demo": {
+      "trainer": "Trainer",
+      "trainerHint": "Studio and clients",
+      "client": "Client",
+      "clientHint": "The trainee app"
+    }
   },
   "navigation": {
     "dashboard": "Dashboard",

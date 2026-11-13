@@ -85,7 +85,14 @@
     "logoutSuccess": "התנתקת בהצלחה",
     "sessionExpired": "פג תוקף ההתחברות",
     "unauthorized": "אין הרשאה",
-    "accessDenied": "הגישה נדחתה"
+    "accessDenied": "הגישה נדחתה",
+    "demoAccess": "כניסת דמו",
+    "demo": {
+      "trainer": "מאמן",
+      "trainerHint": "סטודיו ומתאמנים",
+      "client": "מתאמן",
+      "clientHint": "האפליקציה של המתאמן"
+    }
   },
   "navigation": {
     "dashboard": "לוח בקרה",

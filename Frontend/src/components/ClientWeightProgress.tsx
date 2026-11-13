@@ -420,7 +420,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
         <Card>
           <CardContent className="flex items-center px-4 pb-4 pt-6 min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-primary to-[hsl(18_85%_44%)] rounded-lg flex items-center justify-center">
                 <Weight className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -452,7 +452,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
         <Card>
           <CardContent className="flex items-center px-4 pb-4 pt-6 min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-[hsl(var(--gold))] to-primary rounded-lg flex items-center justify-center">
                 <Activity className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">

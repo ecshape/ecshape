@@ -236,7 +236,7 @@ const CreateMealPlan = () => {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Create Meal Plan</h1>
+              <h1 className="ec-page-title text-foreground">Create Meal Plan</h1>
               <p className="text-muted-foreground">
                 {client ? `Creating meal plan for ${client.full_name}` : 'Create a new meal plan'}
               </p>

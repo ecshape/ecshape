@@ -160,7 +160,7 @@ const SecretUsersPage = () => {
               <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Secret Users Management</h1>
+              <h1 className="ec-page-title text-foreground">Secret Users Management</h1>
               <p className="text-sm sm:text-base text-muted-foreground">Development & Testing Access</p>
             </div>
           </div>
@@ -358,7 +358,7 @@ const SecretUsersPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <User className="w-5 h-5 text-blue-600" />
+                  <User className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Trainer Access</p>

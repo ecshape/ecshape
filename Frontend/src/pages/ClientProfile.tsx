@@ -479,7 +479,7 @@ const ClientProfile = () => {
               {t('clientProfile.back')}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{client?.full_name || 'Client'}</h1>
+              <h1 className="ec-page-title text-foreground">{client?.full_name || 'Client'}</h1>
               <p className="text-muted-foreground">{t('clientProfile.title')}</p>
             </div>
           </div>
@@ -501,7 +501,7 @@ const ClientProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="rounded-xl shadow-xl border border-border bg-muted/90 animate-fade-in-up">
             <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-4 h-48">
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-r from-primary to-[hsl(18_85%_44%)] rounded-xl flex items-center justify-center">
                 <User className="w-7 h-7 text-white" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">{t('clientProfile.lastLogin')}</p>
@@ -568,7 +568,7 @@ const ClientProfile = () => {
 
           <Card className="rounded-xl shadow-xl border border-border bg-muted/90 animate-fade-in-up">
             <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-4 h-48">
-              <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-r from-[hsl(var(--gold))] to-primary rounded-xl flex items-center justify-center">
                 <Calendar className="w-7 h-7 text-white" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">{t('clientProfile.memberSince')}</p>

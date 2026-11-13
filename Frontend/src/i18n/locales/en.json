@@ -113,7 +113,9 @@
     "viewAll": "View All",
     "noData": "No data to display",
     "loading": "Loading data...",
-    "error": "Error loading data"
+    "error": "Error loading data",
+    "letsMove": "Let's move today.",
+    "hiThere": "Hi there"
   },
   "client": {
     "client": "Client",
@@ -1404,4 +1406,3 @@
     "enable": "Enable"
   }
 }
-

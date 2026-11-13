@@ -1,7 +1,14 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Dumbbell, Home, Utensils, Target, TrendingUp, Menu, X, LogOut, User, Shield, Settings, Users, MessageSquare } from 'lucide-react';
-import { NotificationBell } from './NotificationBell';
+import { Dumbbell, Home, Utensils, Target, TrendingUp, LogOut, User, Settings, MessageSquare, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import LanguageSelector from './LanguageSelector';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,254 +20,181 @@ interface LayoutProps {
   currentPage?: string;
 }
 
-const LogoBadge = ({ variant }: { variant: 'mobile' | 'desktop' }) => {
-  const sizeClasses =
-    variant === 'mobile'
-      ? 'h-16 sm:h-20 md:h-24 w-auto'
-      : 'h-full w-auto';
+const getInitials = (name?: string) =>
+  (name || '?')
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
-  return (
-    <div
-      className={`${sizeClasses} flex items-center justify-center flex-shrink-0 overflow-hidden`}
-      aria-hidden="true"
-    >
-      <img
-        src="/logonavbar.png"
-        alt="ECshape logo"
-        className="h-full w-auto object-contain"
-        loading="lazy"
-        style={{ maxHeight: '100%', maxWidth: '100%' }}
-      />
-    </div>
-  );
-};
+/** Logo mark + wordmark, same lockup as the marketing site. */
+const Brand = ({ compact = false }: { compact?: boolean }) => (
+  <div className="flex items-center gap-2.5 select-none" dir="ltr">
+    <img
+      src="/logonavbar.png"
+      alt="ECshape"
+      className={cn('w-auto object-contain', compact ? 'h-9' : 'h-11')}
+      loading="eager"
+    />
+    <span className={cn('font-num tracking-wide leading-none', compact ? 'text-lg' : 'text-xl')}>
+      EC<span className="text-primary">SHAPE</span>
+    </span>
+  </div>
+);
 
 const Layout = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const dir = i18n.language === 'he' ? 'rtl' : 'ltr';
 
   const isTrainer = user?.role === 'TRAINER';
   const isAdmin = user?.role === 'ADMIN';
 
-  const baseNavigationItems = isAdmin ? [
-    { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/' },
-    { id: 'users', label: t('navigation.users'), icon: User, href: '/users' },
-    { id: 'system', label: t('navigation.system'), icon: Settings, href: '/system' }
-  ] : isTrainer ? [
-    { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/trainer-dashboard' },
-    { id: 'exercises', label: t('navigation.exercises'), icon: Dumbbell, href: '/exercises' },
-    { id: 'meal-bank', label: t('foodBank.title'), icon: Utensils, href: '/meal-bank' },
-    { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat' }
-  ] : [
-    { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/' },
-    { id: 'meals', label: t('navigation.meals'), icon: Utensils, href: '/meals' },
-    { id: 'training', label: t('navigation.training'), icon: Target, href: '/training' }, 
-    { id: 'progress', label: t('navigation.progress'), icon: TrendingUp, href: '/progress' },
-    { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat' }
-  ];
+  const navigationItems = isAdmin
+    ? [
+        { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/' },
+        { id: 'users', label: t('navigation.users'), icon: User, href: '/users' },
+        { id: 'system', label: t('navigation.system'), icon: Settings, href: '/system' },
+      ]
+    : isTrainer
+    ? [
+        { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/trainer-dashboard' },
+        { id: 'exercises', label: t('navigation.exercises'), icon: Dumbbell, href: '/exercises' },
+        { id: 'meal-bank', label: t('foodBank.title'), icon: Utensils, href: '/meal-bank' },
+        { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat' },
+      ]
+    : [
+        { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/' },
+        { id: 'meals', label: t('navigation.meals'), icon: Utensils, href: '/meals' },
+        { id: 'training', label: t('navigation.training'), icon: Target, href: '/training' },
+        { id: 'progress', label: t('navigation.progress'), icon: TrendingUp, href: '/progress' },
+        { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat' },
+      ];
 
-  const navigationItems =
-    i18n.language === "he" ? [...baseNavigationItems].reverse() : baseNavigationItems;
+  const areaLabel = isAdmin ? t('layout.adminPanel') : isTrainer ? t('layout.trainerDashboard') : t('layout.clientPortal');
 
-  const handleNavigation = (href: string) => {
-    navigate(href);
-    setMobileMenuOpen(false);
-  };
+  const UserMenu = ({ showName }: { showName: boolean }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="group flex items-center gap-2.5 rounded-full p-1 pe-3 transition-colors hover:bg-foreground/[.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={user?.full_name || 'account'}
+        >
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]">
+            {getInitials(user?.full_name)}
+          </span>
+          {showName && (
+            <span className="hidden text-start leading-tight xl:block">
+              <span className="block max-w-[140px] truncate text-sm font-semibold">{user?.full_name}</span>
+              <span className="block text-xs text-muted-foreground">{user?.role ? t(`roles.${user.role}`) : ''}</span>
+            </span>
+          )}
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="font-normal">
+          <p className="truncate text-sm font-semibold">{user?.full_name}</p>
+          <p className="text-xs text-muted-foreground">{areaLabel}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={logout}
+          className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+        >
+          <LogOut className="h-4 w-4" />
+          {t('auth.logout')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
-    <div className="h-screen overflow-hidden bg-background flex flex-col">
-      {/* Mobile Header */}
-      <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border/50 lg:hidden">
-        <div className="flex items-center justify-between px-2 sm:px-4 h-24 sm:h-28 md:h-32 gap-2 overflow-hidden">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <div className="transform hover:scale-105 transition-transform duration-300">
-              <LogoBadge variant="mobile" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground truncate">
-                {isAdmin ? t('layout.adminPanel') : isTrainer ? t('layout.trainerDashboard') : t('layout.clientPortal')}
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-background" dir={dir}>
+      {/* ---------- Top bar ---------- */}
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-3 px-3 sm:px-5 lg:h-[76px] lg:px-8">
+          <button onClick={() => navigate(navigationItems[0].href)} className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <span className="lg:hidden"><Brand compact /></span>
+            <span className="hidden lg:block"><Brand /></span>
+            <span className="hidden border-s border-border/60 ps-3 text-xs font-medium text-muted-foreground sm:block">{areaLabel}</span>
+          </button>
+
+          {/* Desktop navigation: segmented pill */}
+          <nav
+            className="hidden items-center gap-1 rounded-full border border-border/60 bg-card/70 p-1 lg:flex"
+            aria-label={t('navigation.dashboard')}
+          >
+            {navigationItems.map((item) => {
+              const active = currentPage === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navigate(item.href)}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'relative flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-[0_8px_20px_-10px_hsl(var(--primary)/.9)]'
+                      : 'text-muted-foreground hover:bg-foreground/[.06] hover:text-foreground'
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <LanguageSelector />
             <ThemeToggle />
-            <div className="flex items-center gap-1 sm:gap-2 me-1 sm:me-2">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-sm sm:text-base flex-shrink-0">
-                👤
-              </div>
-              <span className="text-xs sm:text-sm font-medium text-foreground hidden md:inline truncate max-w-[80px]">{user?.full_name}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden w-10 h-10 sm:w-11 sm:h-11 flex-shrink-0"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-            </Button>
+            <UserMenu showName />
           </div>
         </div>
+      </header>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div 
-            className="absolute top-full left-0 right-0 bg-card/95 backdrop-blur-lg border-b border-border/50 animate-slide-up"
-            dir={i18n.language === 'he' ? 'rtl' : 'ltr'}
-          >
-            <div className="px-4 py-3 space-y-1">
-              {navigationItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={currentPage === item.id ? "default" : "ghost"}
-                  className={`w-full justify-start transform hover:scale-105 transition-all duration-200 ${
-                    currentPage === item.id 
-                      ? "gradient-orange text-background font-semibold shadow-lg" 
-                      : "hover:bg-secondary"
-                  }`}
-                  onClick={() => handleNavigation(item.href)}
-                >
-                  <item.icon className="w-5 h-5 me-3" />
-                  <span>{item.label}</span>
-                </Button>
-              ))}
-              <div className="pt-2 border-t border-border/30">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={logout}
-                >
-                  <LogOut className="w-5 h-5 me-3" />
-                  <span>{t('auth.logout')}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Desktop Header */}
-      <div
-        className="hidden lg:block sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border/50 overflow-hidden"
-        dir="ltr"
-      >
-        <div className="w-full h-32">
-          <div className="flex items-center justify-between h-full gap-2">
-            {/* Left side: Logout -> Username & Icon -> Theme & Language */}
-            <div className="flex items-center gap-2 xl:gap-3 flex-shrink-0 pl-4 lg:pl-6">
-              {/* Logout */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-10 h-10 xl:w-12 xl:h-12"
-              >
-                <LogOut className="w-5 h-5 xl:w-6 xl:h-6" />
-              </Button>
-              
-              {/* Username & Icon */}
-              <div className="flex items-center gap-2 xl:gap-3 border-r border-border/30 pr-2 xl:pr-3 h-full">
-                <div className="w-10 h-10 xl:w-12 xl:h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-base xl:text-lg shadow-lg flex-shrink-0">
-                  👤
-                </div>
-                <div className="text-end hidden xl:block">
-                  <p className="text-sm font-semibold text-foreground">{user?.full_name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.role ? t(`roles.${user.role}`) : ''}</p>
-                </div>
-              </div>
-              
-              {/* Theme & Language */}
-              <div className="flex items-center gap-2 xl:gap-3 border-r border-border/30 pr-2 xl:pr-3 h-full">
-                <ThemeToggle />
-                <LanguageSelector />
-              </div>
-            </div>
-
-            {/* Center: 4 Navigation Tabs */}
-            <div className="flex-1 min-w-0 flex items-center justify-center h-full">
-              <nav 
-                className={`flex items-center gap-1 lg:gap-2 xl:gap-3 overflow-x-auto scrollbar-hide px-2 h-full ${i18n.language === 'he' ? 'flex-row-reverse' : ''}`}
-                dir={i18n.language === 'he' ? 'rtl' : 'ltr'}
-              >
-                {navigationItems.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant={currentPage === item.id ? "default" : "ghost"}
-                    className={`flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 xl:px-5 text-xs lg:text-sm xl:text-base whitespace-nowrap transform hover:scale-105 transition-all duration-200 flex-shrink-0 h-auto ${
-                      currentPage === item.id 
-                        ? "gradient-orange text-background font-semibold shadow-lg" 
-                        : "hover:bg-secondary"
-                    }`}
-                    onClick={() => handleNavigation(item.href)}
-                  >
-                    <item.icon className="w-4 h-4 xl:w-5 xl:h-5 flex-shrink-0" />
-                    <span>{item.label}</span>
-                  </Button>
-                ))}
-              </nav>
-            </div>
-
-            {/* Right side: Page Title -> Logo */}
-            <div className="flex items-center gap-2 xl:gap-3 flex-shrink-0 h-full pr-4 lg:pr-6">
-              {/* Page Title */}
-              <div className="flex-shrink-0 border-r border-border/30 pr-2 xl:pr-3 h-full flex items-center">
-                <div className="bg-card border border-border/50 rounded-lg px-2 xl:px-3 py-1.5 xl:py-2 max-w-[160px] xl:max-w-[180px]">
-                  <p
-                    className="text-[10px] xl:text-xs text-muted-foreground break-words leading-tight text-center"
-                    dir="rtl"
-                  >
-                    {isAdmin ? t('layout.adminSubtitle') : isTrainer ? t('layout.trainerSubtitle') : t('layout.clientSubtitle')}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Logo - Constrained to navbar height */}
-              <div className="flex-shrink-0 h-full w-32 xl:w-40 flex items-center justify-end overflow-hidden">
-                <div className="h-full w-full flex items-center justify-end">
-                  <img
-                    src="/logonavbar.png"
-                    alt="ECshape logo"
-                    className="h-full w-auto object-contain max-h-full max-w-full"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 lg:pb-0">
-        {children}
+      {/* ---------- Content ---------- */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
+        <div className="animate-fade-in">{children}</div>
       </main>
 
-      {/* Mobile Bottom Navigation - Alternative approach */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border/50 lg:hidden shadow-2xl z-50 overflow-hidden"
-        dir={i18n.language === 'he' ? 'rtl' : 'ltr'}
+      {/* ---------- Mobile floating tab bar ---------- */}
+      <nav
+        className="fixed inset-x-3 z-50 lg:hidden"
+        style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}
+        aria-label={t('navigation.dashboard')}
       >
-        <div className={`flex items-center justify-around px-2 sm:px-3 pt-3 pb-2 overflow-x-auto scrollbar-hide ${i18n.language === 'he' ? 'flex-row-reverse' : ''}`} style={{ paddingBottom: 'max(8px, calc(env(safe-area-inset-bottom) + 8px))' }}>
-          {navigationItems.map((item) => (
-            <Button
-              key={item.id}
-              variant="ghost"
-              className={`flex flex-col items-center gap-1 sm:gap-1.5 min-h-[56px] sm:min-h-[52px] py-2 sm:py-2.5 px-3 sm:px-4 min-w-0 flex-shrink-0 transform hover:scale-105 transition-all duration-200 ${
-                currentPage === item.id 
-                  ? "text-primary bg-primary/10" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => handleNavigation(item.href)}
-            >
-              <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${currentPage === item.id ? 'text-primary' : ''}`} />
-              <span className="text-xs sm:text-sm font-medium truncate max-w-[70px] sm:max-w-none leading-tight">{item.label}</span>
-            </Button>
-          ))}
+        <div className="flex items-stretch justify-between gap-1 rounded-[1.6rem] border border-border/60 bg-card/85 p-1.5 shadow-[0_20px_40px_-16px_rgba(0,0,0,.7)] backdrop-blur-xl">
+          {navigationItems.map((item) => {
+            const active = currentPage === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.href)}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1.2rem] px-1 py-2 text-[11px] font-semibold transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] active:scale-95',
+                  active ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <span
+                  className={cn(
+                    'grid h-8 w-8 place-items-center rounded-full transition-all duration-300',
+                    active && 'bg-primary text-primary-foreground shadow-[0_6px_14px_-6px_hsl(var(--primary)/.9)]'
+                  )}
+                >
+                  <item.icon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="max-w-full truncate leading-none">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </nav>
     </div>
   );
 };

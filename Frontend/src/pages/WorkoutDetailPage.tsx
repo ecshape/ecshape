@@ -91,7 +91,7 @@ const WorkoutDetailPage = () => {
                 <Dumbbell className="w-7 h-7 text-background" />
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gradient">{workout.name}</h1>
+                <h1 className="ec-page-title text-gradient">{workout.name}</h1>
                 <div className="flex items-center space-x-4 mt-2">
                   <Badge variant="outline" className="text-xs">
                     <Clock className="w-3 h-3 mr-1" />
@@ -163,7 +163,7 @@ const WorkoutDetailPage = () => {
             {exercises.map((exercise, index) => (
               <Card 
                 key={index} 
-                className={`transform hover:scale-[1.02] transition-all duration-300 shadow-xl ${
+                className={`transform transition-all duration-300 shadow-xl ${
                   exercise.completed 
                     ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30' 
                     : currentExercise === index
@@ -193,13 +193,13 @@ const WorkoutDetailPage = () => {
                             {index + 1}. {exercise.name}
                           </h3>
                           <div className="flex items-center space-x-4 mt-2">
-                            <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30">
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                               {exercise.sets} sets
                             </Badge>
                             <Badge variant="outline" className="bg-orange-500/10 text-orange-400 border-orange-500/30">
                               {exercise.reps} reps
                             </Badge>
-                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/30">
+                            <Badge variant="outline" className="bg-[hsl(var(--gold)/.15)] text-[hsl(var(--gold))] border-purple-500/30">
                               Rest: {exercise.rest}
                             </Badge>
                           </div>

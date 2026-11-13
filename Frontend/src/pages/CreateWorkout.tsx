@@ -223,7 +223,7 @@ const CreateWorkout = () => {
               {t('workoutCreation.back')}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{t('workoutCreation.title')}</h1>
+              <h1 className="ec-page-title text-foreground">{t('workoutCreation.title')}</h1>
               <p className="text-muted-foreground">
                 {client ? `${t('workoutCreation.creatingWorkoutFor')} ${client.full_name}` : t('workoutCreation.subtitle')}
               </p>

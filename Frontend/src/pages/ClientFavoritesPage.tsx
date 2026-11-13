@@ -178,7 +178,7 @@ const ClientFavoritesPage: React.FC = () => {
             <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
           </Button>
           <div className="space-y-1">
-            <h1 className="text-xl font-bold flex items-center gap-2">
+            <h1 className="ec-page-title flex items-center gap-2">
               <Heart className="h-5 w-5 text-primary" />
               {t("meals.favorites.title", "Favorite foods")}
             </h1>

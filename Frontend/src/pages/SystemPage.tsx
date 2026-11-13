@@ -294,7 +294,7 @@ const SystemPage: React.FC = () => {
       <div className="container mx-auto p-4 sm:p-6 space-y-6 w-full max-w-full overflow-x-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">System Management</h1>
+            <h1 className="ec-page-title">System Management</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Monitor and manage system health and performance</p>
           </div>
           <Button onClick={loadSystemData} variant="outline" className="w-full sm:w-auto">
@@ -667,8 +667,8 @@ const SystemPage: React.FC = () => {
                     <Card>
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-2">
-                          <Shield className="h-4 w-4 text-blue-500" />
-                          <span className="text-2xl font-bold text-blue-500">{testResults.coverage}%</span>
+                          <Shield className="h-4 w-4 text-primary" />
+                          <span className="text-2xl font-bold text-primary">{testResults.coverage}%</span>
                         </div>
                         <p className="text-sm text-muted-foreground">Coverage</p>
                       </CardContent>

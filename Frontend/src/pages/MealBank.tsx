@@ -443,7 +443,7 @@ const MealBank = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('foodBank.title')}</h1>
+              <h1 className="ec-page-title text-foreground">{t('foodBank.title')}</h1>
               <p className="text-sm sm:text-base text-muted-foreground">{t('foodBank.subtitle')}</p>
             </div>
             <div 

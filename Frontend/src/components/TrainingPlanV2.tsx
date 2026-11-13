@@ -293,7 +293,7 @@ const TrainingPlanV2: React.FC = () => {
       <div className="pb-20 lg:pb-8">
         <div className="bg-gradient-to-br from-card to-secondary px-4 lg:px-6 py-6 lg:py-8">
           <div className="max-w-6xl mx-auto">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gradient">{t('training.myWorkouts')}</h1>
+            <h1 className="ec-page-title text-gradient">{t('training.myWorkouts')}</h1>
             <p className="text-muted-foreground mt-1">
               {t('training.defaultPlanDescription', 'התוכנית האישית שלך לאימונים')}
             </p>
@@ -362,7 +362,7 @@ const TrainingPlanV2: React.FC = () => {
                 <Card
                   key={day.id}
                   className={cn(
-                    'border rounded-lg cursor-pointer transition-all hover:shadow-lg hover:scale-[1.01]',
+                    'border rounded-lg cursor-pointer transition-all hover:shadow-lg',
                     isCompleted && 'border-green-500/30 bg-green-500/5',
                     !isCompleted && 'border-border/60 hover:border-primary/30'
                   )}

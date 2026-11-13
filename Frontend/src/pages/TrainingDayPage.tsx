@@ -1208,7 +1208,7 @@ const TrainingDayPage: React.FC = () => {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight truncate" dir="auto">{workoutDay.workout_plan_name || workoutDay.name}</h1>
+                  <h1 className="ec-page-title truncate" dir="auto">{workoutDay.workout_plan_name || workoutDay.name}</h1>
                   {workoutDay.notes && (
                     <p className="text-sm sm:text-base text-muted-foreground mt-2 line-clamp-2">{workoutDay.notes}</p>
                   )}

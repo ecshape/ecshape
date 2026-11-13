@@ -503,7 +503,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
             <span className="hidden sm:inline">{t('clientProfile.back')}</span>
           </Button>
           <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">
+              <h1 className="ec-page-title">
                 {isEditing ? t('workoutCreation.updateTitle') : t('workoutCreation.title')}
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">{t('workoutCreation.subtitle')}</p>

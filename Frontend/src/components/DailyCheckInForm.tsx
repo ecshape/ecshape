@@ -216,7 +216,7 @@ export const DailyCheckInForm: React.FC<DailyCheckInFormProps> = ({
           <div className="flex flex-col gap-2">
             <Button
               type="submit"
-              className="gradient-orange text-background w-full py-3 font-semibold hover:scale-105 transition-all"
+              className="gradient-orange text-background w-full py-3 font-semibold transition-all"
               disabled={loading}
             >
               {loading ? t('common.loading') : t('checkIn.submitButton')}

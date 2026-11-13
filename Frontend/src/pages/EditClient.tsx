@@ -234,7 +234,7 @@ const EditClient: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('clientProfile.editProfile', 'Edit Profile')}</h1>
+            <h1 className="ec-page-title text-foreground">{t('clientProfile.editProfile', 'Edit Profile')}</h1>
             <p className="text-muted-foreground">{client.full_name}</p>
           </div>
         </div>

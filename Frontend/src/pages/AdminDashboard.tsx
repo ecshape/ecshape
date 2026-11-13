@@ -102,7 +102,7 @@ const AdminDashboard = () => {
       label: t('admin.totalUsers'),
       value: statsLoading ? '...' : stats.totalUsers.toString(),
       icon: Users,
-      gradient: 'bg-gradient-to-r from-blue-500 to-blue-600',
+      gradient: 'bg-gradient-to-r from-primary to-[hsl(18_85%_44%)]',
     },
     {
       label: t('admin.activeTrainers'),
@@ -114,7 +114,7 @@ const AdminDashboard = () => {
       label: t('admin.totalClients'),
       value: statsLoading ? '...' : stats.totalClients.toString(),
       icon: Users,
-      gradient: 'bg-gradient-to-r from-purple-500 to-purple-600',
+      gradient: 'bg-gradient-to-r from-[hsl(var(--gold))] to-primary',
     },
     {
       label: t('admin.systemHealth'),
@@ -150,7 +150,7 @@ const AdminDashboard = () => {
               icon: UserPlus,
               color: (u.role === 'ADMIN' || u.role === 'admin') ? 'bg-gradient-to-tr from-red-500 to-red-700' : 
                      (u.role === 'TRAINER' || u.role === 'trainer') ? 'bg-gradient-to-tr from-green-500 to-green-700' : 
-                     'bg-gradient-to-tr from-purple-500 to-purple-700',
+                     'bg-gradient-to-tr from-[hsl(var(--gold))] to-primary',
             };
           });
           setRecentActivity(activities);
@@ -259,7 +259,7 @@ const AdminDashboard = () => {
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gradient">
+                <h1 className="ec-page-title text-gradient">
                   {t('admin.adminDashboard')}
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
                 <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
-                      className="gradient-orange hover:gradient-orange-dark text-background font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg text-xs sm:text-sm w-full sm:w-auto min-w-0"
+                      className="gradient-orange hover:gradient-orange-dark text-background font-semibold transition-all duration-200 shadow-lg text-xs sm:text-sm w-full sm:w-auto min-w-0"
                     >
                       <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                       <span className="hidden sm:inline truncate">{t('admin.registerTrainer')}</span>
@@ -382,7 +382,7 @@ const AdminDashboard = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/system')}
-                  className="font-semibold transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto min-w-0"
+                  className="font-semibold transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto min-w-0"
                 >
                   <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="hidden sm:inline truncate">{t('admin.systemSettings')}</span>
@@ -391,7 +391,7 @@ const AdminDashboard = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/secret-users')}
-                  className="font-semibold transform hover:scale-105 transition-all duration-200 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 text-xs sm:text-sm w-full sm:w-auto min-w-0"
+                  className="font-semibold transition-all duration-200 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 text-xs sm:text-sm w-full sm:w-auto min-w-0"
                 >
                   <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="hidden sm:inline truncate">{t('admin.secretUsers')}</span>
@@ -406,7 +406,7 @@ const AdminDashboard = () => {
           {/* Stats Overview */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Users */}
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-primary to-[hsl(18_85%_44%)] border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -420,7 +420,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
             {/* Active Trainers */}
-            <Card className="bg-gradient-to-r from-green-500 to-green-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-green-500 to-green-600 border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -434,7 +434,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
             {/* Total Clients */}
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-[hsl(var(--gold))] to-primary border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -448,7 +448,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
             {/* System Health */}
-            <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -485,7 +485,7 @@ const AdminDashboard = () => {
                 <Progress value={stats.totalUsers ? Math.round((stats.totalTrainers / stats.totalUsers) * 100) : 0} className="h-3 bg-secondary" />
                 <Button 
                   onClick={() => navigate('/users')}
-                  className="w-full gradient-orange text-background font-semibold transform hover:scale-105 transition-all duration-200"
+                  className="w-full gradient-orange text-background font-semibold transition-all duration-200"
                 >
                   <Users className="w-4 h-4 mr-2" />
                   {t('admin.manageUsers')}
@@ -513,7 +513,7 @@ const AdminDashboard = () => {
                 <Progress value={100} className="h-3 bg-secondary" />
                 <Button 
                   onClick={() => navigate('/system')}
-                  className="w-full bg-green-500 hover:bg-green-600 text-background font-semibold transform hover:scale-105 transition-all duration-200"
+                  className="w-full bg-green-500 hover:bg-green-600 text-background font-semibold transition-all duration-200"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   {t('admin.viewSystemStatus')}
@@ -526,7 +526,7 @@ const AdminDashboard = () => {
           <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-foreground">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
+                <TrendingUp className="w-5 h-5 text-primary" />
                 <span>{t('admin.recentSystemActivity')}</span>
               </CardTitle>
             </CardHeader>

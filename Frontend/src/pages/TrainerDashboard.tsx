@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config/api';
 import ClientWeightProgress from '../components/ClientWeightProgress';
+import { PageHeader, StatTile } from '../components/PageHeader';
 import { useTranslation } from 'react-i18next';
 import { CheckInStatusBadge } from '../components/CheckInStatusBadge';
 import UnmatchedQuestionnaires from '../components/meals/UnmatchedQuestionnaires';
@@ -210,102 +211,73 @@ const TrainerDashboard = () => {
   }
   return (
     <Layout currentPage="dashboard">
-      <div className="max-w-5xl mx-auto py-6 md:py-10 px-4">
-        <h1 className="text-4xl font-bold mb-10 text-center">{t('trainerDashboard.title')}</h1>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+        <PageHeader
+          eyebrow={t('layout.trainerDashboard')}
+          title={t('trainerDashboard.title')}
+          actions={
+            <Button size="lg" onClick={() => setAddClientDialogOpen(true)}>
+              <UserPlus />
+              {t('client.addClient')}
+            </Button>
+          }
+        />
         <UnmatchedQuestionnaires clients={clients} />
         {/* Stats Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="rounded-xl shadow-xl border border-border bg-muted/90 transition-transform duration-300 animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl">
-            <CardContent className="px-6 pt-8 pb-6 flex flex-col items-center justify-center text-center space-y-4 h-48">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-3xl font-bold mb-1">{stats.totalClients}</div>
-              <div className="text-muted-foreground text-sm">{t('trainerDashboard.totalClients')}</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-xl shadow-xl border border-border bg-muted/90 transition-transform duration-300 animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl">
-            <CardContent className="px-6 pt-8 pb-6 flex flex-col items-center justify-center text-center space-y-4 h-48">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                <Dumbbell className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-3xl font-bold mb-1">{stats.totalExercises}</div>
-              <div className="text-muted-foreground text-sm">{t('trainerDashboard.exercises')}</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-xl shadow-xl border border-border bg-muted/90 transition-transform duration-300 animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl">
-            <CardContent className="px-6 pt-8 pb-6 flex flex-col items-center justify-center text-center space-y-4 h-48">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-3xl font-bold mb-1">{stats.completionRate.toFixed(1)}%</div>
-              <div className="text-muted-foreground text-sm">{t('trainerDashboard.workoutCompletion')}</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-xl shadow-xl border border-border bg-muted/90 transition-transform duration-300 animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl">
-            <CardContent className="px-6 pt-8 pb-6 flex flex-col items-center justify-center text-center space-y-4 h-48">
-              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-3xl font-bold mb-1">{stats.checkInCompletionRate.toFixed(1)}%</div>
-              <div className="text-muted-foreground text-sm">{t('trainerDashboard.checkInCompletion')}</div>
-            </CardContent>
-          </Card>
+        <div className="ec-stagger mb-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <StatTile icon={Users} value={stats.totalClients} label={t('trainerDashboard.totalClients')} highlight />
+          <StatTile icon={Dumbbell} value={stats.totalExercises} label={t('trainerDashboard.exercises')} />
+          <StatTile icon={TrendingUp} value={`${stats.completionRate.toFixed(1)}%`} label={t('trainerDashboard.workoutCompletion')} />
+          <StatTile icon={CheckCircle} value={`${stats.checkInCompletionRate.toFixed(1)}%`} label={t('trainerDashboard.checkInCompletion')} />
         </div>
 
         {/* Clients Section */}
         <div className="mb-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-center sm:justify-between gap-4 mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">{t('client.yourClients')}</h2>
-            <Button 
-              onClick={() => setAddClientDialogOpen(true)} 
-              className="gradient-orange text-background font-semibold flex items-center w-full sm:w-auto px-4 py-2 text-sm sm:text-base whitespace-nowrap"
-            >
-              <UserPlus className="w-4 h-4 me-2 flex-shrink-0" />
-              <span className="truncate">{t('client.addClient')}</span>
-            </Button>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <h2 className="font-display text-4xl sm:text-5xl">{t('client.yourClients')}</h2>
+            <div className="relative w-full sm:max-w-sm">
+              <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t('client.searchClients')}
+                value={clientSearch}
+                onChange={e => setClientSearch(e.target.value)}
+                className="ps-11"
+              />
+            </div>
           </div>
-          <div className="flex justify-center mb-8">
-            <input
-              type="text"
-              placeholder={t('client.searchClients')}
-              value={clientSearch}
-              onChange={e => setClientSearch(e.target.value)}
-              className="px-4 py-2 border border-input rounded-lg w-full max-w-md focus:ring-2 focus:ring-primary focus:outline-none"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="ec-stagger grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {clients.filter(client =>
               client.full_name.toLowerCase().includes(clientSearch.toLowerCase()) ||
               client.email.toLowerCase().includes(clientSearch.toLowerCase()) ||
               client.username.toLowerCase().includes(clientSearch.toLowerCase())
             ).length === 0 ? (
-              <div className="col-span-full text-center text-muted-foreground py-12 text-lg">{t('trainerDashboard.noClientsFound')}</div>
+              <div className="col-span-full rounded-[1.25rem] border border-dashed border-border py-16 text-center text-lg text-muted-foreground">{t('trainerDashboard.noClientsFound')}</div>
             ) : (
               clients.filter(client =>
                 client.full_name.toLowerCase().includes(clientSearch.toLowerCase()) ||
                 client.email.toLowerCase().includes(clientSearch.toLowerCase()) ||
                 client.username.toLowerCase().includes(clientSearch.toLowerCase())
               ).map(client => (
-                <Card key={client.id} className="rounded-xl shadow-lg border border-border bg-muted/90 hover:-translate-y-1 hover:shadow-2xl transition-transform duration-300 animate-fade-in-up flex flex-col justify-between h-full relative">
-                  <CardContent className="p-4 sm:p-6 flex flex-col h-full">
-                    <div className="absolute top-2 right-2">
+                <Card key={client.id} className="card-hover group relative flex h-full flex-col justify-between">
+                  <CardContent className="flex h-full flex-col p-5 sm:p-6">
+                    <div className="absolute end-4 top-4">
                       <CheckInStatusBadge status={clientCheckInStatuses[client.id] || 'none'} />
                     </div>
-                    <div className="flex items-center mt-2 mb-4">
-                      <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center me-4">
-                        <span className="text-white font-bold text-2xl">
+                    <div className="mb-4 mt-1 flex items-center gap-4 pe-20">
+                      <div className="grid h-14 w-14 flex-none place-items-center rounded-2xl bg-primary/12 text-primary transition-colors duration-500 group-hover:bg-primary group-hover:text-primary-foreground">
+                        <span className="font-num text-2xl">
                           {client.full_name.split(' ').map(n => n[0]).join('')}
                         </span>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-foreground mb-1">{client.full_name}</h3>
-                        <p className="text-sm text-muted-foreground">{client.email}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-lg font-bold text-foreground">{client.full_name}</h3>
+                        <p className="truncate text-sm text-muted-foreground">{client.email}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-3 mt-auto pt-4">
-                      <Button variant="outline" className="w-full h-12 sm:h-11 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-colors text-base sm:text-sm font-medium border-2 rounded-lg" onClick={() => handleViewProgress(client)}>{t('client.viewProgress')}</Button>
-                      <Button variant="outline" className="w-full h-12 sm:h-11 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-colors text-base sm:text-sm font-medium border-2 rounded-lg" onClick={() => navigate(`/client/${client.id}`)}>{t('client.viewProfile')}</Button>
+                    <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+                      <Button variant="outline" onClick={() => handleViewProgress(client)}><TrendingUp />{t('client.viewProgress')}</Button>
+                      <Button onClick={() => navigate(`/client/${client.id}`)}>{t('client.viewProfile')}</Button>
                     </div>
                   </CardContent>
                 </Card>

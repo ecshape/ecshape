@@ -837,7 +837,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1 min-w-0">
-              <h1 className="text-2xl lg:text-3xl font-bold">{t("meals.weeklyMeals.title", "Meal plan")}</h1>
+              <h1 className="ec-page-title">{t("meals.weeklyMeals.title", "Meal plan")}</h1>
               <p className="text-muted-foreground text-sm break-words">
                 {t("meals.weeklyMeals.subtitle", {
                   defaultValue:

@@ -20,6 +20,35 @@ const ICONS = {
   chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/></svg>',
 };
 const APP_ICONS = [ICONS.dumbbell, ICONS.bowl, ICONS.trend, ICONS.chat];
+const STEP_ICONS = [
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 3.5h6M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+  ICONS.dumbbell,
+  ICONS.trend,
+];
+
+/** Visuals of the "why" cards (original SVG; animated in site.css, still when motion is reduced). */
+function shiftArt(i: number, lang: SiteLang) {
+  if (i % 3 === 0) {
+    const ticks = Array.from({ length: 12 }, (_, k) => `<line x1="100" y1="22" x2="100" y2="${k % 3 ? 32 : 40}" transform="rotate(${k * 30} 100 100)"/>`).join('');
+    return `<svg class="art-clock" viewBox="0 0 200 200"><circle class="art-clock__ring" cx="100" cy="100" r="88"/><circle class="art-clock__arc" cx="100" cy="100" r="88" pathLength="100"/><g class="art-clock__ticks">${ticks}</g><line class="art-clock__h" x1="100" y1="100" x2="100" y2="58"/><line class="art-clock__m" x1="100" y1="100" x2="100" y2="34"/><circle cx="100" cy="100" r="6" class="art-clock__pin"/></svg>`;
+  }
+  if (i % 3 === 1) {
+    const rows = [0, 1, 2, 3].map((k) => `<g class="art-list__row" style="--k:${k}"><rect x="20" y="${30 + k * 40}" width="26" height="26" rx="8"/><path class="art-list__tick" d="M26 ${44 + k * 40}l5 5 10-11" pathLength="1"/><rect class="art-list__bar" x="60" y="${37 + k * 40}" width="${[110, 86, 120, 70][k]}" height="12" rx="6"/></g>`).join('');
+    return `<svg class="art-list" viewBox="0 0 200 200">${rows}</svg>`;
+  }
+  return `<div class="art-phone"><img src="${appShot(lang, 2)}" alt="" loading="lazy"><span class="art-chip">−6.5 kg</span></div>`;
+}
+
+/** Visual header of each program card. */
+function programArt(id: string, lang: SiteLang) {
+  if (id === 'online') return `<div class="prog__art prog__art--app"><img src="${appShot(lang, 0)}" alt="" loading="lazy"><img src="${appShot(lang, 1)}" alt="" loading="lazy"></div>`;
+  if (id === 'group') {
+    const dots = [0, 1, 2, 3, 4, 5].map((k) => `<i style="--k:${k}"></i>`).join('');
+    return `<div class="prog__art prog__art--group" aria-hidden="true"><span class="prog__crowd">${dots}</span></div>`;
+  }
+  return `<div class="prog__art prog__art--photo"><img src="${P}opt/trainer.jpg" alt="" loading="lazy" data-parallax></div>`;
+}
 
 const LANGS: { code: SiteLang; label: string }[] = [
   { code: 'he', label: 'עב' },
@@ -169,7 +198,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
           ${s.text ? `<p style="margin-top:18px"${P_(`shift.cards.${i}.text`)}>${esc(s.text)}</p>` : ''}
           ${s.pills ? `<div class="pills">${s.pills.map((p, k) => `<span class="pill"${P_(`shift.cards.${i}.pills.${k}`)}>${esc(p)}</span>`).join('')}</div>` : ''}
         </div>
-        <div class="stack__idx">0${i + 1}</div>
+        <div class="stack__art" aria-hidden="true"><span class="stack__idx">0${i + 1}</span>${shiftArt(i, lang)}</div>
       </div>`).join('')}
     </div>
   </div>
@@ -187,6 +216,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     </div>
     <div class="programs" data-stagger>
       ${c.programs.items.map((p, i) => `<article class="prog${p.featured ? ' prog--feat' : ''}"${ITEM(`programs.items.${i}`)}>
+        ${programArt(p.id, lang)}
         <div class="prog__top"><span class="prog__idx">0${i + 1} /</span>${p.featured ? `<span class="badge"${P_('programs.popular')}>${esc(c.programs.popular)}</span>` : ''}</div>
         <h3${P_(`programs.items.${i}.name`)}>${esc(p.name)}</h3>
         <p${P_(`programs.items.${i}.text`)}>${esc(p.text)}</p>
@@ -231,7 +261,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     </div>
     <div class="steps">
       <div class="steps__line" aria-hidden="true"><i></i></div>
-      ${c.process.steps.map((s, i) => `<div class="step"${ITEM(`process.steps.${i}`)}><div class="step__dot">${i + 1}</div><h3${P_(`process.steps.${i}.title`)}>${esc(s.title)}</h3><p${P_(`process.steps.${i}.text`)}>${esc(s.text)}</p></div>`).join('')}
+      ${c.process.steps.map((s, i) => `<div class="step"${ITEM(`process.steps.${i}`)}><div class="step__dot"><span class="step__ic" aria-hidden="true">${STEP_ICONS[i % 4]}</span><span class="step__n">${i + 1}</span></div><h3${P_(`process.steps.${i}.title`)}>${esc(s.title)}</h3><p${P_(`process.steps.${i}.text`)}>${esc(s.text)}</p></div>`).join('')}
     </div>
   </div>
 </section>`,

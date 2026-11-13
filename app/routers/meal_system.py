@@ -1183,7 +1183,8 @@ def _meal_bank_library_fields(data: Dict[str, Any]) -> Dict[str, Any]:
         if key == "tags":
             value = _json.dumps([str(t) for t in value][:30]) if value else None
         elif key == "image_credit":
-            value = _json.dumps(value, ensure_ascii=False) if value else None
+            from app.services.food_library_service import credit_string
+            value = credit_string(value)
         elif key == "image_url":
             value = value.strip() if isinstance(value, str) else None
             if value and not value.startswith("https://"):

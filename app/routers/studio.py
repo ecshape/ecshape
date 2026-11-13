@@ -32,6 +32,7 @@ public_router = APIRouter()
 router = APIRouter()
 
 LANGS = ("he", "en", "fr")
+SITE_CONTENT_MAX = 3_000_000  # bytes of JSON per language (a few inline photos)
 LEAD_STATUSES = ("new", "contacted", "qualified", "converted", "lost")
 QA_STATUSES = ("new", "in_progress", "done", "cancelled")
 QA_PRIORITIES = ("low", "normal", "high")
@@ -254,6 +255,10 @@ class SiteContentIn(BaseModel):
 def put_site_content(lang: str, payload: SiteContentIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
     if lang not in LANGS:
         raise HTTPException(status_code=404, detail="Unknown language")
+    # Photos are stored inline (resized in the browser): cap the size so the public site stays fast.
+    import json as _json
+    if len(_json.dumps(payload.content, ensure_ascii=False)) > SITE_CONTENT_MAX:
+        raise HTTPException(status_code=413, detail="Site content too large: use smaller photos")
     put_setting(db, f"content:{lang}", payload.content, user.id)
     if payload.brand is not None:
         put_setting(db, "brand", payload.brand, user.id)

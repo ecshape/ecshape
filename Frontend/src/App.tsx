@@ -73,6 +73,9 @@ const HomeRoute = () => {
     </Suspense>
   );
 };
+/** Redirects followed in a row (guards against A -> B -> A loops). */
+const redirectHops = { count: 0 };
+
 /** Applies the SEO redirects managed in Studio → SEO before falling back to the 404 page. */
 const RedirectGate = () => {
   const location = useLocation();
@@ -84,9 +87,16 @@ const RedirectGate = () => {
     publicApi
       .redirects()
       .then((rules) => {
-        const path = location.pathname.replace(/\/+$/, '') || '/';
-        const rule = rules.find((r) => (r.from.replace(/\/+$/, '') || '/') === path);
-        if (!rule || !alive) return setChecked(true);
+        const norm = (p: string) => p.replace(/[?#].*$/, '').replace(/\/+$/, '') || '/';
+        const path = norm(location.pathname);
+        const rule = rules.find((r) => norm(r.from) === path);
+        // No rule, a rule pointing to this same page, or a chain of rules (A -> B -> A): show the 404 instead of looping.
+        if (!rule || !alive || redirectHops.count >= 3 || (!/^https?:\/\//.test(rule.to) && norm(rule.to) === path)) {
+          redirectHops.count = 0;
+          return setChecked(true);
+        }
+        redirectHops.count += 1;
+        window.setTimeout(() => (redirectHops.count = 0), 4000);
         if (/^https?:\/\//.test(rule.to)) window.location.replace(rule.to);
         else navigate(rule.to, { replace: true });
       })

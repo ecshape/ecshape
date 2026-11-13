@@ -994,7 +994,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0 flex-1">
                                         <div className="text-xs text-muted-foreground mb-1">
-                                          {t(m.labelKey, m.macro === "protein" ? "🍗 Protein" : m.macro === "carb" ? "🍞 Carbs" : "🥑 Fats")}
+                                          {t(m.labelKey, m.macro === "protein" ? "Protein" : m.macro === "carb" ? "Carbs" : "Fats")}
                                         </div>
                                         <Button
                                           type="button"

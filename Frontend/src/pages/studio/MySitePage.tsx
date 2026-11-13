@@ -550,8 +550,18 @@ const MySitePage = () => {
     return createPortal(
       <div className="ec-ms-studio">
         <div className="ec-ms-loading is-full">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>{t('mysite.studio.loading')}</span>
+          {draft.loadError ? (
+            <>
+              <span>{t('mysite.studio.loadFailed')}</span>
+              <Button variant="outline" size="sm" onClick={() => void draft.reload()}>{t('mysite.studio.retry')}</Button>
+              <Button variant="ghost" size="sm" onClick={exit}>{t('mysite.studio.exit')}</Button>
+            </>
+          ) : (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>{t('mysite.studio.loading')}</span>
+            </>
+          )}
         </div>
       </div>,
       document.body,

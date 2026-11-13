@@ -242,7 +242,7 @@ export const RankMathPanel = ({ seo, onChange, ctx, analysis, onSlugChange }: Ra
 
         {tab === 'advanced' ? (
           <>
-            <p className="ec-rm-label">Robots Meta</p>
+            <p className="ec-rm-label">{t('studio.seo.rm.robotsMeta')}</p>
             <div className="ec-rm-checklist">
               <label className="ec-rm-check">
                 <input type="checkbox" checked={seo.robots !== 'noindex'} onChange={(e) => onChange({ robots: e.target.checked ? 'index' : 'noindex' })} />
@@ -254,15 +254,15 @@ export const RankMathPanel = ({ seo, onChange, ctx, analysis, onSlugChange }: Ra
               </label>
               <label className="ec-rm-check">
                 <input type="checkbox" checked={seo.noarchive} onChange={(e) => onChange({ noarchive: e.target.checked })} />
-                No Archive
+                {t('studio.seo.rm.robots.noarchive')}
               </label>
               <label className="ec-rm-check">
                 <input type="checkbox" checked={seo.noimageindex} onChange={(e) => onChange({ noimageindex: e.target.checked })} />
-                No Image Index
+                {t('studio.seo.rm.robots.noimageindex')}
               </label>
               <label className="ec-rm-check">
                 <input type="checkbox" checked={seo.nosnippet} onChange={(e) => onChange({ nosnippet: e.target.checked })} />
-                No Snippet
+                {t('studio.seo.rm.robots.nosnippet')}
               </label>
             </div>
             <label className="ec-rm-field">

@@ -973,7 +973,7 @@ const ExerciseBank = () => {
                                 onClick={handleUpdateMuscleGroup}
                                 disabled={!newMuscleGroupName.trim()}
                               >
-                                <Save className="w-4 h-4 mr-1" />
+                                <Save className="w-4 h-4 me-1" />
                                 {t('common.save')}
                               </Button>
                               <Button
@@ -995,7 +995,7 @@ const ExerciseBank = () => {
                               onClick={handleCreateMuscleGroup}
                               disabled={!newMuscleGroupName.trim()}
                             >
-                              <Plus className="w-4 h-4 mr-1" />
+                              <Plus className="w-4 h-4 me-1" />
                               {t('workoutCreation.create')}
                             </Button>
                           )}
@@ -1095,9 +1095,9 @@ const ExerciseBank = () => {
                   </Button>
                 </label>
                 <div className="flex-1 relative min-w-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <input
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ps-10"
                     placeholder={t('exerciseBank.searchPlaceholder')}
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -1395,7 +1395,7 @@ const ExerciseBank = () => {
                                   setImageRemoved(true);
                                 }
                               }}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 text-xs z-10"
+                              className="absolute -top-1 -end-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 text-xs z-10"
                             >
                               <X className="w-3 h-3" />
                             </button>

@@ -33,7 +33,12 @@ function writeStoredDraft(lang: SiteLang, draft: SiteContent | null) {
     if (!draft) localStorage.removeItem(DRAFT_KEY(lang));
     else localStorage.setItem(DRAFT_KEY(lang), JSON.stringify(diffContent(DEFAULT_CONTENT[lang], draft) || {}));
   } catch {
-    /* storage full or blocked: the draft simply stays in memory */
+    // Storage full or blocked: drop the stored copy so an older draft is never restored over newer edits.
+    try {
+      localStorage.removeItem(DRAFT_KEY(lang));
+    } catch {
+      /* blocked: nothing stored anyway */
+    }
   }
 }
 
@@ -46,19 +51,17 @@ export function hasStoredDrafts() {
   }
 }
 
+/** Throws when the server can't be read: treating the defaults as "published" would let a publish wipe the site. */
 async function fetchPublished(lang: SiteLang): Promise<SiteContent> {
-  try {
-    const { content } = await studioApi.siteContent(lang);
-    return mergeContent(DEFAULT_CONTENT[lang], content || {});
-  } catch {
-    return DEFAULT_CONTENT[lang];
-  }
+  const { content } = await studioApi.siteContent(lang);
+  return mergeContent(DEFAULT_CONTENT[lang], content || {});
 }
 
 export function useSiteDraft() {
   const [published, setPublished] = useState<Drafts>(defaults);
   const [drafts, setDrafts] = useState<Drafts>(defaults);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [restored, setRestored] = useState(false);
   const [savedAt, setSavedAt] = useState(0);
   const past = useRef<Drafts[]>([]);
@@ -71,7 +74,15 @@ export function useSiteDraft() {
   publishedRef.current = published;
 
   const load = useCallback(async () => {
-    const pubs = await Promise.all(SITE_LANGS.map(fetchPublished));
+    let pubs: SiteContent[];
+    try {
+      pubs = await Promise.all(SITE_LANGS.map(fetchPublished));
+    } catch {
+      setLoadError(true);
+      setLoaded(false);
+      return;
+    }
+    setLoadError(false);
     const pub = Object.fromEntries(SITE_LANGS.map((l, i) => [l, pubs[i]])) as Drafts;
     let anyRestored = false;
     const next = Object.fromEntries(
@@ -174,6 +185,7 @@ export function useSiteDraft() {
 
   /** Save the overrides of every changed language. Returns the languages published. */
   const publish = useCallback(async () => {
+    if (!loaded) throw new Error('site not loaded');
     const cur = draftsRef.current;
     const langs = SITE_LANGS.filter((l) => !same(cur[l], publishedRef.current[l]));
     for (const l of langs) {
@@ -188,11 +200,16 @@ export function useSiteDraft() {
     setPublished(nextPub);
     setRestored(false);
     return langs;
-  }, []);
+  }, [loaded]);
 
   /** Something else (Agent EC) changed the published site: take it in, keeping the trainer's own edits. */
   const refreshFromServer = useCallback(async () => {
-    const pubs = await Promise.all(SITE_LANGS.map(fetchPublished));
+    let pubs: SiteContent[];
+    try {
+      pubs = await Promise.all(SITE_LANGS.map(fetchPublished));
+    } catch {
+      return false;
+    }
     const old = publishedRef.current;
     const pub = Object.fromEntries(SITE_LANGS.map((l, i) => [l, pubs[i]])) as Drafts;
     const cur = draftsRef.current;
@@ -212,6 +229,7 @@ export function useSiteDraft() {
 
   return {
     loaded,
+    loadError,
     published,
     drafts,
     dirtyLangs,

@@ -37,7 +37,7 @@ function shiftArt(i: number, lang: SiteLang) {
     const rows = [0, 1, 2, 3].map((k) => `<g class="art-list__row" style="--k:${k}"><rect x="20" y="${30 + k * 40}" width="26" height="26" rx="8"/><path class="art-list__tick" d="M26 ${44 + k * 40}l5 5 10-11" pathLength="1"/><rect class="art-list__bar" x="60" y="${37 + k * 40}" width="${[110, 86, 120, 70][k]}" height="12" rx="6"/></g>`).join('');
     return `<svg class="art-list" viewBox="0 0 200 200">${rows}</svg>`;
   }
-  return `<div class="art-phone"><img src="${appShot(lang, 2)}" alt="" loading="lazy"><span class="art-chip">−6.5 kg</span></div>`;
+  return `<div class="art-phone"><img src="${appShot(lang, 2)}" alt="" loading="lazy"><span class="art-chip">${lang === 'he' ? '−6.5 ק״ג' : lang === 'fr' ? '−6,5 kg' : '−6.5 kg'}</span></div>`;
 }
 
 /** Visual header of each program card. */
@@ -170,7 +170,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
   </div>
   <div class="results__pin">
     <div class="results__track">
-      ${c.results.cards.map((r, i) => `<article class="rcard${r.tall ? ' rcard--tall' : ''}" data-cursor="✦"${ITEM(`results.cards.${i}`)}>
+      ${c.results.cards.map((r, i) => `<article class="rcard${r.tall ? ' rcard--tall' : ''}" data-cursor=""${ITEM(`results.cards.${i}`)}>
         <div class="rcard__img"${IMG(`results.cards.${i}.image`)}><img src="${esc(r.image)}" alt="${esc(r.title)} — ${esc(r.tag)}" loading="lazy"></div>
         <div class="rcard__meta"><div><span class="tag"${P_(`results.cards.${i}.tag`)}>${esc(r.tag)}</span><h3${P_(`results.cards.${i}.title`)}>${esc(r.title)}</h3><p${P_(`results.cards.${i}.sub`)}>${esc(r.sub)}</p></div>${r.big ? `<div class="rcard__big"${P_(`results.cards.${i}.big`)}>${esc(r.big)}</div>` : ''}</div>
       </article>`).join('')}
@@ -275,7 +275,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     </div>
     <div class="quotes quotes--grid" data-stagger>
       ${c.voices.quotes.map((q, i) => `<figure class="quote"${ITEM(`voices.quotes.${i}`)}>
-        <div class="quote__stars" aria-label="5/5">★★★★★</div>
+        <div class="quote__stars" role="img" aria-label="5/5"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></div>
         <blockquote>“${T(`voices.quotes.${i}.text`, q.text)}”</blockquote>
         <footer><span class="avatar">${esc((q.name || '?').trim().charAt(0))}</span><div><b${P_(`voices.quotes.${i}.name`)}>${esc(q.name)}</b><small${P_(`voices.quotes.${i}.role`)}>${esc(q.role)}</small></div></footer>
       </figure>`).join('')}
@@ -390,7 +390,7 @@ ${page}
 <div class="form-modal" id="leadModal" role="dialog" aria-modal="true" aria-labelledby="leadTitle" aria-hidden="true">
   <div class="form-modal__backdrop" data-close-form></div>
   <div class="form-modal__panel">
-    <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}">✕</button>
+    <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <div class="form-modal__body">
       <span class="eyebrow">ECshape</span>
       <h2 id="leadTitle" class="display">${esc(c.form.title)}</h2>
@@ -410,7 +410,7 @@ ${page}
         <p class="form-privacy">${esc(c.form.privacy)}</p>
       </form>
       <div class="form-done" hidden>
-        <div class="form-done__icon">✓</div>
+        <div class="form-done__icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
         <h3 class="display">${esc(c.form.success)}</h3>
         <p class="lead">${esc(c.form.successSub)}</p>
       </div>

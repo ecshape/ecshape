@@ -910,7 +910,7 @@ const TrainingDayPage: React.FC = () => {
                     </Badge>
                     {isExerciseComplete && (
                       <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        <CheckCircle2 className="h-3 w-3 me-1" />
                         {t('training.completed', 'Completed')}
                       </Badge>
                     )}
@@ -989,7 +989,7 @@ const TrainingDayPage: React.FC = () => {
                         {prevSet.reps_completed} {t('training.reps')}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground/60 ml-auto">
+                    <span className="text-xs text-muted-foreground/60 ms-auto">
                       {new Date(prevSet.completed_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -1042,7 +1042,7 @@ const TrainingDayPage: React.FC = () => {
                     {/* Delete icon for desktop - always visible */}
                     <button
                       onClick={() => handleDeleteSet(exercise.id, setNumber)}
-                      className="hidden md:flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 ml-auto shrink-0"
+                      className="hidden md:flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 ms-auto shrink-0"
                       aria-label={t('training.delete', 'Delete')}
                     >
                       <svg
@@ -1065,7 +1065,7 @@ const TrainingDayPage: React.FC = () => {
                     {/* Delete text overlay for mobile - appears when swiped */}
                     <div
                       className={cn(
-                        'absolute right-4 top-1/2 -translate-y-1/2 text-destructive-foreground font-semibold text-sm transition-opacity duration-300 pointer-events-none md:hidden',
+                        'absolute left-4 top-1/2 -translate-y-1/2 text-destructive-foreground font-semibold text-sm transition-opacity duration-300 pointer-events-none md:hidden',
                         isSwiped ? 'opacity-100' : 'opacity-0'
                       )}
                     >
@@ -1086,7 +1086,7 @@ const TrainingDayPage: React.FC = () => {
                               {getCompletedSet(exercise.id, setNumber)?.reps_completed ?? 0} {t('training.reps')}
                             </span>
                           </div>
-                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted ml-auto">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted ms-auto">
                             <CheckCircle2 className="h-4 w-4 text-foreground" />
                           </div>
                         </>

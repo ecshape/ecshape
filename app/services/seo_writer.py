@@ -28,13 +28,15 @@ OPENAI_COMPAT_BASE = {
 }
 
 _DANGEROUS = re.compile(r"<\s*(script|style|iframe|object|embed|noscript|template|svg|math|form|textarea|select|button)\b[\s\S]*?<\s*/\s*\1\s*>", re.I)
-_ON_ATTR = re.compile(r"\s+on[a-z]+\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s>]+)", re.I)
+_DANGEROUS_OPEN = re.compile(r"<\s*/?\s*(script|style|iframe|object|embed|noscript|template|svg|math|form|textarea|select|button|link|meta|base)\b[^>]*>?", re.I)
+_ON_ATTR = re.compile(r"[\s/]+on[a-z]+\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s>]+)", re.I)
 _JS_URL = re.compile(r"(href|src)\s*=\s*([\"'])\s*(javascript|data|vbscript):[^\"']*\2", re.I)
 
 
 def sanitize_html(html: str) -> str:
     """Server-side safety net; the site renders through an allow-list sanitizer as well."""
     out = _DANGEROUS.sub("", str(html or "")[:400_000])
+    out = _DANGEROUS_OPEN.sub("", out)  # unclosed or stray dangerous tags
     out = re.sub(r"<!--[\s\S]*?-->", "", out)
     out = _ON_ATTR.sub("", out)
     return _JS_URL.sub(r'\1="#"', out)
@@ -145,9 +147,12 @@ def is_live(a: Dict[str, Any]) -> bool:
         return True
     if a.get("status") == "scheduled" and a.get("publishedAt"):
         try:
-            return datetime.fromisoformat(str(a["publishedAt"]).replace("Z", "+00:00")) <= datetime.now(timezone.utc)
-        except ValueError:
+            when = datetime.fromisoformat(str(a["publishedAt"]).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
             return False
+        if when.tzinfo is None:  # a date saved without a timezone is read as UTC (never a 500 on the public blog)
+            when = when.replace(tzinfo=timezone.utc)
+        return when <= datetime.now(timezone.utc)
     return False
 
 

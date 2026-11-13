@@ -48,7 +48,11 @@
     "loadMore": "Voir plus",
     "remaining": "restant",
     "switchToDark": "Passer en mode sombre",
-    "switchToLight": "Passer en mode clair"
+    "switchToLight": "Passer en mode clair",
+    "warning": "Attention",
+    "complete": "Terminer",
+    "completed": "Terminé",
+    "saving": "Enregistrement…"
   },
   "error": {
     "pageNotFound": "Oups ! Page introuvable",
@@ -92,7 +96,9 @@
       "trainerHint": "Studio et clients",
       "client": "Client",
       "clientHint": "L’app de l’élève"
-    }
+    },
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -126,7 +132,11 @@
     "loading": "Chargement des données…",
     "error": "Erreur de chargement des données",
     "letsMove": "On avance aujourd’hui.",
-    "hiThere": "Salut"
+    "hiThere": "Salut",
+    "steps": "Pas",
+    "weight": "Poids",
+    "today": "Aujourd'hui",
+    "caloriesTracker": "Suivi des calories"
   },
   "client": {
     "client": "Client",
@@ -250,7 +260,11 @@
     "viewProfile": "Voir le profil",
     "enableNotifications": "Activer les notifications",
     "enableNotificationsDesc": "Sois averti des nouveaux messages",
-    "enable": "Activer"
+    "enable": "Activer",
+    "progressEntry": "Relevé de progression",
+    "progressPhoto": "Photo de progression",
+    "removeLinkedEntry": "Retirer le relevé lié",
+    "hideProfile": "Masquer le profil"
   },
   "dates": {
     "today": "Aujourd’hui",
@@ -380,7 +394,11 @@
       "history": "Historique des check-ins",
       "todayStatus": "Statut du jour",
       "viewDetails": "Voir le détail"
-    }
+    },
+    "checkIn": "Check-in",
+    "checkInCompleted": "Check-in terminé",
+    "todayStatus": "Statut du jour",
+    "none": "Rien pour le moment"
   },
   "weightProgress": {
     "currentWeight": "Poids actuel",
@@ -416,7 +434,8 @@
     "deleteConfirm": "Supprimer la pesée du {{date}} ({{weight}} kg) ? Cette action est irréversible.",
     "delete": "Supprimer",
     "successDelete": "Pesée supprimée",
-    "errorDelete": "Impossible de supprimer la pesée"
+    "errorDelete": "Impossible de supprimer la pesée",
+    "noPhotos": "Pas encore de photos"
   },
   "progress": {
     "progress": "Progression",
@@ -499,7 +518,9 @@
     "noEntries": "Aucune entrée de progression",
     "noHistory": "Aucun historique",
     "removePhoto": "Retirer la photo",
-    "viewHistory": "Voir l’historique"
+    "viewHistory": "Voir l’historique",
+    "noPhoto": "Pas de photo",
+    "progressPhoto": "Photo de progression"
   },
   "training": {
     "training": "Entraînement",
@@ -638,7 +659,12 @@
     "allSetsHistory": "Toutes les séries et répétitions",
     "noHistory": "Aucun historique",
     "repsShort": "Rép.",
-    "weightShort": "kg"
+    "weightShort": "kg",
+    "dayNotFound": "Séance introuvable",
+    "delete": "Supprimer",
+    "dayCompleted": "Séance terminée",
+    "markDayComplete": "Marquer la séance comme terminée",
+    "today": "Aujourd'hui"
   },
   "exerciseBank": {
     "title": "Banque d’exercices",
@@ -887,7 +913,8 @@
     "hoursAgo_plural": "il y a {{count}} heures",
     "daysAgo": "il y a {{count}} jour",
     "daysAgo_plural": "il y a {{count}} jours",
-    "confirmDeleteWorkout": "Supprimer ce programme d’entraînement ?"
+    "confirmDeleteWorkout": "Supprimer ce programme d’entraînement ?",
+    "cancel": "Annuler"
   },
   "meals": {
     "meals": "Repas",
@@ -1437,7 +1464,11 @@
     "registrationFailedMessage": "Impossible d’inscrire le coach. Réessaie.",
     "registrationError": "Erreur d’inscription",
     "registrationErrorMessage": "Une erreur est survenue pendant l’inscription. Réessaie.",
-    "loadFailed": "Échec du chargement"
+    "loadFailed": "Échec du chargement",
+    "cannotDeleteSelfMessage": "Vous ne pouvez pas supprimer votre propre compte",
+    "userDeletedMessage": "L'utilisateur a été supprimé",
+    "deleteFailedMessage": "La suppression a échoué",
+    "userDeleted": "Utilisateur supprimé"
   },
   "mealPlan": {
     "addFood": "Ajouter un aliment",
@@ -1829,7 +1860,7 @@
           "general": "Général",
           "advanced": "Avancé",
           "schema": "Schéma",
-          "social": "Social"
+          "social": "Réseaux sociaux"
         },
         "googlePreview": "Aperçu Google",
         "socialPreview": "Aperçu de partage",
@@ -1842,13 +1873,16 @@
         "secondaryKeywordsPh": "Jusqu’à 4, séparés par des virgules",
         "seoTitle": "Titre SEO",
         "slug": "Permalien",
-        "metaDescription": "Meta description",
+        "metaDescription": "Méta-description",
         "canonical": "URL canonique",
         "canonicalHelp": "Laissez vide sauf si ce contenu existe aussi à une autre adresse.",
         "pillar": "Contenu pilier (un de vos articles les plus importants)",
         "robots": {
           "index": "Index (afficher dans Google)",
-          "nofollow": "No Follow"
+          "nofollow": "Ne pas suivre (nofollow)",
+          "noarchive": "Pas d’archive",
+          "noimageindex": "Pas d'indexation des images",
+          "nosnippet": "Pas d’extrait"
         },
         "schemaType": "Type de schéma",
         "schema": {
@@ -1924,7 +1958,8 @@
           "paragraphs": "{{count}} paragraphes de plus de 120 mots",
           "media": "{{count}} images dans le contenu",
           "sentences": "{{count}} mots par phrase en moyenne"
-        }
+        },
+        "robotsMeta": "Méta robots"
       },
       "ai": {
         "title": "Rédiger avec l’IA",
@@ -2519,7 +2554,13 @@
       },
       "rewrite": "Réécrire avec Agent EC",
       "rewritePrompt": "Sur mon site (langue : {{lang}}), propose une meilleure version du texte « {{path}} » : « {{text}} ». Même ton, longueur proche, puis applique-la avec site.text.",
-      "sectionPrompt": "Améliore les textes de la section « {{section}} » de mon site (langue : {{lang}}). Propose des changements et applique-les avec site.text."
+      "sectionPrompt": "Améliore les textes de la section « {{section}} » de mon site (langue : {{lang}}). Propose des changements et applique-les avec site.text.",
+      "loadFailed": "Impossible de charger votre site. Rien n'a été enregistré ni modifié.",
+      "retry": "Réessayer"
     }
+  },
+  "trainer": {
+    "viewProfile": "Voir le profil",
+    "searchClients": "Rechercher un client"
   }
 }

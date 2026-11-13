@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AgentEcIcon } from '@/components/studio/AgentEcIcon';
 import { studioApi } from '@/lib/studioApi';
+import { sanitizeArticleHtml } from '@/lib/seo/articles';
 import { cn } from '@/lib/utils';
 import type { SiteLang } from '@/site/content';
 
@@ -247,7 +248,7 @@ export const LiveArticleCanvas = ({ state, onStop }: { state: GenerationState; o
         </header>
         <div className="ec-article-body ec-ai-live-content" dir="auto">
           {state.blocks.map((b, i) => (
-            <div key={i} className={cn('ec-ai-block', `is-${b.kind}`)} dangerouslySetInnerHTML={{ __html: b.html }} />
+            <div key={i} className={cn('ec-ai-block', `is-${b.kind}`)} dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(b.html) }} />
           ))}
           {state.running ? <span className="ec-ai-caret" aria-hidden /> : null}
         </div>

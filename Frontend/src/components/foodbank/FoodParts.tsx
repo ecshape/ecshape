@@ -210,13 +210,14 @@ export function MacroStats({
 export function PhotoCredit({ credit, className }: { credit?: ImageCredit | null; className?: string }) {
   const { t } = useTranslation();
   if (!credit) return null;
+  const safeUrl = credit.url && /^https:\/\//i.test(credit.url) ? credit.url : undefined;
   const label =
     credit.provider === 'Open Food Facts'
       ? `${credit.provider} (${credit.license ?? 'CC BY-SA'})`
       : t('foodBankPro.photoCredit', { author: credit.author ?? credit.provider, license: credit.license ?? '' });
   return (
     <a
-      href={credit.url}
+      href={safeUrl}
       target="_blank"
       rel="noopener noreferrer"
       className={cn('truncate text-[10px] leading-tight text-white/80 hover:text-white underline-offset-2 hover:underline', className)}

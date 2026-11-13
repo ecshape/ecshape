@@ -669,7 +669,8 @@ html.lenis, html.lenis body { height: auto; }
   transition: transform .5s var(--ease-out), box-shadow .4s;
 }
 .ec-site .quote:hover { transform: translateX(-6px); box-shadow: inset 0 0 0 1px rgba(240, 102, 31, .35); }
-.ec-site .quote__stars { color: var(--gold); letter-spacing: 3px; font-size: .9rem; margin-bottom: 12px; }
+.ec-site .quote__stars { display: flex; gap: 3px; color: var(--gold); margin-bottom: 12px; }
+.ec-site .quote__stars svg { width: 15px; height: 15px; }
 .ec-site .quote blockquote { font-size: 1.12rem; line-height: 1.7; margin-bottom: 20px; }
 .ec-site .quote footer { display: flex; align-items: center; gap: 12px; }
 .ec-site .avatar { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--accent), var(--gold)); }

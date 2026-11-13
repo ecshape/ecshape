@@ -463,7 +463,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
       console.log('Linked progress entry set:', entry);
       // Focus on message input
       setTimeout(() => {
-        const input = document.querySelector('input[placeholder*="הקלד הודעה"]') as HTMLInputElement;
+        const input = Array.from(document.querySelectorAll<HTMLInputElement>('input[data-chat-input]')).find((el) => el.offsetParent !== null);
         if (input) {
           input.focus();
         } else {
@@ -626,13 +626,13 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
             <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">{t('chat.conversations', 'Conversations')}</h2>
             {/* Search bar */}
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder={t('trainer.searchClients', 'Search clients...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10 rounded-full bg-muted/50 border-border"
+                className="ps-10 rounded-full bg-muted/50 border-border"
               />
             </div>
           </div>
@@ -676,7 +676,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                             {conv.unread_count > 0 && (
                               <Badge 
                                 variant="destructive" 
-                                className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs shrink-0"
+                                className="ms-2 h-5 w-5 p-0 flex items-center justify-center text-xs shrink-0"
                               >
                                 {conv.unread_count}
                               </Badge>
@@ -704,13 +704,13 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
         </div>
 
         {/* Chat area */}
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden border-r-2 border-border relative">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden border-s-2 border-border relative">
           {/* Toggle button for profile sidebar */}
           {selectedClient && (
             <Button
               variant="ghost"
               size="icon"
-              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-full z-50 h-10 w-10 rounded-full bg-card border-2 border-border shadow-lg hover:shadow-xl hover:bg-muted"
+              className="hidden lg:flex absolute start-0 top-1/2 -translate-y-1/2 rtl:translate-x-full ltr:-translate-x-full z-50 h-10 w-10 rounded-full bg-card border-2 border-border shadow-lg hover:shadow-xl hover:bg-muted"
               onClick={() => setProfileSidebarOpen(!profileSidebarOpen)}
               aria-label={profileSidebarOpen ? 'Hide profile' : 'Show profile'}
             >
@@ -857,7 +857,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                                         {entry.photo_path && photoUrls[entry.photo_path] ? (
                                           <img 
                                             src={photoUrls[entry.photo_path]}
-                                            alt="Progress photo"
+                                            alt={t('chat.progressPhoto')}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                               (e.target as HTMLImageElement).style.display = 'none';
@@ -961,7 +961,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                         size="icon"
                         className="h-6 w-6"
                         onClick={removeLinkedProgressEntry}
-                        aria-label="Remove linked progress entry"
+                        aria-label={t('chat.removeLinkedEntry')}
                       >
                         <span className="text-xs">×</span>
                       </Button>
@@ -975,7 +975,8 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                         onChange={(e) => setMessageInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={t('chat.typeMessage', 'Type a message...')}
-                        className="rounded-full pr-12 h-11 md:h-12 bg-muted/50 border-border focus:bg-background transition-colors"
+                        data-chat-input
+                        className="rounded-full px-4 h-11 md:h-12 bg-muted/50 border-border focus:bg-background transition-colors"
                         disabled={!selectedClient}
                       />
                     </div>
@@ -1006,14 +1007,14 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
         {selectedClient && profileSidebarOpen && (() => {
           const selectedClientData = conversations.find((c) => c.client_id === selectedClient);
           return (
-            <div className="hidden lg:flex flex-col w-80 xl:w-96 border-l-2 border-border bg-card shrink-0 h-full overflow-hidden relative">
+            <div className="hidden lg:flex flex-col w-80 xl:w-96 border-e-2 border-border bg-card shrink-0 h-full overflow-hidden relative">
               {/* Retract button inside sidebar */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full z-50 h-10 w-10 rounded-r-full rounded-l-none bg-card border-2 border-l-0 border-border shadow-lg hover:shadow-xl hover:bg-muted"
+                className="absolute end-0 top-1/2 -translate-y-1/2 rtl:-translate-x-full ltr:translate-x-full z-50 h-10 w-10 rtl:rounded-r-full rtl:rounded-l-none ltr:rounded-l-full ltr:rounded-r-none bg-card border-2 rtl:border-l-0 ltr:border-r-0 border-border shadow-lg hover:shadow-xl hover:bg-muted"
                 onClick={() => setProfileSidebarOpen(false)}
-                aria-label="Hide profile"
+                aria-label={t('chat.hideProfile')}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
@@ -1036,7 +1037,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                       className="w-full"
                       onClick={() => handleViewFullProfile(selectedClient)}
                     >
-                      <ExternalLink className="h-4 w-4 ml-1" />
+                      <ExternalLink className="h-4 w-4 ms-1" />
                       {t('trainer.viewProfile', 'צפה בפרופיל')}
                     </Button>
                   </div>
@@ -1105,7 +1106,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                                   handleLinkEntryToChat(entry.id);
                                 }}
                               >
-                                <Link2 className="h-3 w-3 ml-1" />
+                                <Link2 className="h-3 w-3 ms-1" />
                                 {t('chat.linkToChat', 'Link to Chat')}
                               </Button>
                             </div>
@@ -1253,7 +1254,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                                         {entry.photo_path && photoUrls[entry.photo_path] ? (
                                           <img 
                                             src={photoUrls[entry.photo_path]}
-                                            alt="Progress photo"
+                                            alt={t('chat.progressPhoto')}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                               (e.target as HTMLImageElement).style.display = 'none';
@@ -1343,7 +1344,8 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={t('chat.typeMessage', 'הקלד הודעה...')}
-                    className="rounded-full pr-12 h-11 md:h-12 bg-muted/50 border-border focus:bg-background transition-colors"
+                    data-chat-input
+                        className="rounded-full px-4 h-11 md:h-12 bg-muted/50 border-border focus:bg-background transition-colors"
                     disabled={!trainerConversation}
                   />
                 </div>

@@ -89,7 +89,6 @@ export const ArticleEditor = ({ article, lang, aiReady, aiEngine, aiModel, autoB
   const [lowScoreAsk, setLowScoreAsk] = useState<ArticleStatus | null>(null);
   const [deleteAsk, setDeleteAsk] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const autoStarted = useRef(false);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const patch = (p: Partial<ArticleDraft>) => setDraft((d) => ({ ...d, ...p }));
@@ -159,11 +158,7 @@ export const ArticleEditor = ({ article, lang, aiReady, aiEngine, aiModel, autoB
     [gen, aiModel],
   );
 
-  useEffect(() => {
-    if (!autoBrief || autoStarted.current || !aiReady || article) return;
-    autoStarted.current = true;
-    startBrief({ topic: autoBrief.topic, keyword: autoBrief.keyword, notes: '', length: 'standard' });
-  }, [autoBrief, aiReady, article, startBrief]);
+  // A brief coming from a link or Agent EC only pre-fills the form: writing (on the trainer's AI key) starts on their click.
 
   /* ---- Agent EC bridge: the agent reads this article and applies edits to it */
   const applyPatch = useCallback(

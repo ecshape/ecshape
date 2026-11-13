@@ -543,7 +543,8 @@ const RedirectsBoard = ({ settings, onSave }: { settings: SeoSettings; onSave: (
   const add = () => {
     const f = normalize(from);
     const d = normalize(to);
-    if (!f || !d || f === d) return;
+    const bare = (x: string) => x.replace(/\/+$/, '') || '/';
+    if (!f || !d || bare(f) === bare(d)) return;
     const next = [{ from: f, to: d, code }, ...rows.filter((r) => r.from !== f)];
     setRows(next);
     setFrom('');

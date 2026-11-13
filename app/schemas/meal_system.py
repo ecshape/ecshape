@@ -334,11 +334,11 @@ class MealBankBase(BaseModel):
     serving_size: Optional[str] = None
     is_public: bool = False
     # Food library metadata (optional, additive)
-    image_url: Optional[str] = None
+    image_url: Optional[str] = Field(None, max_length=1000)
     image_credit: Optional[Dict[str, Any]] = None
-    source: Optional[str] = None
-    source_id: Optional[str] = None
-    brand: Optional[str] = None
+    source: Optional[str] = Field(None, max_length=32)
+    source_id: Optional[str] = Field(None, max_length=64)
+    brand: Optional[str] = Field(None, max_length=200)
     fiber: Optional[float] = None
     tags: Optional[List[str]] = None
     nutriscore: Optional[str] = None

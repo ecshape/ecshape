@@ -146,7 +146,7 @@ def import_from_food_library(
                 "name_en": fallback.get("name_en"),
                 "brand": fallback.get("brand"),
                 "image_url": fallback.get("image_url"),
-                "image_credit": fallback.get("image_credit") if isinstance(fallback.get("image_credit"), dict) else None,
+                "image_credit": library.clean_credit(fallback.get("image_credit")),
                 "kcal": library._num(fallback.get("kcal")),
                 "protein": library._num(fallback.get("protein")),
                 "carbs": library._num(fallback.get("carbs")),

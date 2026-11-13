@@ -48,7 +48,11 @@
     "exporting": "מייצא...",
     "importing": "מייבא...",
     "loadMore": "טען עוד",
-    "remaining": "נותרו"
+    "remaining": "נותרו",
+    "warning": "שימו לב",
+    "complete": "סיום",
+    "completed": "הושלם",
+    "saving": "שומר…"
   },
   "error": {
     "pageNotFound": "אופס! הדף לא נמצא",
@@ -92,7 +96,9 @@
       "trainerHint": "סטודיו ומתאמנים",
       "client": "מתאמן",
       "clientHint": "האפליקציה של המתאמן"
-    }
+    },
+    "showPassword": "הצגת סיסמה",
+    "hidePassword": "הסתרת סיסמה"
   },
   "navigation": {
     "dashboard": "לוח בקרה",
@@ -126,7 +132,11 @@
     "loading": "טוען נתונים...",
     "error": "שגיאה בטעינת נתונים",
     "letsMove": "בוא נתקדם היום.",
-    "hiThere": "היי"
+    "hiThere": "היי",
+    "steps": "צעדים",
+    "weight": "משקל",
+    "today": "היום",
+    "caloriesTracker": "מעקב קלוריות"
   },
   "client": {
     "clients": "מתאמנים",
@@ -403,7 +413,9 @@
       "choosePrompt": "בחר/י אחת מהאפשרויות שהמאמן הכין לארוחה הזו",
       "portions": "מנות",
       "selectError": "לא ניתן לבחור את האפשרות הזו"
-    }
+    },
+    "hide": "הסתרה",
+    "show": "הצגה"
   },
   "training": {
     "training": "אימון",
@@ -541,7 +553,13 @@
     "allSetsHistory": "כל הסטים והחזרות",
     "noHistory": "אין היסטוריה זמינה",
     "repsShort": "חזרות",
-    "weightShort": "ק״ג"
+    "weightShort": "ק״ג",
+    "dayNotFound": "יום האימון לא נמצא",
+    "delete": "מחיקה",
+    "dayCompleted": "היום הושלם",
+    "markDayComplete": "סימון היום כהושלם",
+    "today": "היום",
+    "trainingDays": "ימי אימון"
   },
   "progress": {
     "progress": "התקדמות",
@@ -622,7 +640,11 @@
     "noPhotosTitle": "אין תמונות התקדמות",
     "noPhotosSubtitle": "הוסף תמונות לרישומי המשקל כדי לעקוב אחרי ההתקדמות הויזואלית!",
     "cm": "ס\"מ",
-    "measurements": "מדידות גוף (ס\"מ)"
+    "measurements": "מדידות גוף (ס\"מ)",
+    "noPhoto": "אין תמונה",
+    "progressPhoto": "תמונת התקדמות",
+    "viewPhoto": "צפייה בתמונה",
+    "photoNotFound": "התמונה לא נמצאה"
   },
   "admin": {
     "admin": "ניהול",
@@ -723,7 +745,11 @@
     "registrationFailedMessage": "נכשל ברישום מאמן. אנא נסה שוב.",
     "registrationError": "שגיאת רישום",
     "registrationErrorMessage": "אירעה שגיאה במהלך הרישום. אנא נסה שוב.",
-    "loadFailed": "נכשל בטעינה"
+    "loadFailed": "נכשל בטעינה",
+    "cannotDeleteSelfMessage": "אי אפשר למחוק את המשתמש שלך",
+    "userDeletedMessage": "המשתמש נמחק",
+    "deleteFailedMessage": "המחיקה נכשלה",
+    "userDeleted": "המשתמש נמחק"
   },
   "time": {
     "justNow": "ממש עכשיו",
@@ -805,7 +831,11 @@
     "viewProfile": "צפה בפרופיל",
     "enableNotifications": "הפעל התראות",
     "enableNotificationsDesc": "קבל התראות על הודעות חדשות",
-    "enable": "הפעל"
+    "enable": "הפעל",
+    "progressEntry": "רישום התקדמות",
+    "progressPhoto": "תמונת התקדמות",
+    "removeLinkedEntry": "הסרת הרישום המקושר",
+    "hideProfile": "הסתרת הפרופיל"
   },
   "messages": {
     "success": {
@@ -1053,7 +1083,8 @@
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק את הרשומה מתאריך {{date}} ({{weight}} קג)? פעולה זו לא ניתנת לביטול.",
     "delete": "מחק",
     "successDelete": "הרשומה נמחקה בהצלחה",
-    "errorDelete": "נכשל במחיקת הרשומה"
+    "errorDelete": "נכשל במחיקת הרשומה",
+    "noPhotos": "אין עדיין תמונות"
   },
   "layout": {
     "brandName": "ecshape",
@@ -1181,7 +1212,8 @@
     "hoursAgo": "לפני {{count}} שעה",
     "hoursAgo_plural": "לפני {{count}} שעות",
     "daysAgo": "לפני {{count}} יום",
-    "daysAgo_plural": "לפני {{count}} ימים"
+    "daysAgo_plural": "לפני {{count}} ימים",
+    "cancel": "ביטול"
   },
   "workoutCreation": {
     "title": "צור תוכנית אימון",
@@ -1377,7 +1409,15 @@
     "importSuccess": "תוכנית התזונה יובאה בהצלחה!",
     "importError": "נכשל בייבא תוכנית התזונה",
     "selectClientPlaceholder": "בחר לקוח...",
-    "client": "לקוח"
+    "client": "לקוח",
+    "addFoodToBank": "הוספת מזון לבנק",
+    "addFoodToBankDescription": "הוסיפו מזון חדש לבנק המזון שלכם",
+    "addItemsToMealPlan": "הוספת פריטים לתפריט",
+    "addToMealBank": "הוספה לבנק המזון",
+    "adding": "מוסיף…",
+    "makeFoodPublic": "להפוך את המזון לציבורי",
+    "noMealBankItems": "אין עדיין פריטים בבנק המזון",
+    "searchFoodItems": "חיפוש מזון"
   },
   "checkIn": {
     "title": "בדיקה יומית",
@@ -1424,7 +1464,11 @@
       "history": "היסטוריית בדיקות",
       "todayStatus": "סטטוס היום",
       "viewDetails": "צפה בפרטים"
-    }
+    },
+    "checkIn": "צ'ק-אין",
+    "checkInCompleted": "הצ'ק-אין הושלם",
+    "todayStatus": "הסטטוס של היום",
+    "none": "אין עדיין"
   },
   "mealPlan": {
     "successCreated": "תוכנית התזונה נוצרה בהצלחה!",
@@ -1700,7 +1744,7 @@
       "social": "רשתות וקשר",
       "instagram": "שם משתמש באינסטגרם",
       "whatsapp": "מספר וואטסאפ (בינלאומי)",
-      "analytics": "Google Analytics ID",
+      "analytics": "מזהה Google Analytics",
       "save": "שמירה",
       "saved": "נשמר",
       "score": "ציון SEO",
@@ -1835,7 +1879,10 @@
         "pillar": "תוכן עמוד תווך (אחד המאמרים החשובים שלכם)",
         "robots": {
           "index": "אינדוקס (להופיע בגוגל)",
-          "nofollow": "No Follow"
+          "nofollow": "ללא מעקב קישורים (nofollow)",
+          "noarchive": "ללא ארכיון",
+          "noimageindex": "ללא אינדוקס תמונות",
+          "nosnippet": "ללא תקציר"
         },
         "schemaType": "סוג סכמה",
         "schema": {
@@ -1911,7 +1958,8 @@
           "paragraphs": "{{count}} פסקאות מעל 120 מילים",
           "media": "{{count}} תמונות בתוכן",
           "sentences": "{{count}} מילים למשפט בממוצע"
-        }
+        },
+        "robotsMeta": "Robots Meta"
       },
       "ai": {
         "title": "כתיבה עם AI",
@@ -2506,7 +2554,13 @@
       },
       "rewrite": "שכתוב עם Agent EC",
       "rewritePrompt": "באתר שלי (שפה: {{lang}}), תציע גרסה טובה יותר לטקסט ב-\"{{path}}\": \"{{text}}\". אותו טון, אורך דומה, ואז תחיל אותה עם site.text.",
-      "sectionPrompt": "תשפר את הטקסטים של האזור \"{{section}}\" באתר שלי (שפה: {{lang}}). תציע שינויים ותחיל אותם עם site.text."
+      "sectionPrompt": "תשפר את הטקסטים של האזור \"{{section}}\" באתר שלי (שפה: {{lang}}). תציע שינויים ותחיל אותם עם site.text.",
+      "loadFailed": "לא הצלחנו לטעון את האתר. שום דבר לא נשמר או נמחק.",
+      "retry": "לנסות שוב"
     }
+  },
+  "trainer": {
+    "viewProfile": "צפייה בפרופיל",
+    "searchClients": "חיפוש מתאמנים"
   }
 }

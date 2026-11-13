@@ -296,11 +296,21 @@ def _merge_tags(*groups: Iterable[str]) -> List[str]:
     return seen
 
 
+def clean_credit(credit: Any) -> Optional[Dict[str, Any]]:
+    """Keep only known short text fields; the link must be https (never javascript: / data:)."""
+    if not isinstance(credit, dict):
+        return None
+    out = {k: str(credit[k])[:200] for k in ("provider", "author", "license") if credit.get(k)}
+    url = str(credit.get("url") or "").strip()
+    if url.lower().startswith("https://") and len(url) <= 500:
+        out["url"] = url
+    return out or None
+
+
 def credit_string(credit: Optional[Dict[str, Any]]) -> Optional[str]:
     """Serialise an image credit for storage on a MealBank row."""
-    if not credit:
-        return None
-    return json.dumps(credit, ensure_ascii=False)
+    cleaned = clean_credit(credit)
+    return json.dumps(cleaned, ensure_ascii=False) if cleaned else None
 
 
 # --------------------------------------------------------------------------- #

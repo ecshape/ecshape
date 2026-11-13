@@ -1,9 +1,10 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { publicApi } from "@/lib/studioApi";
 import { useTranslation } from 'react-i18next';
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -48,9 +49,11 @@ import { useAuth } from './contexts/AuthContext';
 import './i18n/config';
 import './styles/qa-capture.css';
 import './styles/portal-chrome.css';
+import './styles/seo-studio.css';
 
 // Public site (gsap + lenis) is code-split so the portal bundle stays lean.
 const SitePage = lazy(() => import('./pages/SitePage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
 const SiteFallback = () => <div className="min-h-screen" style={{ background: '#0b0a08' }} />;
 
 /** "/" is the public site for visitors and the dashboard for signed-in users. */
@@ -70,6 +73,36 @@ const HomeRoute = () => {
     </Suspense>
   );
 };
+/** Applies the SEO redirects managed in Studio → SEO before falling back to the 404 page. */
+const RedirectGate = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    setChecked(false);
+    publicApi
+      .redirects()
+      .then((rules) => {
+        const path = location.pathname.replace(/\/+$/, '') || '/';
+        const rule = rules.find((r) => (r.from.replace(/\/+$/, '') || '/') === path);
+        if (!rule || !alive) return setChecked(true);
+        if (/^https?:\/\//.test(rule.to)) window.location.replace(rule.to);
+        else navigate(rule.to, { replace: true });
+      })
+      .catch(() => alive && setChecked(true));
+    return () => {
+      alive = false;
+    };
+  }, [location.pathname, navigate]);
+  if (!checked) return <SiteFallback />;
+  return (
+    <ProtectedRoute>
+      <NotFound />
+    </ProtectedRoute>
+  );
+};
+
 const queryClient = new QueryClient();
 
 /** Agent EC lives at app level so it stays open from page to page (trainer studio only). */
@@ -314,15 +347,11 @@ const AppRoutes = () => {
         } 
       />
 
-      {/* Catch all route - show 404 */}
-      <Route 
-        path="*" 
-        element={
-          <ProtectedRoute>
-            <NotFound />
-          </ProtectedRoute>
-        } 
-      />
+      <Route path="/blog" element={<Suspense fallback={<SiteFallback />}><BlogPage /></Suspense>} />
+      <Route path="/blog/:slug" element={<Suspense fallback={<SiteFallback />}><BlogPage /></Suspense>} />
+
+      {/* Catch all: SEO redirects first, then 404 */}
+      <Route path="*" element={<RedirectGate />} />
     </Routes>
   );
 };

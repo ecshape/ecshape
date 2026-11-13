@@ -4,6 +4,8 @@ Trainer studio API + public site endpoints.
 Public (no auth):
   POST /api/public/leads            in-site contact/consultation forms
   GET  /api/public/site?lang=he     editable site content overrides + SEO for that language
+  GET  /api/public/articles?lang=he live blog articles; /api/public/articles/{slug} one article
+  GET  /api/public/redirects        SEO redirects (applied by the site router)
 
 Trainer / admin only (/api/studio):
   overview, prospects (leads), site content per language, SEO, Atelier QA, Agent EC chat
@@ -15,6 +17,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
@@ -143,6 +146,31 @@ def public_site(lang: str = "he", db: Session = Depends(get_db)):
         "social": seo.get("social", {}),
         "analytics_id": seo.get("analytics_id"),
     }
+
+
+@public_router.get("/articles")
+def public_articles(lang: Optional[str] = None, db: Session = Depends(get_db)):
+    from app.services.seo_writer import live_articles
+    return [
+        {k: a.get(k) for k in ("id", "lang", "slug", "title", "excerpt", "coverImage", "coverAlt", "category", "publishedAt", "authorName")}
+        for a in live_articles(db, lang if lang in LANGS else None)
+    ]
+
+
+@public_router.get("/articles/{slug}")
+def public_article(slug: str, lang: Optional[str] = None, db: Session = Depends(get_db)):
+    from app.services.seo_writer import live_articles
+    items = live_articles(db)
+    match = next((a for a in items if a.get("slug") == slug and (not lang or a.get("lang") == lang)), None)
+    match = match or next((a for a in items if a.get("slug") == slug), None)
+    if not match:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return match
+
+
+@public_router.get("/redirects")
+def public_redirects(db: Session = Depends(get_db)):
+    return get_setting(db, "seo").get("redirects") or []
 
 
 # ================================================================= STUDIO
@@ -551,3 +579,55 @@ def remove_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db:
         delete_key(db, user.id, key_id)
     except LookupError:
         raise HTTPException(status_code=404, detail="Key not found")
+
+
+# ---------------------------------------------------------------- COM / SEO articles
+@router.get("/articles")
+def get_articles(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.seo_writer import list_articles
+    return list_articles(db)
+
+
+class ArticleIn(BaseModel):
+    article: Dict[str, Any]
+
+
+@router.put("/articles")
+def put_article(payload: ArticleIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.seo_writer import save_article
+    try:
+        return save_article(db, payload.article, user.id, user.full_name or "")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/articles/{article_id}", status_code=204)
+def remove_article(article_id: str, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.seo_writer import delete_article
+    try:
+        delete_article(db, article_id, user.id)
+    except LookupError:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+
+class ArticleBriefIn(BaseModel):
+    topic: str = Field(..., min_length=2, max_length=300)
+    keyword: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = Field(None, max_length=1500)
+    length: Literal["short", "standard", "long"] = "standard"
+    lang: Optional[str] = Field(None, max_length=5)
+    model: Optional[str] = Field(None, max_length=120)
+    statuses: Dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/seo/generate")
+def generate_article(payload: ArticleBriefIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.seo_writer import generate_article as run
+    lang = payload.lang if payload.lang in LANGS else "he"
+    brief = payload.model_dump(exclude={"statuses", "lang"})
+    statuses = {k: str(v)[:120] for k, v in payload.statuses.items()}
+    return StreamingResponse(
+        run(db, user.id, brief, lang, statuses),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )

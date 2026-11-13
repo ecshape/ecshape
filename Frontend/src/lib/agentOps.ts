@@ -3,9 +3,11 @@
  * one in plain words and confirms, then it runs on the right page while they watch.
  * Navigation and "open a form" run immediately. Nothing is ever sent to a client or a prospect.
  */
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { TFunction } from 'i18next';
 
-export type AgentForm = 'prospect' | 'qa_ticket' | 'client';
+export type AgentForm = 'prospect' | 'qa_ticket' | 'client' | 'article';
 
 export type AgentOp =
   | { kind: 'navigate'; href: string; label: string }
@@ -25,6 +27,8 @@ export const AGENT_ASK_EVENT = 'ec-agent:ask';
 export const AGENT_OPEN_FORM_EVENT = 'ec-agent:open-form';
 /** Emitted after Agent EC changed data: open pages reload what they show. */
 export const AGENT_CHANGED_EVENT = 'ec-agent:changed';
+/** Opens the SEO editor's AI writer with a topic and keyword. */
+export const AGENT_NEW_ARTICLE_EVENT = 'ec-agent:new-article';
 
 export function askAgent(prompt?: string) {
   window.dispatchEvent(new CustomEvent(AGENT_ASK_EVENT, { detail: { prompt } }));
@@ -35,6 +39,7 @@ export const opAutoRun = (op: AgentOp) => op.kind === 'navigate' || op.kind === 
 export const opIsDanger = (op: AgentOp) => op.kind === 'lead.update' && op.status === 'lost';
 
 export function formHref(form: AgentForm) {
+  if (form === 'article') return '/studio/seo';
   return form === 'prospect' ? '/studio/prospects' : form === 'qa_ticket' ? '/studio/qa' : '/trainer-dashboard';
 }
 
@@ -135,4 +140,84 @@ export function quickPromptKeys(path: string): string {
   if (path.startsWith('/client/')) return 'client';
   if (path.startsWith('/exercises') || path.startsWith('/meal-bank')) return 'banks';
   return 'dashboard';
+}
+
+/**
+ * Lets a page open its "new …" form when the agent asks: through the event (already on the page)
+ * or through `?new=<form>` after a navigation.
+ */
+export function useAgentForm(form: AgentForm, open: () => void) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const openRef = useRef(open);
+  openRef.current = open;
+
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      if ((e as CustomEvent<{ form?: AgentForm }>).detail?.form === form) openRef.current();
+    };
+    window.addEventListener(AGENT_OPEN_FORM_EVENT, onOpen);
+    return () => window.removeEventListener(AGENT_OPEN_FORM_EVENT, onOpen);
+  }, [form]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('new') !== form) return;
+    openRef.current();
+    params.delete('new');
+    const search = params.toString();
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true });
+  }, [form, location.pathname, location.search, navigate]);
+}
+
+/** Reloads page data after the agent changed something. */
+export function useAgentChanged(reload: () => void) {
+  const ref = useRef(reload);
+  ref.current = reload;
+  useEffect(() => {
+    const on = () => ref.current();
+    window.addEventListener(AGENT_CHANGED_EVENT, on);
+    return () => window.removeEventListener(AGENT_CHANGED_EVENT, on);
+  }, []);
+}
+
+/* ---------------------------------------------------------------- page bridge
+ * A page can publish what it is working on (the SEO article editor) so the agent can act on it live. */
+
+/** Changes proposed for the article open in the SEO editor. */
+export type ArticlePatch = {
+  title?: string;
+  focus_keyword?: string;
+  seo_title?: string;
+  meta_description?: string;
+  excerpt?: string;
+  content_html?: string;
+  faq?: { q: string; a: string }[];
+};
+
+export type ArticleBridge = {
+  title: string;
+  keyword: string;
+  /** Article state sent to the agent as page context. */
+  context: string;
+  apply: (patch: ArticlePatch) => void;
+};
+
+let currentBridge: ArticleBridge | null = null;
+const bridgeListeners = new Set<() => void>();
+
+export function publishArticleBridge(bridge: ArticleBridge | null) {
+  currentBridge = bridge;
+  bridgeListeners.forEach((l) => l());
+}
+
+export function useArticleBridge() {
+  return useSyncExternalStore(
+    (cb) => {
+      bridgeListeners.add(cb);
+      return () => bridgeListeners.delete(cb);
+    },
+    () => currentBridge,
+    () => null,
+  );
 }

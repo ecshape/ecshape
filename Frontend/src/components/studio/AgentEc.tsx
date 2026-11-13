@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { studioApi, type AgentRecommendation, type AiKey } from '@/lib/studioApi';
 import {
   AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT, formHref, opAutoRun, opIsDanger, opNeedsConfirm, opSummary, opTarget,
-  pageSnapshot, pageTitle, quickPromptKeys, spotlight, travel, type AgentOp, type OpState,
+  pageSnapshot, pageTitle, quickPromptKeys, useArticleBridge, spotlight, travel, type AgentOp, type OpState,
 } from '@/lib/agentOps';
 import { applySiteText } from '@/lib/siteContentOps';
 import { toSiteLang } from '@/site/content';
@@ -248,6 +248,7 @@ export function AgentEc() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
+  const articleBridge = useArticleBridge();
   const navigate = useNavigate();
   const { open, setOpen, width, setWidth, seed, clearSeed } = useAgentSidekick();
   const rtl = i18n.language?.startsWith('he');
@@ -392,7 +393,7 @@ export function AgentEc() {
       const res = await studioApi.agentChat(
         next.filter((x) => !x.error).map(({ role, text: body }) => ({ role, content: body })).slice(-30),
         i18n.language,
-        { path: pathname + location.search, title: pageTitle(), snapshot: pageSnapshot(), selection: window.getSelection()?.toString().slice(0, 2000) || '' },
+        { path: pathname + location.search, title: pageTitle(), snapshot: articleBridge ? `${articleBridge.context}\n\n---\n${pageSnapshot()}`.slice(0, 12000) : pageSnapshot(), selection: window.getSelection()?.toString().slice(0, 2000) || '' },
         provider,
       );
       const actions = res.ok ? res.actions || [] : [];

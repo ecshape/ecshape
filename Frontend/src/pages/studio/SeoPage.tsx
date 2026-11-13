@@ -1,163 +1,726 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Save, Sparkles, X, Instagram, MessageCircle, BarChart3 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  CircleAlert,
+  ExternalLink,
+  FileText,
+  Globe2,
+  Instagram,
+  LayoutDashboard,
+  Loader2,
+  MessageCircle,
+  Plus,
+  Repeat2,
+  Save,
+  Search,
+  SearchCheck,
+  Sparkles,
+  Trash2,
+  Wand2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { studioApi, type SeoSettings } from '@/lib/studioApi';
-import { DEFAULT_CONTENT, SITE_LANGS, type SiteLang } from '@/site/content';
-import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArticleEditor } from '@/components/studio/seo/ArticleEditor';
+import { RankMathPanel, ScoreBadge, useSeoAnalysis, type RankMathContext } from '@/components/studio/seo/RankMathPanel';
+import { AGENT_NEW_ARTICLE_EVENT, askAgent, useAgentChanged, useAgentForm } from '@/lib/agentOps';
+import { analyzeSeo } from '@/lib/seo/analysis';
+import { articlePath, EMPTY_ARTICLE_SEO, isLive, type Article, type ArticleSeo } from '@/lib/seo/articles';
+import { studioApi, type AgentModelOption, type PageSeoFields, type SeoRedirect, type SeoSettings } from '@/lib/studioApi';
 import { cn } from '@/lib/utils';
-import { askAgent } from '@/lib/agentOps';
+import { DEFAULT_CONTENT, SITE_LANGS, toSiteLang, type SiteLang } from '@/site/content';
 
-type PageSeo = { title?: string; description?: string; keywords?: string; image?: string };
+type SeoTab = 'dashboard' | 'articles' | 'pages' | 'redirects' | 'indexation' | 'stats';
+const TABS: { id: SeoTab; icon: typeof LayoutDashboard }[] = [
+  { id: 'dashboard', icon: LayoutDashboard },
+  { id: 'articles', icon: FileText },
+  { id: 'pages', icon: Globe2 },
+  { id: 'redirects', icon: Repeat2 },
+  { id: 'indexation', icon: SearchCheck },
+  { id: 'stats', icon: BarChart3 },
+];
+const LANG_LABEL: Record<SiteLang, string> = { he: 'עברית', en: 'English', fr: 'Français' };
 
-const scoreOf = (p: PageSeo) => {
-  const title = p.title || '';
-  const desc = p.description || '';
-  const checks = {
-    titleLength: title.length >= 30 && title.length <= 60,
-    descLength: desc.length >= 70 && desc.length <= 160,
-    keywords: (p.keywords || '').split(',').filter((k) => k.trim()).length >= 3,
-    image: !!p.image,
-    brand: /ecshape/i.test(title),
-  };
-  const score = Math.round((Object.values(checks).filter(Boolean).length / Object.keys(checks).length) * 100);
-  return { checks, score };
-};
+type EditorState = { article: Article | null; brief: { topic: string; keyword: string } | null; lang: SiteLang } | null;
+
+const articleScore = (a: Article, host: string) =>
+  analyzeSeo({
+    keyword: a.seo.focusKeyword,
+    seoTitle: a.seo.title,
+    title: a.title,
+    description: a.seo.description,
+    slug: a.slug,
+    html: a.contentHtml,
+    coverAlt: a.coverAlt,
+    siteHost: host,
+  }).score;
+
+/** Visible text of a site page, as HTML the analyzer can read (headings + paragraphs). */
+function contentToHtml(value: unknown, depth = 0): string {
+  if (typeof value === 'string') return value.trim().length > 2 && !/^(https?:|\/|#)/.test(value) ? `<p>${value.replace(/</g, '&lt;')}</p>` : '';
+  if (Array.isArray(value)) return value.map((v) => contentToHtml(v, depth + 1)).join('');
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([k]) => !k.startsWith('__') && k !== 'meta')
+      .map(([k, v]) => (depth === 0 && typeof v === 'object' && v && 'title' in v && typeof (v as { title: unknown }).title === 'string' ? `<h2>${(v as { title: string }).title}</h2>` : '') + (k === 'title' && depth === 1 ? '' : contentToHtml(v, depth + 1)))
+      .join('');
+  }
+  return '';
+}
 
 const SeoPage = () => {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const [data, setData] = useState<SeoSettings>({});
-  const [lang, setLang] = useState<SiteLang>('he');
-  const [busy, setBusy] = useState(false);
+  const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<SeoTab>('dashboard');
+  const [settings, setSettings] = useState<SeoSettings>({});
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [models, setModels] = useState<AgentModelOption[]>([]);
+  const [editor, setEditor] = useState<EditorState>(null);
+  const uiLang = toSiteLang(i18n.language);
+  const host = typeof window !== 'undefined' ? window.location.host : '';
 
-  useEffect(() => {
-    studioApi.seo().then((s) => setData(s || {})).catch(() => setData({}));
+  const load = useCallback(async () => {
+    try {
+      const [s, a] = await Promise.all([studioApi.seo(), studioApi.articles()]);
+      setSettings(s || {});
+      setArticles(a || []);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const defaults = DEFAULT_CONTENT[lang].meta;
-  const page: PageSeo = { title: defaults.title, description: defaults.description, ...(data.pages?.[lang] || {}) };
-  const { checks, score } = scoreOf(page);
+  useEffect(() => {
+    void load();
+    studioApi.agentModels().then(setModels).catch(() => setModels([]));
+  }, [load]);
+  useAgentChanged(load);
 
-  const setPage = (patch: PageSeo) => setData((d) => ({ ...d, pages: { ...(d.pages || {}), [lang]: { ...page, ...patch } } }));
-  const setSocial = (patch: SeoSettings['social']) => setData((d) => ({ ...d, social: { ...(d.social || {}), ...patch } }));
+  const recommended = models.find((m) => m.recommended) || models[0];
+  const aiReady = models.length > 0;
 
-  const save = async () => {
-    setBusy(true);
+  const openNew = useCallback((brief: { topic: string; keyword: string } | null = null, lang: SiteLang = uiLang) => setEditor({ article: null, brief, lang }), [uiLang]);
+  useAgentForm('article', () => openNew());
+
+  /* `?article=topic&keyword=&lang=` (agent navigation) and the in-page agent event */
+  useEffect(() => {
+    const p = new URLSearchParams(location.search);
+    const topic = p.get('article');
+    if (!topic) return;
+    openNew({ topic, keyword: p.get('keyword') || '' }, toSiteLang(p.get('lang') || uiLang));
+    navigate({ pathname: location.pathname }, { replace: true });
+  }, [location.search, location.pathname, navigate, openNew, uiLang]);
+
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ topic: string; keyword?: string; lang?: string }>).detail;
+      if (d?.topic) openNew({ topic: d.topic, keyword: d.keyword || '' }, toSiteLang(d.lang || uiLang));
+    };
+    window.addEventListener(AGENT_NEW_ARTICLE_EVENT, on);
+    return () => window.removeEventListener(AGENT_NEW_ARTICLE_EVENT, on);
+  }, [openNew, uiLang]);
+
+  const saveSettings = async (next: SeoSettings) => {
+    setSettings(next);
     try {
-      await studioApi.saveSeo(data);
-      toast({ title: t('studio.seo.saved') });
-    } catch (e) {
-      toast({ title: t('messages.error.saveFailed'), description: (e as Error).message, variant: 'destructive' });
-    } finally {
-      setBusy(false);
+      await studioApi.saveSeo(next);
+      toast.success(t('studio.seo.saved'));
+    } catch (err) {
+      toast.error((err as Error).message);
     }
   };
 
-  const ring = 2 * Math.PI * 52;
+  if (editor) {
+    return (
+      <Layout currentPage="seo">
+        <ArticleEditor
+          key={editor.article?.id || `new-${editor.brief?.topic || ''}`}
+          article={editor.article}
+          lang={editor.lang}
+          aiReady={aiReady}
+          aiEngine={recommended?.label}
+          aiModel={recommended?.value}
+          autoBrief={editor.brief}
+          onBack={() => {
+            setEditor(null);
+            setTab('articles');
+          }}
+          onSaved={(saved) => setArticles((list) => [saved, ...list.filter((a) => a.id !== saved.id)])}
+          onDeleted={(id) => {
+            setArticles((list) => list.filter((a) => a.id !== id));
+            setEditor(null);
+          }}
+        />
+      </Layout>
+    );
+  }
 
   return (
     <Layout currentPage="seo">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-10">
-        <PageHeader
-          eyebrow={t('studio.groupStudio')}
-          title={t('studio.seo.title')}
-          description={t('studio.seo.subtitle')}
-          actions={<Button onClick={save} disabled={busy}><Save />{t('studio.seo.save')}</Button>}
-        />
+      <div className="ec-seo" data-ec-seo>
+        <header className="ec-seo-head">
+          <div>
+            <p className="ec-seo-eyebrow">{t('studio.seo.eyebrow')}</p>
+            <h1>{t('studio.seo.title')}</h1>
+            <p>{t('studio.seo.subtitle')}</p>
+          </div>
+          <div className="ec-seo-head-actions">
+            <Button variant="outline" onClick={() => askAgent(t('studio.seo.agentAudit'))}>
+              <Sparkles />
+              {t('studio.seo.askAgent')}
+            </Button>
+            <Button onClick={() => openNew()}>
+              <Plus />
+              {t('studio.seo.newArticle')}
+            </Button>
+          </div>
+        </header>
 
-        <div className="ec-glass mb-6 inline-flex rounded-full p-1">
-          {SITE_LANGS.map((l) => (
-            <button key={l} onClick={() => setLang(l)} className={cn('rounded-full px-4 py-2 text-sm font-bold transition-all duration-300', lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
-              {l === 'he' ? 'עברית' : l === 'en' ? 'English' : 'Français'}
+        <nav className="ec-seo-tabs" role="tablist" aria-label={t('studio.seo.title')}>
+          {TABS.map(({ id, icon: Icon }) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} className={cn(tab === id && 'is-active')} onClick={() => setTab(id)}>
+              <Icon size={16} />
+              <span>{t(`studio.seo.tabs.${id}`)}</span>
+              {id === 'articles' && articles.length ? <small>{articles.length}</small> : null}
+            </button>
+          ))}
+        </nav>
+
+        {loading ? (
+          <div className="ec-seo-loading">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <div className="ec-seo-panel" key={tab}>
+            {tab === 'dashboard' ? <Dashboard articles={articles} settings={settings} host={host} aiReady={aiReady} onOpen={(a) => setEditor({ article: a, brief: null, lang: a.lang })} onNew={() => openNew()} onTab={setTab} /> : null}
+            {tab === 'articles' ? <ArticlesBoard articles={articles} host={host} onOpen={(a) => setEditor({ article: a, brief: null, lang: a.lang })} onNew={() => openNew()} /> : null}
+            {tab === 'pages' ? <PagesSeo settings={settings} onSave={saveSettings} /> : null}
+            {tab === 'redirects' ? <RedirectsBoard settings={settings} onSave={saveSettings} /> : null}
+            {tab === 'indexation' ? <Indexation articles={articles} settings={settings} onSave={saveSettings} /> : null}
+            {tab === 'stats' ? <Connections settings={settings} onSave={saveSettings} /> : null}
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+/* ------------------------------------------------------------------ dashboard */
+const Dashboard = ({
+  articles,
+  settings,
+  host,
+  aiReady,
+  onOpen,
+  onNew,
+  onTab,
+}: {
+  articles: Article[];
+  settings: SeoSettings;
+  host: string;
+  aiReady: boolean;
+  onOpen: (a: Article) => void;
+  onNew: () => void;
+  onTab: (tab: SeoTab) => void;
+}) => {
+  const { t } = useTranslation();
+  const scored = useMemo(() => articles.map((a) => ({ a, score: articleScore(a, host) })), [articles, host]);
+  const live = articles.filter((a) => isLive(a)).length;
+  const drafts = articles.filter((a) => a.status === 'draft').length;
+  const avg = scored.length ? Math.round(scored.reduce((s, x) => s + x.score, 0) / scored.length) : 0;
+  const toImprove = scored.filter((x) => x.score < 80).sort((x, y) => x.score - y.score).slice(0, 5);
+  const pagesDone = SITE_LANGS.filter((l) => settings.pages?.[l]?.title && settings.pages?.[l]?.description).length;
+
+  const connections = [
+    { id: 'analytics', ok: Boolean(settings.analytics_id), tab: 'stats' as SeoTab },
+    { id: 'searchConsole', ok: Boolean(settings.search_console), tab: 'indexation' as SeoTab },
+    { id: 'ai', ok: aiReady, href: '/studio/preferences#ai-keys' },
+  ];
+
+  return (
+    <div className="ec-seo-dash">
+      <div className="ec-seo-kpis">
+        <article className="ec-seo-kpi">
+          <span>{t('studio.seo.kpi.live')}</span>
+          <b>{live}</b>
+          <small>{t('studio.seo.kpi.drafts', { count: drafts })}</small>
+        </article>
+        <article className="ec-seo-kpi">
+          <span>{t('studio.seo.kpi.avgScore')}</span>
+          <b className="ec-seo-kpi-score">{scored.length ? <ScoreBadge score={avg} size="lg" /> : '—'}</b>
+          <small>{t('studio.seo.kpi.avgScoreHint')}</small>
+        </article>
+        <article className="ec-seo-kpi">
+          <span>{t('studio.seo.kpi.pages')}</span>
+          <b>
+            {pagesDone}/{SITE_LANGS.length}
+          </b>
+          <small>{t('studio.seo.kpi.pagesHint')}</small>
+        </article>
+        <article className="ec-seo-kpi">
+          <span>{t('studio.seo.kpi.redirects')}</span>
+          <b>{settings.redirects?.length || 0}</b>
+          <small>{t('studio.seo.kpi.redirectsHint')}</small>
+        </article>
+      </div>
+
+      <div className="ec-seo-dash-grid">
+        <section className="ec-seo-card">
+          <header>
+            <h2>{t('studio.seo.dash.toImprove')}</h2>
+            <button type="button" className="ec-seo-link" onClick={() => onTab('articles')}>
+              {t('studio.seo.dash.allArticles')}
+              <ArrowRight size={14} className="rtl:-scale-x-100" />
+            </button>
+          </header>
+          {toImprove.length ? (
+            <ul className="ec-seo-list">
+              {toImprove.map(({ a, score }) => (
+                <li key={a.id}>
+                  <button type="button" onClick={() => onOpen(a)}>
+                    <ScoreBadge score={score} size="sm" />
+                    <span dir="auto">{a.title || t('studio.seo.untitled')}</span>
+                    <ArrowRight size={14} className="rtl:-scale-x-100" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="ec-seo-empty">
+              <CheckCircle2 />
+              <p>{articles.length ? t('studio.seo.dash.allGood') : t('studio.seo.dash.noArticles')}</p>
+              {!articles.length ? (
+                <Button size="sm" onClick={onNew}>
+                  <Wand2 />
+                  {t('studio.seo.dash.firstArticle')}
+                </Button>
+              ) : null}
+            </div>
+          )}
+        </section>
+
+        <section className="ec-seo-card">
+          <header>
+            <h2>{t('studio.seo.dash.connections')}</h2>
+          </header>
+          <ul className="ec-seo-conn">
+            {connections.map((c) => (
+              <li key={c.id} className={cn(c.ok ? 'is-ok' : 'is-off')}>
+                {c.ok ? <CheckCircle2 size={18} /> : <CircleAlert size={18} />}
+                <span>
+                  <b>{t(`studio.seo.conn.${c.id}`)}</b>
+                  <small>{t(c.ok ? 'studio.seo.conn.connected' : 'studio.seo.conn.notConnected')}</small>
+                </span>
+                {c.ok ? null : c.href ? (
+                  <a className="ec-seo-link" href={c.href}>
+                    {t('studio.seo.conn.connect')}
+                  </a>
+                ) : (
+                  <button type="button" className="ec-seo-link" onClick={() => onTab(c.tab as SeoTab)}>
+                    {t('studio.seo.conn.connect')}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ articles */
+type ArticleFilter = 'all' | 'published' | 'draft' | 'scheduled';
+
+const ArticlesBoard = ({ articles, host, onOpen, onNew }: { articles: Article[]; host: string; onOpen: (a: Article) => void; onNew: () => void }) => {
+  const { t, i18n } = useTranslation();
+  const [filter, setFilter] = useState<ArticleFilter>('all');
+  const [lang, setLang] = useState<SiteLang | 'all'>('all');
+  const [query, setQuery] = useState('');
+  const rows = useMemo(
+    () =>
+      articles
+        .filter((a) => filter === 'all' || a.status === filter)
+        .filter((a) => lang === 'all' || a.lang === lang)
+        .filter((a) => !query.trim() || `${a.title} ${a.seo.focusKeyword}`.toLowerCase().includes(query.trim().toLowerCase()))
+        .map((a) => ({ a, score: articleScore(a, host) })),
+    [articles, filter, lang, query, host],
+  );
+  const count = (f: ArticleFilter) => (f === 'all' ? articles.length : articles.filter((a) => a.status === f).length);
+  const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+
+  return (
+    <section className="ec-seo-card is-board">
+      <div className="ec-seo-filters">
+        <div className="ec-seo-seg" role="tablist">
+          {(['all', 'published', 'draft', 'scheduled'] as ArticleFilter[]).map((f) => (
+            <button key={f} type="button" role="tab" aria-selected={filter === f} className={cn(filter === f && 'is-active')} onClick={() => setFilter(f)}>
+              {t(`studio.seo.filter.${f}`)} <small>{count(f)}</small>
             </button>
           ))}
         </div>
-
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <div className="space-y-6">
-            <section className="ec-card rounded-[1.5rem] border border-border/60 bg-card p-6" dir={lang === 'he' ? 'rtl' : 'ltr'}>
-              <div className="space-y-5">
-                <label className="block">
-                  <span className="mb-1.5 flex justify-between text-sm font-semibold">{t('studio.seo.pageTitle')}<span className={cn('text-xs', checks.titleLength ? 'text-success' : 'text-muted-foreground')}>{(page.title || '').length}/60</span></span>
-                  <Input value={page.title || ''} onChange={(e) => setPage({ title: e.target.value })} />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 flex justify-between text-sm font-semibold">{t('studio.seo.pageDescription')}<span className={cn('text-xs', checks.descLength ? 'text-success' : 'text-muted-foreground')}>{(page.description || '').length}/160</span></span>
-                  <Textarea rows={3} value={page.description || ''} onChange={(e) => setPage({ description: e.target.value })} />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-semibold">{t('studio.seo.keywords')}</span>
-                  <Input value={page.keywords || ''} placeholder="personal trainer, online coaching, …" onChange={(e) => setPage({ keywords: e.target.value })} />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-semibold">{t('studio.seo.image')}</span>
-                  <Input dir="ltr" value={page.image || ''} placeholder="https://ecshape.org/site/photos/opt/trainer.jpg" onChange={(e) => setPage({ image: e.target.value })} />
-                </label>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-5"
-                onClick={() => askAgent(`${t('studio.seo.writeWithAgent')} (${lang}): ${t('studio.seo.pageTitle')} + ${t('studio.seo.pageDescription')}`)}
-              >
-                <Sparkles />{t('studio.seo.writeWithAgent')}
-              </Button>
-            </section>
-
-            <section className="ec-card rounded-[1.5rem] border border-border/60 bg-card p-6">
-              <h2 className="font-display mb-5 text-4xl">{t('studio.seo.social')}</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-1.5 flex items-center gap-2 text-sm font-semibold"><Instagram className="h-4 w-4" />{t('studio.seo.instagram')}</span>
-                  <Input dir="ltr" value={data.social?.instagram || ''} placeholder="ecshape" onChange={(e) => setSocial({ instagram: e.target.value.replace(/^@/, '') })} />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 flex items-center gap-2 text-sm font-semibold"><MessageCircle className="h-4 w-4" />{t('studio.seo.whatsapp')}</span>
-                  <Input dir="ltr" value={data.social?.whatsapp || ''} placeholder="972546683867" onChange={(e) => setSocial({ whatsapp: e.target.value.replace(/[^\d]/g, '') })} />
-                </label>
-                <label className="block sm:col-span-2">
-                  <span className="mb-1.5 flex items-center gap-2 text-sm font-semibold"><BarChart3 className="h-4 w-4" />{t('studio.seo.analytics')}</span>
-                  <Input dir="ltr" value={data.analytics_id || ''} placeholder="G-XXXXXXXXXX" onChange={(e) => setData((d) => ({ ...d, analytics_id: e.target.value }))} />
-                </label>
-              </div>
-            </section>
-          </div>
-
-          <div className="space-y-6">
-            <section className="ec-card flex items-center gap-6 rounded-[1.5rem] border border-border/60 bg-card p-6">
-              <svg viewBox="0 0 120 120" className="h-32 w-32 flex-none -rotate-90">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
-                <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--primary))" strokeWidth="10" strokeLinecap="round" strokeDasharray={ring} strokeDashoffset={ring * (1 - score / 100)} style={{ transition: 'stroke-dashoffset .9s cubic-bezier(.22,1,.36,1)' }} />
-                <text x="60" y="60" textAnchor="middle" dominantBaseline="central" className="rotate-90 fill-foreground font-num" style={{ fontSize: 30, transformOrigin: '60px 60px' }}>{score}</text>
-              </svg>
-              <div className="min-w-0">
-                <p className="font-display text-3xl">{t('studio.seo.score')}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {(Object.keys(checks) as (keyof typeof checks)[]).map((k) => (
-                    <li key={k} className={cn('flex items-center gap-2 text-sm', checks[k] ? 'text-foreground' : 'text-muted-foreground')}>
-                      {checks[k] ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4" />}
-                      {t(`studio.seo.checks.${k}`)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-
-            <section className="rounded-[1.5rem] bg-white p-6 text-[#202124] shadow-sm" dir={lang === 'he' ? 'rtl' : 'ltr'}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#5f6368]">{t('studio.seo.preview')}</p>
-              <p className="text-sm text-[#202124]" dir="ltr" style={{ textAlign: lang === 'he' ? 'right' : 'left' }}>ecshape.org</p>
-              <p className="mt-1 line-clamp-1 text-xl text-[#1a0dab]">{page.title}</p>
-              <p className="mt-1 line-clamp-2 text-sm text-[#4d5156]">{page.description}</p>
-            </section>
-          </div>
+        <div className="ec-seo-filters-end">
+          <Select value={lang} onValueChange={(v) => setLang(v as SiteLang | 'all')}>
+            <SelectTrigger className="h-9 w-[9.5rem]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('studio.seo.allLanguages')}</SelectItem>
+              {SITE_LANGS.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {LANG_LABEL[l]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <label className="ec-seo-search">
+            <Search size={15} />
+            <Input value={query} placeholder={t('studio.seo.searchPh')} onChange={(e) => setQuery(e.target.value)} aria-label={t('studio.seo.searchPh')} />
+          </label>
         </div>
       </div>
-    </Layout>
+
+      {rows.length ? (
+        <ul className="ec-seo-rows">
+          {rows.map(({ a, score }, i) => (
+            <li key={a.id} style={{ ['--i' as string]: i }}>
+              <button type="button" onClick={() => onOpen(a)}>
+                {a.coverImage ? <img src={a.coverImage} alt="" /> : <span className="ec-seo-thumb"><FileText size={18} /></span>}
+                <span className="ec-seo-row-main">
+                  <b dir="auto">{a.title || t('studio.seo.untitled')}</b>
+                  <small>
+                    {a.seo.focusKeyword ? <span dir="auto">{a.seo.focusKeyword}</span> : <span className="is-muted">{t('studio.seo.noKeyword')}</span>}
+                    <span>{LANG_LABEL[a.lang]}</span>
+                    <span>{fmt(a.publishedAt || a.updatedAt)}</span>
+                  </small>
+                </span>
+                <span className={cn('ec-seo-status', `is-${a.status}`)}>{t(`studio.seo.status.${a.status}`)}</span>
+                <ScoreBadge score={score} size="sm" />
+              </button>
+              {isLive(a) ? (
+                <a className="ec-seo-row-view" href={articlePath(a.slug, a.lang)} target="_blank" rel="noreferrer" aria-label={t('studio.seo.editor.view')}>
+                  <ExternalLink size={15} />
+                </a>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="ec-seo-empty">
+          <FileText />
+          <p>{articles.length ? t('studio.seo.noMatch') : t('studio.seo.dash.noArticles')}</p>
+          <Button size="sm" onClick={onNew}>
+            <Plus />
+            {t('studio.seo.newArticle')}
+          </Button>
+        </div>
+      )}
+    </section>
+  );
+};
+
+/* ------------------------------------------------------------------ site pages */
+const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: SeoSettings) => Promise<void> }) => {
+  const { t } = useTranslation();
+  const [lang, setLang] = useState<SiteLang>('he');
+  const [pages, setPages] = useState<Record<string, PageSeoFields>>(settings.pages || {});
+  const [html, setHtml] = useState('');
+  const [busy, setBusy] = useState(false);
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+  useEffect(() => {
+    let alive = true;
+    studioApi
+      .siteContent(lang)
+      .then((r) => alive && setHtml(contentToHtml(r.content)))
+      .catch(() => alive && setHtml(contentToHtml(DEFAULT_CONTENT[lang])));
+    return () => {
+      alive = false;
+    };
+  }, [lang]);
+
+  const defaults = DEFAULT_CONTENT[lang].meta;
+  const page = pages[lang] || {};
+  const seo: ArticleSeo = {
+    ...EMPTY_ARTICLE_SEO,
+    focusKeyword: page.focusKeyword || '',
+    secondaryKeywords: (page.keywords || '').split(',').map((k) => k.trim()).filter(Boolean),
+    title: page.title ?? defaults.title,
+    description: page.description ?? defaults.description,
+    robots: page.robots || 'index',
+    canonical: page.canonical || '',
+    ogTitle: page.ogTitle || '',
+    ogDescription: page.ogDescription || '',
+    ogImage: page.image || '',
+  };
+  const ctx: RankMathContext = { title: defaults.title, slug: '', path: `/home?lang=${lang}`, origin, html, mode: 'page' };
+  const analysis = useSeoAnalysis(seo, ctx);
+
+  const change = (p: Partial<ArticleSeo>) => {
+    const next: PageSeoFields = { ...page };
+    if (p.focusKeyword !== undefined) next.focusKeyword = p.focusKeyword;
+    if (p.title !== undefined) next.title = p.title;
+    if (p.description !== undefined) next.description = p.description;
+    if (p.robots !== undefined) next.robots = p.robots;
+    if (p.canonical !== undefined) next.canonical = p.canonical;
+    if (p.ogTitle !== undefined) next.ogTitle = p.ogTitle;
+    if (p.ogDescription !== undefined) next.ogDescription = p.ogDescription;
+    if (p.ogImage !== undefined) next.image = p.ogImage;
+    setPages({ ...pages, [lang]: next });
+  };
+
+  return (
+    <div className="ec-seo-pages">
+      <aside className="ec-seo-card ec-seo-page-list">
+        <h2>{t('studio.seo.pages.title')}</h2>
+        <p>{t('studio.seo.pages.body')}</p>
+        <ul>
+          {SITE_LANGS.map((l) => (
+            <li key={l}>
+              <button type="button" className={cn(lang === l && 'is-active')} onClick={() => setLang(l)}>
+                <Globe2 size={16} />
+                <span>
+                  <b>{t('studio.site.homePage')}</b>
+                  <small>{LANG_LABEL[l]}</small>
+                </span>
+                {pages[l]?.title ? <CheckCircle2 size={16} className="is-ok" /> : <CircleAlert size={16} />}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="ec-seo-page-actions">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => askAgent(t('studio.seo.pages.agentPrompt', { lang: LANG_LABEL[lang] }))}
+          >
+            <Sparkles />
+            {t('studio.seo.writeWithAgent')}
+          </Button>
+          <Button
+            size="sm"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              await onSave({ ...settings, pages });
+              setBusy(false);
+            }}
+          >
+            {busy ? <Loader2 className="animate-spin" /> : <Save />}
+            {t('studio.seo.save')}
+          </Button>
+        </div>
+      </aside>
+      <section className="ec-seo-card is-flush" dir={lang === 'he' ? 'rtl' : 'ltr'}>
+        <RankMathPanel key={lang} seo={seo} onChange={change} ctx={ctx} analysis={analysis} />
+      </section>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ redirects */
+const RedirectsBoard = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: SeoSettings) => Promise<void> }) => {
+  const { t } = useTranslation();
+  const [rows, setRows] = useState<SeoRedirect[]>(settings.redirects || []);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [code, setCode] = useState<301 | 302>(301);
+  const normalize = (p: string) => {
+    const v = p.trim();
+    if (!v) return '';
+    if (/^https?:\/\//.test(v)) return v;
+    return v.startsWith('/') ? v : `/${v}`;
+  };
+  const add = () => {
+    const f = normalize(from);
+    const d = normalize(to);
+    if (!f || !d || f === d) return;
+    const next = [{ from: f, to: d, code }, ...rows.filter((r) => r.from !== f)];
+    setRows(next);
+    setFrom('');
+    setTo('');
+    void onSave({ ...settings, redirects: next });
+  };
+  const remove = (f: string) => {
+    const next = rows.filter((r) => r.from !== f);
+    setRows(next);
+    void onSave({ ...settings, redirects: next });
+  };
+
+  return (
+    <section className="ec-seo-card">
+      <header>
+        <h2>{t('studio.seo.redirects.title')}</h2>
+      </header>
+      <p className="ec-seo-help">{t('studio.seo.redirects.body')}</p>
+      <form
+        className="ec-seo-redirect-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          add();
+        }}
+      >
+        <Input dir="ltr" value={from} placeholder="/old-page" onChange={(e) => setFrom(e.target.value)} aria-label={t('studio.seo.redirects.from')} />
+        <ArrowRight size={16} className="rtl:-scale-x-100" />
+        <Input dir="ltr" value={to} placeholder="/blog/new-page" onChange={(e) => setTo(e.target.value)} aria-label={t('studio.seo.redirects.to')} />
+        <Select value={String(code)} onValueChange={(v) => setCode(Number(v) as 301 | 302)}>
+          <SelectTrigger className="w-[8.5rem]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="301">301 · {t('studio.seo.redirects.permanent')}</SelectItem>
+            <SelectItem value="302">302 · {t('studio.seo.redirects.temporary')}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="submit" disabled={!from.trim() || !to.trim()}>
+          <Plus />
+          {t('studio.seo.redirects.add')}
+        </Button>
+      </form>
+      {rows.length ? (
+        <ul className="ec-seo-redirects">
+          {rows.map((r) => (
+            <li key={r.from}>
+              <code dir="ltr">{r.from}</code>
+              <ArrowRight size={14} className="rtl:-scale-x-100" />
+              <code dir="ltr">{r.to}</code>
+              <span className="ec-seo-chip">{r.code}</span>
+              <button type="button" className="ec-rm-icon" aria-label={t('studio.site.remove')} onClick={() => remove(r.from)}>
+                <Trash2 size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="ec-seo-empty">
+          <Repeat2 />
+          <p>{t('studio.seo.redirects.empty')}</p>
+        </div>
+      )}
+    </section>
+  );
+};
+
+/* ------------------------------------------------------------------ indexation */
+const Indexation = ({ articles, settings, onSave }: { articles: Article[]; settings: SeoSettings; onSave: (s: SeoSettings) => Promise<void> }) => {
+  const { t } = useTranslation();
+  const [verification, setVerification] = useState(settings.search_console || '');
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const urls = [
+    ...SITE_LANGS.map((l) => ({ url: `${origin}/home?lang=${l}`, label: `${t('studio.site.homePage')} · ${LANG_LABEL[l]}`, indexed: settings.pages?.[l]?.robots !== 'noindex' })),
+    ...articles.filter((a) => isLive(a)).map((a) => ({ url: `${origin}${articlePath(a.slug, a.lang)}`, label: a.title, indexed: a.seo.robots !== 'noindex' })),
+  ];
+  return (
+    <div className="ec-seo-dash-grid">
+      <section className="ec-seo-card">
+        <header>
+          <h2>{t('studio.seo.index.title')}</h2>
+          <span className="ec-seo-chip">{t('studio.seo.index.count', { count: urls.filter((u) => u.indexed).length })}</span>
+        </header>
+        <ul className="ec-seo-urls">
+          {urls.map((u) => (
+            <li key={u.url} className={cn(!u.indexed && 'is-off')}>
+              {u.indexed ? <CheckCircle2 size={16} /> : <CircleAlert size={16} />}
+              <span>
+                <b dir="auto">{u.label}</b>
+                <small dir="ltr">{u.url.replace(/^https?:\/\//, '')}</small>
+              </span>
+              <span className="ec-seo-chip">{u.indexed ? 'index' : 'noindex'}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="ec-seo-card">
+        <header>
+          <h2>{t('studio.seo.index.gscTitle')}</h2>
+        </header>
+        <p className="ec-seo-help">{t('studio.seo.index.gscBody')}</p>
+        <label className="ec-rm-field">
+          <span className="ec-rm-label">{t('studio.seo.index.verification')}</span>
+          <Input dir="ltr" value={verification} placeholder="google-site-verification=…" onChange={(e) => setVerification(e.target.value)} />
+        </label>
+        <div className="ec-seo-page-actions">
+          <Button size="sm" onClick={() => void onSave({ ...settings, search_console: verification.replace(/^google-site-verification=/, '').trim() })}>
+            <Save />
+            {t('studio.seo.save')}
+          </Button>
+          <Button size="sm" variant="ghost" asChild>
+            <a href="https://search.google.com/search-console" target="_blank" rel="noreferrer">
+              <ExternalLink />
+              {t('studio.seo.index.openGsc')}
+            </a>
+          </Button>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ connections & stats */
+const Connections = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: SeoSettings) => Promise<void> }) => {
+  const { t } = useTranslation();
+  const [draft, setDraft] = useState<SeoSettings>(settings);
+  const [busy, setBusy] = useState(false);
+  return (
+    <section className="ec-seo-card">
+      <header>
+        <h2>{t('studio.seo.stats.title')}</h2>
+        {draft.analytics_id ? (
+          <Button size="sm" variant="ghost" asChild>
+            <a href="https://analytics.google.com/" target="_blank" rel="noreferrer">
+              <ExternalLink />
+              {t('studio.seo.stats.openGa')}
+            </a>
+          </Button>
+        ) : null}
+      </header>
+      <p className="ec-seo-help">{t('studio.seo.stats.body')}</p>
+      <div className="ec-seo-conn-grid">
+        <label className="ec-rm-field">
+          <span className="ec-rm-label">
+            <BarChart3 size={15} />
+            {t('studio.seo.analytics')}
+          </span>
+          <Input dir="ltr" value={draft.analytics_id || ''} placeholder="G-XXXXXXXXXX" onChange={(e) => setDraft({ ...draft, analytics_id: e.target.value.trim() })} />
+        </label>
+        <label className="ec-rm-field">
+          <span className="ec-rm-label">
+            <Instagram size={15} />
+            {t('studio.seo.instagram')}
+          </span>
+          <Input dir="ltr" value={draft.social?.instagram || ''} placeholder="ecshape" onChange={(e) => setDraft({ ...draft, social: { ...draft.social, instagram: e.target.value.replace(/^@/, '') } })} />
+        </label>
+        <label className="ec-rm-field">
+          <span className="ec-rm-label">
+            <MessageCircle size={15} />
+            {t('studio.seo.whatsapp')}
+          </span>
+          <Input dir="ltr" value={draft.social?.whatsapp || ''} placeholder="972546683867" onChange={(e) => setDraft({ ...draft, social: { ...draft.social, whatsapp: e.target.value.replace(/[^\d]/g, '') } })} />
+        </label>
+      </div>
+      <div className="ec-seo-page-actions">
+        <Button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await onSave({ ...settings, analytics_id: draft.analytics_id, social: draft.social });
+            setBusy(false);
+          }}
+        >
+          {busy ? <Loader2 className="animate-spin" /> : <Save />}
+          {t('studio.seo.save')}
+        </Button>
+      </div>
+    </section>
   );
 };
 

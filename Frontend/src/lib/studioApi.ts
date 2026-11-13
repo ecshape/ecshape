@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/api';
+import type { Article, ArticleDraft, ArticleSummary } from '@/lib/seo/articles';
 
 /** Small typed client for the trainer studio endpoints (/api/studio). */
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -60,10 +61,44 @@ export interface QaTicket {
   comments?: { id: number; body: string; author?: string | null; created_at?: string | null }[];
 }
 
+export interface PageSeoFields {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  image?: string;
+  focusKeyword?: string;
+  robots?: 'index' | 'noindex';
+  canonical?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+}
+export interface SeoRedirect {
+  from: string;
+  to: string;
+  code: 301 | 302;
+}
 export interface SeoSettings {
-  pages?: Record<string, { title?: string; description?: string; keywords?: string; image?: string }>;
+  pages?: Record<string, PageSeoFields>;
   social?: { instagram?: string; whatsapp?: string };
   analytics_id?: string;
+  search_console?: string;
+  redirects?: SeoRedirect[];
+}
+export interface ArticleBriefIn {
+  topic: string;
+  keyword?: string;
+  notes?: string;
+  length: 'short' | 'standard' | 'long';
+  lang: string;
+  /** AI key id, or "auto" for the preferred key. */
+  model?: string;
+  statuses: Record<string, string>;
+}
+/** An engine the SEO writer can use: one of the trainer's AI keys, or the server key. */
+export interface AgentModelOption {
+  value: string;
+  label: string;
+  recommended: boolean;
 }
 
 export interface AgentTurn {
@@ -114,6 +149,24 @@ export interface AgentRecommendation {
   href: string;
 }
 
+const authHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem('access_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+async function publicGet<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}/public${path}`);
+  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  return res.json() as Promise<T>;
+}
+
+/** Public (no sign-in) endpoints used by the blog and the SEO redirects. */
+export const publicApi = {
+  articles: (lang?: string) => publicGet<ArticleSummary[]>(`/articles${lang ? `?lang=${lang}` : ''}`),
+  article: (slug: string, lang?: string) => publicGet<Article>(`/articles/${encodeURIComponent(slug)}${lang ? `?lang=${lang}` : ''}`),
+  redirects: () => publicGet<SeoRedirect[]>('/redirects'),
+};
+
 export const studioApi = {
   overview: () => request<{ clients: number; leads_new: number; leads_open: number; qa_open: number }>('/overview'),
 
@@ -128,6 +181,28 @@ export const studioApi = {
 
   seo: () => request<SeoSettings>('/seo'),
   saveSeo: (data: SeoSettings) => request<SeoSettings>('/seo', { method: 'PUT', body: JSON.stringify(data) }),
+  articles: () => request<Article[]>('/articles'),
+  saveArticle: (article: ArticleDraft) => request<Article>('/articles', { method: 'PUT', body: JSON.stringify({ article }) }),
+  deleteArticle: (id: string) => request<void>(`/articles/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  /** NDJSON stream of the live AI writer (status, meta, block…, faq, end). */
+  generateArticle: (brief: ArticleBriefIn, signal: AbortSignal) =>
+    fetch(`${API_BASE_URL}/studio/seo/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(brief),
+      signal,
+    }),
+  /** Engines for the SEO writer: the trainer's AI keys (preferred first), else the server key if set. */
+  agentModels: async (): Promise<AgentModelOption[]> => {
+    const keys = await request<AiKey[]>('/ai-keys').catch(() => [] as AiKey[]);
+    if (keys.length) {
+      return [...keys]
+        .sort((a, b) => Number(b.is_preferred) - Number(a.is_preferred))
+        .map((k) => ({ value: String(k.id), label: `${k.product} · ${k.model}`, recommended: k.is_preferred }));
+    }
+    const st = await request<{ configured: boolean; engine: string | null }>('/agent/status').catch(() => null);
+    return st?.configured ? [{ value: 'auto', label: st.engine || 'Auto', recommended: true }] : [];
+  },
 
   tickets: (status?: string) => request<QaTicket[]>(`/qa${status ? `?status=${status}` : ''}`),
   ticket: (id: number) => request<QaTicket>(`/qa/${id}`),

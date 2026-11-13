@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Plus, X, Trash2, Calculator } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X, Trash2, Calculator, Sunrise, Sun, Moon, Apple, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 
@@ -41,11 +41,11 @@ interface MealEntry {
 }
 
 const MEAL_CATEGORIES = [
-  { id: 1, name: 'Breakfast', icon: '🌅', description: 'Start your day right' },
-  { id: 2, name: 'Lunch', icon: '🌞', description: 'Midday fuel' },
-  { id: 3, name: 'Dinner', icon: '🌙', description: 'Evening meal' },
-  { id: 4, name: 'Snack', icon: '🍎', description: 'Between meals' },
-  { id: 5, name: 'Pre-Workout', icon: '⚡', description: 'Energy boost' }
+  { id: 1, name: 'Breakfast', icon: Sunrise, description: 'Start your day right' },
+  { id: 2, name: 'Lunch', icon: Sun, description: 'Midday fuel' },
+  { id: 3, name: 'Dinner', icon: Moon, description: 'Evening meal' },
+  { id: 4, name: 'Snack', icon: Apple, description: 'Between meals' },
+  { id: 5, name: 'Pre-Workout', icon: Zap, description: 'Energy boost' }
 ];
 
 const CreateMealPlan = () => {
@@ -328,7 +328,7 @@ const CreateMealPlan = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{category.icon}</span>
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/12 text-primary"><category.icon className="h-5 w-5" /></span>
                       <div>
                         <CardTitle>{category.name}</CardTitle>
                         <p className="text-sm text-muted-foreground">{category.description}</p>

@@ -113,7 +113,7 @@ class NotificationTriggers:
             # If missed 2 or more exercises, notify trainer
             if missed_exercises >= 2:
                 notification_data = NotificationCreate(
-                    title="Missed Exercises Alert ⚠️",
+                    title="Missed Exercises Alert",
                     message=f"Client {client.full_name} missed {missed_exercises} exercises this week. Consider reaching out to provide support.",
                     type="warning",
                     recipient_id=client.trainer_id
@@ -169,7 +169,7 @@ class NotificationTriggers:
             # If missed 4 or more meals, notify trainer
             if missed_meals >= 4:
                 notification_data = NotificationCreate(
-                    title="Missed Meals Alert 🍽️",
+                    title="Missed Meals Alert",
                     message=f"Client {client.full_name} missed {missed_meals} meals this week. They may need nutritional guidance or support.",
                     type="warning",
                     recipient_id=client.trainer_id
@@ -186,7 +186,7 @@ class NotificationTriggers:
         client = db.query(User).filter(User.id == client_id).first()
         if client:
             notification_data = NotificationCreate(
-                title="New Client Assigned 👤",
+                title="New Client Assigned",
                 message=f"New client {client.full_name} has been assigned to you. Welcome them and start their fitness journey!",
                 type="info",
                 recipient_id=trainer_id

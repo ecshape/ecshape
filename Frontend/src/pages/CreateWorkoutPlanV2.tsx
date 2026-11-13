@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Save, GripVertical, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, GripVertical, Search, Dumbbell, ArrowDownUp, Footprints, ArrowUpToLine, ArrowDownToLine, Shield, MoveHorizontal, Expand, BicepsFlexed, Activity, HeartPulse, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -467,21 +467,15 @@ const CreateWorkoutPlanV2: React.FC = () => {
     }
   };
 
+  /** Line icons per split day (no emojis). */
   const getDayTypeIcon = (type: string) => {
-    switch (type) {
-      case 'push': return '💪';
-      case 'pull': return '↕️';
-      case 'legs': return '🦵';
-      case 'upper': return '⬆️';
-      case 'lower': return '⬇️';
-      case 'chest': return '🫁';
-      case 'back': return '🔙';
-      case 'shoulders': return '👐';
-      case 'arms': return '💪';
-      case 'full_body': return '🏋️';
-      case 'cardio': return '🏃';
-      default: return '📅';
-    }
+    const Icon =
+      ({ push: Dumbbell, pull: ArrowDownUp, legs: Footprints, upper: ArrowUpToLine, lower: ArrowDownToLine, chest: Shield, back: MoveHorizontal, shoulders: Expand, arms: BicepsFlexed, full_body: Activity, cardio: HeartPulse } as Record<string, React.ElementType>)[type] || CalendarDays;
+    return (
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/12 text-primary">
+        <Icon className="h-5 w-5" />
+      </span>
+    );
   };
 
   const isFormValid = () => {
@@ -691,7 +685,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
               <AccordionItem key={dayIndex} value={`day-${dayIndex}`}>
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{getDayTypeIcon(day.day_type)}</span>
+                    {getDayTypeIcon(day.day_type)}
                     <span className="font-semibold">{day.name}</span>
                     <Badge variant="outline">{day.exercises.length} {t('workoutCreation.exercises')}</Badge>
                   </div>

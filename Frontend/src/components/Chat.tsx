@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, MessageSquare, User, Clock, Check, CheckCheck, Search, ExternalLink, Link2, TrendingUp, ArrowLeft, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { Send, MessageSquare, User, Clock, Check, CheckCheck, Search, ExternalLink, Link2, TrendingUp, ArrowLeft, ChevronLeft, ChevronRight, Menu, Camera } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -953,7 +953,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                           {formatChatDate(linkedProgressEntry.date)} • {linkedProgressEntry.weight} קג
                         </span>
                         {linkedProgressEntry.photo_path && (
-                          <Badge variant="outline" className="text-xs">📷</Badge>
+                          <Badge variant="outline" className="text-xs"><Camera className="h-3 w-3" /></Badge>
                         )}
                       </div>
                       <Button
@@ -1090,7 +1090,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId, onClose 
                                 )}
                                 {entry.photo_path && (
                                   <Badge variant="outline" className="mt-1 text-xs px-1.5 py-0">
-                                    📷
+                                    <Camera className="h-3 w-3" />
                                   </Badge>
                                 )}
                               </div>

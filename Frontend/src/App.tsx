@@ -40,8 +40,10 @@ import AgentPage from './pages/studio/AgentPage';
 import MySitePage from './pages/studio/MySitePage';
 import SeoPage from './pages/studio/SeoPage';
 import QaPage from './pages/studio/QaPage';
+import QaCaptureWidget from './components/studio/QaCaptureWidget';
 import { useAuth } from './contexts/AuthContext';
 import './i18n/config';
+import './styles/qa-capture.css';
 
 // Public site (gsap + lenis) is code-split so the portal bundle stays lean.
 const SitePage = lazy(() => import('./pages/SitePage'));
@@ -332,6 +334,7 @@ const App = () => {
               <NotificationProvider>
                 <BrowserRouter>
                   <AppRoutes />
+                  <QaCaptureWidget />
                   <NotificationContainer />
                 </BrowserRouter>
               </NotificationProvider>

@@ -1470,7 +1470,8 @@
       "site": "My site",
       "seo": "COM / SEO",
       "qa": "QA workshop",
-      "preferences": "Preferences"
+      "preferences": "Preferences",
+      "settings": "Settings"
     },
     "prospects": {
       "title": "Prospects",
@@ -1504,7 +1505,9 @@
       "askAgent": "Draft a reply with Agent EC",
       "name": "Name",
       "phone": "Phone",
-      "newCount": "{{count}} new"
+      "newCount": "{{count}} new",
+      "new": "New prospect",
+      "emailLabel": "Email"
     },
     "agent": {
       "title": "Agent EC",
@@ -1633,6 +1636,113 @@
       "preferred": "Preferred",
       "deleteConfirm": "Remove this key?",
       "keySaved": "Key saved"
+    }
+  },
+  "agent": {
+    "openAria": "Open Agent EC",
+    "openTitle": "Agent EC: click or pull it out",
+    "release": "Release to open",
+    "newConversation": "New conversation",
+    "resize": "Drag to adjust the width",
+    "hello": "Hi {{name}}!",
+    "helloNoName": "Hi!",
+    "welcome": "Ask me anything — I can also do it for you, on the right page.",
+    "recommendations": "Recommendations",
+    "rec": {
+      "leads": "{{count}} new prospects waiting for a call",
+      "silent": "{{count}} clients without a check-in for 3 days ({{names}})",
+      "qa": "{{count}} high-priority QA tickets open",
+      "seo": "Google description missing: {{langs}}"
+    },
+    "recPrompt": {
+      "leads": "Which new prospects should I call first, and what should I say?",
+      "silent": "Which clients haven't checked in for 3 days? Draft a short motivating message for each.",
+      "qa": "Sort the open high-priority QA tickets and suggest what to fix first.",
+      "seo": "Write the missing Google titles and descriptions for the site and propose them."
+    },
+    "capabilities": [
+      "Qualify my new prospects",
+      "Summarize this page",
+      "Write an Instagram post for this week",
+      "Which clients need attention today?",
+      "Improve the text of my site's hero"
+    ],
+    "prompts": {
+      "dashboard": [
+        "What should I do first today?",
+        "Which clients need attention today?"
+      ],
+      "prospects": [
+        "Which prospects should I call first?",
+        "Draft a WhatsApp reply to the newest prospect"
+      ],
+      "site": [
+        "Improve the hero text of my site",
+        "Rewrite the FAQ answers more clearly"
+      ],
+      "seo": [
+        "Write my Google title and description",
+        "Suggest 5 article ideas for SEO"
+      ],
+      "qa": [
+        "Sort tickets by priority",
+        "Rewrite the selected ticket clearly"
+      ],
+      "settings": [
+        "Which AI model should I choose?",
+        "What are my AI keys used for?"
+      ],
+      "client": [
+        "Summarize this client's last two weeks",
+        "Draft a motivating message for this client"
+      ],
+      "banks": [
+        "Explain this page",
+        "Which items are missing in my bank?"
+      ]
+    },
+    "placeholder": "Ask anything…",
+    "send": "Send",
+    "thinking": "Agent EC is thinking…",
+    "noAnswer": "Agent EC couldn't answer.",
+    "connectionLost": "Connection lost, try again.",
+    "model": "Model",
+    "auto": "Automatic",
+    "autoHint": "best key for the task",
+    "addModel": "Add a model (AI key)",
+    "confirm": "Confirm",
+    "formOpened": "Form opened",
+    "state": {
+      "running": "Running…",
+      "done": "Done",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "pending": ""
+    },
+    "done": "Done: {{what}}.",
+    "failed": "I couldn't do it: {{reason}}.",
+    "fix": {
+      "settings": "Open Settings → AI keys"
+    },
+    "lang": {
+      "he": "Hebrew",
+      "en": "English",
+      "fr": "French"
+    },
+    "op": {
+      "navigate": "Open {{href}}",
+      "form": {
+        "prospect": "Open the New prospect form.",
+        "qa_ticket": "Open the New QA ticket form.",
+        "client": "Open the New client form."
+      },
+      "leadStatus": "Move prospect {{name}} to “{{status}}”.",
+      "leadNote": "Add a note to {{name}}: “{{note}}”.",
+      "leadCreate": "Create the prospect {{name}}. Nothing is sent to them.",
+      "qaCreate": "Open the QA ticket “{{title}}” ({{priority}} priority).",
+      "qaUpdate": "Update ticket {{title}}: {{change}}.",
+      "siteText": "Change the site text ({{lang}}, {{path}}) to: “{{value}}”.",
+      "seoPage": "Set the Google listing ({{lang}}): {{value}}."
     }
   }
 }

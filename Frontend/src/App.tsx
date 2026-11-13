@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -36,11 +36,13 @@ import SandboxMealsV3 from './pages/SandboxMealsV3';
 import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
 import ClientFavoritesPage from './pages/ClientFavoritesPage';
 import ProspectsPage from './pages/studio/ProspectsPage';
-import AgentPage from './pages/studio/AgentPage';
 import MySitePage from './pages/studio/MySitePage';
 import SeoPage from './pages/studio/SeoPage';
 import QaPage from './pages/studio/QaPage';
 import PreferencesPage from './pages/studio/PreferencesPage';
+import { AgentSidekickProvider } from './contexts/AgentSidekickContext';
+import AgentEc from './components/studio/AgentEc';
+import './styles/agent-ec.css';
 import QaCaptureWidget from './components/studio/QaCaptureWidget';
 import { useAuth } from './contexts/AuthContext';
 import './i18n/config';
@@ -69,6 +71,16 @@ const HomeRoute = () => {
   );
 };
 const queryClient = new QueryClient();
+
+/** Agent EC lives at app level so it stays open from page to page (trainer studio only). */
+const AgentHost = () => {
+  const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const studio = isAuthenticated && user?.role === 'TRAINER';
+  const onPublic = location.pathname === '/login' || location.pathname.startsWith('/home');
+  if (!studio || onPublic) return null;
+  return <AgentEc />;
+};
 
 const AppRoutes = () => {
   return (
@@ -218,11 +230,12 @@ const AppRoutes = () => {
       {/* Trainer studio */}
       <Route path="/studio" element={<Navigate to="/studio/prospects" replace />} />
       <Route path="/studio/prospects" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><ProspectsPage /></ProtectedRoute>} />
-      <Route path="/studio/agent" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><AgentPage /></ProtectedRoute>} />
+      <Route path="/studio/agent" element={<Navigate to="/trainer-dashboard" replace />} />
       <Route path="/studio/site" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><MySitePage /></ProtectedRoute>} />
       <Route path="/studio/seo" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><SeoPage /></ProtectedRoute>} />
       <Route path="/studio/qa" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><QaPage /></ProtectedRoute>} />
-      <Route path="/studio/preferences" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><PreferencesPage /></ProtectedRoute>} />
+      <Route path="/studio/settings" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><PreferencesPage /></ProtectedRoute>} />
+      <Route path="/studio/preferences" element={<Navigate to="/studio/settings" replace />} />
 
       {/* Trainer/Client routes */}
       <Route path="/" element={<HomeRoute />} />
@@ -336,7 +349,10 @@ const App = () => {
             <AuthProvider>
               <NotificationProvider>
                 <BrowserRouter>
+                  <AgentSidekickProvider>
                   <AppRoutes />
+                  <AgentHost />
+                  </AgentSidekickProvider>
                   <QaCaptureWidget />
                   <NotificationContainer />
                 </BrowserRouter>

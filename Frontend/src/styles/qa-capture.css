@@ -18,6 +18,15 @@ body.ec-qa-picking * {
   bottom: 5.5rem;
 }
 
+html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
+  right: calc(var(--ec-psk-w, 400px) + 1.25rem);
+  transition: right 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 1179px) {
+  html.ec-psk-open .ec-qa-fab-stack { display: none; }
+}
+
 .ec-qa-fab-stack.is-moved {
   right: auto;
   bottom: auto;

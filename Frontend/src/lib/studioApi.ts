@@ -70,8 +70,47 @@ export interface AgentTurn {
   content: string;
 }
 export interface AgentReply {
-  reply: string;
-  actions: { tool: string; input: Record<string, unknown> }[];
+  ok: boolean;
+  reply?: string;
+  actions?: import('./agentOps').AgentOp[];
+  engine?: string;
+  error?: string;
+  fix?: { label: string; href: string } | null;
+}
+export interface AgentPage {
+  path: string;
+  title: string;
+  snapshot: string;
+  selection: string;
+}
+export interface AiProvider {
+  id: string;
+  label: string;
+  product: string;
+  placeholder: string;
+  key_url: string;
+  default_model: string;
+  models: string[];
+  base_url: string | null;
+  needs_base_url?: boolean;
+}
+export interface AiKey {
+  id: number;
+  provider: string;
+  product: string;
+  label: string;
+  model: string;
+  base_url: string;
+  last4: string;
+  is_preferred: boolean;
+  created_at?: string | null;
+}
+export interface AgentRecommendation {
+  id: 'leads' | 'silent' | 'qa' | 'seo';
+  count?: number;
+  names?: string[];
+  langs?: string[];
+  href: string;
 }
 
 export const studioApi = {
@@ -96,17 +135,19 @@ export const studioApi = {
   commentTicket: (id: number, body: string) => request<QaTicket>(`/qa/${id}/comments`, { method: 'POST', body: JSON.stringify({ body }) }),
   deleteTicket: (id: number) => request<void>(`/qa/${id}`, { method: 'DELETE' }),
 
-  agentStatus: () => request<{ configured: boolean; has_user_keys?: boolean }>('/agent/status'),
-  agentChat: (messages: AgentTurn[], lang: string, page?: string) =>
-    request<AgentReply>('/agent/chat', { method: 'POST', body: JSON.stringify({ messages, lang, page }) }),
+  agentStatus: () => request<{ configured: boolean; engine: string | null; source: string }>('/agent/status'),
+  agentChat: (messages: AgentTurn[], lang: string, page: AgentPage, provider: string) =>
+    request<AgentReply>('/agent/chat', { method: 'POST', body: JSON.stringify({ messages, lang, page, provider }) }),
+  agentExecute: (op: import('./agentOps').AgentOp) => request<{ ok: boolean }>('/agent/execute', { method: 'POST', body: JSON.stringify({ op }) }),
+  agentRecommendations: () => request<AgentRecommendation[]>('/agent/recommendations'),
 
-  aiKeys: () =>
-    request<{ id: number; provider: string; label: string; last4: string; is_preferred: boolean; created_at?: string | null }[]>('/ai-keys'),
-  addAiKey: (data: { api_key: string; label?: string; provider?: string }) =>
-    request<{ id: number; provider: string; label: string; last4: string; is_preferred: boolean }>('/ai-keys', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+  aiProviders: () => request<AiProvider[]>('/ai-providers'),
+  aiKeys: () => request<AiKey[]>('/ai-keys'),
+  addAiKey: (data: { api_key: string; provider?: string; model?: string; base_url?: string; label?: string }) =>
+    request<AiKey>('/ai-keys', { method: 'POST', body: JSON.stringify(data) }),
+  updateAiKey: (id: number, data: { api_key?: string; model?: string; base_url?: string; label?: string }) =>
+    request<AiKey>(`/ai-keys/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  testAiKey: (id: number) => request<{ ok: boolean; engine?: string; error?: string }>(`/ai-keys/${id}/test`, { method: 'POST' }),
   preferAiKey: (id: number) => request<{ ok: boolean }>(`/ai-keys/${id}/prefer`, { method: 'POST' }),
   deleteAiKey: (id: number) => request<void>(`/ai-keys/${id}`, { method: 'DELETE' }),
 };

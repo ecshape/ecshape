@@ -10,8 +10,6 @@ import { cn } from '@/lib/utils';
 import LanguageSelector from './LanguageSelector';
 import ThemeToggle from './ThemeToggle';
 import LiquidNav, { type LiquidItem } from './LiquidNav';
-import AgentSidekick from './studio/AgentSidekick';
-import { AgentSidekickProvider } from '@/contexts/AgentSidekickContext';
 import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -89,7 +87,6 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
       title: t('studio.groupBusiness'),
       items: [
         { id: 'prospects', label: t('studio.nav.prospects'), icon: Users2, href: '/studio/prospects', badge: newLeads },
-        { id: 'agent', label: t('studio.nav.agent'), icon: Sparkles, href: '/studio/agent' },
       ],
     },
     {
@@ -98,7 +95,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
         { id: 'site', label: t('studio.nav.site'), icon: Globe2, href: '/studio/site' },
         { id: 'seo', label: t('studio.nav.seo'), icon: Megaphone, href: '/studio/seo' },
         { id: 'qa', label: t('studio.nav.qa'), icon: Bug, href: '/studio/qa' },
-        { id: 'preferences', label: t('studio.nav.preferences'), icon: SlidersHorizontal, href: '/studio/preferences' },
+        { id: 'settings', label: t('studio.nav.settings'), icon: SlidersHorizontal, href: '/studio/settings' },
       ],
     },
   ];
@@ -133,9 +130,9 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           {t('studio.site.open')}
         </DropdownMenuItem>
         {isTrainer && (
-          <DropdownMenuItem onClick={() => go('/studio/preferences')} className="gap-2">
+          <DropdownMenuItem onClick={() => go('/studio/settings')} className="gap-2">
             <SlidersHorizontal className="h-4 w-4" />
-            {t('studio.nav.preferences')}
+            {t('studio.nav.settings')}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={logout} className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive">
@@ -147,9 +144,9 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   );
 
   if (isTrainer) {
-    const mobilePrimary = ['dashboard', 'prospects', 'agent', 'chat'].map((id) => trainerAll.find((i) => i.id === id)!) as NavEntry[];
+    const mobilePrimary = ['dashboard', 'prospects', 'site', 'chat'].map((id) => trainerAll.find((i) => i.id === id)!) as NavEntry[];
     return (
-      <div className="ec-portal-shell flex h-screen overflow-hidden bg-background" dir={dir}>
+      <div className="ec-portal-shell flex h-screen overflow-hidden bg-background" dir={dir} data-ec-shell>
         <aside className="ec-glass relative z-40 m-3 hidden w-[264px] flex-none flex-col rounded-[1.75rem] p-4 lg:flex" data-ec-enter>
           <button onClick={() => go('/trainer-dashboard')} className="mb-6 flex items-center justify-between rounded-2xl px-2 py-1 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Brand compact />
@@ -182,7 +179,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
             </div>
           </header>
 
-          <main ref={mainRef} className="ec-portal-body min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
+          <main ref={mainRef} className="ec-portal-body min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0" data-ec-main>
             <div className="ec-page-enter">{children}</div>
           </main>
         </div>
@@ -231,8 +228,6 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           </div>
         </div>
 
-        {/* Docked beside the portal — site/studio stay visible */}
-        {currentPage !== 'agent' && <AgentSidekick />}
       </div>
     );
   }
@@ -258,7 +253,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
         </div>
       </header>
 
-      <main ref={mainRef} className="ec-portal-body flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0">
+      <main ref={mainRef} className="ec-portal-body flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0" data-ec-main>
         <div className="ec-page-enter">{children}</div>
       </main>
 
@@ -281,14 +276,6 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   );
 };
 
-const Layout = (props: LayoutProps) => {
-  const { user } = useAuth();
-  const isTrainer = user?.role === 'TRAINER';
-  return (
-    <AgentSidekickProvider enabled={!!isTrainer}>
-      <LayoutInner {...props} />
-    </AgentSidekickProvider>
-  );
-};
+const Layout = (props: LayoutProps) => <LayoutInner {...props} />;
 
 export default Layout;

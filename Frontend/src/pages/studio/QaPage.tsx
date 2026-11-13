@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { studioApi, type QaPriority, type QaStatus, type QaTicket } from '@/lib/studioApi';
 import { cn } from '@/lib/utils';
+import { useSearchParams } from 'react-router-dom';
+import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT } from '@/lib/agentOps';
 
 const STATUSES: QaStatus[] = ['new', 'in_progress', 'done', 'cancelled'];
 const PRIORITIES: QaPriority[] = ['low', 'normal', 'high'];
@@ -30,9 +32,27 @@ const QaPage = () => {
   const [comment, setComment] = useState('');
 
   const load = () => studioApi.tickets().then(setTickets).catch(() => setTickets([]));
+  const [params, setParams] = useSearchParams();
   useEffect(() => {
     load();
+    const onChanged = () => load();
+    const onForm = (e: Event) => { if ((e as CustomEvent).detail?.form === 'qa_ticket') setCreating(true); };
+    window.addEventListener(AGENT_CHANGED_EVENT, onChanged);
+    window.addEventListener(AGENT_OPEN_FORM_EVENT, onForm);
+    return () => {
+      window.removeEventListener(AGENT_CHANGED_EVENT, onChanged);
+      window.removeEventListener(AGENT_OPEN_FORM_EVENT, onForm);
+    };
   }, []);
+
+  // Agent EC opens the form with ?new=qa_ticket
+  useEffect(() => {
+    if (params.get('new') === 'qa_ticket') {
+      setCreating(true);
+      params.delete('new');
+      setParams(params, { replace: true });
+    }
+  }, [params, setParams]);
 
   const open = async (id: number) => setSelected(await studioApi.ticket(id));
   const patch = async (data: Partial<QaTicket>) => {
@@ -70,7 +90,7 @@ const QaPage = () => {
         {tickets.length === 0 ? (
           <div className="rounded-[1.5rem] border border-dashed border-border py-20 text-center text-lg text-muted-foreground">{t('studio.qa.empty')}</div>
         ) : (
-          <div className={cn('grid gap-4', filter === 'all' ? 'md:grid-cols-2 xl:grid-cols-4' : '')}>
+          <div data-ec-board="qa" className={cn('grid gap-4', filter === 'all' ? 'md:grid-cols-2 xl:grid-cols-4' : '')}>
             {(filter === 'all' ? STATUSES : [filter]).map((col) => (
               <div key={col} className="rounded-[1.5rem] bg-muted/30 p-3">
                 <p className="mb-3 flex items-center justify-between px-2 text-sm font-bold">
@@ -79,7 +99,7 @@ const QaPage = () => {
                 </p>
                 <div className="ec-stagger space-y-2">
                   {visible.filter((x) => x.status === col).map((x) => (
-                    <button key={x.id} onClick={() => open(x.id)} className="ec-card block w-full rounded-[1.1rem] border border-border/60 bg-card p-4 text-start transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40">
+                    <button key={x.id} data-qa-id={x.id} onClick={() => open(x.id)} className="ec-card block w-full rounded-[1.1rem] border border-border/60 bg-card p-4 text-start transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40">
                       <span className="flex items-start gap-2">
                         <span className={cn('mt-1.5 h-2 w-2 flex-none rounded-full', PRIORITY_DOT[x.priority])} />
                         <span className="font-semibold leading-snug">{x.title}</span>

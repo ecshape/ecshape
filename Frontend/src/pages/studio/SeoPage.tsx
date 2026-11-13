@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { Check, Save, Sparkles, X, Instagram, MessageCircle, BarChart3 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/PageHeader';
@@ -11,6 +10,7 @@ import { studioApi, type SeoSettings } from '@/lib/studioApi';
 import { DEFAULT_CONTENT, SITE_LANGS, type SiteLang } from '@/site/content';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { askAgent } from '@/lib/agentOps';
 
 type PageSeo = { title?: string; description?: string; keywords?: string; image?: string };
 
@@ -30,7 +30,6 @@ const scoreOf = (p: PageSeo) => {
 
 const SeoPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [data, setData] = useState<SeoSettings>({});
   const [lang, setLang] = useState<SiteLang>('he');
@@ -104,7 +103,7 @@ const SeoPage = () => {
                 variant="outline"
                 size="sm"
                 className="mt-5"
-                onClick={() => navigate('/studio/agent', { state: { seed: `${t('studio.seo.writeWithAgent')} (${lang}): ${t('studio.seo.pageTitle')} + ${t('studio.seo.pageDescription')}` } })}
+                onClick={() => askAgent(`${t('studio.seo.writeWithAgent')} (${lang}): ${t('studio.seo.pageTitle')} + ${t('studio.seo.pageDescription')}`)}
               >
                 <Sparkles />{t('studio.seo.writeWithAgent')}
               </Button>

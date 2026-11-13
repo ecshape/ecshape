@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { Search, Phone, Mail, MessageCircle, Trash2, UserPlus, Sparkles, Inbox } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, Phone, Mail, MessageCircle, Trash2, UserPlus, Sparkles, Inbox, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT, askAgent } from '@/lib/agentOps';
 import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,9 @@ const ProspectsPage = () => {
   const [q, setQ] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreating] = useState(false);
+  const [draft, setDraft] = useState({ name: '', phone: '', email: '', message: '' });
 
   const load = () =>
     studioApi
@@ -50,8 +55,35 @@ const ProspectsPage = () => {
 
   useEffect(() => {
     load();
+    const onChanged = () => load();
+    const onForm = (e: Event) => { if ((e as CustomEvent).detail?.form === 'prospect') setCreating(true); };
+    window.addEventListener(AGENT_CHANGED_EVENT, onChanged);
+    window.addEventListener(AGENT_OPEN_FORM_EVENT, onForm);
+    return () => {
+      window.removeEventListener(AGENT_CHANGED_EVENT, onChanged);
+      window.removeEventListener(AGENT_OPEN_FORM_EVENT, onForm);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Agent EC opens the form with ?new=prospect
+  useEffect(() => {
+    if (params.get('new') === 'prospect') {
+      setCreating(true);
+      params.delete('new');
+      setParams(params, { replace: true });
+    }
+  }, [params, setParams]);
+
+  const create = async () => {
+    if (!draft.name.trim()) return;
+    const lead = await studioApi.createLead({ ...draft, source: 'studio' });
+    setLeads((ls) => [lead, ...ls]);
+    setSelectedId(lead.id);
+    setCreating(false);
+    setDraft({ name: '', phone: '', email: '', message: '' });
+    toast({ title: t('studio.prospects.saved') });
+  };
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: leads.length };
@@ -99,9 +131,12 @@ const ProspectsPage = () => {
           title={t('studio.prospects.title')}
           description={t('studio.prospects.subtitle')}
           actions={
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <div className="relative w-full sm:w-72">
               <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('studio.prospects.search')} className="ps-11" />
+            </div>
+            <Button onClick={() => setCreating(true)}><Plus />{t('studio.prospects.new')}</Button>
             </div>
           }
         />
@@ -131,12 +166,13 @@ const ProspectsPage = () => {
             <p className="max-w-sm">{t('studio.prospects.empty')}</p>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+          <div data-ec-board="prospects" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
             {/* List */}
             <div className="ec-stagger space-y-2">
               {visible.map((l) => (
                 <button
                   key={l.id}
+                  data-lead-id={l.id}
                   onClick={() => setSelectedId(l.id)}
                   className={cn(
                     'ec-card flex w-full items-center gap-4 rounded-[1.25rem] border p-4 text-start transition-all duration-300',
@@ -213,7 +249,7 @@ const ProspectsPage = () => {
                 <p className="mb-2 mt-6 text-sm font-semibold">{t('studio.prospects.notes')}</p>
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('studio.prospects.notesPh')} rows={4} />
                 <div className="mt-3 flex flex-wrap justify-between gap-2">
-                  <Button variant="outline" size="sm" onClick={() => navigate('/studio/agent', { state: { seed: `${t('studio.prospects.askAgent')}: ${selected.name} (#${selected.id})` } })}>
+                  <Button variant="outline" size="sm" onClick={() => askAgent(`${t('studio.prospects.askAgent')}: ${selected.name} (#${selected.id})`)}>
                     <Sparkles />{t('studio.prospects.askAgent')}
                   </Button>
                   <div className="flex gap-2">
@@ -230,6 +266,22 @@ const ProspectsPage = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={creating} onOpenChange={setCreating}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{t('studio.prospects.new')}</DialogTitle></DialogHeader>
+          <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); create(); }}>
+            <Input autoFocus required value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder={t('studio.prospects.name')} />
+            <Input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} placeholder={t('studio.prospects.phone')} dir="ltr" />
+            <Input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} placeholder={t('studio.prospects.emailLabel')} dir="ltr" />
+            <Textarea value={draft.message} onChange={(e) => setDraft({ ...draft, message: e.target.value })} placeholder={t('studio.prospects.message')} rows={3} />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setCreating(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={!draft.name.trim()}>{t('studio.prospects.save')}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

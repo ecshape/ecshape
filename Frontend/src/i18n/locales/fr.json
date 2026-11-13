@@ -1470,7 +1470,8 @@
       "site": "Mon site",
       "seo": "COM / SEO",
       "qa": "Atelier QA",
-      "preferences": "Préférences"
+      "preferences": "Préférences",
+      "settings": "Paramètres"
     },
     "prospects": {
       "title": "Prospects",
@@ -1504,7 +1505,9 @@
       "askAgent": "Rédiger une réponse avec Agent EC",
       "name": "Nom",
       "phone": "Téléphone",
-      "newCount": "{{count}} nouveaux"
+      "newCount": "{{count}} nouveaux",
+      "new": "Nouveau prospect",
+      "emailLabel": "E-mail"
     },
     "agent": {
       "title": "Agent EC",
@@ -1633,6 +1636,113 @@
       "preferred": "Préférée",
       "deleteConfirm": "Supprimer cette clé ?",
       "keySaved": "Clé enregistrée"
+    }
+  },
+  "agent": {
+    "openAria": "Ouvrir l’Agent EC",
+    "openTitle": "Agent EC : cliquez ou tirez-le",
+    "release": "Relâchez pour ouvrir",
+    "newConversation": "Nouvelle conversation",
+    "resize": "Glisser pour ajuster la largeur",
+    "hello": "Salut {{name}} !",
+    "helloNoName": "Salut !",
+    "welcome": "Demande ce que tu veux : je peux aussi le faire pour toi, sur la bonne page.",
+    "recommendations": "Recommandations",
+    "rec": {
+      "leads": "{{count}} nouveaux prospects attendent un appel",
+      "silent": "{{count}} clients sans check-in depuis 3 jours ({{names}})",
+      "qa": "{{count}} tickets QA prioritaires ouverts",
+      "seo": "Description Google manquante : {{langs}}"
+    },
+    "recPrompt": {
+      "leads": "Quels nouveaux prospects appeler en premier, et que leur dire ?",
+      "silent": "Quels clients n’ont pas fait leur check-in depuis 3 jours ? Rédige un court message motivant pour chacun.",
+      "qa": "Trie les tickets QA prioritaires et propose ce qu’il faut corriger en premier.",
+      "seo": "Rédige les titres et descriptions Google manquants du site et propose-les."
+    },
+    "capabilities": [
+      "Qualifie mes nouveaux prospects",
+      "Résume cette page",
+      "Rédige un post Instagram pour cette semaine",
+      "Quels clients ont besoin d’attention aujourd’hui ?",
+      "Améliore le texte d’accueil de mon site"
+    ],
+    "prompts": {
+      "dashboard": [
+        "Que dois-je faire en priorité aujourd’hui ?",
+        "Quels clients ont besoin d’attention aujourd’hui ?"
+      ],
+      "prospects": [
+        "Quels prospects appeler en premier ?",
+        "Rédige une réponse WhatsApp au dernier prospect"
+      ],
+      "site": [
+        "Améliore le texte d’accueil de mon site",
+        "Réécris les réponses de la FAQ plus clairement"
+      ],
+      "seo": [
+        "Rédige mon titre et ma description Google",
+        "Propose 5 idées d’articles pour le SEO"
+      ],
+      "qa": [
+        "Trie les tickets par priorité",
+        "Reformule clairement le ticket sélectionné"
+      ],
+      "settings": [
+        "Quel modèle IA choisir ?",
+        "À quoi servent mes clés IA ?"
+      ],
+      "client": [
+        "Résume les deux dernières semaines de ce client",
+        "Rédige un message motivant pour ce client"
+      ],
+      "banks": [
+        "Explique-moi cette page",
+        "Que manque-t-il dans ma banque ?"
+      ]
+    },
+    "placeholder": "Demande ce que tu veux…",
+    "send": "Envoyer",
+    "thinking": "L’Agent EC réfléchit…",
+    "noAnswer": "L’Agent EC n’a pas pu répondre.",
+    "connectionLost": "Connexion perdue, réessaie.",
+    "model": "Modèle",
+    "auto": "Automatique",
+    "autoHint": "la meilleure clé selon la tâche",
+    "addModel": "Ajouter un modèle (clé IA)",
+    "confirm": "Confirmer",
+    "formOpened": "Formulaire ouvert",
+    "state": {
+      "running": "En cours…",
+      "done": "Fait",
+      "cancelled": "Annulé",
+      "failed": "Échec",
+      "pending": ""
+    },
+    "done": "Fait : {{what}}.",
+    "failed": "Je n’ai pas pu le faire : {{reason}}.",
+    "fix": {
+      "settings": "Ouvrir Paramètres → Clés IA"
+    },
+    "lang": {
+      "he": "hébreu",
+      "en": "anglais",
+      "fr": "français"
+    },
+    "op": {
+      "navigate": "Ouvrir {{href}}",
+      "form": {
+        "prospect": "Ouvrir le formulaire Nouveau prospect.",
+        "qa_ticket": "Ouvrir le formulaire Nouveau ticket QA.",
+        "client": "Ouvrir le formulaire Nouveau client."
+      },
+      "leadStatus": "Passer le prospect {{name}} en « {{status}} ».",
+      "leadNote": "Ajouter une note à {{name}} : « {{note}} ».",
+      "leadCreate": "Créer le prospect {{name}}. Aucun message ne lui est envoyé.",
+      "qaCreate": "Ouvrir le ticket QA « {{title}} » (priorité {{priority}}).",
+      "qaUpdate": "Mettre à jour le ticket {{title}} : {{change}}.",
+      "siteText": "Remplacer le texte du site ({{lang}}, {{path}}) par : « {{value}} ».",
+      "seoPage": "Définir la fiche Google ({{lang}}) : {{value}}."
     }
   }
 }

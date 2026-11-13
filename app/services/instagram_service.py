@@ -12,9 +12,10 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Bundled with the app code so it ships in the Docker image (data/ is not copied).
 _DEFAULT_RULES_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "data", "instagram_rules.json",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "instagram_rules.json",
 )
 
 _rules_cache = {"mtime": None, "path": None, "rules": []}
@@ -28,7 +29,10 @@ def _normalize(text: str) -> str:
 
 
 def load_rules() -> list:
-    path = os.getenv("INSTAGRAM_RULES_PATH", _DEFAULT_RULES_PATH)
+    path = os.getenv("INSTAGRAM_RULES_PATH") or _DEFAULT_RULES_PATH
+    if path != _DEFAULT_RULES_PATH and not os.path.exists(path):
+        logger.warning("Instagram rules file not found: %s, using bundled %s", path, _DEFAULT_RULES_PATH)
+        path = _DEFAULT_RULES_PATH
     try:
         mtime = os.path.getmtime(path)
     except OSError:

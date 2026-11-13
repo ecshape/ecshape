@@ -51,4 +51,11 @@ check("match -> reply+dm", res["reply"] and res["dm"] and len(calls) == 2)
 check("dedupe", not svc.handle_comment("c1", "plan", "1", client=mc)["matched"])
 check("no match", not svc.handle_comment("c2", "hello", "1", client=mc)["matched"])
 check("own comment ignored", not svc.handle_comment("c3", "plan", "999", client=mc)["matched"])
+
+# Missing configured path falls back to the rules file bundled in app/
+os.environ["INSTAGRAM_RULES_PATH"] = "data/does_not_exist.json"
+check("bundled rules file exists", os.path.exists(svc._DEFAULT_RULES_PATH))
+check("fallback loads bundled rules", len(svc.load_rules()) > 0)
+del os.environ["INSTAGRAM_RULES_PATH"]
+check("default path loads bundled rules", len(svc.load_rules()) > 0)
 sys.exit(1 if fails else 0)

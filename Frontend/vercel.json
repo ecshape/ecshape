@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://sb-1onfq6wgmvku.vercel.run/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://sb-1onfq6wgmvku.vercel.run/api/$1"
     },
     {
-      "source": "/uploads/:path*",
-      "destination": "https://sb-1onfq6wgmvku.vercel.run/uploads/:path*"
+      "source": "/uploads/(.*)",
+      "destination": "https://sb-1onfq6wgmvku.vercel.run/uploads/$1"
     },
     {
       "source": "/((?!assets/|.*\\.[a-zA-Z0-9]+$).*)",

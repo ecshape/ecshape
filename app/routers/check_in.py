@@ -156,40 +156,6 @@ def get_today_check_in(
     
     return check_in
 
-@router.get("/{check_in_id}", response_model=DailyCheckInResponse)
-def get_check_in(
-    check_in_id: int,
-    current_user: UserResponse = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """בדיקה ספציפית"""
-    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
-    
-    if not check_in:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Check-in not found"
-        )
-    
-    # בדיקת הרשאות
-    if current_user.role == UserRole.CLIENT:
-        if check_in.client_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view your own check-ins"
-            )
-    elif current_user.role == UserRole.TRAINER:
-        # בדיקה שהלקוח שייך למאמן
-        client = db.query(User).filter(User.id == check_in.client_id).first()
-        if not client or client.trainer_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view check-ins for your clients"
-            )
-    # ADMIN יכול לראות הכל
-    
-    return check_in
-
 @router.get("/summary", response_model=CheckInSummary)
 def get_check_in_summary(
     client_id: Optional[int] = Query(None, description="Client ID (for trainers)"),
@@ -347,6 +313,41 @@ def get_check_in_summary(
             first_check_in=None,
             last_check_in=None
         )
+
+
+@router.get("/{check_in_id}", response_model=DailyCheckInResponse)
+def get_check_in(
+    check_in_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """בדיקה ספציפית"""
+    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
+    
+    if not check_in:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Check-in not found"
+        )
+    
+    # בדיקת הרשאות
+    if current_user.role == UserRole.CLIENT:
+        if check_in.client_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view your own check-ins"
+            )
+    elif current_user.role == UserRole.TRAINER:
+        # בדיקה שהלקוח שייך למאמן
+        client = db.query(User).filter(User.id == check_in.client_id).first()
+        if not client or client.trainer_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view check-ins for your clients"
+            )
+    # ADMIN יכול לראות הכל
+    
+    return check_in
 
 @router.get("/trainer/dashboard", response_model=List[dict])
 def get_trainer_dashboard(

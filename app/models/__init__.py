@@ -91,3 +91,6 @@ __all__ = [
     "WorkoutSplitType",
     "DayType",
 ]
+
+# Trainer studio (prospects, site content, QA)
+from app.models.studio import Lead, SiteSetting, QaTicket, QaComment

@@ -29,6 +29,7 @@ class ExerciseUpdate(BaseModel):
 
 class ExerciseResponse(ExerciseBase):
     id: int
+    library_id: Optional[str] = None
     created_by: int
     created_at: datetime
 

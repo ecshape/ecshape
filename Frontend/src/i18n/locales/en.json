@@ -917,7 +917,11 @@
     "importReviewMuscleGroup": "Muscle Group",
     "confirmImport": "Confirm Import",
     "selectFileToImport": "Please select a file to import",
-    "errorImport": "Failed to import exercises"
+    "errorImport": "Failed to import exercises",
+    "createWorkoutSplit": "Create a workout split",
+    "noExercises": "No exercises",
+    "noExercisesFiltered": "No exercise matches your search",
+    "noExercisesDescription": "Your bank is empty. Add exercises from the pro library or create your own."
   },
   "foodBank": {
     "title": "Food Bank",
@@ -1784,6 +1788,64 @@
       "qaUpdate": "Update ticket {{title}}: {{change}}.",
       "siteText": "Change the site text ({{lang}}, {{path}}) to: “{{value}}”.",
       "seoPage": "Set the Google listing ({{lang}}): {{value}}."
+    }
+  },
+  "exerciseLibrary": {
+    "open": "Pro exercise library",
+    "title": "Exercise library",
+    "subtitle": "{{count}} professional exercises with animated demos, target muscles and step-by-step instructions.",
+    "search": "Search: bench press, squat, curl…",
+    "allMuscles": "All muscles",
+    "allEquipment": "All equipment",
+    "results": "{{count}} exercises",
+    "empty": "No exercise matches these filters.",
+    "more": "Show more ({{count}} left)",
+    "select": "Select",
+    "inBank": "In my bank",
+    "selected": "{{count}} selected",
+    "clear": "Clear",
+    "addToBank": "Add {{count}} to my bank",
+    "addOne": "Add to my bank",
+    "imported": "{{count}} exercises added to your bank",
+    "credit": "Library: free-exercise-db (public domain).",
+    "level": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "expert": "Advanced"
+    },
+    "muscle": {
+      "chest": "Chest",
+      "shoulders": "Shoulders",
+      "lats": "Lats",
+      "middle back": "Middle back",
+      "lower back": "Lower back",
+      "traps": "Traps",
+      "biceps": "Biceps",
+      "triceps": "Triceps",
+      "forearms": "Forearms",
+      "abdominals": "Abs",
+      "quadriceps": "Quads",
+      "hamstrings": "Hamstrings",
+      "glutes": "Glutes",
+      "calves": "Calves",
+      "adductors": "Adductors",
+      "abductors": "Abductors",
+      "neck": "Neck",
+      "other": "Other"
+    },
+    "equipment": {
+      "body only": "Bodyweight",
+      "machine": "Machine",
+      "other": "Other",
+      "barbell": "Barbell",
+      "dumbbell": "Dumbbell",
+      "cable": "Cable",
+      "kettlebells": "Kettlebell",
+      "bands": "Bands",
+      "medicine ball": "Medicine ball",
+      "exercise ball": "Swiss ball",
+      "foam roll": "Foam roller",
+      "e-z curl bar": "EZ bar"
     }
   }
 }

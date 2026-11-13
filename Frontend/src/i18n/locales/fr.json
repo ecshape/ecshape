@@ -711,7 +711,11 @@
     "importReviewMuscleGroup": "Groupe musculaire",
     "confirmImport": "Confirmer l’import",
     "selectFileToImport": "Choisis un fichier à importer",
-    "errorImport": "Impossible d’importer les exercices"
+    "errorImport": "Impossible d’importer les exercices",
+    "createWorkoutSplit": "Créer un split d’entraînement",
+    "noExercises": "Aucun exercice",
+    "noExercisesFiltered": "Aucun exercice ne correspond à ta recherche",
+    "noExercisesDescription": "Ta banque est vide. Ajoute des exercices depuis la bibliothèque pro ou crée les tiens."
   },
   "foodBank": {
     "title": "Banque d’aliments",
@@ -1784,6 +1788,64 @@
       "qaUpdate": "Mettre à jour le ticket {{title}} : {{change}}.",
       "siteText": "Remplacer le texte du site ({{lang}}, {{path}}) par : « {{value}} ».",
       "seoPage": "Définir la fiche Google ({{lang}}) : {{value}}."
+    }
+  },
+  "exerciseLibrary": {
+    "open": "Bibliothèque pro d’exercices",
+    "title": "Bibliothèque d’exercices",
+    "subtitle": "{{count}} exercices professionnels avec démos animées, muscles ciblés et instructions pas à pas.",
+    "search": "Rechercher : développé couché, squat, curl…",
+    "allMuscles": "Tous les muscles",
+    "allEquipment": "Tout le matériel",
+    "results": "{{count}} exercices",
+    "empty": "Aucun exercice ne correspond à ces filtres.",
+    "more": "Afficher plus ({{count}} restants)",
+    "select": "Sélectionner",
+    "inBank": "Dans ma banque",
+    "selected": "{{count}} sélectionnés",
+    "clear": "Effacer",
+    "addToBank": "Ajouter {{count}} à ma banque",
+    "addOne": "Ajouter à ma banque",
+    "imported": "{{count}} exercices ajoutés à ta banque",
+    "credit": "Bibliothèque : free-exercise-db (domaine public).",
+    "level": {
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "expert": "Avancé"
+    },
+    "muscle": {
+      "chest": "Pectoraux",
+      "shoulders": "Épaules",
+      "lats": "Grands dorsaux",
+      "middle back": "Milieu du dos",
+      "lower back": "Bas du dos",
+      "traps": "Trapèzes",
+      "biceps": "Biceps",
+      "triceps": "Triceps",
+      "forearms": "Avant-bras",
+      "abdominals": "Abdos",
+      "quadriceps": "Quadriceps",
+      "hamstrings": "Ischios",
+      "glutes": "Fessiers",
+      "calves": "Mollets",
+      "adductors": "Adducteurs",
+      "abductors": "Abducteurs",
+      "neck": "Cou",
+      "other": "Autre"
+    },
+    "equipment": {
+      "body only": "Poids du corps",
+      "machine": "Machine",
+      "other": "Autre",
+      "barbell": "Barre",
+      "dumbbell": "Haltère",
+      "cable": "Poulie",
+      "kettlebells": "Kettlebell",
+      "bands": "Élastiques",
+      "medicine ball": "Médecine-ball",
+      "exercise ball": "Swiss ball",
+      "foam roll": "Rouleau",
+      "e-z curl bar": "Barre EZ"
     }
   }
 }

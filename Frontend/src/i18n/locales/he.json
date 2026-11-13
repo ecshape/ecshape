@@ -936,7 +936,11 @@
     "importReviewMuscleGroup": "קבוצת שריר",
     "confirmImport": "אשר ייבוא",
     "selectFileToImport": "אנא בחר קובץ לייבוא",
-    "errorImport": "נכשל בייבוא תרגילים"
+    "errorImport": "נכשל בייבוא תרגילים",
+    "createWorkoutSplit": "צור פיצול אימון",
+    "noExercises": "אין תרגילים",
+    "noExercisesFiltered": "לא נמצאו תרגילים התואמים לחיפוש שלך",
+    "noExercisesDescription": "הבנק ריק. הוסיפו תרגילים מהספרייה המקצועית או צרו תרגיל משלכם."
   },
   "foodBank": {
     "title": "בנק אוכל",
@@ -1771,6 +1775,64 @@
       "qaUpdate": "עדכון הפנייה {{title}}: {{change}}.",
       "siteText": "שינוי טקסט באתר ({{lang}}, {{path}}) ל: „{{value}}”.",
       "seoPage": "עדכון התצוגה בגוגל ({{lang}}): {{value}}."
+    }
+  },
+  "exerciseLibrary": {
+    "open": "ספריית תרגילים מקצועית",
+    "title": "ספריית תרגילים",
+    "subtitle": "{{count}} תרגילים מקצועיים עם הדגמה מונפשת, שרירי מטרה והוראות צעד אחר צעד.",
+    "search": "חיפוש: bench press, squat, curl…",
+    "allMuscles": "כל השרירים",
+    "allEquipment": "כל הציוד",
+    "results": "{{count}} תרגילים",
+    "empty": "אין תרגיל שמתאים לסינון.",
+    "more": "הצגת עוד ({{count}} נותרו)",
+    "select": "בחירה",
+    "inBank": "בבנק שלי",
+    "selected": "{{count}} נבחרו",
+    "clear": "ניקוי",
+    "addToBank": "הוספת {{count}} לבנק שלי",
+    "addOne": "הוספה לבנק שלי",
+    "imported": "{{count}} תרגילים נוספו לבנק שלך",
+    "credit": "ספרייה: free-exercise-db (נחלת הכלל).",
+    "level": {
+      "beginner": "מתחיל",
+      "intermediate": "בינוני",
+      "expert": "מתקדם"
+    },
+    "muscle": {
+      "chest": "חזה",
+      "shoulders": "כתפיים",
+      "lats": "רחב גבי",
+      "middle back": "גב אמצעי",
+      "lower back": "גב תחתון",
+      "traps": "טרפזים",
+      "biceps": "יד קדמית",
+      "triceps": "יד אחורית",
+      "forearms": "אמות",
+      "abdominals": "בטן",
+      "quadriceps": "ארבע ראשי",
+      "hamstrings": "המסטרינג",
+      "glutes": "ישבן",
+      "calves": "תאומים",
+      "adductors": "מקרבים",
+      "abductors": "מרחיקים",
+      "neck": "צוואר",
+      "other": "אחר"
+    },
+    "equipment": {
+      "body only": "משקל גוף",
+      "machine": "מכונה",
+      "other": "אחר",
+      "barbell": "מוט",
+      "dumbbell": "משקולת יד",
+      "cable": "כבל",
+      "kettlebells": "קטלבל",
+      "bands": "גומיות",
+      "medicine ball": "כדור כוח",
+      "exercise ball": "כדור פיזיו",
+      "foam roll": "רולר",
+      "e-z curl bar": "מוט EZ"
     }
   }
 }

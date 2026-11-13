@@ -218,3 +218,6 @@ html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
   margin-bottom: 1rem;
   font-size: 0.95rem;
 }
+
+/* Hide the QA launcher while a modal dialog is open */
+body[data-scroll-locked] .ec-qa-fab-stack { opacity: 0; pointer-events: none; }

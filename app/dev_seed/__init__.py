@@ -25,9 +25,33 @@ def _password_for(role: str):
     return get_password_hash(raw) if raw else None
 
 
+DEMO_LIBRARY_LINKS = {
+    "Bench Press": "Barbell_Bench_Press_-_Medium_Grip", "Incline Dumbbell Press": "Incline_Dumbbell_Press",
+    "Overhead Press": "Standing_Military_Press", "Lateral Raise": "Side_Lateral_Raise",
+    "Triceps Pushdown": "Triceps_Pushdown", "Pull-Up": "Pullups", "Barbell Row": "Bent_Over_Barbell_Row",
+    "Biceps Curl": "Dumbbell_Bicep_Curl", "Back Squat": "Barbell_Squat", "Romanian Deadlift": "Romanian_Deadlift",
+    "Walking Lunge": "Barbell_Walking_Lunge", "Plank": "Plank",
+}
+
+
+def _backfill_library_links(engine) -> None:
+    """Idempotent: give the demo exercises their library demo frames."""
+    try:
+        with engine.begin() as conn:
+            for name, lid in DEMO_LIBRARY_LINKS.items():
+                conn.execute(text("update exercises set library_id = :l where name = :n and library_id is null"), {"l": lid, "n": name})
+    except Exception as e:
+        logger.error("dev seed backfill failed: %s", e)
+
+
 def run_if_enabled(engine) -> None:
     if os.getenv("DEV_DEMO_SEED") != "1":
         return
+    _run_seed(engine)
+    _backfill_library_links(engine)
+
+
+def _run_seed(engine) -> None:
     try:
         with engine.begin() as conn:
             has_trainer = conn.execute(text("select count(*) from users where upper(cast(role as text)) = 'TRAINER'")).scalar()

@@ -272,6 +272,9 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️ Continuing startup despite migration errors...")
         logger.warning("⚠️ Some schema changes may not be applied. Check logs for details.")
     
+    from app.routers.exercise_library import ensure_library_column
+    ensure_library_column(engine)
+
     # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
     from app.dev_seed import run_if_enabled as run_dev_seed
     run_dev_seed(engine)
@@ -732,6 +735,8 @@ try:
     
     logger.info("Including muscle_groups router...")
     app.include_router(muscle_groups.router, prefix="/api/muscle-groups", tags=["Muscle Groups"])
+    from app.routers import exercise_library
+    app.include_router(exercise_library.router, prefix="/api/exercise-library", tags=["Exercise library"])
     logger.info("✅ Muscle groups router included")
     
     logger.info("Including workout_splits router...")

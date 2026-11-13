@@ -11,11 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { 
-  Dumbbell, Plus, Search, Filter, Edit, Trash2, 
+import {
+  Dumbbell, Plus, Search, Filter, Edit, Trash2,
   Video, FileText, Tag, Clock, Weight, Settings, Save, X, Image as ImageIcon,
-  Download, Upload
+  Download, Upload, Library, Sparkles
 } from 'lucide-react';
+import { ExerciseLibrary, LevelBars } from '@/components/exercises/ExerciseLibrary';
+import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
+import { libraryFrames } from '@/lib/exerciseLibrary';
+import '@/styles/exercises.css';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { useToast } from '../hooks/use-toast';
@@ -35,12 +39,23 @@ interface Exercise {
   video_url?: string;
   image_path?: string;
   category?: string;
+  library_id?: string | null;
   created_by: number;
   created_at: string;
 }
 
+/** Demo frames for a bank exercise: library animation, uploaded image, or none. */
+const exerciseFrames = (e: Exercise): string[] => {
+  if (e.library_id) return libraryFrames(e.library_id);
+  if (!e.image_path) return [];
+  if (/^https?:\/\//.test(e.image_path) || e.image_path.startsWith(API_BASE_URL)) return [e.image_path];
+  const file = e.image_path.split('/').pop() || e.image_path.split('\\').pop();
+  return [`${API_BASE_URL}/files/media/exercise_images/${file}`];
+};
+const levelOf = (e: Exercise) => (/\bexpert\b/.test(e.description || '') ? 'expert' : /\bintermediate\b/.test(e.description || '') ? 'intermediate' : /\bbeginner\b/.test(e.description || '') ? 'beginner' : '');
+
 const staticMuscleGroups = [
-  'chest', 'back', 'shoulders', 'biceps', 'triceps', 
+  'chest', 'back', 'shoulders', 'biceps', 'triceps',
   'legs', 'glutes', 'core', 'cardio', 'full body'
 ];
 
@@ -96,6 +111,8 @@ const ExerciseBank = () => {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
+  const [libraryOpen, setLibraryOpen] = useState(false);
+
   const fetchExercises = async () => {
     try {
       setLoading(true);
@@ -107,7 +124,7 @@ const ExerciseBank = () => {
       const response = await fetch(`${API_BASE_URL}/exercises/`, {
         headers
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched exercises:', data);
@@ -186,7 +203,7 @@ const ExerciseBank = () => {
         });
         return;
       }
-      
+
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: t('common.error'),
@@ -195,10 +212,10 @@ const ExerciseBank = () => {
         });
         return;
       }
-      
+
       setImageFile(file);
       setImageRemoved(false); // Reset removal flag when new image is selected
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -209,21 +226,21 @@ const ExerciseBank = () => {
 
   const handleCreateExercise = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields and set errors
     const errors: Record<string, boolean> = {};
     let firstErrorField: string | null = null;
-    
+
     if (!exerciseForm.name || !exerciseForm.name.trim()) {
       errors.name = true;
       if (!firstErrorField) firstErrorField = 'name';
     }
-    
+
     if (!exerciseForm.muscle_group || !exerciseForm.muscle_group.trim()) {
       errors.muscle_group = true;
       if (!firstErrorField) firstErrorField = 'muscle_group';
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       // Scroll to first error field
@@ -238,13 +255,13 @@ const ExerciseBank = () => {
       }
       return;
     }
-    
+
     // Clear errors if validation passes
     setFieldErrors({});
-    
+
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // Prepare exercise data (without created_by - backend adds it)
       const exerciseData = {
         name: exerciseForm.name.trim(),
@@ -255,13 +272,13 @@ const ExerciseBank = () => {
         video_url: exerciseForm.video_url?.trim() || null,
         category: exerciseForm.category?.trim() || null,
       };
-      
+
       // If image is uploaded, use multipart/form-data
       if (imageFile) {
         const formDataToSend = new FormData();
         formDataToSend.append('exercise_json', JSON.stringify(exerciseData));
         formDataToSend.append('image', imageFile);
-        
+
         const response = await fetch(`${API_BASE_URL}/exercises/`, {
           method: 'POST',
           headers: {
@@ -343,21 +360,21 @@ const ExerciseBank = () => {
   const handleUpdateExercise = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingExercise) return;
-    
+
     // Validate required fields and set errors
     const errors: Record<string, boolean> = {};
     let firstErrorField: string | null = null;
-    
+
     if (!exerciseForm.name || !exerciseForm.name.trim()) {
       errors.name = true;
       if (!firstErrorField) firstErrorField = 'name';
     }
-    
+
     if (!exerciseForm.muscle_group || !exerciseForm.muscle_group.trim()) {
       errors.muscle_group = true;
       if (!firstErrorField) firstErrorField = 'muscle_group';
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       // Scroll to first error field
@@ -372,24 +389,24 @@ const ExerciseBank = () => {
       }
       return;
     }
-    
+
     // Clear errors if validation passes
     setFieldErrors({});
-    
+
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // If new image is uploaded, use multipart/form-data
       if (imageFile) {
         const exerciseData = {
           ...exerciseForm,
           video_url: exerciseForm.video_url || null,
         };
-        
+
         const formDataToSend = new FormData();
         formDataToSend.append('exercise_json', JSON.stringify(exerciseData));
         formDataToSend.append('image', imageFile);
-        
+
         const response = await fetch(`${API_BASE_URL}/exercises/${editingExercise.id}`, {
           method: 'PUT',
           headers: {
@@ -400,7 +417,7 @@ const ExerciseBank = () => {
 
         if (response.ok) {
           const updatedExercise = await response.json();
-          setExercises(exercises.map(ex => 
+          setExercises(exercises.map(ex =>
             ex.id === updatedExercise.id ? updatedExercise : ex
           ));
           setEditingExercise(null);
@@ -425,7 +442,7 @@ const ExerciseBank = () => {
           video_url: exerciseForm.video_url || null,
           ...(imageRemoved && editingExercise?.image_path ? { image_path: null } : {})
         };
-        
+
         const response = await fetch(`${API_BASE_URL}/exercises/${editingExercise.id}`, {
           method: 'PUT',
           headers: {
@@ -437,7 +454,7 @@ const ExerciseBank = () => {
 
         if (response.ok) {
           const updatedExercise = await response.json();
-          setExercises(exercises.map(ex => 
+          setExercises(exercises.map(ex =>
             ex.id === updatedExercise.id ? updatedExercise : ex
           ));
           setEditingExercise(null);
@@ -467,7 +484,7 @@ const ExerciseBank = () => {
 
   const handleDeleteExercise = async (exerciseId: number) => {
     if (!confirm(t('exerciseBank.deleteConfirm'))) return;
-    
+
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_BASE_URL}/exercises/${exerciseId}`, {
@@ -500,7 +517,7 @@ const ExerciseBank = () => {
         } catch (parseError) {
           console.error('Error parsing error response:', parseError);
         }
-        
+
         toast({
           title: t('common.error'),
           description: errorMessage,
@@ -686,7 +703,7 @@ const ExerciseBank = () => {
       video_url: exercise.video_url || '',
       category: exercise.category || ''
     });
-    
+
     // Set media type based on what exists
     setImageRemoved(false); // Reset removal flag when starting to edit
     if (exercise.video_url) {
@@ -869,15 +886,20 @@ const ExerciseBank = () => {
             <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>
           </div>
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto min-w-0 flex-shrink-0">
-            <Button 
-              onClick={() => setCreateDialogOpen(true)} 
-              className="gradient-green w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
+            <Button onClick={() => setLibraryOpen(true)} className="ec-exlib-cta w-full md:w-auto whitespace-nowrap">
+              <Library className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{t('exerciseLibrary.open')}</span>
+            </Button>
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              variant="outline"
+              className="w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
             >
               <Plus className="w-4 h-4 me-2 flex-shrink-0" />
               <span className="truncate">{t('exerciseBank.addExercise')}</span>
             </Button>
-            <Button 
-              onClick={() => navigate('/create-workout-plan-v2?createSplit=true')} 
+            <Button
+              onClick={() => navigate('/create-workout-plan-v2?createSplit=true')}
               variant="outline"
               className="w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
             >
@@ -886,8 +908,8 @@ const ExerciseBank = () => {
             </Button>
             <Dialog open={muscleGroupDialogOpen} onOpenChange={setMuscleGroupDialogOpen}>
               <DialogTrigger asChild>
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   className="w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
                 >
@@ -1105,15 +1127,21 @@ const ExerciseBank = () => {
                 <Dumbbell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-semibold mb-2">{t('exerciseBank.noExercises', 'אין תרגילים')}</p>
                 <p className="text-muted-foreground mb-4">
-                  {searchTerm || selectedMuscleGroup !== 'all' 
+                  {searchTerm || selectedMuscleGroup !== 'all'
                     ? t('exerciseBank.noExercisesFiltered', 'לא נמצאו תרגילים התואמים לחיפוש שלך')
                     : t('exerciseBank.noExercisesDescription', 'עדיין לא נוצרו תרגילים. צור תרגיל חדש כדי להתחיל.')}
                 </p>
                 {!searchTerm && selectedMuscleGroup === 'all' && (
-                  <Button onClick={() => setCreateDialogOpen(true)} className="gradient-green">
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t('exerciseBank.addExercise')}
-                  </Button>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button onClick={() => setLibraryOpen(true)}>
+                      <Sparkles className="w-4 h-4" />
+                      {t('exerciseLibrary.open')}
+                    </Button>
+                    <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
+                      <Plus className="w-4 h-4" />
+                      {t('exerciseBank.addExercise')}
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1125,67 +1153,75 @@ const ExerciseBank = () => {
                   {getMuscleGroupDisplayName(muscleGroup)}
                   <Badge variant="secondary" className="ms-2">{groupExercises.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupExercises.map((exercise) => (
-                    <Card key={exercise.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span className="text-lg">{exercise.name}</span>
-                          <div className="flex gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => startEdit(exercise)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDeleteExercise(exercise.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
+                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {groupExercises.map((exercise, idx) => {
+                    const frames = exerciseFrames(exercise);
+                    const level = levelOf(exercise);
+                    return (
+                      <article
+                        key={exercise.id}
+                        style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                        className="ec-excard group relative overflow-hidden rounded-[1.4rem] border border-border/60 bg-card transition-all duration-500"
+                      >
+                        {frames.length > 0 && <ExerciseDemo frames={frames} alt={exercise.name} className="aspect-[16/10] w-full" />}
+                        <div className="absolute end-2.5 top-2.5 flex gap-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100 focus-within:opacity-100 max-md:opacity-100">
+                          <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white/90 text-neutral-800 shadow hover:bg-white" onClick={() => startEdit(exercise)} aria-label={t('common.edit', 'Edit')}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white/90 text-destructive shadow hover:bg-white" onClick={() => handleDeleteExercise(exercise.id)} aria-label={t('common.delete', 'Delete')}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <div className="space-y-2.5 p-4">
+                          <div className="flex items-start gap-2">
+                            {frames.length === 0 && (
+                              <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-primary/12 text-primary"><Dumbbell className="h-5 w-5" /></span>
+                            )}
+                            <h3 className="min-w-0 flex-1 text-lg font-bold leading-snug">{exercise.name}</h3>
+                            {level && <span className="mt-1.5"><LevelBars level={level} /></span>}
                           </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <p className="text-sm text-muted-foreground">{exercise.description}</p>
-                        
-                        {exercise.equipment_needed && (
-                          <div className="flex items-center text-sm">
-                            <Weight className="w-4 h-4 me-2 text-muted-foreground" />
-                            <span>{exercise.equipment_needed}</span>
+                          <div className="flex flex-wrap gap-1.5 text-xs">
+                            <span className="rounded-full bg-primary/12 px-2.5 py-0.5 font-semibold text-primary">{getMuscleGroupDisplayName(exercise.muscle_group)}</span>
+                            {exercise.equipment_needed && (
+                              <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-muted-foreground">
+                                <Weight className="h-3 w-3" />
+                                {t(`exerciseLibrary.equipment.${exercise.equipment_needed}`, { defaultValue: exercise.equipment_needed })}
+                              </span>
+                            )}
+                            {exercise.video_url && (
+                              <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-primary hover:underline">
+                                <Video className="h-3 w-3" />
+                                {t('exerciseBank.videoTutorial')}
+                              </a>
+                            )}
                           </div>
-                        )}
-                        
-                        {exercise.video_url && (
-                          <div className="flex items-center text-sm">
-                            <Video className="w-4 h-4 me-2 text-muted-foreground" />
-                            <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" 
-                               className="text-primary hover:underline">
-                              {t('exerciseBank.videoTutorial')}
-                            </a>
-                          </div>
-                        )}
-                        
-                        {exercise.instructions && (
-                          <div className="flex items-start text-sm">
-                            <FileText className="w-4 h-4 me-2 text-muted-foreground mt-0.5" />
-                            <p className="text-muted-foreground line-clamp-2">{exercise.instructions}</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                          {exercise.instructions && (
+                            <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <FileText className="mt-0.5 h-4 w-4 flex-none" />
+                              <span className="line-clamp-2">{exercise.instructions}</span>
+                            </p>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </div>
             ))
           )}
         </div>
 
+        <ExerciseLibrary
+          open={libraryOpen}
+          onOpenChange={setLibraryOpen}
+          onImported={(n) => {
+            toast({ title: t('exerciseLibrary.imported', { count: n }) });
+            fetchExercises();
+          }}
+        />
+
         {/* Create/Edit Exercise Dialog */}
-        <Dialog open={createDialogOpen || !!editingExercise} 
+        <Dialog open={createDialogOpen || !!editingExercise}
                 onOpenChange={(open) => {
                   if (!open) {
                     setCreateDialogOpen(false);
@@ -1200,12 +1236,12 @@ const ExerciseBank = () => {
                 {editingExercise ? t('exerciseBank.editExercise') : t('exerciseBank.addNewExercise')}
               </DialogTitle>
               <DialogDescription className="text-sm">
-                {editingExercise 
+                {editingExercise
                   ? t('exerciseBank.editDescription')
                   : t('exerciseBank.createDescription')}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={editingExercise ? handleUpdateExercise : handleCreateExercise} 
+            <form onSubmit={editingExercise ? handleUpdateExercise : handleCreateExercise}
                   className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -1230,8 +1266,8 @@ const ExerciseBank = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="muscle_group" className="text-sm">{t('exerciseBank.muscleGroup')}</Label>
-                  <Select 
-                    value={exerciseForm.muscle_group} 
+                  <Select
+                    value={exerciseForm.muscle_group}
                     onValueChange={(value) => {
                       setExerciseForm({...exerciseForm, muscle_group: value});
                       // Clear error when user selects a value
@@ -1240,7 +1276,7 @@ const ExerciseBank = () => {
                       }
                     }}
                   >
-                    <SelectTrigger 
+                    <SelectTrigger
                       id="muscle_group"
                       className={`h-9 text-sm ${fieldErrors.muscle_group ? 'border-destructive focus:ring-destructive' : ''}`}
                     >
@@ -1259,7 +1295,7 @@ const ExerciseBank = () => {
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="description" className="text-sm">{t('exerciseBank.description')}</Label>
                 <Textarea
@@ -1272,7 +1308,7 @@ const ExerciseBank = () => {
                   required
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="equipment_needed" className="text-sm">{t('exerciseBank.equipmentNeeded')}</Label>
@@ -1289,9 +1325,9 @@ const ExerciseBank = () => {
                     {mediaType === 'video' ? t('exerciseBank.videoUrl') : t('exerciseBank.exerciseImageOptional')}
                   </Label>
                   <div className="flex gap-2 items-center">
-                    <ToggleGroup 
-                      type="single" 
-                      value={mediaType} 
+                    <ToggleGroup
+                      type="single"
+                      value={mediaType}
                       onValueChange={(value) => {
                         if (value === 'video' || value === 'image') {
                           setMediaType(value);
@@ -1370,7 +1406,7 @@ const ExerciseBank = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="category" className="text-sm">{t('exerciseBank.category')}</Label>
                 <Input
@@ -1381,7 +1417,7 @@ const ExerciseBank = () => {
                   className="h-9 text-sm"
                 />
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="instructions" className="text-sm">{t('exerciseBank.instructions')}</Label>
                 <Textarea
@@ -1393,7 +1429,7 @@ const ExerciseBank = () => {
                   className="text-sm resize-none"
                 />
               </div>
-              
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button
                   type="button"
@@ -1433,4 +1469,4 @@ const ExerciseBank = () => {
   );
 };
 
-export default ExerciseBank; 
+export default ExerciseBank;

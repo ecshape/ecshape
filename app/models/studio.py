@@ -69,4 +69,6 @@ class TrainerAiKey(Base):
     key_ciphertext = Column(Text, nullable=False)
     key_last4 = Column(String(8), nullable=False)
     is_preferred = Column(Integer, nullable=False, default=0)  # 0/1 for SQLite friendliness
+    model = Column(String(120), nullable=True)      # chosen model for this provider
+    base_url = Column(String(300), nullable=True)   # OpenAI-compatible endpoint for custom providers
     created_at = Column(DateTime, default=func.now())

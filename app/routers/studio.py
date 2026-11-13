@@ -315,39 +315,187 @@ def delete_ticket(ticket_id: int, user: UserResponse = Depends(require_studio), 
 
 
 # ---- Agent EC
+from app.database import engine as _db_engine  # noqa: E402
+from app.services.ai_keys import ensure_columns as _ensure_ai_key_columns  # noqa: E402
+
+_ensure_ai_key_columns(_db_engine)
+
+
 class ChatTurn(BaseModel):
     role: Literal["user", "assistant"]
     content: str = Field(..., max_length=20000)
 
 
+class PageContext(BaseModel):
+    path: Optional[str] = Field(None, max_length=300)
+    title: Optional[str] = Field(None, max_length=300)
+    snapshot: Optional[str] = Field(None, max_length=12000)
+    selection: Optional[str] = Field(None, max_length=4000)
+
+
 class AgentChatIn(BaseModel):
     messages: List[ChatTurn] = Field(..., min_length=1, max_length=60)
     lang: Optional[str] = "he"
-    page: Optional[str] = None
+    page: Optional[PageContext] = None
+    provider: Optional[str] = "auto"  # "auto" or an AI key id
 
 
 @router.post("/agent/chat")
 def agent_chat(payload: AgentChatIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
-    from app.services.agent_ec import run_agent, AgentUnavailable
+    from app.services.agent_ec import AgentUnavailable, run_agent
     try:
-        return run_agent(db, user, [t.model_dump() for t in payload.messages], lang=payload.lang or "he", page=payload.page)
+        return {"ok": True, **run_agent(db, user, [t.model_dump() for t in payload.messages], lang=payload.lang or "he",
+                                         page=payload.page.model_dump() if payload.page else None, provider=payload.provider)}
     except AgentUnavailable as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        return {"ok": False, "error": str(e), "fix": e.fix}
 
 
 @router.get("/agent/status")
 def agent_status(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
-    from app.services.ai_keys import has_any_key, resolve_anthropic_key
-    return {
-        "configured": bool(resolve_anthropic_key(db, user.id)),
-        "has_user_keys": has_any_key(db, user.id),
-    }
+    from app.services.ai_keys import resolve_engine
+    eng = resolve_engine(db, user.id)
+    return {"configured": bool(eng), "engine": eng.label if eng else None, "source": eng.source if eng else "none"}
 
 
+class AgentOpIn(BaseModel):
+    op: Dict[str, Any]
+
+
+def _set_path(obj: Dict[str, Any], path: str, value: Any) -> Dict[str, Any]:
+    parts = [p for p in str(path).split(".") if p]
+    if not parts:
+        raise HTTPException(status_code=422, detail="Empty path")
+    node: Any = obj
+    for i, p in enumerate(parts[:-1]):
+        nxt_is_index = parts[i + 1].isdigit()
+        if isinstance(node, list) and p.isdigit():
+            idx = int(p)
+            while len(node) <= idx:
+                node.append({} if not nxt_is_index else [])
+            node = node[idx]
+        else:
+            if not isinstance(node.get(p), (dict, list)):
+                node[p] = [] if nxt_is_index else {}
+            node = node[p]
+    last = parts[-1]
+    if isinstance(node, list) and last.isdigit():
+        idx = int(last)
+        while len(node) <= idx:
+            node.append("")
+        node[idx] = value
+    else:
+        node[last] = value
+    return obj
+
+
+@router.post("/agent/execute")
+def agent_execute(payload: AgentOpIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """Run one action the trainer confirmed in the Agent EC panel. Same validation as the studio pages."""
+    op = payload.op or {}
+    kind = op.get("kind")
+    if kind == "lead.update":
+        lead = db.query(Lead).get(int(op.get("leadId") or 0))
+        if not lead:
+            raise HTTPException(status_code=404, detail="Prospect not found")
+        if op.get("status") in LEAD_STATUSES:
+            lead.status = op["status"]
+        if op.get("note"):
+            lead.notes = ((lead.notes or "") + f"\n[{datetime.now():%Y-%m-%d} · Agent EC] {str(op['note'])[:2000]}").strip()
+        db.commit()
+        return {"ok": True, "lead": lead_dict(lead)}
+    if kind == "lead.create":
+        data = LeadIn(**{k: v for k, v in (op.get("lead") or {}).items() if k in ("name", "phone", "email", "goal", "program") and v})
+        notes = (op.get("lead") or {}).get("notes")
+        lead = Lead(**data.model_dump(exclude={"website"}), status="new", source="agent-ec", notes=notes)
+        db.add(lead)
+        db.commit()
+        return {"ok": True, "lead": lead_dict(lead)}
+    if kind == "qa.create":
+        t = op.get("ticket") or {}
+        data = TicketIn(title=str(t.get("title") or "")[:200], body=t.get("body"), page=t.get("page"), priority=t.get("priority") if t.get("priority") in QA_PRIORITIES else "normal")
+        ticket = QaTicket(**data.model_dump(), status="new", created_by=user.id)
+        db.add(ticket)
+        db.commit()
+        return {"ok": True, "ticket": ticket_dict(ticket, db)}
+    if kind == "qa.update":
+        ticket = db.query(QaTicket).get(int(op.get("ticketId") or 0))
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        if op.get("status") in QA_STATUSES:
+            ticket.status = op["status"]
+        if op.get("priority") in QA_PRIORITIES:
+            ticket.priority = op["priority"]
+        db.commit()
+        return {"ok": True, "ticket": ticket_dict(ticket, db)}
+    if kind == "site.text":
+        lang = op.get("lang")
+        if lang not in LANGS or not isinstance(op.get("value"), str):
+            raise HTTPException(status_code=422, detail="Invalid site text")
+        content = _set_path(get_setting(db, f"content:{lang}"), op.get("path", ""), op["value"][:4000])
+        put_setting(db, f"content:{lang}", content, user.id)
+        return {"ok": True}
+    if kind == "seo.page":
+        lang = op.get("lang")
+        if lang not in LANGS:
+            raise HTTPException(status_code=422, detail="Invalid language")
+        seo = get_setting(db, "seo")
+        pages = seo.setdefault("pages", {})
+        page = pages.setdefault(lang, {})
+        for k in ("title", "description", "keywords"):
+            if op.get(k):
+                page[k] = str(op[k])[:400]
+        put_setting(db, "seo", seo, user.id)
+        return {"ok": True}
+    raise HTTPException(status_code=422, detail="Unknown action")
+
+
+@router.get("/agent/recommendations")
+def agent_recommendations(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """Data-driven nudges shown on the agent's welcome screen (no AI call)."""
+    from datetime import timedelta
+    from app.models.check_in import DailyCheckIn
+
+    out: List[Dict[str, Any]] = []
+    new_leads = db.query(Lead).filter(Lead.status == "new").count()
+    if new_leads:
+        out.append({"id": "leads", "count": new_leads, "href": "/studio/prospects"})
+    q = db.query(User).filter(User.role == UserRole.CLIENT, User.is_active == True)  # noqa: E712
+    if user.role == UserRole.TRAINER:
+        q = q.filter(User.trainer_id == user.id)
+    since = datetime.now() - timedelta(days=3)
+    silent = [c for c in q.all() if not db.query(DailyCheckIn).filter(DailyCheckIn.client_id == c.id, DailyCheckIn.date >= since).first()]
+    if silent:
+        out.append({"id": "silent", "count": len(silent), "names": [c.full_name for c in silent[:3]], "href": "/trainer-dashboard"})
+    high = db.query(QaTicket).filter(QaTicket.status.in_(("new", "in_progress")), QaTicket.priority == "high").count()
+    if high:
+        out.append({"id": "qa", "count": high, "href": "/studio/qa"})
+    seo = get_setting(db, "seo")
+    missing = [l for l in LANGS if not ((seo.get("pages") or {}).get(l) or {}).get("description")]
+    if missing:
+        out.append({"id": "seo", "langs": missing, "href": "/studio/seo"})
+    return out
+
+
+# ---- AI keys (trainer only)
 class AiKeyIn(BaseModel):
     api_key: str = Field(..., min_length=12, max_length=500)
     label: Optional[str] = Field(None, max_length=80)
     provider: Optional[str] = Field(None, max_length=40)
+    model: Optional[str] = Field(None, max_length=120)
+    base_url: Optional[str] = Field(None, max_length=300)
+
+
+class AiKeyUpdate(BaseModel):
+    api_key: Optional[str] = Field(None, max_length=500)
+    label: Optional[str] = Field(None, max_length=80)
+    model: Optional[str] = Field(None, max_length=120)
+    base_url: Optional[str] = Field(None, max_length=300)
+
+
+@router.get("/ai-providers")
+def ai_providers(user: UserResponse = Depends(require_studio)):
+    from app.services.ai_providers import public_catalogue
+    return public_catalogue()
 
 
 @router.get("/ai-keys")
@@ -360,7 +508,18 @@ def list_ai_keys(user: UserResponse = Depends(require_studio), db: Session = Dep
 def create_ai_key(payload: AiKeyIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
     from app.services.ai_keys import add_key
     try:
-        return add_key(db, user.id, payload.api_key, payload.label, payload.provider)
+        return add_key(db, user.id, payload.api_key, payload.label, payload.provider, payload.model, payload.base_url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.patch("/ai-keys/{key_id}")
+def update_ai_key(key_id: int, payload: AiKeyUpdate, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.ai_keys import update_key
+    try:
+        return update_key(db, user.id, key_id, payload.api_key, payload.model, payload.base_url, payload.label)
+    except LookupError:
+        raise HTTPException(status_code=404, detail="Key not found")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -373,6 +532,15 @@ def prefer_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db:
         return {"ok": True}
     except LookupError:
         raise HTTPException(status_code=404, detail="Key not found")
+
+
+@router.post("/ai-keys/{key_id}/test")
+def test_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.agent_ec import AgentUnavailable, test_engine
+    try:
+        return {"ok": True, "engine": test_engine(db, user, key_id)}
+    except AgentUnavailable as e:
+        return {"ok": False, "error": str(e)}
 
 
 @router.delete("/ai-keys/{key_id}", status_code=204)

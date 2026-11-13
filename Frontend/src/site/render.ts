@@ -61,7 +61,7 @@ export function renderSite(c: SiteContent, lang: SiteLang): string {
 
 <header class="nav" id="nav">
   <a href="#site-top" class="nav__logo" aria-label="ECshape">
-    <img src="${P}logo.png" alt="" width="46" height="42"><b>ECSHAPE</b>
+    <img src="/brand/ec-mark-trainer.svg" alt="" width="42" height="44"><b>ECSHAPE</b>
   </a>
   <nav class="nav__links" aria-label="Main">
     ${navItems.map(([h, t]) => `<a href="${h}" data-scramble>${esc(t)}</a>`).join('')}
@@ -301,7 +301,7 @@ export function renderSite(c: SiteContent, lang: SiteLang): string {
 
 <footer class="footer">
   <div class="footer__top">
-    <a href="#site-top" class="nav__logo" aria-label="ECshape"><img src="${P}logo.png" alt="" width="46" height="42" loading="lazy"><b>ECSHAPE</b></a>
+    <a href="#site-top" class="nav__logo" aria-label="ECshape"><img src="/brand/ec-mark-trainer.svg" alt="" width="42" height="44" loading="lazy"><b>ECSHAPE</b></a>
     <nav class="footer__links">
       <a class="link-draw" href="${ig}" target="_blank" rel="noopener">${esc(c.footer.instagram)}</a>
       <a class="link-draw" href="${wa}" target="_blank" rel="noopener">${esc(c.footer.whatsapp)}</a>

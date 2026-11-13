@@ -262,3 +262,16 @@ html[dir='rtl'] { --ec-travel-origin: right; }
   .ec-engine-line.is-on .ec-engine-dot, .ec-key-form { animation: none; }
   .ec-key-row, .ec-key-row:hover { transform: none; }
 }
+
+/* ── Brand marks ─────────────────────────────────────────────────── */
+.ec-mark { display: block; aspect-ratio: 100 / 100; overflow: visible; }
+.ec-mark[viewBox="0 0 100 104"] { aspect-ratio: 100 / 104; }
+.ec-mark-ring path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.ec-brand-mark .ec-mark-ring path { animation: ec-mark-draw 1.1s cubic-bezier(.65,0,.35,1) both; }
+.ec-brand-mark .ec-mark-bar, .ec-brand-mark .ec-mark-stem { animation-delay: .25s !important; }
+.ec-brand-mark .ec-mark-c1, .ec-brand-mark .ec-mark-c2 { animation-delay: .12s !important; }
+.ec-brand-mark .ec-mark-figure { animation: ec-mark-rise .9s .45s cubic-bezier(.22,1,.36,1) both; transform-origin: 50% 100%; }
+@keyframes ec-mark-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ec-mark-rise { from { opacity: 0; transform: translateY(8px) scale(.94); } to { opacity: 1; transform: none; } }
+.dark .ec-mark-figure, :root:not(.light) .ec-portal-shell .ec-mark-figure { filter: drop-shadow(0 0 .6px rgba(255,255,255,.55)); }
+@media (prefers-reduced-motion: reduce) { .ec-brand-mark .ec-mark-ring path, .ec-brand-mark .ec-mark-figure { animation: none; } }

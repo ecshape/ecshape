@@ -7,6 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { EcMark } from '@/components/brand/EcMark';
 import LanguageSelector from './LanguageSelector';
 import ThemeToggle from './ThemeToggle';
 import LiquidNav, { type LiquidItem } from './LiquidNav';
@@ -26,7 +27,7 @@ const getInitials = (name?: string) =>
 
 const Brand = ({ compact = false }: { compact?: boolean }) => (
   <div className="flex select-none items-center gap-2.5" dir="ltr">
-    <img src="/logonavbar.png" alt="ECshape" className={cn('w-auto object-contain', compact ? 'h-9' : 'h-11')} />
+    <EcMark variant="trainer" className={cn('ec-brand-mark w-auto', compact ? 'h-9' : 'h-11')} />
     <span className={cn('font-num leading-none tracking-wide', compact ? 'text-lg' : 'text-xl')}>
       EC<span className="text-primary">SHAPE</span>
     </span>

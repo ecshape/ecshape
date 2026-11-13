@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Dumbbell, UserRound } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
+import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../components/LanguageSelector';
@@ -84,7 +85,7 @@ const Login = () => {
       <section className="relative z-10 flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-16">
         <header className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" dir="ltr" aria-label="ECshape">
-            <img src="/logonavbar.png" alt="ECshape" className="h-11 w-auto" />
+            <EcMark variant="trainer" className="h-11 w-auto" />
             <span className="font-num text-xl tracking-wide">EC<span className="text-primary">SHAPE</span></span>
           </Link>
           <div className="flex items-center gap-2">

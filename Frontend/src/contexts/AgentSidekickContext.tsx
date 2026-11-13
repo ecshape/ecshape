@@ -98,6 +98,13 @@ export const AgentSidekickProvider: React.FC<{ children: React.ReactNode; enable
     return () => window.removeEventListener('keydown', onKey);
   }, [open, setOpen]);
 
+  // askAgent() (lib/agentOps) opens the panel from anywhere, with an optional pre-filled request.
+  useEffect(() => {
+    const onAsk = (e: Event) => ask((e as CustomEvent<{ prompt?: string }>).detail?.prompt);
+    window.addEventListener('ec-agent:ask', onAsk);
+    return () => window.removeEventListener('ec-agent:ask', onAsk);
+  }, [ask]);
+
   const value = useMemo(
     () => ({ open, width, setOpen, toggle, setWidth, ask, seed, clearSeed }),
     [open, width, setOpen, toggle, setWidth, ask, seed, clearSeed],

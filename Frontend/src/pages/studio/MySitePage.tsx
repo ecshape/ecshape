@@ -1,355 +1,567 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/**
+ * Studio -> My site.
+ *  - Hub: the live site in a scaled thumbnail, its sections (show / hide), and the way into the editor.
+ *  - Editor (?edit=1): full screen. The real site runs in an iframe in edit mode (site/editBridge.ts): the trainer
+ *    types directly on the page, clicks photos to replace them, hides or moves sections from the page itself.
+ *    The inspector on the side edits whatever is selected precisely (lists, photos, every field of a section).
+ *    Drafts are kept in this browser for the three languages; "Publish" sends every changed language at once.
+ */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  ChevronDown, ExternalLink, Monitor, Plus, RotateCcw, Save, Smartphone, Tablet, Trash2, X, Paintbrush,
+  ArrowDown, ArrowUp, Check, ExternalLink, Eye, EyeOff, Globe, Loader2, Monitor, MousePointerClick, Paintbrush, Pencil,
+  Redo2, RotateCcw, Smartphone, Sparkles, Tablet, Undo2, X,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { studioApi } from '@/lib/studioApi';
-import { DEFAULT_CONTENT, SITE_LANGS, mergeContent, type SiteLang } from '@/site/content';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { AgentEcIcon } from '@/components/studio/AgentEcIcon';
+import { SiteInspector, type ListOp } from '@/components/studio/site/SiteInspector';
+import { hasStoredDrafts, useSiteDraft, type SiteDraftApi } from '@/components/studio/site/useSiteDraft';
+import { askAgent, useAgentChanged } from '@/lib/agentOps';
+import { getIn, parsePath } from '@/lib/siteContentOps';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { SITE_LANGS, toSiteLang, type SiteLang } from '@/site/content';
+import {
+  EC_EDIT_PARAM, EC_EDIT_SOURCE, EC_PREVIEW_PARAM, isEcEditMessage, type EcChildMsg, type EcEditMode, type EcFrameLabels,
+  type EcParentPayload, type EcSelect,
+} from '@/site/editProtocol';
+import { GLOBAL_GROUPS, SITE_SECTIONS, hiddenSections, sectionOfPath, sectionOrder, type SectionKey } from '@/site/sections';
+import '@/styles/my-site.css';
 
-type Json = unknown;
-const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'object' && !Array.isArray(v);
+const LANG_LABEL: Record<SiteLang, string> = { he: 'עברית', en: 'English', fr: 'Français' };
+type Device = 'desktop' | 'tablet' | 'mobile';
+const DEVICE_WIDTH: Record<Device, number | null> = { desktop: null, tablet: 820, mobile: 390 };
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
-const humanize = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/\d+$/, (n) => ` ${n}`);
 
-function diff(base: Json, value: Json): Json | undefined {
-  if (Array.isArray(base) || Array.isArray(value)) return JSON.stringify(base) === JSON.stringify(value) ? undefined : value;
-  if (isObj(base) && isObj(value)) {
-    const out: Record<string, Json> = {};
-    for (const k of Object.keys(value)) {
-      const d = diff(base[k], value[k]);
-      if (d !== undefined) out[k] = d;
-    }
-    return Object.keys(out).length ? out : undefined;
-  }
-  return base === value ? undefined : value;
+function useSectionLabel() {
+  const { t } = useTranslation();
+  return useCallback((key: string) => t(`studio.site.sections.${key}`, { defaultValue: key }), [t]);
 }
 
-const setIn = (obj: Json, path: (string | number)[], v: Json): Json => {
-  if (!path.length) return v;
-  const [h, ...rest] = path;
-  const copy: any = Array.isArray(obj) ? [...obj] : { ...(obj as object) };
-  copy[h as any] = setIn((obj as any)?.[h as any], rest, v);
-  return copy;
-};
+/* =================================================================== hub */
 
-interface FieldProps {
-  name: string;
-  value: Json;
-  base: Json;
-  path: (string | number)[];
-  onChange: (path: (string | number)[], v: Json) => void;
-  t: (k: string) => string;
-}
-
-const Field: React.FC<FieldProps> = ({ name, value, base, path, onChange, t }) => {
-  const changed = JSON.stringify(value) !== JSON.stringify(base);
-  const labelEl = (
-    <span className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-      {humanize(name)}
-      {changed && <span className="rounded-full bg-primary/15 px-1.5 text-[10px] text-primary">{t('studio.site.modified')}</span>}
-    </span>
-  );
-
-  if (typeof value === 'string') {
-    const long = value.length > 70 || ['text', 'sub', 'lead', 'a', 'description', 'p1', 'p2'].includes(name);
-    const isImage = name === 'image' || /\.(jpe?g|png|webp|gif)$/i.test(value);
-    return (
-      <label className="block">
-        {labelEl}
-        <div className="flex gap-3">
-          {isImage && value && <img src={value} alt="" className="h-14 w-14 flex-none rounded-xl object-cover" />}
-          {long ? (
-            <Textarea value={value} rows={Math.min(6, Math.ceil(value.length / 70) + 1)} onChange={(e) => onChange(path, e.target.value)} />
-          ) : (
-            <Input value={value} onChange={(e) => onChange(path, e.target.value)} />
-          )}
-        </div>
-      </label>
-    );
-  }
-  if (typeof value === 'number') {
-    return (
-      <label className="block">
-        {labelEl}
-        <Input type="number" value={value} onChange={(e) => onChange(path, Number(e.target.value))} />
-      </label>
-    );
-  }
-  if (typeof value === 'boolean') {
-    return (
-      <label className="flex items-center gap-3">
-        <input type="checkbox" checked={value} onChange={(e) => onChange(path, e.target.checked)} className="h-5 w-5 accent-[hsl(var(--primary))]" />
-        <span className="text-sm font-semibold">{humanize(name)}</span>
-      </label>
-    );
-  }
-  if (Array.isArray(value)) {
-    const template = (Array.isArray(base) && base[0]) ?? value[0] ?? '';
-    return (
-      <div>
-        {labelEl}
-        <div className="space-y-3">
-          {value.map((item, i) => (
-            <div key={i} className={cn('relative', isObj(item) && 'rounded-2xl border border-border/60 bg-muted/30 p-4')}>
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  {isObj(item) ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {Object.keys(item).map((k) => (
-                        <div key={k} className={cn((typeof item[k] === 'string' && (item[k] as string).length > 50) || Array.isArray(item[k]) ? 'sm:col-span-2' : '')}>
-                          <Field name={k} value={item[k]} base={(Array.isArray(base) && isObj(base[i]) ? base[i][k] : undefined) as Json} path={[...path, i, k]} onChange={onChange} t={t} />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Field name={`${name} ${i + 1}`} value={item} base={Array.isArray(base) ? base[i] : undefined} path={[...path, i]} onChange={onChange} t={t} />
-                  )}
-                </div>
-                <button type="button" onClick={() => onChange(path, value.filter((_, k) => k !== i))} className="mt-6 grid h-9 w-9 flex-none place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label={t('studio.site.remove')}>
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-          <Button type="button" variant="outline" size="sm" onClick={() => onChange(path, [...value, clone(template)])}>
-            <Plus />{t('studio.site.add')}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  if (isObj(value)) {
-    return (
-      <fieldset className="space-y-4">
-        {Object.keys(value).map((k) => (
-          <Field key={k} name={k} value={value[k]} base={isObj(base) ? base[k] : undefined} path={[...path, k]} onChange={onChange} t={t} />
-        ))}
-      </fieldset>
-    );
-  }
-  return null;
-};
-
-type Viewport = 'desktop' | 'tablet' | 'mobile';
-const VIEW_W: Record<Viewport, number> = { desktop: 1280, tablet: 768, mobile: 390 };
-
-const MySitePage = () => {
-  const { t, i18n } = useTranslation();
-  const { toast } = useToast();
-  const [lang, setLang] = useState<SiteLang>((SITE_LANGS.find((l) => i18n.language?.startsWith(l)) || 'he') as SiteLang);
-  const [draft, setDraft] = useState<Record<string, Json>>(clone(DEFAULT_CONTENT[lang]) as any);
-  const [saved, setSaved] = useState<string>('');
-  const [open, setOpen] = useState<string | null>('hero');
-  const [busy, setBusy] = useState(false);
-  const [studio, setStudio] = useState(false);
-  const [viewport, setViewport] = useState<Viewport>('desktop');
-  const [previewKey, setPreviewKey] = useState(0);
-
-  const defaults = DEFAULT_CONTENT[lang] as unknown as Record<string, Json>;
-
+const LiveThumb: React.FC<{ lang: SiteLang; version: number }> = ({ lang, version }) => {
+  const box = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.4);
   useEffect(() => {
-    studioApi
-      .siteContent(lang)
-      .then(({ content }) => {
-        const merged = mergeContent(DEFAULT_CONTENT[lang], content) as unknown as Record<string, Json>;
-        setDraft(clone(merged));
-        setSaved(JSON.stringify(merged));
-      })
-      .catch(() => {
-        setDraft(clone(defaults));
-        setSaved(JSON.stringify(defaults));
-      });
-  }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('ec-site-studio-open', studio);
-    return () => document.documentElement.classList.remove('ec-site-studio-open');
-  }, [studio]);
-
-  const dirty = JSON.stringify(draft) !== saved;
-  const sections = useMemo(() => Object.keys(defaults), [defaults]);
-  const onChange = (path: (string | number)[], v: Json) => setDraft((d) => setIn(d, path, v) as Record<string, Json>);
-
-  const save = async () => {
-    setBusy(true);
-    try {
-      const overrides = (diff(defaults, draft) || {}) as Record<string, unknown>;
-      await studioApi.saveSiteContent(lang, overrides);
-      setSaved(JSON.stringify(draft));
-      setPreviewKey((k) => k + 1);
-      toast({ title: t('studio.site.saved') });
-    } catch (e) {
-      toast({ title: t('messages.error.saveFailed'), description: String((e as Error).message), variant: 'destructive' });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const reset = async () => {
-    if (!window.confirm(t('studio.site.resetConfirm'))) return;
-    await studioApi.saveSiteContent(lang, {});
-    setDraft(clone(defaults));
-    setSaved(JSON.stringify(defaults));
-    setPreviewKey((k) => k + 1);
-  };
-
-  const previewSrc = `/home?lang=${lang}`;
-  const editor = (
-    <div className="space-y-3" dir={lang === 'he' ? 'rtl' : 'ltr'}>
-      {sections.map((key) => {
-        const isOpen = open === key;
-        const sectionChanged = JSON.stringify(draft[key]) !== JSON.stringify(defaults[key]);
-        return (
-          <div key={key} className={cn('ec-card overflow-hidden rounded-[1.25rem] border bg-card transition-colors', isOpen ? 'border-primary/40' : 'border-border/60')}>
-            <button onClick={() => setOpen(isOpen ? null : key)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-start">
-              <span className="flex items-center gap-2">
-                <span className="font-display text-3xl leading-none">{t(`studio.site.sections.${key}`, humanize(key))}</span>
-                {sectionChanged && <span className="h-2 w-2 rounded-full bg-primary" />}
-              </span>
-              <ChevronDown className={cn('h-5 w-5 text-muted-foreground transition-transform duration-500', isOpen && 'rotate-180')} />
-            </button>
-            <div className={cn('grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(.22,1,.36,1)]', isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-              <div className="overflow-hidden">
-                <div className="border-t border-border/60 px-5 pb-6 pt-5">
-                  {isOpen && <Field name={key} value={draft[key]} base={defaults[key]} path={[key]} onChange={onChange} t={t} />}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setScale(el.clientWidth / 1440));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={box} className="ec-ms-thumb" aria-hidden>
+      <iframe
+        key={`${lang}:${version}`}
+        title="preview"
+        tabIndex={-1}
+        src={`/home?${EC_PREVIEW_PARAM}=1&lang=${lang}`}
+        style={{ transform: `scale(${scale})` }}
+      />
     </div>
   );
+};
 
-  const studioUi = studio
-    ? createPortal(
-        <div className="ec-site-studio" data-qa-ignore>
-          <header className="ec-site-studio-bar">
-            <div className="flex min-w-0 items-center gap-3">
-              <button type="button" className="grid h-9 w-9 place-items-center rounded-full bg-muted" onClick={() => setStudio(false)} aria-label={t('common.close')}>
-                <X className="h-4 w-4" />
-              </button>
-              <div className="min-w-0">
-                <p className="truncate font-display text-2xl leading-none">{t('studio.site.studioTitle')}</p>
-                <p className="truncate text-xs text-muted-foreground">{dirty ? t('studio.site.unsaved') : t('studio.site.livePreview')}</p>
-              </div>
-            </div>
-            <div className="ec-glass flex rounded-full p-1">
-              {([
-                ['desktop', Monitor],
-                ['tablet', Tablet],
-                ['mobile', Smartphone],
-              ] as const).map(([id, Icon]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setViewport(id)}
-                  className={cn('grid h-9 w-9 place-items-center rounded-full transition-colors', viewport === id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
-                >
-                  <Icon className="h-4 w-4" />
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="ec-glass hidden rounded-full p-1 sm:inline-flex">
-                {SITE_LANGS.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => {
-                      if (dirty && !window.confirm(t('studio.site.unsaved') + ' — ' + t('common.confirm') + '?')) return;
-                      setLang(l);
-                    }}
-                    className={cn('rounded-full px-3 py-1.5 text-xs font-bold', lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
-                  >
-                    {l.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <Button variant="ghost" size="sm" onClick={reset}><RotateCcw />{t('studio.site.reset')}</Button>
-              <Button size="sm" onClick={save} disabled={!dirty || busy}><Save />{t('studio.site.save')}</Button>
-            </div>
-          </header>
-
-          <div className="ec-site-studio-grid">
-            <aside className="ec-site-studio-inspector overflow-y-auto p-4">{editor}</aside>
-            <div className="ec-site-studio-stage">
-              <div className="ec-site-studio-device" style={{ width: `min(100%, ${VIEW_W[viewport]}px)` }}>
-                <iframe key={`${lang}-${previewKey}-${viewport}`} title={t('studio.site.preview')} src={previewSrc} className="h-full w-full bg-[#0b0a08]" />
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )
-    : null;
+const Hub: React.FC<{ draft: SiteDraftApi; onEdit: (select?: EcSelect) => void }> = ({ draft, onEdit }) => {
+  const { t, i18n } = useTranslation();
+  const label = useSectionLabel();
+  const [lang, setLang] = useState<SiteLang>(toSiteLang(i18n.language));
+  const layout = draft.drafts[lang].layout;
+  const order = sectionOrder(layout);
+  const hidden = hiddenSections(layout);
+  const unpublished = draft.dirty || hasStoredDrafts();
 
   return (
     <Layout currentPage="site">
-      <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 md:py-10">
+      <div className="container mx-auto p-4 md:p-6">
         <PageHeader
-          eyebrow={t('studio.groupStudio')}
-          title={t('studio.site.title')}
-          description={t('studio.site.subtitle')}
+          eyebrow={t('studio.site.title')}
+          title={t('mysite.home.title')}
+          description={t('mysite.home.body')}
           actions={
             <>
-              <Button variant="outline" onClick={() => window.open(previewSrc, '_blank')}><ExternalLink />{t('studio.site.open')}</Button>
-              <Button onClick={() => setStudio(true)}><Paintbrush />{t('studio.site.customize')}</Button>
+              <Button variant="outline" asChild>
+                <a href={`/home?lang=${lang}`} target="_blank" rel="noreferrer">
+                  <ExternalLink />
+                  {t('mysite.home.view')}
+                </a>
+              </Button>
+              <Button onClick={() => onEdit()}>
+                <Paintbrush />
+                {t('mysite.home.customize')}
+              </Button>
             </>
           }
         />
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_.9fr]" data-ec-enter>
-          <button
-            type="button"
-            onClick={() => setStudio(true)}
-            className="ec-card group relative overflow-hidden rounded-[1.75rem] border border-border/60 bg-[#0b0a08] text-start shadow-[0_30px_80px_-40px_rgba(0,0,0,.8)] transition-transform duration-500 hover:-translate-y-1"
-          >
-            <div className="flex items-center gap-1.5 px-4 py-3">
-              <i className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-              <i className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-              <i className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-              <span className="ms-2 truncate text-xs text-white/50" dir="ltr">ecshape.org</span>
-            </div>
-            <div className="relative aspect-[16/11] overflow-hidden">
-              <iframe key={`hub-${lang}-${previewKey}`} title="preview" src={previewSrc} className="pointer-events-none absolute inset-0 h-[180%] w-[180%] origin-top-left scale-[0.555]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-              <span className="absolute bottom-4 start-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-black shadow-lg">
-                <Paintbrush className="h-4 w-4" />
-                {t('studio.site.customize')}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <section className="ec-ms-card">
+            <div className="ec-ms-browser">
+              <span className="ec-ms-dots" aria-hidden><i /><i /><i /></span>
+              <span className="ec-ms-url" dir="ltr"><Globe className="h-3.5 w-3.5" />{t('mysite.home.url')}</span>
+              <span className={cn('ec-ms-badge', unpublished ? 'is-draft' : 'is-live')}>
+                <i aria-hidden />
+                {unpublished ? t('mysite.home.badgeDraft') : t('mysite.home.badgeLive')}
               </span>
             </div>
-          </button>
+            <button type="button" className="ec-ms-thumb-btn" onClick={() => onEdit()} aria-label={t('mysite.home.customize')}>
+              <LiveThumb lang={lang} version={JSON.stringify(draft.published[lang]).length} />
+              <span className="ec-ms-thumb-cta"><Pencil className="h-4 w-4" />{t('mysite.home.customize')}</span>
+            </button>
+            <div className="ec-ms-card-foot">
+              <span className="text-sm text-muted-foreground">
+                {t('mysite.home.meta', { count: order.length, hidden: hidden.size })}
+              </span>
+              <div className="ec-ms-seg" role="tablist" aria-label={t('mysite.home.previewLang')}>
+                {SITE_LANGS.map((l) => (
+                  <button key={l} type="button" role="tab" aria-selected={lang === l} className={cn(lang === l && 'is-on')} onClick={() => setLang(l)}>
+                    {LANG_LABEL[l]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
 
-          <div className="ec-card flex flex-col justify-between rounded-[1.75rem] border border-border/60 bg-card p-6">
-            <div>
-              <p className="ec-eyebrow">{t('studio.site.livePreview')}</p>
-              <h2 className="mt-3 font-display text-4xl leading-none">{t('studio.site.hubTitle')}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t('studio.site.hubBody')}</p>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-2">
-              {SITE_LANGS.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => setLang(l)}
-                  className={cn('rounded-full px-4 py-2 text-sm font-bold transition-colors', lang === l ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}
-                >
-                  {l === 'he' ? 'עברית' : l === 'en' ? 'English' : 'Français'}
-                </button>
-              ))}
-            </div>
-          </div>
+          <section className="ec-ms-card">
+            <h2 className="ec-ms-h2">{t('mysite.home.sections')}</h2>
+            <ol className="ec-ms-seclist">
+              {order.map((key, i) => {
+                const off = hidden.has(key);
+                return (
+                  <li key={key} className={cn(off && 'is-off')} style={{ ['--i' as string]: i }}>
+                    <span className="ec-ms-secidx">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{label(key)}</span>
+                    <span className={cn('ec-ms-pill', off ? 'is-off' : 'is-on')}>
+                      {off ? t('mysite.home.hiddenStatus') : t('mysite.home.visible')}
+                    </span>
+                    <button type="button" className="ec-ms-icon" onClick={() => onEdit({ kind: 'section', path: key })} title={t('mysite.home.edit')} aria-label={`${t('mysite.home.edit')} · ${label(key)}`}>
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
         </div>
       </div>
-      {studioUi}
     </Layout>
+  );
+};
+
+/* ================================================================ editor */
+
+const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null; onExit: () => void }> = ({ draft, initialSelect, onExit }) => {
+  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
+  const label = useSectionLabel();
+  const [lang, setLang] = useState<SiteLang>(toSiteLang(i18n.language));
+  const [device, setDevice] = useState<Device>('desktop');
+  const [mode, setMode] = useState<EcEditMode>('edit');
+  const [select, setSelectState] = useState<EcSelect | null>(initialSelect);
+  const [pickSignal, setPickSignal] = useState(0);
+  const [frameReady, setFrameReady] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const pendingScroll = useRef<EcSelect | null>(initialSelect);
+
+  const content = draft.drafts[lang];
+  const base = draft.published[lang];
+  const order = sectionOrder(content.layout);
+  const hidden = hiddenSections(content.layout);
+  const uiDir: 'rtl' | 'ltr' = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
+  const contentDir: 'rtl' | 'ltr' = lang === 'he' ? 'rtl' : 'ltr';
+
+  const labels: EcFrameLabels = useMemo(
+    () => ({
+      sections: Object.fromEntries(SITE_SECTIONS.map((s) => [s.key, label(s.key)])),
+      hide: t('mysite.studio.hide'),
+      show: t('mysite.studio.show'),
+      hidden: t('mysite.studio.hidden'),
+      up: t('mysite.studio.moveUp'),
+      down: t('mysite.studio.moveDown'),
+      changePhoto: t('mysite.studio.photo.change'),
+    }),
+    [t, label],
+  );
+
+  const post = useCallback((msg: EcParentPayload) => {
+    frame.current?.contentWindow?.postMessage({ source: EC_EDIT_SOURCE, ...msg }, window.location.origin);
+  }, []);
+
+  const setSelect = useCallback(
+    (next: EcSelect | null, scroll = false) => {
+      setSelectState(next);
+      if (next && scroll) post({ type: 'scroll', select: next });
+    },
+    [post],
+  );
+
+  /* ---- draft operations */
+  const setLayout = useCallback(
+    (next: { order: string[]; hidden: string[] }) => draft.setValue(lang, 'layout', next),
+    [draft, lang],
+  );
+  const toggleSection = useCallback(
+    (key: string) => {
+      if (key === 'hero') return;
+      const h = new Set(hidden);
+      if (h.has(key)) h.delete(key);
+      else h.add(key);
+      setLayout({ order, hidden: [...h] });
+    },
+    [hidden, order, setLayout],
+  );
+  const moveSection = useCallback(
+    (key: string, dir: -1 | 1) => {
+      const i = order.indexOf(key as SectionKey);
+      const j = i + dir;
+      if (i < 1 || j < 1 || j >= order.length) return; // the hero stays first
+      const next = [...order];
+      [next[i], next[j]] = [next[j], next[i]];
+      setLayout({ order: next, hidden: [...hidden] });
+    },
+    [order, hidden, setLayout],
+  );
+  const onSet = useCallback((path: string, value: unknown, coalesce?: boolean) => draft.setValue(lang, path, value, { coalesce }), [draft, lang]);
+  const onList = useCallback(
+    (listPath: string, op: ListOp, index: number) => {
+      const list = [...(((getIn(content, parsePath(listPath)) as unknown[]) || []))];
+      if (op === 'up' && index > 0) [list[index - 1], list[index]] = [list[index], list[index - 1]];
+      else if (op === 'down' && index < list.length - 1) [list[index + 1], list[index]] = [list[index], list[index + 1]];
+      else if (op === 'duplicate') list.splice(index + 1, 0, clone(list[index]));
+      else if (op === 'remove' && list.length > 1) list.splice(index, 1);
+      else if (op === 'add' && list.length) list.push(clone(list[list.length - 1]));
+      else return;
+      draft.setValue(lang, listPath, list);
+      if (op === 'remove' && select && select.path.startsWith(`${listPath}.${index}`)) {
+        setSelect({ kind: 'section', path: sectionOfPath(listPath) || listPath.split('.')[0] });
+      }
+    },
+    [content, draft, lang, select, setSelect],
+  );
+
+  /* ---- messages from the page */
+  useEffect(() => {
+    const onMessage = (ev: MessageEvent) => {
+      if (ev.origin !== window.location.origin || ev.source !== frame.current?.contentWindow || !isEcEditMessage(ev.data)) return;
+      const msg = ev.data as EcChildMsg;
+      switch (msg.type) {
+        case 'ready':
+          setFrameReady(true);
+          break;
+        case 'select':
+          setSelectState(msg.select);
+          break;
+        case 'text':
+          draft.setValue(lang, msg.path, msg.value, { coalesce: true });
+          break;
+        case 'pick-image':
+          setSelectState({ kind: 'image', path: msg.path });
+          setPickSignal((n) => n + 1);
+          break;
+        case 'section':
+          if (msg.action === 'toggle') toggleSection(msg.key);
+          else moveSection(msg.key, msg.action === 'up' ? -1 : 1);
+          break;
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [draft, lang, toggleSection, moveSection]);
+
+  /* ---- keep the page in sync with the draft */
+  useEffect(() => {
+    if (!frameReady) return;
+    post({ type: 'sync', lang, content, select, mode, labels });
+    if (pendingScroll.current) {
+      post({ type: 'scroll', select: pendingScroll.current });
+      pendingScroll.current = null;
+    }
+  }, [frameReady, lang, content, select, mode, labels, post]);
+
+  // Changing language reloads the page in that language.
+  useEffect(() => setFrameReady(false), [lang]);
+
+  // Agent EC edited the site (site.text): take it in without losing the trainer's own edits.
+  useAgentChanged(() => {
+    void draft.refreshFromServer().then((changed) => changed && toast({ title: t('mysite.studio.agentUpdated') }));
+  });
+
+  // Undo / redo / deselect from the keyboard (not while typing in a field of the studio).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) draft.redo();
+        else draft.undo();
+      } else if (e.key === 'Escape') setSelectState(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [draft]);
+
+  // The editor covers the portal: lock the page behind it.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (draft.restored) toast({ title: t('mysite.studio.restored') });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.restored]);
+
+  const publish = async () => {
+    setPublishing(true);
+    try {
+      await draft.publish();
+      toast({ title: t('mysite.studio.publishedToast') });
+    } catch (e) {
+      toast({ title: t('mysite.studio.publishFailed'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const selectedSection = select ? (select.kind === 'section' ? select.path : sectionOfPath(select.path)) : null;
+  const width = DEVICE_WIDTH[device];
+
+  return createPortal(
+    <div className={cn('ec-ms-studio', mode === 'preview' && 'is-preview')} dir={uiDir}>
+      {/* ---- top bar */}
+      <header className="ec-ms-bar">
+        <div className="ec-ms-bar-start">
+          <button type="button" className="ec-ms-exit" onClick={onExit}>
+            <X className="h-4 w-4" />
+            <span className="ec-ms-label">{t('mysite.studio.exit')}</span>
+          </button>
+          <div className="ec-ms-bar-title">
+            <strong>{t('mysite.studio.title')}</strong>
+            <span className={cn('ec-ms-status', draft.dirty ? 'is-draft' : 'is-saved')}>
+              <i aria-hidden />
+              {draft.dirty ? t('mysite.studio.statusDraft') : t('mysite.studio.statusSaved')}
+            </span>
+          </div>
+        </div>
+
+        <div className="ec-ms-bar-mid">
+          <div className="ec-ms-seg" role="tablist" aria-label={t('mysite.studio.language')}>
+            {SITE_LANGS.map((l) => (
+              <button key={l} type="button" role="tab" aria-selected={lang === l} className={cn(lang === l && 'is-on')} onClick={() => setLang(l)}>
+                {LANG_LABEL[l]}
+                {draft.dirtyLangs.includes(l) && <i className="ec-ms-dirtydot" aria-hidden />}
+              </button>
+            ))}
+          </div>
+          <div className="ec-ms-seg is-icons" role="tablist" aria-label={t('mysite.studio.devices.desktop')}>
+            {([['desktop', Monitor], ['tablet', Tablet], ['mobile', Smartphone]] as const).map(([d, Icon]) => (
+              <button key={d} type="button" role="tab" aria-selected={device === d} className={cn(device === d && 'is-on')} onClick={() => setDevice(d)} title={t(`mysite.studio.devices.${d}`)} aria-label={t(`mysite.studio.devices.${d}`)}>
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ec-ms-bar-end">
+          <button type="button" className="ec-ms-icon" onClick={draft.undo} disabled={!draft.canUndo} title={t('mysite.studio.undo')} aria-label={t('mysite.studio.undo')}>
+            <Undo2 className="h-4 w-4" />
+          </button>
+          <button type="button" className="ec-ms-icon" onClick={draft.redo} disabled={!draft.canRedo} title={t('mysite.studio.redo')} aria-label={t('mysite.studio.redo')}>
+            <Redo2 className="h-4 w-4" />
+          </button>
+          <button type="button" className="ec-ms-icon" onClick={() => setConfirmDiscard(true)} disabled={!draft.dirty} title={t('mysite.studio.discard')} aria-label={t('mysite.studio.discard')}>
+            <RotateCcw className="h-4 w-4" />
+          </button>
+          <button type="button" className="ec-ms-icon" onClick={() => setMode(mode === 'edit' ? 'preview' : 'edit')} title={mode === 'edit' ? t('mysite.studio.preview') : t('mysite.studio.backToEdit')} aria-pressed={mode === 'preview'}>
+            {mode === 'edit' ? <Eye className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+          </button>
+          <a className="ec-ms-icon" href={`/home?lang=${lang}`} target="_blank" rel="noreferrer" title={t('mysite.studio.openSite')} aria-label={t('mysite.studio.openSite')}>
+            <ExternalLink className="h-4 w-4" />
+          </a>
+          <button type="button" className="ec-ms-agent" onClick={() => askAgent()}>
+            <AgentEcIcon size="xs" />
+            <span className="ec-ms-label">{t('mysite.studio.agent')}</span>
+          </button>
+          <Button onClick={publish} disabled={!draft.dirty || publishing} className="ec-ms-publish">
+            {publishing ? <Loader2 className="animate-spin" /> : <Check />}
+            {publishing ? t('mysite.studio.publishing') : draft.dirty ? t('mysite.studio.publish') : t('mysite.studio.published')}
+          </Button>
+        </div>
+      </header>
+
+      <div className="ec-ms-body">
+        {/* ---- sections */}
+        <aside className="ec-ms-side" aria-label={t('mysite.studio.sectionsTitle')}>
+          <div className="ec-ms-side-head">
+            <strong>{t('mysite.studio.sectionsTitle')}</strong>
+            <span>{t('mysite.studio.pageGroup')}</span>
+          </div>
+          <ol className="ec-ms-tree">
+            {order.map((key, i) => {
+              const off = hidden.has(key);
+              const fixed = key === 'hero';
+              return (
+                <li key={key} className={cn(selectedSection === key && 'is-active', off && 'is-off')}>
+                  <button type="button" className="ec-ms-tree-name" onClick={() => setSelect({ kind: 'section', path: key }, true)}>
+                    <span className="ec-ms-secidx">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="truncate">{label(key)}</span>
+                  </button>
+                  <span className="ec-ms-tree-tools">
+                    {fixed ? (
+                      <span className="ec-ms-fixed" title={t('mysite.studio.fixedFirst')}>{t('mysite.studio.fixedFirst')}</span>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => moveSection(key, -1)} disabled={i <= 1} title={t('mysite.studio.moveUp')} aria-label={t('mysite.studio.moveUp')}><ArrowUp className="h-3.5 w-3.5" /></button>
+                        <button type="button" onClick={() => moveSection(key, 1)} disabled={i >= order.length - 1} title={t('mysite.studio.moveDown')} aria-label={t('mysite.studio.moveDown')}><ArrowDown className="h-3.5 w-3.5" /></button>
+                        <button type="button" onClick={() => toggleSection(key)} title={off ? t('mysite.studio.show') : t('mysite.studio.hide')} aria-label={off ? t('mysite.studio.show') : t('mysite.studio.hide')}>
+                          {off ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <div className="ec-ms-side-head is-sub"><span>{t('mysite.studio.wholeSite')}</span></div>
+          <ul className="ec-ms-tree">
+            {GLOBAL_GROUPS.map((g) => (
+              <li key={g} className={cn(selectedSection === null && select?.path === g && 'is-active')}>
+                <button type="button" className="ec-ms-tree-name" onClick={() => setSelect({ kind: 'section', path: g })}>
+                  <span className="truncate">{label(g)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="ec-ms-side-note">{t('mysite.studio.layoutShared')}</p>
+        </aside>
+
+        {/* ---- the page */}
+        <main className={cn('ec-ms-stage', `is-${device}`)}>
+          <div className="ec-ms-device" style={width ? { width } : undefined}>
+            <iframe
+              ref={frame}
+              key={lang}
+              title={t('mysite.studio.title')}
+              src={`/home?${EC_EDIT_PARAM}=1&lang=${lang}`}
+            />
+            {!frameReady && (
+              <div className="ec-ms-loading">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>{t('mysite.studio.loading')}</span>
+              </div>
+            )}
+          </div>
+          {mode === 'edit' && (
+            <p className="ec-ms-tip">
+              <MousePointerClick className="h-4 w-4" />
+              {t('mysite.studio.tip')}
+            </p>
+          )}
+        </main>
+
+        {/* ---- inspector */}
+        <aside className={cn('ec-ms-inspector', select && 'is-open')} aria-label={t('mysite.studio.content')}>
+          {select ? (
+            <SiteInspector
+              select={select}
+              content={content}
+              base={base}
+              dir={contentDir}
+              sectionLabel={label}
+              hidden={hidden}
+              pickSignal={pickSignal}
+              onSet={onSet}
+              onList={onList}
+              onSelect={setSelect}
+              onToggleSection={toggleSection}
+              onAgent={(prompt) => askAgent(prompt)}
+              langName={LANG_LABEL[lang]}
+            />
+          ) : (
+            <div className="ec-ms-empty">
+              <span className="ec-ms-empty-mark"><MousePointerClick className="h-6 w-6" /></span>
+              <strong>{t('mysite.studio.emptyTitle')}</strong>
+              <p>{t('mysite.studio.emptyBody')}</p>
+              <button type="button" className="ec-studio-btn is-agent is-block" onClick={() => askAgent(t('mysite.studio.sectionPrompt', { lang: LANG_LABEL[lang], section: label('hero') }))}>
+                <Sparkles className="h-4 w-4" />
+                {t('mysite.studio.emptyNote')}
+              </button>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('mysite.studio.discardTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('mysite.studio.discardBody')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('mysite.studio.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                draft.discard();
+                setSelectState(null);
+              }}
+            >
+              {t('mysite.studio.discardConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>,
+    document.body,
+  );
+};
+
+/* ================================================================== page */
+
+const MySitePage = () => {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const editing = params.get('edit') === '1';
+  const draft = useSiteDraft();
+  const [initialSelect, setInitialSelect] = useState<EcSelect | null>(null);
+
+  const open = (select?: EcSelect) => {
+    setInitialSelect(select || null);
+    setParams({ edit: '1' });
+  };
+  const exit = () => setParams({}, { replace: false });
+
+  if (editing && !draft.loaded) {
+    return createPortal(
+      <div className="ec-ms-studio">
+        <div className="ec-ms-loading is-full">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>{t('mysite.studio.loading')}</span>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+  return (
+    <>
+      <Hub draft={draft} onEdit={open} />
+      {editing && <SiteStudio draft={draft} initialSelect={initialSelect} onExit={exit} />}
+    </>
   );
 };
 

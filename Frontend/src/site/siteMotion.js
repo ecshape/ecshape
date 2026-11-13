@@ -26,16 +26,21 @@ function loadGoogleAnalytics() {
 
 const ARROW_RTL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>';
 const ARROW_LTR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const escHtml = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const GLYPHS = 'אבגדהוזחטיכלמנסעפצקרשת';
 const EASE = 'expo.out';
 
 /**
  * @param {HTMLElement} root   element with class "ec-site"
- * @param {{ navigate: (to: string) => void, content: object, lang: 'he'|'en'|'fr', onLang: (l: string) => void }} opts
+ * @param {{ navigate: (to: string) => void, content: object, lang: 'he'|'en'|'fr', onLang: (l: string) => void, mode?: 'live'|'edit'|'preview' }} opts
+ *   mode "edit": Studio -> My site visual editor (still page, content paths on every editable element, no cookie banner).
+ *   mode "preview": scaled thumbnail in the studio (full motion, no intro loader, no cookie banner).
  * @returns {() => void} cleanup
  */
-export function initSite(root, { navigate, content, lang, onLang }) {
-  root.innerHTML = renderSite(content, lang);
+export function initSite(root, { navigate, content, lang, onLang, mode = 'live' }) {
+  const editing = mode === 'edit';
+  const live = mode === 'live';
+  root.innerHTML = renderSite(content, lang, { edit: editing });
   const rtl = lang === 'he';
   const DIR = rtl ? 1 : -1; // horizontal motion sign: RTL content flows toward +x
 
@@ -44,7 +49,8 @@ export function initSite(root, { navigate, content, lang, onLang }) {
   const html = document.documentElement;
   const ac = new AbortController();
   const on = (target, type, fn, opts) => target.addEventListener(type, fn, { ...(opts || {}), signal: ac.signal });
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // The editor shows the page still: scroll-jacking (pins, Lenis, scrubs) would fight text editing.
+  const reduce = editing || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   let alive = true;
   let lenis = null;
@@ -66,12 +72,16 @@ export function initSite(root, { navigate, content, lang, onLang }) {
   $$('.btn').forEach((btn) => {
     if (btn.querySelector('.btn__label')) return;
     const text = btn.textContent.trim();
+    // Studio: the content path moves onto the label so the text can be edited in place.
+    const path = btn.getAttribute('data-ec-path');
+    if (path) btn.removeAttribute('data-ec-path');
+    const pathAttr = path ? ` data-ec-path="${path.replace(/"/g, '&quot;')}"` : '';
     const icon = btn.getAttribute('data-icon');
     let iconHTML = '';
     if (icon === 'wa') iconHTML = '<span class="btn__icon"><img src="/site/photos/icon-whatsapp.png" alt=""></span>';
     else if (icon) { const a = rtl ? ARROW_RTL : ARROW_LTR; iconHTML = `<span class="btn__icon">${a}${a}</span>`; }
     btn.innerHTML = '<span class="btn__fill" aria-hidden="true"></span>' +
-      `<span class="btn__label"><span data-text="${text.replace(/"/g, '&quot;')}">${text}</span></span>${iconHTML}`;
+      `<span class="btn__label"><span data-text="${text.replace(/"/g, '&quot;')}"${pathAttr}>${escHtml(text)}</span></span>${iconHTML}`;
     btn.setAttribute('aria-label', btn.getAttribute('aria-label') || text);
     const origin = (e) => {
       const r = btn.getBoundingClientRect();
@@ -262,7 +272,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
   };
 
   /* ------------------------------------------------------- cookie banner */
-  {
+  if (live) {
     const banner = $('#cookieBanner');
     let consent = null;
     try { consent = localStorage.getItem('cookie_consent'); } catch (e) { /* storage blocked */ }
@@ -276,7 +286,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
 
   /* ------------------------------------------------ intro loader (once) */
   let showLoader = false;
-  try { showLoader = !reduce && !sessionStorage.getItem('ec_intro'); } catch (e) { /* ignore */ }
+  try { showLoader = live && !reduce && !sessionStorage.getItem('ec_intro'); } catch (e) { /* ignore */ }
   const endLoader = () => {
     root.classList.remove('has-loader');
     try { sessionStorage.setItem('ec_intro', '1'); } catch (e) { /* ignore */ }
@@ -412,7 +422,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
       const tween = gsap.fromTo(row, { xPercent: dir > 0 ? 0 : -50 }, { xPercent: dir > 0 ? -50 : 0, duration: 30, ease: 'none', repeat: -1 });
       const skewTo = gsap.quickTo(row, 'skewX', { duration: 0.5, ease: 'power3' });
       ScrollTrigger.create({
-        trigger: $('.marquee'), start: 'top bottom', end: 'bottom top',
+        trigger: row.closest('.marquee'), start: 'top bottom', end: 'bottom top',
         onUpdate: (self) => {
           const v = self.getVelocity();
           gsap.to(tween, { timeScale: self.direction * (1 + Math.min(Math.abs(v) / 400, 5)), duration: 0.2, overwrite: true });
@@ -434,7 +444,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
 
     // Process line
     const steps = $$('.step');
-    gsap.fromTo($('.steps__line i'), { scaleX: 0 }, {
+    if ($('.steps__line i')) gsap.fromTo($('.steps__line i'), { scaleX: 0 }, {
       scaleX: 1, ease: 'none',
       scrollTrigger: {
         trigger: $('.steps'), start: 'top 75%', end: 'bottom 55%', scrub: 0.5,
@@ -454,11 +464,11 @@ export function initSite(root, { navigate, content, lang, onLang }) {
     });
 
     // CTA outline fill + footer wordmark
-    gsap.fromTo($('[data-fill]'), { backgroundPosition: rtl ? '0% 0' : '100% 0' }, {
+    if ($('.cta__title')) gsap.fromTo($('[data-fill]'), { backgroundPosition: rtl ? '0% 0' : '100% 0' }, {
       backgroundPosition: rtl ? '100% 0' : '0% 0', ease: 'none',
       scrollTrigger: { trigger: $('.cta__title'), start: 'top 80%', end: 'top 30%', scrub: true },
     });
-    gsap.from($('.cta__title .line'), { yPercent: 40, autoAlpha: 0, duration: 1.3, ease: EASE, scrollTrigger: { trigger: $('.cta__title'), start: 'top 85%' } });
+    if ($('.cta__title')) gsap.from($('.cta__title .line'), { yPercent: 40, autoAlpha: 0, duration: 1.3, ease: EASE, scrollTrigger: { trigger: $('.cta__title'), start: 'top 85%' } });
     gsap.from($$('.footer__mark span'), { yPercent: 100, duration: 1.2, stagger: 0.05, ease: EASE, scrollTrigger: { trigger: $('.footer__mark'), start: 'top 95%' } });
   });
 
@@ -474,8 +484,8 @@ export function initSite(root, { navigate, content, lang, onLang }) {
       .fromTo($('.hero__caption'), { autoAlpha: 0, y: 60 }, { autoAlpha: 1, y: 0, ease: 'power2.out' }, 0.55);
 
     const track = $('.results__track');
-    const dist = () => Math.max(0, track.scrollWidth - innerWidth);
-    gsap.to(track, {
+    const dist = () => (track ? Math.max(0, track.scrollWidth - innerWidth) : 0);
+    if (track) gsap.to(track, {
       x: () => DIR * dist(), ease: 'none',
       scrollTrigger: {
         trigger: $('.results'), start: 'top top', end: () => `+=${dist()}`,
@@ -484,6 +494,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
       },
     });
 
+    if (!$('#app')) return undefined;
     const appST = ScrollTrigger.create({
       trigger: $('#app'), start: 'top top', end: '+=240%', pin: true, scrub: true,
       onUpdate: (self) => setScreen(Math.min(appItems.length - 1, Math.floor(self.progress * appItems.length))),
@@ -505,6 +516,7 @@ export function initSite(root, { navigate, content, lang, onLang }) {
       it.addEventListener('click', fn);
       return fn;
     });
+    if (!$('#app')) return () => clearInterval(timer);
     const st = ScrollTrigger.create({ trigger: $('#app'), start: 'top 80%', end: 'bottom 20%', onToggle: (s) => (s.isActive ? restart() : clearInterval(timer)) });
     return () => { clearInterval(timer); st.kill(); appItems.forEach((it, i) => it.removeEventListener('click', handlers[i])); };
   });

@@ -2,11 +2,11 @@
 export interface SiteContent {
   meta: { title: string; description: string };
   nav: { about: string; results: string; programs: string; app: string; reviews: string; faq: string; login: string; cta: string };
-  hero: { eyebrow: string; title1: string; title2: string; sub: string; ctaPrimary: string; ctaSecondary: string; scroll: string; caption: string; captionAccent: string;
+  hero: { image?: string; eyebrow: string; title1: string; title2: string; sub: string; ctaPrimary: string; ctaSecondary: string; scroll: string; caption: string; captionAccent: string;
     stats: { value: number; suffix: string; label: string }[] };
   marquee: { row1: string[]; row2: string[] };
   manifesto: { eyebrow: string; text: string; highlight: string; role: string };
-  story: { eyebrow: string; title1: string; title2: string; p1: string; p1Strong: string; p2: string; p2Strong: string; photoRole: string;
+  story: { image?: string; eyebrow: string; title1: string; title2: string; p1: string; p1Strong: string; p2: string; p2Strong: string; photoRole: string;
     values: { title: string; text: string }[]; statValue: number; statSuffix: string; statTitle: string; statText: string };
   results: { eyebrow: string; title1: string; title2: string; lead: string; ctaCard: string; ctaButton: string;
     cards: { image: string; tag: string; title: string; sub: string; big?: string; tall?: boolean }[] };
@@ -26,6 +26,10 @@ export interface SiteContent {
     goals: { value: string; label: string }[]; programs: { value: string; label: string }[]; close: string };
   cookie: { text: string; accept: string; decline: string };
   contact: { whatsapp: string; whatsappText: string; instagram: string };
+  /** Page layout chosen in Studio -> My site: section order and sections hidden from visitors (same for every language). */
+  layout?: SiteLayout;
 }
+
+export interface SiteLayout { order?: string[]; hidden?: string[] }
 
 export type SiteLang = 'he' | 'en' | 'fr';

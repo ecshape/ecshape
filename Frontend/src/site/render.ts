@@ -3,6 +3,7 @@
  * All text is escaped; only icons and structure are raw HTML.
  */
 import type { SiteContent, SiteLang } from './content/types';
+import { hiddenSections, sectionOrder, type SectionKey } from './sections';
 
 const P = '/site/photos/';
 const esc = (v: unknown) =>
@@ -35,20 +36,270 @@ export function appShot(lang: SiteLang, i: number) {
   return `${P}app/${lang}/${i + 1}.jpg`;
 }
 
-const splitLines = (a: string, b: string, cls = '') =>
-  `<span class="line">${esc(a)}</span><span class="line ${cls || 'accent'}">${esc(b)}</span>`;
+export interface RenderOptions {
+  /** Studio edit mode: every editable text / photo / list item carries its content path, hidden sections stay visible (ghosted). */
+  edit?: boolean;
+}
 
-export function renderSite(c: SiteContent, lang: SiteLang): string {
+export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions = {}): string {
+  const edit = !!opts.edit;
+  /** data-ec-path: inline-editable text (studio only). */
+  const P_ = (path: string) => (edit ? ` data-ec-path="${esc(path)}"` : '');
+  /** Text wrapped in a span carrying its path (text mixed with other markup). */
+  const T = (path: string, value: unknown) => (edit ? `<span data-ec-path="${esc(path)}">${esc(value)}</span>` : esc(value));
+  const IMG = (path: string) => (edit ? ` data-ec-img="${esc(path)}"` : '');
+  const ITEM = (path: string) => (edit ? ` data-ec-item="${esc(path)}"` : '');
+  const splitLines = (a: string, pa: string, b: string, pb: string, cls = '') =>
+    `<span class="line"${P_(pa)}>${esc(a)}</span><span class="line ${cls || 'accent'}"${P_(pb)}>${esc(b)}</span>`;
+  const titles = (g: 'story' | 'results' | 'shift' | 'programs' | 'app' | 'process' | 'voices' | 'faq') =>
+    splitLines(c[g].title1, `${g}.title1`, c[g].title2, `${g}.title2`);
+
+  const hidden = hiddenSections(c.layout);
+  const order = sectionOrder(c.layout);
   const wa = waLink(c);
   const ig = `https://www.instagram.com/${encodeURIComponent(c.contact.instagram)}`;
   const name = lang === 'he' ? 'אליאור קרמיזי' : 'Elior Cremisi';
-  const navItems = [
-    ['#story', c.nav.about], ['#results', c.nav.results], ['#programs', c.nav.programs],
-    ['#app', c.nav.app], ['#voices', c.nav.reviews], ['#faq', c.nav.faq],
-  ];
+  const heroImg = c.hero.image || `${P}opt/trainer.jpg`;
+  const storyImg = c.story.image || `${P}opt/trainer_story.jpg`;
+  const navItems = ([
+    ['story', '#story', 'about'], ['results', '#results', 'results'], ['programs', '#programs', 'programs'],
+    ['app', '#app', 'app'], ['voices', '#voices', 'reviews'], ['faq', '#faq', 'faq'],
+  ] as const).filter(([key]) => !hidden.has(key));
   const langSwitch = `<div class="lang-switch" role="group" aria-label="Language">${LANGS.map(
     (l) => `<button type="button" data-lang="${l.code}" class="${l.code === lang ? 'is-on' : ''}" aria-pressed="${l.code === lang}">${l.label}</button>`
   ).join('')}</div>`;
+
+  const sections: Record<SectionKey, () => string> = {
+    hero: () => `
+<section class="hero" id="hero">
+  <div class="hero__bg" aria-hidden="true"></div>
+  <figure class="hero__media" data-cursor="ECshape"${IMG('hero.image')}>
+    <img src="${esc(heroImg)}" alt="${esc(name)}" fetchpriority="high">
+  </figure>
+  <div class="hero__content">
+    <span class="eyebrow" data-reveal${P_('hero.eyebrow')}>${esc(c.hero.eyebrow)}</span>
+    <h1 class="hero__title display h-xl" data-split>${splitLines(c.hero.title1, 'hero.title1', c.hero.title2, 'hero.title2', 'grad-text')}</h1>
+    <p class="hero__sub lead" data-reveal${P_('hero.sub')}>${esc(c.hero.sub)}</p>
+    <div class="hero__ctas" data-reveal>
+      <span class="magnetic"><button type="button" class="btn btn--primary btn--shine" data-open-form data-source="hero" data-icon="arrow"${P_('hero.ctaPrimary')}>${esc(c.hero.ctaPrimary)}</button></span>
+      <span class="magnetic"><a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener" data-icon="wa"${P_('hero.ctaSecondary')}>${esc(c.hero.ctaSecondary)}</a></span>
+    </div>
+  </div>
+  <div class="hero__stats" data-reveal>
+    ${c.hero.stats.map((s, i) => `<div class="chip"${ITEM(`hero.stats.${i}`)}><span class="num" data-count="${Number(s.value) || 0}" data-suffix="${esc(s.suffix)}">${esc(s.value)}${esc(s.suffix)}</span><small${P_(`hero.stats.${i}.label`)}>${esc(s.label)}</small></div>`).join('')}
+  </div>
+  <div class="hero__scroll" aria-hidden="true"><i></i>${T('hero.scroll', c.hero.scroll)}</div>
+  <div class="hero__caption" aria-hidden="true"><div class="display">${T('hero.caption', c.hero.caption)} <span class="accent"${P_('hero.captionAccent')}>${esc(c.hero.captionAccent)}</span></div></div>
+</section>`,
+
+    marquee: () => `
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__row" data-marquee="1"><div class="marquee__item">${c.marquee.row1.map((w, i) => `${T(`marquee.row1.${i}`, w)} ${STAR}`).join(' ')}</div></div>
+  <div class="marquee__row marquee__row--outline" data-marquee="-1"><div class="marquee__item">${c.marquee.row2.map((w, i) => `${T(`marquee.row2.${i}`, w)} ${STAR}`).join(' ')}</div></div>
+</div>`,
+
+    manifesto: () => `
+<section class="section manifesto">
+  <div class="wrap">
+    <span class="eyebrow" data-reveal${P_('manifesto.eyebrow')}>${esc(c.manifesto.eyebrow)}</span>
+    <p class="manifesto__text" data-words style="margin-top:28px">${T('manifesto.text', c.manifesto.text)} <span class="hl"${P_('manifesto.highlight')}>${esc(c.manifesto.highlight)}</span></p>
+    <div class="manifesto__sig" data-reveal>
+      <img src="${esc(storyImg)}" alt="" width="64" height="64" loading="lazy">
+      <div><b>${esc(name)}</b><small${P_('manifesto.role')}>${esc(c.manifesto.role)}</small></div>
+    </div>
+  </div>
+</section>`,
+
+    story: () => `
+<section class="section" id="story" style="padding-top:0">
+  <div class="wrap story">
+    <figure class="story__media" data-cursor="${esc(name.split(' ')[0])}"${IMG('story.image')}>
+      <img src="${esc(storyImg)}" alt="${esc(name)}" loading="lazy" data-parallax>
+      <figcaption><b>${esc(name)}</b><span${P_('story.photoRole')}>${esc(c.story.photoRole)}</span></figcaption>
+    </figure>
+    <div class="story__body">
+      <span class="eyebrow" data-reveal${P_('story.eyebrow')}>${esc(c.story.eyebrow)}</span>
+      <h2 class="display h-lg" data-split style="margin:20px 0 32px">${titles('story')}</h2>
+      <p data-reveal>${T('story.p1', c.story.p1)} <strong${P_('story.p1Strong')}>${esc(c.story.p1Strong)}</strong>.</p>
+      <p data-reveal>${T('story.p2', c.story.p2)} <strong${P_('story.p2Strong')}>${esc(c.story.p2Strong)}</strong>.</p>
+      <div class="bento" data-stagger>
+        ${c.story.values.map((v, i) => `<div class="bento__cell"${ITEM(`story.values.${i}`)}>${[ICONS.target, ICONS.people, ICONS.loop][i % 3]}<div><h3${P_(`story.values.${i}.title`)}>${esc(v.title)}</h3><p${P_(`story.values.${i}.text`)}>${esc(v.text)}</p></div></div>`).join('')}
+        <div class="bento__cell bento__cell--accent"><span class="num" data-count="${Number(c.story.statValue) || 0}" data-suffix="${esc(c.story.statSuffix)}">${esc(c.story.statValue)}${esc(c.story.statSuffix)}</span><div><h3${P_('story.statTitle')}>${esc(c.story.statTitle)}</h3><p${P_('story.statText')}>${esc(c.story.statText)}</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>`,
+
+    results: () => `
+<section class="section results" id="results">
+  <div class="wrap section-head section-head--split">
+    <div>
+      <span class="eyebrow" data-reveal${P_('results.eyebrow')}>${esc(c.results.eyebrow)}</span>
+      <h2 class="display h-lg" data-split style="margin-top:20px">${titles('results')}</h2>
+    </div>
+    <p class="lead" data-reveal${P_('results.lead')}>${esc(c.results.lead)}</p>
+  </div>
+  <div class="results__pin">
+    <div class="results__track">
+      ${c.results.cards.map((r, i) => `<article class="rcard${r.tall ? ' rcard--tall' : ''}" data-cursor="✦"${ITEM(`results.cards.${i}`)}>
+        <div class="rcard__img"${IMG(`results.cards.${i}.image`)}><img src="${esc(r.image)}" alt="${esc(r.title)} — ${esc(r.tag)}" loading="lazy"></div>
+        <div class="rcard__meta"><div><span class="tag"${P_(`results.cards.${i}.tag`)}>${esc(r.tag)}</span><h3${P_(`results.cards.${i}.title`)}>${esc(r.title)}</h3><p${P_(`results.cards.${i}.sub`)}>${esc(r.sub)}</p></div>${r.big ? `<div class="rcard__big"${P_(`results.cards.${i}.big`)}>${esc(r.big)}</div>` : ''}</div>
+      </article>`).join('')}
+      <article class="rcard rcard--cta">
+        <div class="display"${P_('results.ctaCard')}>${esc(c.results.ctaCard)}</div>
+        <button type="button" class="btn" data-open-form data-source="results" data-icon="arrow"${P_('results.ctaButton')}>${esc(c.results.ctaButton)}</button>
+      </article>
+    </div>
+    <div class="results__progress" aria-hidden="true"><i></i></div>
+  </div>
+</section>`,
+
+    shift: () => `
+<section class="section" id="shift">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal${P_('shift.eyebrow')}>${esc(c.shift.eyebrow)}</span>
+      <h2 class="display h-lg" data-split>${titles('shift')}</h2>
+    </div>
+    <div class="stack">
+      ${c.shift.cards.map((s, i) => `<div class="stack__card" style="--i:${i}"${ITEM(`shift.cards.${i}`)}>
+        <div>
+          <div class="stack__from"${P_(`shift.cards.${i}.from`)}>${esc(s.from)}</div>
+          <h3${P_(`shift.cards.${i}.title`)}>${esc(s.title)}</h3>
+          ${s.text ? `<p style="margin-top:18px"${P_(`shift.cards.${i}.text`)}>${esc(s.text)}</p>` : ''}
+          ${s.pills ? `<div class="pills">${s.pills.map((p, k) => `<span class="pill"${P_(`shift.cards.${i}.pills.${k}`)}>${esc(p)}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="stack__idx">0${i + 1}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>`,
+
+    programs: () => `
+<section class="section" id="programs" style="background:var(--bg-2)">
+  <div class="wrap">
+    <div class="section-head section-head--split">
+      <div>
+        <span class="eyebrow" data-reveal${P_('programs.eyebrow')}>${esc(c.programs.eyebrow)}</span>
+        <h2 class="display h-lg" data-split style="margin-top:20px">${titles('programs')}</h2>
+      </div>
+      <p class="lead" data-reveal${P_('programs.lead')}>${esc(c.programs.lead)}</p>
+    </div>
+    <div class="programs" data-stagger>
+      ${c.programs.items.map((p, i) => `<article class="prog${p.featured ? ' prog--feat' : ''}"${ITEM(`programs.items.${i}`)}>
+        <div class="prog__top"><span class="prog__idx">0${i + 1} /</span>${p.featured ? `<span class="badge"${P_('programs.popular')}>${esc(c.programs.popular)}</span>` : ''}</div>
+        <h3${P_(`programs.items.${i}.name`)}>${esc(p.name)}</h3>
+        <p${P_(`programs.items.${i}.text`)}>${esc(p.text)}</p>
+        <ul>${p.features.map((f, k) => `<li${P_(`programs.items.${i}.features.${k}`)}>${esc(f)}</li>`).join('')}</ul>
+        <button type="button" class="btn ${p.featured ? 'btn--primary btn--shine' : 'btn--ghost'} btn--block" data-open-form data-program="${esc(p.id)}" data-source="program" data-icon="arrow"${P_(p.featured ? 'programs.start' : 'programs.more')}>${esc(p.featured ? c.programs.start : c.programs.more)}</button>
+      </article>`).join('')}
+    </div>
+  </div>
+</section>`,
+
+    app: () => `
+<section class="section" id="app">
+  <div class="wrap app">
+    <div>
+      <span class="eyebrow" data-reveal${P_('app.eyebrow')}>${esc(c.app.eyebrow)}</span>
+      <h2 class="display h-lg" data-split style="margin-top:20px">${titles('app')}</h2>
+      <p class="lead" data-reveal style="margin-top:24px"${P_('app.lead')}>${esc(c.app.lead)}</p>
+      <a class="btn btn--ghost btn--sm" href="/login" data-route data-icon="arrow" style="margin-top:22px"${P_('app.already')}>${esc(c.app.already)}</a>
+      <ul class="app__list" role="tablist">
+        ${c.app.items.map((it, i) => `<li class="app__item${i === 0 ? ' is-active' : ''}" role="tab" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" data-screen="${i}"${ITEM(`app.items.${i}`)}>
+          <span class="ic">${APP_ICONS[i % 4]}</span><h3${P_(`app.items.${i}.title`)}>${esc(it.title)}</h3><p${P_(`app.items.${i}.text`)}>${esc(it.text)}</p>
+        </li>`).join('')}
+      </ul>
+    </div>
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone__notch" aria-hidden="true"></div>
+        <div class="phone__screen">
+          ${c.app.items.map((it, i) => `<img class="screen screen--shot${i === 0 ? ' is-active' : ''}" src="${appShot(lang, i % 4)}" alt="${esc(it.title)}" loading="lazy">`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>`,
+
+    process: () => `
+<section class="section" id="process" style="background:var(--bg-2)">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal${P_('process.eyebrow')}>${esc(c.process.eyebrow)}</span>
+      <h2 class="display h-lg" data-split>${titles('process')}</h2>
+    </div>
+    <div class="steps">
+      <div class="steps__line" aria-hidden="true"><i></i></div>
+      ${c.process.steps.map((s, i) => `<div class="step"${ITEM(`process.steps.${i}`)}><div class="step__dot">${i + 1}</div><h3${P_(`process.steps.${i}.title`)}>${esc(s.title)}</h3><p${P_(`process.steps.${i}.text`)}>${esc(s.text)}</p></div>`).join('')}
+    </div>
+  </div>
+</section>`,
+
+    voices: () => `
+<section class="section" id="voices">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal${P_('voices.eyebrow')}>${esc(c.voices.eyebrow)}</span>
+      <h2 class="display h-lg" data-split>${titles('voices')}</h2>
+    </div>
+    <div class="quotes quotes--grid" data-stagger>
+      ${c.voices.quotes.map((q, i) => `<figure class="quote"${ITEM(`voices.quotes.${i}`)}>
+        <div class="quote__stars" aria-label="5/5">★★★★★</div>
+        <blockquote>“${T(`voices.quotes.${i}.text`, q.text)}”</blockquote>
+        <footer><span class="avatar">${esc((q.name || '?').trim().charAt(0))}</span><div><b${P_(`voices.quotes.${i}.name`)}>${esc(q.name)}</b><small${P_(`voices.quotes.${i}.role`)}>${esc(q.role)}</small></div></footer>
+      </figure>`).join('')}
+    </div>
+  </div>
+</section>`,
+
+    faq: () => `
+<section class="section" id="faq" style="background:var(--bg-2)">
+  <div class="wrap faq">
+    <div class="faq__aside">
+      <span class="eyebrow" data-reveal${P_('faq.eyebrow')}>${esc(c.faq.eyebrow)}</span>
+      <h2 class="display h-lg" data-split style="margin-top:20px">${titles('faq')}</h2>
+      <button type="button" class="btn btn--ghost" data-open-form data-source="faq" data-icon="arrow"${P_('faq.other')}>${esc(c.faq.other)}</button>
+    </div>
+    <div class="acc">
+      ${c.faq.items.map((f, i) => `<div class="acc__item${edit ? ' is-open' : ''}"${ITEM(`faq.items.${i}`)}>
+        <button class="acc__q" aria-expanded="${edit}"><span${P_(`faq.items.${i}.q`)}>${esc(f.q)}</span><i class="acc__ic" aria-hidden="true"></i></button>
+        <div class="acc__a"><div><p${P_(`faq.items.${i}.a`)}>${esc(f.a)}</p></div></div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>`,
+
+    cta: () => `
+<section class="section cta" id="contact">
+  <span class="eyebrow" data-reveal${P_('cta.eyebrow')}>${esc(c.cta.eyebrow)}</span>
+  <h2 class="cta__title display" style="margin-top:28px">
+    <span class="line"${P_('cta.title1')}>${esc(c.cta.title1)}</span>
+    <span class="line fill" data-fill${P_('cta.title2')}>${esc(c.cta.title2)}</span>
+  </h2>
+  <p class="lead" data-reveal${P_('cta.lead')}>${esc(c.cta.lead)}</p>
+  <div class="cta__btns" data-reveal>
+    <span class="magnetic"><button type="button" class="btn btn--primary btn--shine" data-open-form data-source="cta" data-icon="arrow"${P_('cta.form')}>${esc(c.cta.form)}</button></span>
+    <span class="magnetic"><a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener" data-icon="wa"${P_('cta.whatsapp')}>${esc(c.cta.whatsapp)}</a></span>
+  </div>
+  <div class="trust" data-reveal>
+    ${c.cta.trust.map((t, i) => `<div${ITEM(`cta.trust.${i}`)}><span class="num"${P_(`cta.trust.${i}.value`)}>${esc(t.value)}</span><small${P_(`cta.trust.${i}.label`)}>${esc(t.label)}</small></div>`).join('')}
+  </div>
+</section>`,
+
+    ig: () => `
+<div class="ig" data-reveal>
+  <div><div class="ig__handle">@${esc(c.contact.instagram)}</div><p${P_('ig.text')}>${esc(c.ig.text)}</p></div>
+  <a class="btn btn--ig" href="${ig}" target="_blank" rel="noopener" data-icon="arrow"${P_('ig.button')}>${esc(c.ig.button)}</a>
+</div>`,
+  };
+
+  /* In the studio each section gets a wrapper (display: contents, so the layout is unchanged) that the editor can
+     select, ghost when hidden, and label. Visitors never get hidden sections. */
+  const page = order
+    .filter((key) => edit || !hidden.has(key))
+    .map((key) => (edit ? `<div class="ec-sec${hidden.has(key) ? ' is-ec-hidden' : ''}" data-ec-section="${key}">${sections[key]()}</div>` : sections[key]()))
+    .join('\n');
 
   return `
 <div class="grain" aria-hidden="true"></div>
@@ -59,24 +310,24 @@ export function renderSite(c: SiteContent, lang: SiteLang): string {
   <div class="loader__count"><span id="loaderCount">0</span></div>
 </div>
 
-<header class="nav" id="nav">
+<header class="nav" id="nav"${edit ? ' data-ec-section="nav"' : ''}>
   <a href="#site-top" class="nav__logo" aria-label="ECshape">
     <img src="/brand/ec-mark-trainer.svg" alt="" width="42" height="44"><b>ECSHAPE</b>
   </a>
   <nav class="nav__links" aria-label="Main">
-    ${navItems.map(([h, t]) => `<a href="${h}" data-scramble>${esc(t)}</a>`).join('')}
+    ${navItems.map(([, h, k]) => `<a href="${h}" data-scramble${P_(`nav.${k}`)}>${esc(c.nav[k])}</a>`).join('')}
   </nav>
   <div class="nav__actions">
     ${langSwitch}
-    <a class="btn btn--ghost btn--sm nav__login" href="/login" data-route data-icon="arrow">${esc(c.nav.login)}</a>
-    <button type="button" class="btn btn--primary btn--sm nav__cta" data-open-form data-source="nav" data-icon="arrow">${esc(c.nav.cta)}</button>
+    <a class="btn btn--ghost btn--sm nav__login" href="/login" data-route data-icon="arrow"${P_('nav.login')}>${esc(c.nav.login)}</a>
+    <button type="button" class="btn btn--primary btn--sm nav__cta" data-open-form data-source="nav" data-icon="arrow"${P_('nav.cta')}>${esc(c.nav.cta)}</button>
   </div>
   <button class="nav__menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
 </header>
 
 <div class="menu" id="menu" aria-hidden="true">
   <nav aria-label="Mobile">
-    ${navItems.map(([h, t]) => `<a href="${h}"><span>${esc(t)}</span></a>`).join('')}
+    ${navItems.map(([, h, k]) => `<a href="${h}"><span>${esc(c.nav[k])}</span></a>`).join('')}
   </nav>
   ${langSwitch}
   <div class="menu__ctas">
@@ -86,232 +337,22 @@ export function renderSite(c: SiteContent, lang: SiteLang): string {
 </div>
 
 <main id="site-top">
-
-<section class="hero" id="hero">
-  <div class="hero__bg" aria-hidden="true"></div>
-  <figure class="hero__media" data-cursor="ECshape">
-    <img src="${P}opt/trainer.jpg" alt="${esc(name)}" fetchpriority="high">
-  </figure>
-  <div class="hero__content">
-    <span class="eyebrow" data-reveal>${esc(c.hero.eyebrow)}</span>
-    <h1 class="hero__title display h-xl" data-split>${splitLines(c.hero.title1, c.hero.title2, 'grad-text')}</h1>
-    <p class="hero__sub lead" data-reveal>${esc(c.hero.sub)}</p>
-    <div class="hero__ctas" data-reveal>
-      <span class="magnetic"><button type="button" class="btn btn--primary btn--shine" data-open-form data-source="hero" data-icon="arrow">${esc(c.hero.ctaPrimary)}</button></span>
-      <span class="magnetic"><a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener" data-icon="wa">${esc(c.hero.ctaSecondary)}</a></span>
-    </div>
-  </div>
-  <div class="hero__stats" data-reveal>
-    ${c.hero.stats.map((s) => `<div class="chip"><span class="num" data-count="${Number(s.value) || 0}" data-suffix="${esc(s.suffix)}">${esc(s.value)}${esc(s.suffix)}</span><small>${esc(s.label)}</small></div>`).join('')}
-  </div>
-  <div class="hero__scroll" aria-hidden="true"><i></i>${esc(c.hero.scroll)}</div>
-  <div class="hero__caption" aria-hidden="true"><div class="display">${esc(c.hero.caption)} <span class="accent">${esc(c.hero.captionAccent)}</span></div></div>
-</section>
-
-<div class="marquee" aria-hidden="true">
-  <div class="marquee__row" data-marquee="1"><div class="marquee__item">${c.marquee.row1.map((w) => `${esc(w)} ${STAR}`).join(' ')}</div></div>
-  <div class="marquee__row marquee__row--outline" data-marquee="-1"><div class="marquee__item">${c.marquee.row2.map((w) => `${esc(w)} ${STAR}`).join(' ')}</div></div>
-</div>
-
-<section class="section manifesto">
-  <div class="wrap">
-    <span class="eyebrow" data-reveal>${esc(c.manifesto.eyebrow)}</span>
-    <p class="manifesto__text" data-words style="margin-top:28px">${esc(c.manifesto.text)} <span class="hl">${esc(c.manifesto.highlight)}</span></p>
-    <div class="manifesto__sig" data-reveal>
-      <img src="${P}opt/trainer_story.jpg" alt="" width="64" height="64" loading="lazy">
-      <div><b>${esc(name)}</b><small>${esc(c.manifesto.role)}</small></div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="story" style="padding-top:0">
-  <div class="wrap story">
-    <figure class="story__media" data-cursor="${esc(name.split(' ')[0])}">
-      <img src="${P}opt/trainer_story.jpg" alt="${esc(name)}" loading="lazy" data-parallax>
-      <figcaption><b>${esc(name)}</b><span>${esc(c.story.photoRole)}</span></figcaption>
-    </figure>
-    <div class="story__body">
-      <span class="eyebrow" data-reveal>${esc(c.story.eyebrow)}</span>
-      <h2 class="display h-lg" data-split style="margin:20px 0 32px">${splitLines(c.story.title1, c.story.title2)}</h2>
-      <p data-reveal>${esc(c.story.p1)} <strong>${esc(c.story.p1Strong)}</strong>.</p>
-      <p data-reveal>${esc(c.story.p2)} <strong>${esc(c.story.p2Strong)}</strong>.</p>
-      <div class="bento" data-stagger>
-        ${c.story.values.map((v, i) => `<div class="bento__cell">${[ICONS.target, ICONS.people, ICONS.loop][i % 3]}<div><h3>${esc(v.title)}</h3><p>${esc(v.text)}</p></div></div>`).join('')}
-        <div class="bento__cell bento__cell--accent"><span class="num" data-count="${Number(c.story.statValue) || 0}" data-suffix="${esc(c.story.statSuffix)}">${esc(c.story.statValue)}${esc(c.story.statSuffix)}</span><div><h3>${esc(c.story.statTitle)}</h3><p>${esc(c.story.statText)}</p></div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section results" id="results">
-  <div class="wrap section-head section-head--split">
-    <div>
-      <span class="eyebrow" data-reveal>${esc(c.results.eyebrow)}</span>
-      <h2 class="display h-lg" data-split style="margin-top:20px">${splitLines(c.results.title1, c.results.title2)}</h2>
-    </div>
-    <p class="lead" data-reveal>${esc(c.results.lead)}</p>
-  </div>
-  <div class="results__pin">
-    <div class="results__track">
-      ${c.results.cards.map((r) => `<article class="rcard${r.tall ? ' rcard--tall' : ''}" data-cursor="✦">
-        <div class="rcard__img"><img src="${esc(r.image)}" alt="${esc(r.title)} — ${esc(r.tag)}" loading="lazy"></div>
-        <div class="rcard__meta"><div><span class="tag">${esc(r.tag)}</span><h3>${esc(r.title)}</h3><p>${esc(r.sub)}</p></div>${r.big ? `<div class="rcard__big">${esc(r.big)}</div>` : ''}</div>
-      </article>`).join('')}
-      <article class="rcard rcard--cta">
-        <div class="display">${esc(c.results.ctaCard)}</div>
-        <button type="button" class="btn" data-open-form data-source="results" data-icon="arrow">${esc(c.results.ctaButton)}</button>
-      </article>
-    </div>
-    <div class="results__progress" aria-hidden="true"><i></i></div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow" data-reveal>${esc(c.shift.eyebrow)}</span>
-      <h2 class="display h-lg" data-split>${splitLines(c.shift.title1, c.shift.title2)}</h2>
-    </div>
-    <div class="stack">
-      ${c.shift.cards.map((s, i) => `<div class="stack__card" style="--i:${i}">
-        <div>
-          <div class="stack__from">${esc(s.from)}</div>
-          <h3>${esc(s.title)}</h3>
-          ${s.text ? `<p style="margin-top:18px">${esc(s.text)}</p>` : ''}
-          ${s.pills ? `<div class="pills">${s.pills.map((p) => `<span class="pill">${esc(p)}</span>`).join('')}</div>` : ''}
-        </div>
-        <div class="stack__idx">0${i + 1}</div>
-      </div>`).join('')}
-    </div>
-  </div>
-</section>
-
-<section class="section" id="programs" style="background:var(--bg-2)">
-  <div class="wrap">
-    <div class="section-head section-head--split">
-      <div>
-        <span class="eyebrow" data-reveal>${esc(c.programs.eyebrow)}</span>
-        <h2 class="display h-lg" data-split style="margin-top:20px">${splitLines(c.programs.title1, c.programs.title2)}</h2>
-      </div>
-      <p class="lead" data-reveal>${esc(c.programs.lead)}</p>
-    </div>
-    <div class="programs" data-stagger>
-      ${c.programs.items.map((p, i) => `<article class="prog${p.featured ? ' prog--feat' : ''}">
-        <div class="prog__top"><span class="prog__idx">0${i + 1} /</span>${p.featured ? `<span class="badge">${esc(c.programs.popular)}</span>` : ''}</div>
-        <h3>${esc(p.name)}</h3>
-        <p>${esc(p.text)}</p>
-        <ul>${p.features.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>
-        <button type="button" class="btn ${p.featured ? 'btn--primary btn--shine' : 'btn--ghost'} btn--block" data-open-form data-program="${esc(p.id)}" data-source="program" data-icon="arrow">${esc(p.featured ? c.programs.start : c.programs.more)}</button>
-      </article>`).join('')}
-    </div>
-  </div>
-</section>
-
-<section class="section" id="app">
-  <div class="wrap app">
-    <div>
-      <span class="eyebrow" data-reveal>${esc(c.app.eyebrow)}</span>
-      <h2 class="display h-lg" data-split style="margin-top:20px">${splitLines(c.app.title1, c.app.title2)}</h2>
-      <p class="lead" data-reveal style="margin-top:24px">${esc(c.app.lead)}</p>
-      <a class="btn btn--ghost btn--sm" href="/login" data-route data-icon="arrow" style="margin-top:22px">${esc(c.app.already)}</a>
-      <ul class="app__list" role="tablist">
-        ${c.app.items.map((it, i) => `<li class="app__item${i === 0 ? ' is-active' : ''}" role="tab" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" data-screen="${i}">
-          <span class="ic">${APP_ICONS[i % 4]}</span><h3>${esc(it.title)}</h3><p>${esc(it.text)}</p>
-        </li>`).join('')}
-      </ul>
-    </div>
-    <div class="phone-wrap">
-      <div class="phone">
-        <div class="phone__notch" aria-hidden="true"></div>
-        <div class="phone__screen">
-          ${c.app.items.map((it, i) => `<img class="screen screen--shot${i === 0 ? ' is-active' : ''}" src="${appShot(lang, i)}" alt="${esc(it.title)}" loading="lazy">`).join('')}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section" style="background:var(--bg-2)">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow" data-reveal>${esc(c.process.eyebrow)}</span>
-      <h2 class="display h-lg" data-split>${splitLines(c.process.title1, c.process.title2)}</h2>
-    </div>
-    <div class="steps">
-      <div class="steps__line" aria-hidden="true"><i></i></div>
-      ${c.process.steps.map((s, i) => `<div class="step"><div class="step__dot">${i + 1}</div><h3>${esc(s.title)}</h3><p>${esc(s.text)}</p></div>`).join('')}
-    </div>
-  </div>
-</section>
-
-<section class="section" id="voices">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow" data-reveal>${esc(c.voices.eyebrow)}</span>
-      <h2 class="display h-lg" data-split>${splitLines(c.voices.title1, c.voices.title2)}</h2>
-    </div>
-    <div class="quotes quotes--grid" data-stagger>
-      ${c.voices.quotes.map((q) => `<figure class="quote">
-        <div class="quote__stars" aria-label="5/5">★★★★★</div>
-        <blockquote>“${esc(q.text)}”</blockquote>
-        <footer><span class="avatar">${esc((q.name || '?').trim().charAt(0))}</span><div><b>${esc(q.name)}</b><small>${esc(q.role)}</small></div></footer>
-      </figure>`).join('')}
-    </div>
-  </div>
-</section>
-
-<section class="section" id="faq" style="background:var(--bg-2)">
-  <div class="wrap faq">
-    <div class="faq__aside">
-      <span class="eyebrow" data-reveal>${esc(c.faq.eyebrow)}</span>
-      <h2 class="display h-lg" data-split style="margin-top:20px">${splitLines(c.faq.title1, c.faq.title2)}</h2>
-      <button type="button" class="btn btn--ghost" data-open-form data-source="faq" data-icon="arrow">${esc(c.faq.other)}</button>
-    </div>
-    <div class="acc">
-      ${c.faq.items.map((f) => `<div class="acc__item">
-        <button class="acc__q" aria-expanded="false"><span>${esc(f.q)}</span><i class="acc__ic" aria-hidden="true"></i></button>
-        <div class="acc__a"><div><p>${esc(f.a)}</p></div></div>
-      </div>`).join('')}
-    </div>
-  </div>
-</section>
-
-<section class="section cta" id="contact">
-  <span class="eyebrow" data-reveal>${esc(c.cta.eyebrow)}</span>
-  <h2 class="cta__title display" style="margin-top:28px">
-    <span class="line">${esc(c.cta.title1)}</span>
-    <span class="line fill" data-fill>${esc(c.cta.title2)}</span>
-  </h2>
-  <p class="lead" data-reveal>${esc(c.cta.lead)}</p>
-  <div class="cta__btns" data-reveal>
-    <span class="magnetic"><button type="button" class="btn btn--primary btn--shine" data-open-form data-source="cta" data-icon="arrow">${esc(c.cta.form)}</button></span>
-    <span class="magnetic"><a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener" data-icon="wa">${esc(c.cta.whatsapp)}</a></span>
-  </div>
-  <div class="trust" data-reveal>
-    ${c.cta.trust.map((t) => `<div><span class="num">${esc(t.value)}</span><small>${esc(t.label)}</small></div>`).join('')}
-  </div>
-</section>
-
-<div class="ig" data-reveal>
-  <div><div class="ig__handle">@${esc(c.contact.instagram)}</div><p>${esc(c.ig.text)}</p></div>
-  <a class="btn btn--ig" href="${ig}" target="_blank" rel="noopener" data-icon="arrow">${esc(c.ig.button)}</a>
-</div>
-
+${page}
 </main>
 
-<footer class="footer">
+<footer class="footer"${edit ? ' data-ec-section="footer"' : ''}>
   <div class="footer__top">
     <a href="#site-top" class="nav__logo" aria-label="ECshape"><img src="/brand/ec-mark-trainer.svg" alt="" width="42" height="44" loading="lazy"><b>ECSHAPE</b></a>
     <nav class="footer__links">
-      <a class="link-draw" href="${ig}" target="_blank" rel="noopener">${esc(c.footer.instagram)}</a>
-      <a class="link-draw" href="${wa}" target="_blank" rel="noopener">${esc(c.footer.whatsapp)}</a>
-      <a class="link-draw" href="#contact" data-open-form data-source="footer">${esc(c.footer.contact)}</a>
+      <a class="link-draw" href="${ig}" target="_blank" rel="noopener"${P_('footer.instagram')}>${esc(c.footer.instagram)}</a>
+      <a class="link-draw" href="${wa}" target="_blank" rel="noopener"${P_('footer.whatsapp')}>${esc(c.footer.whatsapp)}</a>
+      <a class="link-draw" href="#contact" data-open-form data-source="footer"${P_('footer.contact')}>${esc(c.footer.contact)}</a>
       <a class="link-draw" href="/login" data-route>${esc(c.nav.login)}</a>
-      <a class="link-draw" href="#" id="cookieSettings">${esc(c.footer.cookies)}</a>
+      <a class="link-draw" href="#" id="cookieSettings"${P_('footer.cookies')}>${esc(c.footer.cookies)}</a>
     </nav>
   </div>
   <div class="footer__mark" aria-hidden="true">${'ECSHAPE'.split('').map((l) => `<span>${l}</span>`).join('')}</div>
-  <div class="footer__bottom"><span>${esc(c.footer.rights)}</span><a href="#site-top" class="link-draw">${esc(c.footer.back)}</a></div>
+  <div class="footer__bottom"><span${P_('footer.rights')}>${esc(c.footer.rights)}</span><a href="#site-top" class="link-draw"${P_('footer.back')}>${esc(c.footer.back)}</a></div>
 </footer>
 
 <a class="wa-float" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><img src="${P}icon-whatsapp.png" alt=""></a>

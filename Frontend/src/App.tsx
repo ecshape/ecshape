@@ -382,7 +382,8 @@ const App = () => {
                   <AppRoutes />
                   <AgentHost />
                   </AgentSidekickProvider>
-                  <QaCaptureWidget />
+                  {/* never inside the site editor / preview frames */}
+                  {window.self === window.top && <QaCaptureWidget />}
                   <NotificationContainer />
                 </BrowserRouter>
               </NotificationProvider>

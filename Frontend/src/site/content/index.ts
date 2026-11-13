@@ -3,8 +3,18 @@ import { en } from './en';
 import { fr } from './fr';
 import { he } from './he';
 import type { SiteContent, SiteLang } from './types';
+import { DEFAULT_ORDER } from '../sections';
 
-export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he, en, fr };
+const PHOTOS = '/site/photos/opt/';
+/** Fields shared by every language (photos, layout) get their defaults here, once. */
+const withShared = (c: SiteContent): SiteContent => ({
+  ...c,
+  hero: { image: PHOTOS + 'trainer.jpg', ...c.hero },
+  story: { image: PHOTOS + 'trainer_story.jpg', ...c.story },
+  layout: { order: [...DEFAULT_ORDER], hidden: [], ...(c.layout || {}) },
+});
+
+export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he: withShared(he), en: withShared(en), fr: withShared(fr) };
 export const SITE_LANGS: SiteLang[] = ['he', 'en', 'fr'];
 
 export const toSiteLang = (lng?: string | null): SiteLang => {

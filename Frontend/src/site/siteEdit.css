@@ -1,0 +1,92 @@
+/* Studio visual editor, inside the iframe (/home?ec-edit=1). Loaded with the site but every rule is gated by
+   html.ec-editing, which only editBridge.ts sets: visitors never see any of this.
+   The page is drawn still (no pins / smooth scroll); editable texts get an outline on hover; sections show a
+   floating bar (name, move, hide). */
+
+html.ec-editing .ec-site .cookie,
+html.ec-editing .ec-site .wa-float,
+html.ec-editing .ec-site .cursor,
+html.ec-editing .ec-site .loader,
+html.ec-editing .ec-site .grain,
+html.ec-editing .ec-site .form-modal { display: none !important; }
+html.ec-editing .ec-site .nav { position: absolute; transform: none !important; opacity: 1 !important; visibility: visible !important; }
+html.ec-editing .ec-site .results__track { width: auto; overflow-x: auto; scrollbar-width: thin; padding-bottom: 14px; }
+html.ec-editing .ec-site .manifesto__text { color: var(--ink); }
+
+html.ec-editing .ec-site [data-ec-path] {
+  cursor: text; outline: 2px solid transparent; outline-offset: 3px; border-radius: 4px;
+  transition: outline-color .2s var(--ease-out), background-color .2s var(--ease-out);
+}
+html.ec-editing .ec-site [data-ec-item],
+html.ec-editing .ec-site [data-ec-img] { cursor: pointer; outline: 2px dashed transparent; outline-offset: 4px; transition: outline-color .2s var(--ease-out); }
+html.ec-editing .ec-site .ec-sec {
+  position: relative; outline: 2px solid transparent; outline-offset: -2px;
+  transition: outline-color .25s var(--ease-out);
+}
+html.ec-editing .ec-site .ec-sec > :not(.ec-edit-bar) { transition: opacity .35s var(--ease-out), filter .35s var(--ease-out); }
+
+html.ec-mode-edit .ec-site .ec-sec:hover { outline-color: rgba(240, 102, 31, .35); }
+html.ec-mode-edit .ec-site .ec-sec.is-ec-selected { outline-color: var(--accent); }
+html.ec-mode-edit .ec-site [data-ec-item]:hover { outline-color: rgba(245, 240, 230, .35); }
+html.ec-mode-edit .ec-site [data-ec-item].is-ec-selected,
+html.ec-mode-edit .ec-site [data-ec-img].is-ec-selected { outline-color: var(--accent); }
+html.ec-mode-edit .ec-site [data-ec-img]:hover { outline-color: rgba(240, 102, 31, .7); }
+html.ec-mode-edit .ec-site [data-ec-path]:hover { outline-color: rgba(240, 102, 31, .75); }
+html.ec-mode-edit .ec-site [data-ec-path].is-ec-selected { outline-color: var(--accent); }
+html.ec-mode-edit .ec-site [data-ec-path][contenteditable] {
+  outline: 2px solid var(--accent); background-color: rgba(240, 102, 31, .12); caret-color: var(--accent); cursor: text;
+}
+html.ec-mode-edit .ec-site [data-ec-path]:empty::before { content: '\2026'; opacity: .4; }
+html.ec-mode-edit .ec-site .ec-sec.is-ec-hidden > :not(.ec-edit-bar) { opacity: .3; filter: grayscale(.7); }
+html.ec-mode-preview .ec-site .ec-sec.is-ec-hidden { display: none; }
+html.ec-mode-preview .ec-site .ec-edit-bar,
+html.ec-mode-preview .ec-site .ec-edit-imgbtn { display: none !important; }
+html.ec-mode-preview .ec-site [data-ec-path],
+html.ec-mode-preview .ec-site [data-ec-item],
+html.ec-mode-preview .ec-site [data-ec-img] { cursor: inherit; }
+
+/* Section bar */
+.ec-site .ec-edit-bar {
+  position: absolute; z-index: 600; top: 12px; inset-inline-start: 12px;
+  display: inline-flex; align-items: center; gap: 2px; padding: 4px; padding-inline-start: 12px;
+  border-radius: 999px; background: rgba(11, 10, 8, .92); color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-2), 0 14px 34px -14px rgba(0, 0, 0, .8);
+  font: 600 12px/1 var(--f-body); letter-spacing: .01em; white-space: nowrap;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  transition: opacity .25s var(--ease-out), transform .35s var(--ease-out);
+}
+.ec-site .ec-sec[data-ec-section="hero"] > .ec-edit-bar { top: calc(var(--nav-h) + 28px); }
+.ec-site .nav > .ec-edit-bar { top: auto; bottom: -40px; }
+.ec-site .footer > .ec-edit-bar { top: 16px; }
+html.ec-mode-edit .ec-site [data-ec-section]:hover > .ec-edit-bar,
+html.ec-mode-edit .ec-site [data-ec-section].is-ec-selected > .ec-edit-bar,
+html.ec-mode-edit .ec-site .ec-sec.is-ec-hidden > .ec-edit-bar { opacity: 1; transform: none; pointer-events: auto; }
+.ec-site .ec-edit-bar__label { padding-inline-end: 8px; }
+.ec-site .ec-edit-bar__label em { font-style: normal; color: var(--gold); }
+.ec-site .ec-edit-bar button {
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; color: var(--ink-2);
+  transition: background .2s, color .2s;
+}
+.ec-site .ec-edit-bar button:hover { background: var(--accent); color: #fff; }
+.ec-site .ec-edit-bar svg { width: 15px; height: 15px; }
+
+/* "Change photo" chip */
+.ec-site .ec-edit-imgbtn {
+  position: absolute; z-index: 5; bottom: 14px; inset-inline-end: 14px;
+  padding: 9px 14px; border-radius: 999px; background: var(--accent); color: #fff;
+  font: 700 12.5px/1 var(--f-body); box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .8);
+  opacity: 0; transform: translateY(6px); transition: opacity .25s var(--ease-out), transform .35s var(--ease-out);
+}
+/* The hero photo is a clipped frame on the inline-end side: keep the chip inside the visible frame. */
+.ec-site .hero__media > .ec-edit-imgbtn { bottom: calc(11% + 18px); inset-inline-end: calc(6% + 18px); }
+@media (max-width: 900px) { .ec-site .hero__media > .ec-edit-imgbtn { bottom: 14px; inset-inline-end: 14px; } }
+html.ec-editing .ec-site .rcard__img { position: relative; }
+html.ec-mode-edit .ec-site [data-ec-img]:hover > .ec-edit-imgbtn,
+html.ec-mode-edit .ec-site [data-ec-img].is-ec-selected > .ec-edit-imgbtn { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-site .ec-edit-bar,
+  .ec-site .ec-edit-imgbtn,
+  html.ec-editing .ec-site .ec-sec,
+  html.ec-editing .ec-site .ec-sec > * { transition: none !important; }
+}

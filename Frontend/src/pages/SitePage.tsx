@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../site/site.css';
 import { initSite } from '../site/siteMotion';
@@ -25,7 +25,10 @@ const SitePage = () => {
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { i18n } = useTranslation();
-  const lang = toSiteLang(i18n.language);
+  const location = useLocation();
+  // ?lang=xx previews one language without changing the visitor's saved choice (used by Studio → Mon site)
+  const forced = new URLSearchParams(location.search).get('lang');
+  const lang = toSiteLang(forced || i18n.language);
   const [site, setSite] = useState<PublicSite>({ content: DEFAULT_CONTENT[lang], seo: {}, social: {} });
   const [ready, setReady] = useState(false);
 
@@ -54,7 +57,10 @@ const SitePage = () => {
       navigate,
       content: site.content,
       lang,
-      onLang: (l: SiteLang) => setLanguage(l),
+      onLang: (l: SiteLang) => {
+        setLanguage(l);
+        if (forced) navigate({ search: `?lang=${l}` }, { replace: true });
+      },
     });
     return () => {
       cleanup();

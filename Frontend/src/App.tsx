@@ -35,6 +35,11 @@ import MealsPageV3 from './pages/MealsPageV3';
 import SandboxMealsV3 from './pages/SandboxMealsV3';
 import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
 import ClientFavoritesPage from './pages/ClientFavoritesPage';
+import ProspectsPage from './pages/studio/ProspectsPage';
+import AgentPage from './pages/studio/AgentPage';
+import MySitePage from './pages/studio/MySitePage';
+import SeoPage from './pages/studio/SeoPage';
+import QaPage from './pages/studio/QaPage';
 import { useAuth } from './contexts/AuthContext';
 import './i18n/config';
 
@@ -205,6 +210,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
+
+      {/* Trainer studio */}
+      <Route path="/studio" element={<Navigate to="/studio/prospects" replace />} />
+      <Route path="/studio/prospects" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><ProspectsPage /></ProtectedRoute>} />
+      <Route path="/studio/agent" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><AgentPage /></ProtectedRoute>} />
+      <Route path="/studio/site" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><MySitePage /></ProtectedRoute>} />
+      <Route path="/studio/seo" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><SeoPage /></ProtectedRoute>} />
+      <Route path="/studio/qa" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><QaPage /></ProtectedRoute>} />
 
       {/* Trainer/Client routes */}
       <Route path="/" element={<HomeRoute />} />

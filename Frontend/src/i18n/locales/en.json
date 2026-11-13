@@ -1608,7 +1608,7 @@
       "title": "QA workshop",
       "subtitle": "Requests and issues on the site and the app",
       "new": "New ticket",
-      "empty": "No tickets. 🎉",
+      "empty": "No tickets yet.",
       "titleField": "Title",
       "body": "Description",
       "bodyPh": "What happened? Where? What should have happened?",
@@ -1632,7 +1632,16 @@
         "normal": "Normal",
         "high": "High"
       },
-      "all": "All"
+      "all": "All",
+      "hint": "To report something, click the QA button at the bottom of any page, then click the text, image or block to change: the ticket remembers the exact element.",
+      "search": "Search tickets…",
+      "allPriorities": "All priorities",
+      "dropHere": "Drop here",
+      "emptyCol": "Nothing here",
+      "request": "Requested change",
+      "element": "Flagged element",
+      "showOnPage": "Show on the page",
+      "askAgent": "Ask Agent EC about this ticket"
     },
     "prefs": {
       "title": "Preferences",
@@ -1847,5 +1856,26 @@
       "foam roll": "Foam roller",
       "e-z curl bar": "EZ bar"
     }
+  },
+  "qaWidget": {
+    "openMode": "Open QA mode",
+    "cancelMode": "Cancel QA mode",
+    "fabTitle": "Report a change (drag to move)",
+    "mode": "QA mode",
+    "pickHint": "Click the text, icon or block to flag",
+    "cancel": "Cancel",
+    "close": "Close",
+    "created": "Ticket created",
+    "newReport": "New QA report",
+    "saved": "Saved to the QA workshop (#{{id}}).",
+    "openTicket": "Open the ticket",
+    "keepBrowsing": "Keep browsing",
+    "text": "Text",
+    "title": "Title",
+    "whatChange": "What should change?",
+    "describe": "Describe the change…",
+    "saving": "Saving…",
+    "create": "Create ticket",
+    "defaultTitle": "Change: {{label}}"
   }
 }

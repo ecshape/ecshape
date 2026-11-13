@@ -56,6 +56,7 @@ export interface QaTicket {
   created_at?: string | null;
   updated_at?: string | null;
   comment_count: number;
+  author?: string | null;
   comments?: { id: number; body: string; author?: string | null; created_at?: string | null }[];
 }
 

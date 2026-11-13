@@ -73,6 +73,7 @@ def ticket_dict(t: QaTicket, db: Session, with_comments: bool = False) -> Dict[s
     d = {
         "id": t.id, "title": t.title, "body": t.body, "page": t.page, "priority": t.priority,
         "status": t.status, "created_by": t.created_by,
+        "author": (db.query(User.full_name).filter(User.id == t.created_by).scalar() if t.created_by else None),
         "created_at": t.created_at.isoformat() if t.created_at else None,
         "updated_at": t.updated_at.isoformat() if t.updated_at else None,
     }

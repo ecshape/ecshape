@@ -1,9 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Crosshair, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { studioApi } from '@/lib/studioApi';
+import { studioApi, type QaPriority } from '@/lib/studioApi';
+import { spotlight } from '@/lib/agentOps';
 import { cn } from '@/lib/utils';
+
+/** "Show on page" from a QA ticket: the selector to highlight after navigation. */
+export const QA_SPOTLIGHT_KEY = 'ec-qa-spotlight';
 
 type TargetInfo = {
   kind: 'element' | 'text';
@@ -87,6 +93,29 @@ function clampFab(left: number, top: number, size = 52) {
 /** Floating QA picker (LaveriExpert-style) for trainers/admins. */
 const QaCaptureWidget = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const [priority, setPriority] = useState<QaPriority>('normal');
+  const loc = useLocation();
+
+  // Highlight the element a ticket points to, once the page has rendered.
+  useEffect(() => {
+    let selector: string | null = null;
+    try {
+      selector = sessionStorage.getItem(QA_SPOTLIGHT_KEY);
+      if (selector) sessionStorage.removeItem(QA_SPOTLIGHT_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    if (!selector) return;
+    const h = window.setTimeout(() => {
+      try {
+        spotlight(selector as string);
+      } catch {
+        /* invalid selector */
+      }
+    }, 700);
+    return () => window.clearTimeout(h);
+  }, [loc.pathname]);
   const location = useLocation();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
@@ -135,6 +164,7 @@ const QaCaptureWidget = () => {
     setTitle('');
     setError(null);
     setTicketId(null);
+    setPriority('normal');
   }, []);
 
   useEffect(() => {
@@ -185,7 +215,7 @@ const QaCaptureWidget = () => {
         setTitle(`Text: ${selection.slice(0, 48)}`);
       } else {
         setTarget(info);
-        setTitle(`Change: ${info.label.slice(0, 48)}`);
+        setTitle(t('qaWidget.defaultTitle', { label: info.label.slice(0, 48) }));
       }
       clearHover();
       document.body.classList.remove('ec-qa-picking');
@@ -219,10 +249,10 @@ const QaCaptureWidget = () => {
     const pageUrl = window.location.href;
     try {
       const ticket = await studioApi.createTicket({
-        title: title.trim() || `QA — ${target.label}`,
+        title: title.trim() || `QA: ${target.label}`,
         body: buildTicketBody(target, note, pageUrl),
         page: pageUrl.slice(0, 200),
-        priority: 'normal',
+        priority,
       });
       setTicketId(ticket.id);
       setMode('done');
@@ -247,8 +277,8 @@ const QaCaptureWidget = () => {
         <button
           type="button"
           className={cn('ec-qa-fab', fabBusy && 'is-busy')}
-          aria-label={fabBusy ? 'Cancel QA mode' : 'Open QA mode'}
-          title={fabBusy ? 'Cancel' : 'Report a QA change — drag to move'}
+          aria-label={fabBusy ? t('qaWidget.cancelMode') : t('qaWidget.openMode')}
+          title={fabBusy ? t('qaWidget.cancel') : t('qaWidget.fabTitle')}
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             const el = e.currentTarget;
@@ -322,19 +352,20 @@ const QaCaptureWidget = () => {
             window.addEventListener('pointercancel', onUp);
           }}
         >
-          {fabBusy ? '×' : 'QA'}
+          {fabBusy ? <X className="h-5 w-5" /> : 'QA'}
         </button>
       </div>
 
       {mode === 'picking' ? (
         <div className="ec-qa-pick-bar" data-qa-ignore>
-          <strong>QA mode</strong>
+          <Crosshair className="h-4 w-4" />
+          <strong>{t('qaWidget.mode')}</strong>
           <span>
-            Click text, an icon, or a block to flag
+            {t('qaWidget.pickHint')}
             {hoverEl ? ` · <${hoverEl.tagName.toLowerCase()}>` : ''}
           </span>
           <button type="button" className="ec-qa-pick-cancel" onClick={stopPicking}>
-            Cancel
+            {t('qaWidget.cancel')}
           </button>
         </div>
       ) : null}
@@ -348,21 +379,21 @@ const QaCaptureWidget = () => {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="ec-qa-capture-head">
-              <h2>{mode === 'done' ? 'Ticket created' : 'New QA report'}</h2>
-              <button type="button" className="ec-qa-capture-x" aria-label="Close" onClick={closeForm}>
-                ×
+              <h2>{mode === 'done' ? t('qaWidget.created') : t('qaWidget.newReport')}</h2>
+              <button type="button" className="ec-qa-capture-x" aria-label={t('qaWidget.close')} onClick={closeForm}>
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             {mode === 'done' ? (
               <div className="ec-qa-done">
-                <p>Saved to Atelier QA{ticketId ? ` (#${ticketId})` : ''}.</p>
+                <p>{t('qaWidget.saved', { id: ticketId ?? '' })}</p>
                 <div className="ec-qa-actions">
-                  <button type="button" className="ec-qa-btn" onClick={() => navigate('/studio/qa')}>
-                    Open Atelier QA
+                  <button type="button" className="ec-qa-btn" onClick={() => { closeForm(); navigate(ticketId ? `/studio/qa?ticket=${ticketId}` : '/studio/qa'); }}>
+                    {t('qaWidget.openTicket')}
                   </button>
                   <button type="button" className="ec-qa-btn ghost" onClick={closeForm}>
-                    Keep browsing
+                    {t('qaWidget.keepBrowsing')}
                   </button>
                 </div>
               </div>
@@ -370,25 +401,33 @@ const QaCaptureWidget = () => {
               <>
                 {target ? (
                   <p className="ec-qa-target">
-                    <span>{target.kind === 'text' ? 'Text' : `<${target.tag}>`}</span>
+                    <span>{target.kind === 'text' ? t('qaWidget.text') : `<${target.tag}>`}</span>
                     {target.label}
                   </p>
                 ) : null}
                 <label className="ec-qa-field">
-                  Title
+                  {t('qaWidget.title')}
                   <input value={title} onChange={(e) => setTitle(e.target.value)} required minLength={2} maxLength={200} />
                 </label>
                 <label className="ec-qa-field">
-                  What should change?
-                  <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={4} placeholder="Describe the fix…" />
+                  {t('qaWidget.whatChange')}
+                  <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={4} placeholder={t('qaWidget.describe')} />
                 </label>
+                <div className="ec-qa-prio" role="radiogroup" aria-label={t('studio.qa.priority')}>
+                  {(['low', 'normal', 'high'] as QaPriority[]).map((p) => (
+                    <button key={p} type="button" role="radio" aria-checked={priority === p} className={cn('ec-qa-prio-btn', priority === p && 'is-on', `is-${p}`)} onClick={() => setPriority(p)}>
+                      <i />
+                      {t(`studio.qa.priorities.${p}`)}
+                    </button>
+                  ))}
+                </div>
                 {error ? <p className="ec-qa-error">{error}</p> : null}
                 <div className="ec-qa-actions">
                   <button type="button" className="ec-qa-btn ghost" onClick={closeForm} disabled={busy}>
-                    Cancel
+                    {t('qaWidget.cancel')}
                   </button>
                   <button type="submit" className="ec-qa-btn" disabled={busy || !target}>
-                    {busy ? 'Saving…' : 'Create ticket'}
+                    {busy ? t('qaWidget.saving') : t('qaWidget.create')}
                   </button>
                 </div>
               </>

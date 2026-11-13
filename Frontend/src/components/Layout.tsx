@@ -25,9 +25,13 @@ interface LayoutProps {
 const getInitials = (name?: string) =>
   (name || '?').split(' ').filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
+/** The logo draws itself when the app opens, not on every page change. */
+const APP_OPENED_AT = typeof performance !== 'undefined' ? performance.now() : 0;
+const drawBrandOnce = () => typeof performance !== 'undefined' && performance.now() - APP_OPENED_AT < 2500;
+
 const Brand = ({ compact = false }: { compact?: boolean }) => (
   <div className="flex select-none items-center gap-2.5" dir="ltr">
-    <EcMark variant="trainer" className={cn('ec-brand-mark w-auto', compact ? 'h-9' : 'h-11')} />
+    <EcMark variant="trainer" className={cn('w-auto', drawBrandOnce() && 'ec-brand-mark', compact ? 'h-9' : 'h-11')} />
     <span className={cn('font-num leading-none tracking-wide', compact ? 'text-lg' : 'text-xl')}>
       EC<span className="text-primary">SHAPE</span>
     </span>

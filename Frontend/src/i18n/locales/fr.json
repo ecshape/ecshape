@@ -1608,7 +1608,7 @@
       "title": "Atelier QA",
       "subtitle": "Demandes et anomalies sur le site et l’application",
       "new": "Nouveau ticket",
-      "empty": "Aucun ticket. 🎉",
+      "empty": "Aucun ticket pour l’instant.",
       "titleField": "Titre",
       "body": "Description",
       "bodyPh": "Que s’est-il passé ? Où ? Qu’aurait-il fallu ?",
@@ -1632,7 +1632,16 @@
         "normal": "Normale",
         "high": "Haute"
       },
-      "all": "Tous"
+      "all": "Tous",
+      "hint": "Pour signaler quelque chose, clique sur le bouton QA en bas de n’importe quelle page, puis sur le texte, l’image ou le bloc à modifier : le ticket garde l’élément exact.",
+      "search": "Rechercher un ticket…",
+      "allPriorities": "Toutes priorités",
+      "dropHere": "Déposer ici",
+      "emptyCol": "Rien ici",
+      "request": "Modification demandée",
+      "element": "Élément signalé",
+      "showOnPage": "Voir sur la page",
+      "askAgent": "Demander à l’Agent EC à propos de ce ticket"
     },
     "prefs": {
       "title": "Préférences",
@@ -1847,5 +1856,26 @@
       "foam roll": "Rouleau",
       "e-z curl bar": "Barre EZ"
     }
+  },
+  "qaWidget": {
+    "openMode": "Ouvrir le mode QA",
+    "cancelMode": "Quitter le mode QA",
+    "fabTitle": "Signaler une modification (glisser pour déplacer)",
+    "mode": "Mode QA",
+    "pickHint": "Clique sur le texte, l’icône ou le bloc à signaler",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "created": "Ticket créé",
+    "newReport": "Nouveau signalement QA",
+    "saved": "Enregistré dans l’atelier QA (#{{id}}).",
+    "openTicket": "Ouvrir le ticket",
+    "keepBrowsing": "Continuer",
+    "text": "Texte",
+    "title": "Titre",
+    "whatChange": "Que faut-il changer ?",
+    "describe": "Décris la modification…",
+    "saving": "Enregistrement…",
+    "create": "Créer le ticket",
+    "defaultTitle": "Modifier : {{label}}"
   }
 }

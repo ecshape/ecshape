@@ -31,16 +31,37 @@ except ImportError:
     from app.models.notification import Notification
     from app.models.chat import ChatMessage
 
+
+def _resolve_admin_password() -> str:
+    """Require ADMIN_PASSWORD on Railway/production; allow local default only off-platform."""
+    password = os.getenv("ADMIN_PASSWORD")
+    if password:
+        return password
+
+    on_railway = bool(os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_PROJECT_ID"))
+    environment = (os.getenv("ENVIRONMENT") or "").lower()
+    if on_railway or environment in {"production", "staging", "preview"}:
+        raise SystemExit(
+            "ADMIN_PASSWORD must be set via environment variables "
+            "(default admin123 is disabled on deployed environments)."
+        )
+
+    print("WARNING: ADMIN_PASSWORD unset; using local-only default admin123")
+    return "admin123"
+
+
 ADMIN_USER = {
     "username": "admin",
     "email": "admin@elior.com",
-    "password": "admin123",
     "full_name": "Admin User",
-    "role": UserRole.ADMIN
+    "role": UserRole.ADMIN,
 }
 
 def ensure_admin_exists():
     """Create admin user directly in database if it doesn't exist"""
+    admin_password = _resolve_admin_password()
+    password_from_env = bool(os.getenv("ADMIN_PASSWORD"))
+
     # First, ensure database tables exist (handles fresh installs)
     print("Initializing database tables if needed...")
     if not init_database():
@@ -67,7 +88,6 @@ def ensure_admin_exists():
         print("Running meal calorie goal migration...")
         run_meal_calorie_goal_migration()
         
-        print("✅ Database migrations completed successfully.")
     except Exception as migration_error:
         print(f"⚠️ Warning: Some migrations encountered errors: {migration_error}")
         import traceback
@@ -88,19 +108,23 @@ def ensure_admin_exists():
         ).first()
         
         if admin:
-            # Update password if needed
             if admin.role != UserRole.ADMIN:
                 admin.role = UserRole.ADMIN
-            admin.hashed_password = get_password_hash(ADMIN_USER["password"])
-            db.commit()
-            print("Admin user verified and password updated.")
+            # Only rotate password when ADMIN_PASSWORD is explicitly provided
+            if password_from_env:
+                admin.hashed_password = get_password_hash(admin_password)
+                db.commit()
+                print("Admin user verified; password updated from ADMIN_PASSWORD.")
+            else:
+                db.commit()
+                print("Admin user verified (password unchanged).")
             return True
         
         # Create new admin user
         admin = User(
             username=ADMIN_USER["username"],
             email=ADMIN_USER["email"],
-            hashed_password=get_password_hash(ADMIN_USER["password"]),
+            hashed_password=get_password_hash(admin_password),
             full_name=ADMIN_USER["full_name"],
             role=UserRole.ADMIN,
             is_active=True
@@ -108,7 +132,7 @@ def ensure_admin_exists():
         db.add(admin)
         db.commit()
         db.refresh(admin)
-        print(f"Admin user created: username={ADMIN_USER['username']}, password={ADMIN_USER['password']}")
+        print(f"Admin user created: username={ADMIN_USER['username']}")
         return True
         
     except Exception as e:
@@ -129,4 +153,3 @@ if __name__ == "__main__":
     else:
         print("Failed to setup admin user.")
         sys.exit(1)
-

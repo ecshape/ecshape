@@ -17,6 +17,8 @@ build
 .env.test.local
 .env.production.local
 env.production.example
+.dev-credentials
+.dev-credentials.json
 
 # Editor
 .vscode/

@@ -5,12 +5,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Import translation files
 import he from './locales/he.json';
 import en from './locales/en.json';
+import fr from './locales/fr.json';
 
 // Get stored language preference or default to Hebrew
 const getInitialLanguage = (): string => {
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('i18nextLng');
-    if (stored && (stored === 'he' || stored === 'en')) {
+    if (stored && (stored === 'he' || stored === 'en' || stored === 'fr')) {
       return stored;
     }
   }
@@ -24,9 +25,12 @@ i18n
     resources: {
       he: { translation: he },
       en: { translation: en },
+      fr: { translation: fr },
     },
+    supportedLngs: ['he', 'en', 'fr'],
     // Default to Hebrew, fallback to English if needed
-    fallbackLng: 'he',
+    // Missing French strings fall back to English, never to Hebrew
+    fallbackLng: { fr: ['en'], en: ['he'], default: ['he'] },
     lng: getInitialLanguage(), // Use stored preference or default to Hebrew
     debug: false,
     interpolation: {

@@ -303,15 +303,9 @@ const App = () => {
     // Set initial direction and language based on current language
     // Check localStorage first, then i18n language, then default to Hebrew
     const storedLang = typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') : null;
-    const currentLang = storedLang && (storedLang === 'he' || storedLang === 'en')
-      ? storedLang
-      : (i18n.language || 'he');
+    const currentLang = storedLang && ['he', 'en', 'fr'].includes(storedLang) ? storedLang : (i18n.language || 'he');
     document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
     document.documentElement.lang = currentLang;
-    // Fallback language should match user preference so missing keys show in chosen language
-    if (i18n.options) {
-      i18n.options.fallbackLng = currentLang;
-    }
   }, [i18n.language]);
 
   return (

@@ -4,7 +4,8 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import markup from './markup.html?raw';
+import { renderSite } from './render';
+import { API_BASE_URL } from '../config/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,17 +24,20 @@ function loadGoogleAnalytics() {
   gtag('config', GA_ID);
 }
 
-const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>';
+const ARROW_RTL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>';
+const ARROW_LTR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 const GLYPHS = 'אבגדהוזחטיכלמנסעפצקרשת';
 const EASE = 'expo.out';
 
 /**
  * @param {HTMLElement} root   element with class "ec-site"
- * @param {{ navigate: (to: string) => void }} opts
+ * @param {{ navigate: (to: string) => void, content: object, lang: 'he'|'en'|'fr', onLang: (l: string) => void }} opts
  * @returns {() => void} cleanup
  */
-export function initSite(root, { navigate }) {
-  root.innerHTML = markup;
+export function initSite(root, { navigate, content, lang, onLang }) {
+  root.innerHTML = renderSite(content, lang);
+  const rtl = lang === 'he';
+  const DIR = rtl ? 1 : -1; // horizontal motion sign: RTL content flows toward +x
 
   const $ = (s, c) => (c || root).querySelector(s);
   const $$ = (s, c) => Array.from((c || root).querySelectorAll(s));
@@ -65,7 +69,7 @@ export function initSite(root, { navigate }) {
     const icon = btn.getAttribute('data-icon');
     let iconHTML = '';
     if (icon === 'wa') iconHTML = '<span class="btn__icon"><img src="/site/photos/icon-whatsapp.png" alt=""></span>';
-    else if (icon) iconHTML = `<span class="btn__icon">${ARROW}${ARROW}</span>`;
+    else if (icon) { const a = rtl ? ARROW_RTL : ARROW_LTR; iconHTML = `<span class="btn__icon">${a}${a}</span>`; }
     btn.innerHTML = '<span class="btn__fill" aria-hidden="true"></span>' +
       `<span class="btn__label"><span data-text="${text.replace(/"/g, '&quot;')}">${text}</span></span>${iconHTML}`;
     btn.setAttribute('aria-label', btn.getAttribute('aria-label') || text);
@@ -163,21 +167,64 @@ export function initSite(root, { navigate }) {
   on(menuBtn, 'click', () => setMenu(!menu.classList.contains('is-open')));
   $$('a', menu).forEach((a) => on(a, 'click', () => setMenu(false)));
 
-  /* ------------------------------------------------------------ lightbox */
-  const lb = $('#lightbox');
-  const closeLightbox = () => {
-    if (lb.classList.contains('is-open')) { lb.classList.remove('is-open'); if (lenis) lenis.start(); }
+  /* ------------------------------------------------------- language switch */
+  $$('[data-lang]').forEach((b) => on(b, 'click', () => { if (b.dataset.lang !== lang) onLang(b.dataset.lang); }));
+
+  /* ---------------------------------------------------- lead form (modal) */
+  const modal = $('#leadModal');
+  const form = $('#leadForm');
+  const done = $('.form-done', modal);
+  let lastFocus = null;
+  const openForm = (trigger) => {
+    lastFocus = trigger || document.activeElement;
+    form.hidden = false; done.hidden = true;
+    const program = trigger && trigger.getAttribute('data-program');
+    if (program) { const r = form.querySelector(`input[name="program"][value="${program}"]`); if (r) r.checked = true; }
+    form.dataset.source = (trigger && trigger.getAttribute('data-source')) || 'site';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    if (lenis) lenis.stop();
+    setMenu(false);
+    timers.push(setTimeout(() => form.querySelector('input[name="name"]').focus(), 350));
   };
-  on(window, 'keydown', (e) => { if (e.key === 'Escape') { setMenu(false); closeLightbox(); } });
-  $$('[data-lightbox]').forEach((b) => {
-    on(b, 'click', () => {
-      $('img', lb).src = b.getAttribute('data-lightbox');
-      lb.classList.add('is-open');
-      if (lenis) lenis.stop();
-      $('.lightbox__close', lb).focus();
-    });
+  const closeForm = () => {
+    if (!modal.classList.contains('is-open')) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    if (lenis) lenis.start();
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  };
+  $$('[data-open-form]').forEach((b) => on(b, 'click', (e) => { e.preventDefault(); openForm(b); }));
+  $$('[data-close-form]', modal).forEach((b) => on(b, 'click', closeForm));
+  on(window, 'keydown', (e) => { if (e.key === 'Escape') { setMenu(false); closeForm(); } });
+  on(form, 'submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    const msg = $('.form-msg', form);
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.lang = lang;
+    data.source = form.dataset.source || 'site';
+    msg.textContent = '';
+    if (!String(data.name || '').trim() || !(String(data.phone || '').trim() || String(data.email || '').trim())) {
+      msg.textContent = btn.dataset.required;
+      return;
+    }
+    const label = btn.querySelector('.btn__label > span');
+    const original = label ? label.textContent : '';
+    if (label) label.textContent = btn.dataset.sending;
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_BASE_URL}/public/leads`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      if (!res.ok) throw new Error(String(res.status));
+      form.hidden = true; done.hidden = false; form.reset();
+      if (window.gtag) window.gtag('event', 'generate_lead', { source: data.source, program: data.program });
+    } catch (err) {
+      msg.textContent = btn.dataset.error;
+    } finally {
+      btn.disabled = false;
+      if (label) label.textContent = original;
+    }
   });
-  on(lb, 'click', (e) => { if (e.target !== $('img', lb)) closeLightbox(); });
 
   /* ----------------------------------------------------------------- FAQ */
   $$('.acc__q').forEach((q) => {
@@ -196,17 +243,6 @@ export function initSite(root, { navigate }) {
       const r = card.getBoundingClientRect();
       card.style.setProperty('--mx', `${e.clientX - r.left}px`);
       card.style.setProperty('--my', `${e.clientY - r.top}px`);
-    });
-  });
-
-  /* ---------------------------------------------------- WhatsApp wall loop */
-  $$('.wall__col').forEach((col) => {
-    $$('button', col).forEach((b) => {
-      const c = b.cloneNode(true);
-      c.setAttribute('aria-hidden', 'true');
-      c.tabIndex = -1;
-      on(c, 'click', () => b.click());
-      col.appendChild(c);
     });
   });
 
@@ -307,6 +343,9 @@ export function initSite(root, { navigate }) {
   });
 
   const mqDesktop = window.matchMedia('(min-width: 901px)');
+  // Photo frame sits on the trailing side: left in RTL, right in LTR.
+  const CLIP_START = rtl ? 'inset(15% 58% 11% 6% round 28px)' : 'inset(15% 6% 11% 58% round 28px)';
+  const SHIFT = rtl ? -30 : 24;
   const ctx = gsap.context(() => {}, root);
   const mm = gsap.matchMedia();
 
@@ -327,8 +366,8 @@ export function initSite(root, { navigate }) {
       .from('.hero__stats .chip', { y: 30, autoAlpha: 0, duration: 1, stagger: 0.08 }, 0.6)
       .from('.hero__scroll', { autoAlpha: 0, duration: 1 }, 0.9);
     if (mqDesktop.matches) {
-      tl.fromTo('.hero__media', { clipPath: 'inset(15% 58% 89% 6% round 28px)' }, { clipPath: 'inset(15% 58% 11% 6% round 28px)', duration: 1.6, ease: 'expo.inOut' }, 0)
-        .fromTo('.hero__media img', { scale: 1.5, xPercent: -30 }, { scale: 1.15, xPercent: -30, duration: 2 }, 0);
+      tl.fromTo('.hero__media', { clipPath: CLIP_START.replace(' 11% ', ' 89% ') }, { clipPath: CLIP_START, duration: 1.6, ease: 'expo.inOut' }, 0)
+        .fromTo('.hero__media img', { scale: 1.5, xPercent: SHIFT }, { scale: 1.15, xPercent: SHIFT, duration: 2 }, 0);
     } else {
       tl.from('.hero__media', { y: 40, autoAlpha: 0, duration: 1.2 }, 0.3);
     }
@@ -415,8 +454,8 @@ export function initSite(root, { navigate }) {
     });
 
     // CTA outline fill + footer wordmark
-    gsap.fromTo($('[data-fill]'), { backgroundPosition: '0% 0' }, {
-      backgroundPosition: '100% 0', ease: 'none',
+    gsap.fromTo($('[data-fill]'), { backgroundPosition: rtl ? '0% 0' : '100% 0' }, {
+      backgroundPosition: rtl ? '100% 0' : '0% 0', ease: 'none',
       scrollTrigger: { trigger: $('.cta__title'), start: 'top 80%', end: 'top 30%', scrub: true },
     });
     gsap.from($('.cta__title .line'), { yPercent: 40, autoAlpha: 0, duration: 1.3, ease: EASE, scrollTrigger: { trigger: $('.cta__title'), start: 'top 85%' } });
@@ -425,10 +464,10 @@ export function initSite(root, { navigate }) {
 
   // Breakpoint-specific pins
   mm.add('(min-width: 901px)', () => {
-    gsap.set($('.hero__media img'), { xPercent: -30 });
+    gsap.set($('.hero__media img'), { xPercent: SHIFT });
     gsap.timeline({ scrollTrigger: { trigger: $('.hero'), start: 'top top', end: '+=120%', pin: true, scrub: 0.8, anticipatePin: 1 } })
-      .fromTo($('.hero__media'), { clipPath: 'inset(15% 58% 11% 6% round 28px)' }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'power2.inOut', immediateRender: false }, 0)
-      .fromTo($('.hero__media img'), { scale: 1.15, xPercent: -30 }, { scale: 1, xPercent: 0, ease: 'power2.inOut', immediateRender: false }, 0)
+      .fromTo($('.hero__media'), { clipPath: CLIP_START }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'power2.inOut', immediateRender: false }, 0)
+      .fromTo($('.hero__media img'), { scale: 1.15, xPercent: SHIFT }, { scale: 1, xPercent: 0, ease: 'power2.inOut', immediateRender: false }, 0)
       .to($('.hero__media'), { '--shade': 1, ease: 'none' }, 0.2)
       .to($('.hero__content'), { yPercent: -18, autoAlpha: 0, ease: 'power2.in' }, 0)
       .to([$('.hero__stats'), $('.hero__scroll')], { autoAlpha: 0, y: 20, ease: 'power1.in' }, 0)
@@ -437,7 +476,7 @@ export function initSite(root, { navigate }) {
     const track = $('.results__track');
     const dist = () => Math.max(0, track.scrollWidth - innerWidth);
     gsap.to(track, {
-      x: () => dist(), ease: 'none',
+      x: () => DIR * dist(), ease: 'none',
       scrollTrigger: {
         trigger: $('.results'), start: 'top top', end: () => `+=${dist()}`,
         pin: $('.results'), pinSpacing: true, scrub: 0.6, invalidateOnRefresh: true,

@@ -46,13 +46,17 @@
     "exporting": "Exporting...",
     "importing": "Importing...",
     "loadMore": "Load More",
-    "remaining": "remaining"
+    "remaining": "remaining",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode"
   },
   "error": {
     "pageNotFound": "Oops! Page not found",
     "accessDenied": "Access denied",
     "somethingWentWrong": "Something went wrong",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "redirectMessage": "You will be redirected in {{count}} seconds",
+    "returnToDashboard": "Back to dashboard"
   },
   "roles": {
     "ADMIN": "Admin",
@@ -389,7 +393,12 @@
     "copyFailed": "Could not copy this meal",
     "daySummary": "Day summary",
     "remainingToday": "Remaining today",
-    "summaryPage": "Summary page {{n}}"
+    "summaryPage": "Summary page {{n}}",
+    "dailyMeals": "Daily meals",
+    "finishDay": "Finish day",
+    "hideHistory": "Hide history",
+    "macroLimitsExceeded": "Macro limits exceeded:",
+    "showHistory": "Show history"
   },
   "training": {
     "training": "Training",
@@ -603,7 +612,13 @@
     "noPhotosTitle": "No Progress Photos Yet",
     "noPhotosSubtitle": "Add photos to your weigh-ins to track your visual progress!",
     "cm": "cm",
-    "measurements": "Body Measurements (cm)"
+    "measurements": "Body Measurements (cm)",
+    "confirmDelete": "Are you sure you want to delete this entry?",
+    "deleteError": "Error deleting the entry",
+    "noEntries": "No progress entries",
+    "noHistory": "No history",
+    "removePhoto": "Remove photo",
+    "viewHistory": "View history"
   },
   "admin": {
     "admin": "Admin",
@@ -1133,7 +1148,8 @@
     "hoursAgo": "{{count}} hour ago",
     "hoursAgo_plural": "{{count}} hours ago",
     "daysAgo": "{{count}} day ago",
-    "daysAgo_plural": "{{count}} days ago"
+    "daysAgo_plural": "{{count}} days ago",
+    "confirmDeleteWorkout": "Are you sure you want to delete this workout plan?"
   },
   "workoutCreation": {
     "title": "Create Workout Plan",
@@ -1246,7 +1262,12 @@
       "cardio": "Cardio",
       "rest": "Rest",
       "custom": "Custom"
-    }
+    },
+    "allCategories": "All categories",
+    "clientModificationsPlaceholder": "Add client-specific changes, injury considerations or special instructions...",
+    "filterByCategory": "Filter by category",
+    "searchExercisesPlaceholder": "Search exercises...",
+    "workoutDescriptionPlaceholder": "Describe the workout goals and focus areas..."
   },
   "mealCreation": {
     "title": "Create Meal Plan",
@@ -1404,5 +1425,38 @@
     "enableNotifications": "Enable Notifications",
     "enableNotificationsDesc": "Get notified about new messages",
     "enable": "Enable"
+  },
+  "mealPlan": {
+    "addFood": "Add food",
+    "addFoodToBank": "Add food to the food bank",
+    "addFoodToBankDescription": "Add a new food item to your food bank for future use",
+    "addFromMealBank": "Add from food bank",
+    "addItemsToMealPlan": "Add {{count}} item(s) to the meal plan",
+    "addToMealBank": "Add to food bank",
+    "adding": "Adding...",
+    "all": "All",
+    "calculated": "(Calculated)",
+    "calculatedFromCalorieGoal": "Calculated from the calorie goal",
+    "calculatedFromMacroGoals": "Calculated from the sum of macro calorie goals",
+    "calculatedFromMeals": "Calculated from the sum of all meal calories",
+    "calorieGoal": "Calorie goal",
+    "calorieGoalHint": "Set the calorie goal for this macronutrient. Meal calories are the sum of all macro calorie goals.",
+    "calorieGoalPlaceholder": "e.g., 200",
+    "enterRecommendedAmount": "Enter recommended amount in grams",
+    "kcalPer100g": "kcal per 100g",
+    "makeFoodPublic": "Make this food item public (visible to all trainers)",
+    "mealBankDescription": "Choose from the food bank to add common food items to your meal plan",
+    "mealBankTitle": "Food bank - select food options",
+    "noMealBankItems": "No food bank items found. Try a different search or filter.",
+    "notAvailable": "N/A",
+    "quantityBasedOnCalories": "Quantity calculated from the calorie goal",
+    "recommendedQuantity": "Recommended amount (grams)",
+    "recommendedQuantityHint": "Suggested amount for the client (calorie counting stays accurate)",
+    "searchFoodItems": "Search food items...",
+    "setCalorieGoalFirst": "Set a calorie goal first",
+    "successCreated": "Meal plan created successfully!",
+    "totalAmountAllowed": "Total amount allowed (grams)",
+    "trackCrossMacros": "Track macros on each food",
+    "trackCrossMacrosHint": "Subtract calories from other macro categories based on food composition"
   }
 }

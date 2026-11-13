@@ -272,6 +272,10 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️ Continuing startup despite migration errors...")
         logger.warning("⚠️ Some schema changes may not be applied. Check logs for details.")
     
+    # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
+    from app.dev_seed import run_if_enabled as run_dev_seed
+    run_dev_seed(engine)
+
     # Log database pool statistics
     pool_stats = get_db_pool_stats()
     logger.info(f"📊 Database pool initialized: {pool_stats}")

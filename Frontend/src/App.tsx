@@ -45,6 +45,7 @@ import PreferencesPage from './pages/studio/PreferencesPage';
 import { AgentSidekickProvider } from './contexts/AgentSidekickContext';
 import AgentEc from './components/studio/AgentEc';
 import './styles/agent-ec.css';
+import './styles/info-tip.css';
 import QaCaptureWidget from './components/studio/QaCaptureWidget';
 import { useAuth } from './contexts/AuthContext';
 import './i18n/config';

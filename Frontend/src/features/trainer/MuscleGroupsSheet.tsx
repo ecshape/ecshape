@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
-import { Check, Loader2, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { api } from '@/features/trainee/api';
 import { InfoTip } from '@/components/ui/info-tip';
 import { useToast } from '@/hooks/use-toast';
@@ -84,7 +85,7 @@ export const MuscleGroupsSheet: React.FC<{
               <input className="tp-input tr-input-sm" dir="rtl" value={he} onChange={(e) => setHe(e.target.value)} placeholder={t('exerciseBank.newMuscleGroupNameHePlaceholder')} />
             </label>
             <button type="submit" className="tp-btn tp-btn--primary tp-btn--sm tp-press self-end" disabled={busy || !en.trim()}>
-              {busy && !editId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {busy && !editId ? <EcSpinner className="h-4 w-4" mono /> : <Plus className="h-4 w-4" />}
               {t('tt.common.add')}
             </button>
           </div>

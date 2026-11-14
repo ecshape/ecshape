@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
@@ -11,7 +12,6 @@ import {
   Link2Off,
   List,
   ListOrdered,
-  Loader2,
   Quote,
   Redo2,
   Sparkles,
@@ -292,7 +292,7 @@ export const ArticleEditor = ({ article, lang, aiReady, aiEngine, aiModel, autoB
             {t('studio.seo.editor.saveDraft')}
           </Button>
           <Button size="sm" disabled={saving || gen.state.running} onClick={() => void save(primaryStatus)}>
-            {saving ? <Loader2 className="animate-spin" /> : null}
+            {saving ? <EcSpinner mono /> : null}
             {scheduled ? t('studio.seo.editor.schedule') : draft.status === 'published' ? t('studio.seo.editor.update') : t('studio.seo.editor.publish')}
           </Button>
         </div>

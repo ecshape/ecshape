@@ -565,3 +565,11 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
   .tr-draw { stroke-dashoffset: 0; }
   .tr-blob, .tr-hblob, .tr-side, .tr-lift, .tr-more-panel, .tr-nav-link, .tr-tab { transition: none !important; }
 }
+
+/* Liquid indicator, phase 1: the front edge leads quickly (QA #29); phase 2 ("settle") uses the normal calm timing. */
+.tr-blob[data-phase="stretch"], .tr-hblob[data-phase="stretch"] {
+  transition: transform .14s cubic-bezier(.4, 0, .2, 1), height .14s cubic-bezier(.4, 0, .2, 1), width .14s cubic-bezier(.4, 0, .2, 1);
+}
+.tr-blob[data-phase="settle"], .tr-hblob[data-phase="settle"] {
+  transition: transform .26s var(--tr-ease), height .26s var(--tr-ease), width .26s var(--tr-ease), opacity var(--tr-fast);
+}

@@ -5,6 +5,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
 import { LevelBars } from '@/components/exercises/ExerciseLibrary';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
+import { ExerciseMuscleMap } from '@/components/exercises/ExerciseMuscleMap';
 
 export interface BankExercise {
   id: number;
@@ -90,6 +91,7 @@ export const BankExerciseSheet: React.FC<{
                     </div>
                   </div>
                   {info.text && <p className="text-sm leading-relaxed text-muted-foreground" dir="auto">{info.text}</p>}
+                  <ExerciseMuscleMap primary={[e.muscle_group]} secondary={info.secondary} label={(m) => (m === e.muscle_group ? muscleLabel(m) : label('muscle', m))} />
                   <section>
                     <h3 className="tp-label mb-2.5">{t('tt.bank.instructions')}</h3>
                     {steps.length === 0 ? (

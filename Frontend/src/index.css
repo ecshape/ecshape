@@ -409,12 +409,14 @@
 /* Liquid nav highlight (see components/LiquidNav.tsx) */
 .liquid-blob {
   box-shadow: 0 10px 24px -10px hsl(var(--primary) / .9), inset 0 1px 0 rgba(255, 255, 255, .25);
-  transition: transform .62s var(--ease-spring), width .5s var(--ease-out), height .5s var(--ease-out);
+  transition: transform .38s cubic-bezier(.2, .7, .3, 1), width .32s cubic-bezier(.2, .7, .3, 1), height .32s cubic-bezier(.2, .7, .3, 1);
 }
-.liquid-blob[data-stretch="x"] { animation: liquidX .62s var(--ease-out); }
-.liquid-blob[data-stretch="y"] { animation: liquidY .62s var(--ease-out); }
-@keyframes liquidX { 0% { scale: 1 1; } 35% { scale: 1.18 .82; } 70% { scale: .96 1.04; } 100% { scale: 1 1; } }
-@keyframes liquidY { 0% { scale: 1 1; } 35% { scale: .9 1.2; } 70% { scale: 1.03 .97; } 100% { scale: 1 1; } }
+/* Calm liquid: a light stretch while it travels, no wobble (QA #29) */
+.liquid-blob[data-stretch="x"] { animation: liquidX .38s cubic-bezier(.2, .7, .3, 1); }
+.liquid-blob[data-stretch="y"] { animation: liquidY .38s cubic-bezier(.2, .7, .3, 1); }
+@keyframes liquidX { 0% { scale: 1 1; } 40% { scale: 1.08 .94; } 100% { scale: 1 1; } }
+@keyframes liquidY { 0% { scale: 1 1; } 40% { scale: .96 1.08; } 100% { scale: 1 1; } }
+@media (prefers-reduced-motion: reduce) { .liquid-blob { transition: none; animation: none !important; } }
 
 /* Frosted glass surfaces */
 .ec-glass {

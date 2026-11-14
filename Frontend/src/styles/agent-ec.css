@@ -278,3 +278,7 @@ html[dir='rtl'] { --ec-travel-origin: right; }
 
 /* Radix modals set pointer-events:none on <body>; Agent EC stays usable on top of every pop-up */
 .ec-psk, .ec-psk *, .ec-psk-edge, .ec-psk-edge *, .ec-psk-swipe-panel { pointer-events: auto; }
+
+/* Dropdowns, selects, popovers and tooltips (Radix poppers) open above Agent EC, dialogs and sheets (QA #28, #30).
+   Radix copies the content's z-index onto this wrapper; the QA widget (2147483000) stays on top of everything. */
+[data-radix-popper-content-wrapper] { z-index: calc(var(--ec-z-agent, 80) + 40) !important; }

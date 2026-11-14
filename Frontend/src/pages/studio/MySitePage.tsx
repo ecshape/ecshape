@@ -7,11 +7,12 @@
  *    Drafts are kept in this browser for the three languages; "Publish" sends every changed language at once.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowDown, ArrowUp, Check, ExternalLink, Eye, EyeOff, Globe, Loader2, Monitor, MousePointerClick, Paintbrush, Pencil,
+  ArrowDown, ArrowUp, Check, ExternalLink, Eye, EyeOff, Globe, Monitor, MousePointerClick, Paintbrush, Pencil,
   PanelLeft, PanelRight, Redo2, RotateCcw, Smartphone, Sparkles, Tablet, Undo2, X,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -464,7 +465,7 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
             <span className="ec-ms-label">{t('mysite.studio.agent')}</span>
           </button>
           <Button onClick={publish} disabled={!draft.dirty || publishing} className="ec-ms-publish">
-            {publishing ? <Loader2 className="animate-spin" /> : <Check />}
+            {publishing ? <EcSpinner mono /> : <Check />}
             {publishing ? t('mysite.studio.publishing') : draft.dirty ? t('mysite.studio.publish') : t('mysite.studio.published')}
           </Button>
         </div>
@@ -534,7 +535,7 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
               />
               {!frameReady && (
                 <div className="ec-ms-loading">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <EcSpinner className="h-5 w-5" mono />
                   <span>{t('mysite.studio.loading')}</span>
                 </div>
               )}
@@ -635,7 +636,7 @@ const MySitePage = () => {
             </>
           ) : (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <EcSpinner className="h-5 w-5" mono />
               <span>{t('mysite.studio.loading')}</span>
             </>
           )}

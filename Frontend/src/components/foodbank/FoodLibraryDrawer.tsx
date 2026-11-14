@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Check, ExternalLink, Info, Layers, Loader2, Plus, Search, X } from 'lucide-react';
+import { AlertCircle, Check, ExternalLink, Info, Layers, Plus, Search, X } from 'lucide-react';
 import { API_BASE_URL } from '@/config/api';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -190,7 +191,7 @@ function LibraryCard({
               </>
             ) : adding ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <EcSpinner className="h-3.5 w-3.5" mono />
                 <span className="truncate">{t('foodBankPro.library.adding')}</span>
               </>
             ) : (
@@ -295,7 +296,7 @@ function StarterPacks({
                   )}
                 >
                   {busy === pack.key ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <EcSpinner className="h-3.5 w-3.5" mono />
                   ) : done ? (
                     <Check className="h-3.5 w-3.5" />
                   ) : (
@@ -581,7 +582,7 @@ export function FoodLibraryDrawer({
                   className="h-11 w-full rounded-xl border border-border bg-card pe-10 ps-9 text-base outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/30 sm:text-sm"
                 />
                 {loading && (
-                  <Loader2 className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-primary" />
+                  <EcSpinner className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
                 )}
               </div>
               <div
@@ -694,7 +695,7 @@ export function FoodLibraryDrawer({
                       disabled={loadingMore}
                       className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-sm font-medium transition hover:border-primary/50 hover:text-primary active:scale-95 disabled:opacity-60"
                     >
-                      {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {loadingMore && <EcSpinner className="h-4 w-4" mono />}
                       {t('foodBankPro.library.loadMore')}
                     </button>
                   </div>

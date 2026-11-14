@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Compass, Loader2, Search, X } from 'lucide-react';
+import { EcSpinner } from '@/components/brand/EcLoader';
+import { Compass, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InfoTip } from '@/components/ui/info-tip';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
@@ -126,7 +127,7 @@ const ExploreScreen: React.FC = () => {
               {lib.hasNextPage && (
                 <div className="mt-5 flex justify-center">
                   <button type="button" onClick={() => lib.fetchNextPage()} disabled={lib.isFetchingNextPage} className="tp-btn tp-btn--ghost tp-press">
-                    {lib.isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin" />}{tt('explore.more')}
+                    {lib.isFetchingNextPage && <EcSpinner className="h-4 w-4" mono />}{tt('explore.more')}
                   </button>
                 </div>
               )}

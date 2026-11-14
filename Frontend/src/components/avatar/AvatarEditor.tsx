@@ -3,8 +3,9 @@
  * and in the trainee profile. Saves through /api/files/avatar and updates the signed-in user right away.
  */
 import React, { useEffect, useRef, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
-import { Camera, Loader2, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Camera, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import '@/i18n/ticketsStudio';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -98,7 +99,7 @@ export const AvatarEditor: React.FC<{ className?: string; rounded?: string; comp
       >
         <UserAvatar name={user?.full_name} src={user?.avatar_url} rounded={rounded} className={cn('bg-primary text-primary-foreground', className || 'h-20 w-20 text-2xl')} />
         <span className={cn('absolute -bottom-1 -end-1 grid h-8 w-8 place-items-center rounded-full border-2 border-background bg-foreground text-background shadow-md transition-transform duration-300 group-hover:scale-110 motion-reduce:transition-none')}>
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+          {busy ? <EcSpinner className="h-3.5 w-3.5" mono /> : <Camera className="h-3.5 w-3.5" />}
         </span>
       </button>
       {!compact && (
@@ -176,7 +177,7 @@ export const AvatarEditor: React.FC<{ className?: string; rounded?: string; comp
               <div className="flex w-full justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={() => setImg(null)} disabled={busy}>{t('tix.common.cancel')}</Button>
                 <Button type="button" onClick={save} disabled={busy}>
-                  {busy && <Loader2 className="animate-spin" />}
+                  {busy && <EcSpinner mono />}
                   {t('tix.avatar.save')}
                 </Button>
               </div>

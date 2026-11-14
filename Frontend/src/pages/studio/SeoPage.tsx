@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -11,7 +12,6 @@ import {
   Globe2,
   Instagram,
   LayoutDashboard,
-  Loader2,
   Plus,
   Repeat2,
   Save,
@@ -198,7 +198,7 @@ const SeoPage = () => {
 
         {loading ? (
           <div className="ec-seo-loading">
-            <Loader2 className="animate-spin" />
+            <EcSpinner mono />
           </div>
         ) : (
           <div className="ec-seo-panel" key={tab}>
@@ -508,7 +508,7 @@ const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: Seo
               setBusy(false);
             }}
           >
-            {busy ? <Loader2 className="animate-spin" /> : <Save />}
+            {busy ? <EcSpinner mono /> : <Save />}
             {t('studio.seo.save')}
           </Button>
         </div>
@@ -710,7 +710,7 @@ const Connections = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: 
             setBusy(false);
           }}
         >
-          {busy ? <Loader2 className="animate-spin" /> : <Save />}
+          {busy ? <EcSpinner mono /> : <Save />}
           {t('studio.seo.save')}
         </Button>
       </div>

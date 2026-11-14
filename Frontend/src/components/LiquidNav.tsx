@@ -22,22 +22,49 @@ interface LiquidNavProps {
  * Navigation with a "liquid" active highlight: a single blob that stretches toward the newly
  * selected item, then settles (springy transform + size transition). Pure CSS motion.
  */
+/** Last blob box per orientation: pages remount the nav on every route. */
+const lastBox: Record<string, { x: number; y: number; w: number; h: number } | undefined> = {};
+
 export const LiquidNav: React.FC<LiquidNavProps> = ({ items, active, orientation = 'horizontal', className, itemClassName, ariaLabel }) => {
   const wrap = useRef<HTMLDivElement>(null);
   const [blob, setBlob] = useState<{ x: number; y: number; w: number; h: number; stretch: boolean } | null>(null);
   const prev = useRef<string | null>(null);
 
   useLayoutEffect(() => {
+    let frame = 0;
     const measure = () => {
       const el = wrap.current?.querySelector<HTMLElement>(`[data-liquid-id="${CSS.escape(active)}"]`);
       if (!el || !wrap.current) return setBlob(null);
-      setBlob({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight, stretch: prev.current !== null && prev.current !== active });
+      const target = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+      const from = prev.current === null ? lastBox[orientation] : null;
+      const moved = !!from && (from.x !== target.x || from.y !== target.y || from.w !== target.w);
+      lastBox[orientation] = target;
+      if (moved && from) {
+        // The page (and this nav) remounted on navigation: start where the blob was, then glide.
+        setBlob({ ...from, stretch: false });
+        frame = window.requestAnimationFrame(() => {
+          frame = window.requestAnimationFrame(() => setBlob({ ...target, stretch: true }));
+        });
+      } else {
+        setBlob({ ...target, stretch: prev.current !== null && prev.current !== active });
+      }
       prev.current = active;
     };
     measure();
-    const ro = new ResizeObserver(measure);
+    let primed = false;
+    const ro = new ResizeObserver(() => {
+      if (!primed) {
+        primed = true;
+        return;
+      }
+      measure();
+    });
     if (wrap.current) ro.observe(wrap.current);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, items.length]);
 
   const vertical = orientation === 'vertical';

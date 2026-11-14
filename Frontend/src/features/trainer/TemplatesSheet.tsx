@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarDays, Dumbbell, Home, Loader2, Salad, UserRound } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Dumbbell, Home, Salad, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/features/trainee/api';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -147,7 +148,7 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
             </select>
           </label>
           <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press" disabled={!clientId || busy} onClick={assign}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {busy && <EcSpinner className="h-4 w-4" mono />}
             {t('tt.tpl.assign')}
           </button>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -282,7 +283,7 @@ const SystemPage: React.FC = () => {
       <Layout currentPage="system">
         <div className="container mx-auto p-6">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <EcSpinner className="h-8 w-8" />
           </div>
         </div>
       </Layout>

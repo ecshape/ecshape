@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2, Eye, Shield, User, Loader2, UserPlus, EyeOff } from 'lucide-react';
+import { Pencil, Trash2, Eye, Shield, User, UserPlus, EyeOff } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 const UsersPage = () => {
@@ -293,7 +294,7 @@ const UsersPage = () => {
               </Button>
             </div>
             {loading ? (
-              <div className="flex justify-center py-10"><Loader2 className="animate-spin w-8 h-8 text-muted-foreground" /></div>
+              <div className="flex justify-center py-10"><EcSpinner className="w-8 h-8" mono /></div>
             ) : error ? (
               <div className="text-red-500 font-semibold text-center py-8">{error}</div>
             ) : (

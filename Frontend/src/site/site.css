@@ -305,7 +305,10 @@ html.lenis, html.lenis body { height: auto; }
   clip-path: inset(15% 58% 11% 6% round 28px);
   will-change: clip-path;
 }
-.ec-site .hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: 58% 27%; transform: scale(1.15); }
+/* Without JS the photo simply covers the box. siteMotion.js (heroFit) sizes the <img> to the whole photo and frames it
+   with one transform, so the trainer's whole body fits the hero frame at any size (QA #33). */
+.ec-site .hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: 58% 27%; }
+.ec-site .hero__media img.is-framed { position: absolute; top: 0; left: 0; max-width: none; object-fit: fill; transform-origin: 0 0; }
 .ec-site .hero__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 10, 8, 0) 40%, rgba(11, 10, 8, .85)); opacity: var(--shade, 0); }
 .ec-site .hero__content {
   position: relative; z-index: 2; height: 100%;
@@ -891,8 +894,7 @@ html.lenis, html.lenis body { height: auto; }
 
   .ec-site .hero { height: auto; min-height: 0; display: flex; flex-direction: column; }
   .ec-site .hero__media { position: relative; order: 2; clip-path: none !important; height: min(62svh, 128vw); margin: 0 var(--gutter); border-radius: var(--radius-lg); overflow: hidden; }
-  /* Trainer stands at ~58% of the photo width: zoom on his body and shift him to the middle of the frame */
-  .ec-site .hero__media img { transform: scale(1.6) translateX(-5%); transform-origin: 58% 47%; object-position: 58% 40%; }
+  .ec-site .hero__media img:not(.is-framed) { object-position: 58% 40%; }
   .ec-site .hero__content { max-width: none; padding-bottom: 32px; padding-top: calc(var(--nav-h) + 48px); }
   .ec-site .hero__ctas .btn { flex: 1 1 auto; justify-content: space-between; }
   .ec-site .hero__stats { position: relative; order: 3; inset: auto; margin: 16px var(--gutter) 0; flex-wrap: wrap; }

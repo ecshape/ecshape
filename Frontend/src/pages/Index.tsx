@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -424,7 +425,7 @@ const Index = () => {
       <Layout currentPage="dashboard">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            <EcSpinner className="w-6 h-6" />
             <span className="text-muted-foreground">{t('dashboard.loading')}</span>
           </div>
         </div>

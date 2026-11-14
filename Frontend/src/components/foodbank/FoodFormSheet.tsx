@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
-import { Camera, Link2, Loader2, Trash2, Wand2 } from 'lucide-react';
+import { Camera, Link2, Trash2, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/features/trainee/api';
 import { Seg, Sheet } from '@/features/trainer/ui';
@@ -84,7 +85,7 @@ export const FoodFormSheet: React.FC<{
         <div className="flex gap-2">
           <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press flex-1" onClick={onClose}>{t('foodBank.cancel')}</button>
           <button type="submit" form="fb-food-form" className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1" disabled={saving || uploading}>
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {saving && <EcSpinner className="h-4 w-4" mono />}
             {editing ? t('foodBank.updateFoodItem') : t('foodBank.createFoodItem')}
           </button>
         </div>
@@ -95,7 +96,7 @@ export const FoodFormSheet: React.FC<{
         <section className="fb-section flex flex-col gap-4 sm:flex-row">
           <div className="fb-photo-pick max-sm:mx-auto">
             <FoodPhoto src={form.image_url && isStorablePhoto(form.image_url) ? form.image_url : null} alt="" macro={form.macro_type} iconSize={30} className="!aspect-square w-full rounded-2xl" />
-            {uploading && <span className="absolute inset-0 grid place-items-center rounded-2xl bg-black/45 text-white"><Loader2 className="h-6 w-6 animate-spin" /></span>}
+            {uploading && <span className="absolute inset-0 grid place-items-center rounded-2xl bg-black/45 text-white"><EcSpinner className="h-6 w-6" mono /></span>}
             <div className="mt-2 flex justify-center gap-1.5">
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ''; }} />
               <button type="button" className="tp-icon-btn tp-press !h-9 !w-9" onClick={() => fileRef.current?.click()} aria-label={t('tt.food.upload')} title={t('tt.food.upload')}><Camera className="h-4 w-4" /></button>

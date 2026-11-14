@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ExerciseMuscleMap } from './ExerciseMuscleMap';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Check, ExternalLink, Globe, Library, Loader2, Plus, Search, X } from 'lucide-react';
+import { AlertCircle, Check, ExternalLink, Globe, Library, Plus, Search, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -238,7 +240,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
           {items.length < total && (
             <div className="mt-6 flex justify-center">
               <Button variant="outline" onClick={() => load(items.length)} disabled={loading}>
-                {loading && <Loader2 className="animate-spin" />}
+                {loading && <EcSpinner mono />}
                 {t('exerciseLibrary.more', { count: total - items.length })}
               </Button>
             </div>
@@ -263,7 +265,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
             {t('exerciseLibrary.clear')}
           </Button>
           <Button className="ms-auto" onClick={() => doImport([...picked])} disabled={importing}>
-            {importing ? <Loader2 className="animate-spin" /> : <Plus />}
+            {importing ? <EcSpinner mono /> : <Plus />}
             {t('exerciseLibrary.addToBank', { count: picked.size })}
           </Button>
         </div>
@@ -291,6 +293,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
                     {detail.level && <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1"><LevelBars level={detail.level} />{label('level', detail.level)}</span>}
                   </div>
                 </div>
+                <ExerciseMuscleMap primary={detail.primaryMuscles} secondary={detail.secondaryMuscles} label={(m) => label('muscle', m)} />
                 {detail.instructions.length === 0 && <p className="text-sm text-muted-foreground">{t('banks.exercise.noInstructions')}</p>}
                 <ol className="space-y-3" dir="auto">
                   {detail.instructions.map((s, i) => (

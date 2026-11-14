@@ -377,11 +377,67 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     try { sessionStorage.setItem('ec_intro', '1'); } catch (e) { /* ignore */ }
   };
 
+  /* ---------------------------------------------------- hero photo fit (QA #33)
+     The whole trainer (head to shoes) always fits the hero frame, whatever the screen or editor device size:
+     scale + translate computed from the photo's real ratio, its object-position and the frame box.
+     data-focus = "u0,v0,u1,v1": the trainer's box in the photo (0..1); custom photos fill the frame instead. */
+  const heroMedia = $('.hero__media');
+  const heroPic = heroMedia && $('img', heroMedia);
+  const heroDesktop = window.matchMedia('(min-width: 901px)');
+  const heroFrame = (W, H) => {
+    if (!heroDesktop.matches) return { x0: 0, y0: 0, x1: W, y1: H };
+    // start frame of the clip-path: inset(15% 58% 11% 6%) in RTL, inset(15% 6% 11% 58%) in LTR
+    return rtl ? { x0: W * 0.06, x1: W * 0.42, y0: H * 0.15, y1: H * 0.89 } : { x0: W * 0.58, x1: W * 0.94, y0: H * 0.15, y1: H * 0.89 };
+  };
+  // The <img> is sized to the whole photo (no object-fit crop), so a single transform frames it:
+  // cover = the full-bleed state, fit = the trainer inside the start frame (or the whole phone box).
+  const heroGeom = () => {
+    if (!heroPic || !heroPic.naturalWidth) return null;
+    const W = heroMedia.clientWidth, H = heroMedia.clientHeight;
+    const a = heroPic.naturalWidth / heroPic.naturalHeight;
+    const pos = (heroMedia.getAttribute('data-pos') || '.58,.27').split(',').map(Number);
+    const dw = Math.max(W, H * a), dh = dw / a;
+    heroPic.classList.add('is-framed');
+    heroPic.style.width = `${dw}px`;
+    heroPic.style.height = `${dh}px`;
+    return { W, H, dw, dh, ox: (W - dw) * pos[0], oy: (H - dh) * pos[1] };
+  };
+  const heroCover = () => {
+    const g = heroGeom();
+    return g ? { scale: 1, x: g.ox, y: g.oy } : { scale: 1, x: 0, y: 0 };
+  };
+  const heroFit = () => {
+    const g = heroGeom();
+    if (!g) return { scale: 1, x: 0, y: 0 };
+    const f = (heroMedia.getAttribute('data-focus') || '.1,.06,.9,.96').split(',').map(Number);
+    const pad = 0.035; // breathing room around head and shoes
+    const R = { x0: f[0] * g.dw, x1: f[2] * g.dw, y0: Math.max(0, f[1] - pad) * g.dh, y1: Math.min(1, f[3] + pad) * g.dh };
+    const F = heroFrame(g.W, g.H);
+    const fw = F.x1 - F.x0, fh = F.y1 - F.y0;
+    const s = Math.max(Math.min(fw / (R.x1 - R.x0), fh / (R.y1 - R.y0)), fw / g.dw, fh / g.dh);
+    const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+    // centre the focus box in the frame, but never let an edge of the photo show inside the frame
+    const x = clamp((F.x0 + F.x1) / 2 - s * (R.x0 + R.x1) / 2, F.x1 - s * g.dw, F.x0);
+    const y = clamp((F.y0 + F.y1) / 2 - s * (R.y0 + R.y1) / 2, F.y1 - s * g.dh, F.y0);
+    return { scale: s, x, y };
+  };
+  const heroReady = (fn) => {
+    if (!heroPic) return;
+    if (heroPic.complete && heroPic.naturalWidth) fn();
+    else on(heroPic, 'load', fn, { once: true });
+  };
+
   /* ===================================================================
      Reduced motion: static page, simple interactions only.
      =================================================================== */
   if (reduce) {
     on(window, 'scroll', () => onScrollNav(window.scrollY), { passive: true });
+    const placeStatic = () => {
+      const f = heroFit();
+      if (heroPic) { heroPic.style.transform = `translate(${f.x}px, ${f.y}px) scale(${f.scale})`; }
+    };
+    heroReady(placeStatic);
+    on(window, 'resize', placeStatic);
     appItems.forEach((it, i) => on(it, 'click', () => setScreen(i)));
     return () => {
       alive = false;
@@ -441,7 +497,6 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
   const mqDesktop = window.matchMedia('(min-width: 901px)');
   // Photo frame sits on the trailing side: left in RTL, right in LTR.
   const CLIP_START = rtl ? 'inset(15% 58% 11% 6% round 28px)' : 'inset(15% 6% 11% 58% round 28px)';
-  const SHIFT = rtl ? -35 : 17; // xPercent that centres the trainer inside the start frame
   const ctx = gsap.context(() => {}, root);
   const mm = gsap.matchMedia();
 
@@ -462,8 +517,12 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
       .from('.hero__stats .chip', { y: 30, autoAlpha: 0, duration: 1, stagger: 0.08 }, 0.6)
       .from('.hero__scroll', { autoAlpha: 0, duration: 1 }, 0.9);
     if (mqDesktop.matches) {
-      tl.fromTo('.hero__media', { clipPath: CLIP_START.replace(' 11% ', ' 89% ') }, { clipPath: CLIP_START, duration: 1.6, ease: 'expo.inOut' }, 0)
-        .fromTo('.hero__media img', { scale: 1.5, xPercent: SHIFT }, { scale: 1.15, xPercent: SHIFT, duration: 2 }, 0);
+      tl.fromTo('.hero__media', { clipPath: CLIP_START.replace(' 11% ', ' 89% ') }, { clipPath: CLIP_START, duration: 1.6, ease: 'expo.inOut' }, 0);
+      // The zoom-in needs the photo's real size: start it once the image has loaded (never with a stale fit)
+      heroReady(() => {
+        const f = heroFit();
+        gsap.fromTo(heroPic, { scale: f.scale * 1.25, x: f.x, y: f.y }, { scale: f.scale, x: f.x, y: f.y, duration: 2, ease: EASE });
+      });
     } else {
       tl.from('.hero__media', { y: 40, autoAlpha: 0, duration: 1.2 }, 0.3);
     }
@@ -569,10 +628,10 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
 
   // Breakpoint-specific pins
   mm.add('(min-width: 901px)', () => {
-    gsap.set($('.hero__media img'), { xPercent: SHIFT });
-    gsap.timeline({ scrollTrigger: { trigger: $('.hero'), start: 'top top', end: '+=120%', pin: true, scrub: 0.8, anticipatePin: 1 } })
+    heroReady(() => { gsap.set(heroPic, heroFit()); ScrollTrigger.refresh(); });
+    gsap.timeline({ scrollTrigger: { trigger: $('.hero'), start: 'top top', end: '+=120%', pin: true, scrub: 0.8, anticipatePin: 1, invalidateOnRefresh: true } })
       .fromTo($('.hero__media'), { clipPath: CLIP_START }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'power2.inOut', immediateRender: false }, 0)
-      .fromTo($('.hero__media img'), { scale: 1.15, xPercent: SHIFT }, { scale: 1, xPercent: 0, ease: 'power2.inOut', immediateRender: false }, 0)
+      .fromTo($('.hero__media img'), { scale: () => heroFit().scale, x: () => heroFit().x, y: () => heroFit().y }, { scale: 1, x: () => heroCover().x, y: () => heroCover().y, ease: 'power2.inOut', immediateRender: false }, 0)
       .to($('.hero__media'), { '--shade': 1, ease: 'none' }, 0.2)
       .to($('.hero__content'), { yPercent: -18, autoAlpha: 0, ease: 'power2.in' }, 0)
       .to([$('.hero__stats'), $('.hero__scroll')], { autoAlpha: 0, y: 20, ease: 'power1.in' }, 0)
@@ -604,6 +663,9 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
   });
 
   mm.add('(max-width: 900px)', () => {
+    const placePhone = () => gsap.set(heroPic, heroFit());
+    heroReady(placePhone);
+    window.addEventListener('resize', placePhone);
     let timer = null;
     const restart = () => { clearInterval(timer); timer = setInterval(() => setScreen((currentScreen + 1) % appItems.length), 3500); };
     const handlers = appItems.map((it, i) => {
@@ -611,9 +673,9 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
       it.addEventListener('click', fn);
       return fn;
     });
-    if (!$('#app')) return () => clearInterval(timer);
+    if (!$('#app')) return () => { window.removeEventListener('resize', placePhone); clearInterval(timer); };
     const st = ScrollTrigger.create({ trigger: $('#app'), start: 'top 80%', end: 'bottom 20%', onToggle: (s) => (s.isActive ? restart() : clearInterval(timer)) });
-    return () => { clearInterval(timer); st.kill(); appItems.forEach((it, i) => it.removeEventListener('click', handlers[i])); };
+    return () => { window.removeEventListener('resize', placePhone); clearInterval(timer); st.kill(); appItems.forEach((it, i) => it.removeEventListener('click', handlers[i])); };
   });
 
   // Images load late; recompute pin distances once they have dimensions

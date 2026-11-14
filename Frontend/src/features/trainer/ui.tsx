@@ -45,11 +45,42 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       setBox(null);
       return;
     }
-    // Calm slide: the indicator glides straight to the new item (no stretch / overshoot).
-    setBox({ ...target, phase: last.current ? 'settle' : 'jump' });
+    // Liquid, but calm: start where the indicator was, lead with the front edge (the trailing edge only goes halfway),
+    // then let the back edge catch up. No overshoot. Reduced motion: straight to the target.
+    const from = last.current;
     remember(target);
+    const timers: number[] = [];
+    const same = from && from.x === target.x && from.y === target.y && from.w === target.w && from.h === target.h;
+    if (!from || same || prefersReducedMotion()) {
+      setBox({ ...target, phase: from ? 'settle' : 'jump' });
+    } else {
+      const stretchBox = (): Box => {
+        if (axis === 'y') {
+          const down = target.y > from.y;
+          const top = down ? from.y + (target.y - from.y) * 0.5 : target.y;
+          const bottom = down ? target.y + target.h : from.y + from.h - (from.y + from.h - (target.y + target.h)) * 0.5;
+          return { x: target.x, w: target.w, y: top, h: Math.max(target.h, bottom - top) };
+        }
+        const right = target.x > from.x;
+        const left = right ? from.x + (target.x - from.x) * 0.5 : target.x;
+        const end = right ? target.x + target.w : from.x + from.w - (from.x + from.w - (target.x + target.w)) * 0.5;
+        return { y: target.y, h: target.h, x: left, w: Math.max(target.w, end - left) };
+      };
+      setBox({ ...from, phase: 'jump' });
+      timers.push(window.requestAnimationFrame(() => {
+        timers.push(window.requestAnimationFrame(() => {
+          setBox({ ...stretchBox(), phase: 'stretch' });
+          timers.push(window.setTimeout(() => setBox({ ...target, phase: 'settle' }), 140));
+        }));
+      }));
+    }
 
+    let primed = false; // ResizeObserver fires once on observe(): ignore it, or it would cancel the glide
     const ro = new ResizeObserver(() => {
+      if (!primed) {
+        primed = true;
+        return;
+      }
       const b = measure();
       if (!b) return;
       remember(b);
@@ -58,6 +89,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
     ro.observe(wrap);
     return () => {
       ro.disconnect();
+      timers.forEach((id) => { window.cancelAnimationFrame(id); window.clearTimeout(id); });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeKey, axis]);
@@ -65,7 +97,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
   const style = box
     ? ({ ['--x' as string]: `${box.x}px`, ['--y' as string]: `${box.y}px`, ['--w' as string]: `${box.w}px`, ['--h' as string]: `${box.h}px` } as React.CSSProperties)
     : { opacity: 0 };
-  return { style, phase: box?.phase === 'jump' ? 'jump' : box?.phase, visible: !!box };
+  return { style, phase: box?.phase, visible: !!box };
 }
 
 /* ------------------------------------------------------------------ small pieces */

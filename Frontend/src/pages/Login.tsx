@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,7 +161,7 @@ const Login = () => {
                 <span>{loading ? t('common.loading') : t('auth.signIn')}</span>
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-white/15">
                   {loading ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <EcSpinner className="h-4 w-4" mono />
                   ) : (
                     <Arrow className="!size-5" />
                   )}

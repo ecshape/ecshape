@@ -6,6 +6,7 @@ exercises into their own bank; imported rows keep `library_id` so the app can an
 the frames.
 """
 import json
+import re
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -307,6 +308,70 @@ def import_from_library(payload: ImportIn, user: UserResponse = Depends(get_curr
     return {"created": len(created), "skipped": len(skipped)}
 
 
+def _norm_name(n: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (n or "").lower()).strip()
+
+
+def backfill_instructions(db: Session, use_wger: bool = False) -> Dict[str, int]:
+    """Fill empty exercise instructions (QA #32) from the built-in library (free-exercise-db): by library_id, else by an
+    exact name match. With use_wger, exercises imported from wger.de are filled from its catalogue (network)."""
+    from app.models.workout import Exercise
+
+    lib = _library()
+    by_id = {e["id"]: e for e in lib}
+    by_name = {}
+    for e in lib:
+        by_name.setdefault(_norm_name(e["name"]), e)
+    wger_by_id: Dict[str, Dict] = {}
+    if use_wger:
+        try:
+            from app.services import wger_service
+
+            wger_by_id = {w["id"]: wger_service.localize(w, "en") for w in wger_service.catalog()}
+        except Exception as err:  # wger unreachable: built-in part still runs
+            logger.warning("wger catalogue unavailable for backfill: %s", err)
+    filled = {"library": 0, "name": 0, "wger": 0, "missing": 0}
+    rows = db.query(Exercise).filter((Exercise.instructions.is_(None)) | (Exercise.instructions == "")).all()
+    for ex in rows:
+        lid = getattr(ex, "library_id", None) or ""
+        src, how = None, None
+        if lid.startswith("wger:"):
+            src, how = wger_by_id.get(lid), "wger"
+        elif lid:
+            src, how = by_id.get(lid), "library"
+        if not src or not src.get("instructions"):
+            src, how = by_name.get(_norm_name(ex.name)), "name"
+        if src and src.get("instructions"):
+            ex.instructions = "\n".join(src["instructions"])
+            if not (ex.description or "").strip() and src.get("secondaryMuscles"):
+                ex.description = " · ".join(x for x in [src.get("level"), src.get("mechanic"), src.get("force"), "also: " + ", ".join(src["secondaryMuscles"])] if x)
+            filled[how] += 1
+        else:
+            filled["missing"] += 1
+    if any(filled[k] for k in ("library", "name", "wger")):
+        db.commit()
+    return filled
+
+
+@router.post("/backfill-instructions")
+def backfill_instructions_route(user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainer action: fill every exercise without instructions (built-in library, name match, wger.de)."""
+    _require_trainer(user)
+    return backfill_instructions(db, use_wger=True)
+
+
+def _startup_backfill(engine) -> None:
+    from sqlalchemy.orm import Session as _S
+
+    try:
+        with _S(bind=engine) as db:
+            res = backfill_instructions(db)
+            if res["library"] or res["name"]:
+                logger.info("exercise instructions backfilled: %s", res)
+    except Exception as e:  # never block startup
+        logger.error("instructions backfill failed: %s", e)
+
+
 def ensure_library_column(engine) -> None:
     """Additive migration: exercises.library_id (works on SQLite and Postgres)."""
     try:
@@ -317,3 +382,4 @@ def ensure_library_column(engine) -> None:
             logger.info("exercises.library_id added")
     except Exception as e:  # never block startup
         logger.error("library_id migration failed: %s", e)
+    _startup_backfill(engine)

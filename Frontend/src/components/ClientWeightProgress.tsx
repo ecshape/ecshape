@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -965,7 +966,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                           />
                         ) : photo ? (
                           <div className="w-full h-48 bg-secondary/20 rounded-lg flex items-center justify-center">
-                            <p className="text-muted-foreground text-sm">{t('progress.loading', 'Loading...')}</p>
+                            <EcSpinner className="h-8 w-8" label={t('progress.loading', 'Loading...')} />
                           </div>
                         ) : (
                           <div className="w-full h-48 bg-secondary/20 rounded-lg flex items-center justify-center">

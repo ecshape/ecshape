@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, CheckCircle, Clock } from 'lucide-react';
@@ -125,7 +126,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="flex justify-center py-8"><EcSpinner className="h-8 w-8" label="Loading" /></div>;
   }
 
   return (

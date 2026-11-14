@@ -119,6 +119,9 @@
         "urlPh": "https://…",
         "badUrl": "כתובת לא תקינה. התחילו ב-https://, ב-/ או ב-#."
       }
+    },
+    "exerciseLibrary": {
+      "musclesWorked": "שרירים עובדים"
     }
   },
   "en": {
@@ -241,6 +244,9 @@
         "urlPh": "https://…",
         "badUrl": "Invalid address. Start with https://, / or #."
       }
+    },
+    "exerciseLibrary": {
+      "musclesWorked": "Muscles worked"
     }
   },
   "fr": {
@@ -363,6 +369,9 @@
         "urlPh": "https://…",
         "badUrl": "Adresse invalide. Commencez par https://, / ou #."
       }
+    },
+    "exerciseLibrary": {
+      "musclesWorked": "Muscles sollicités"
     }
   }
 }

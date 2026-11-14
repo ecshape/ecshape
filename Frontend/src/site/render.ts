@@ -106,7 +106,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     hero: () => `
 <section class="hero" id="hero">
   <div class="hero__bg" aria-hidden="true"></div>
-  <figure class="hero__media" data-cursor="ECshape"${IMG('hero.image')}>
+  <figure class="hero__media" data-cursor="ECshape"${!c.hero.image || /opt\/trainer\.jpg$/.test(c.hero.image) ? ' data-focus=".40,.23,.76,.95"' : ''}${IMG('hero.image')}>
     <img src="${esc(heroImg)}" alt="${esc(name)}" fetchpriority="high">
   </figure>
   <div class="hero__content">

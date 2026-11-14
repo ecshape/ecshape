@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate } from 'react-router-dom';
 import {
   BadgeHelp,
@@ -7,7 +8,6 @@ import {
   Clock,
   Dumbbell,
   History,
-  Loader2,
   MoreHorizontal,
   PlayCircle,
   PlusCircle,
@@ -279,7 +279,7 @@ const TrainingPlanV2: React.FC = () => {
     return (
       <div className="pb-20 lg:pb-8">
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-3 px-4 py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <EcSpinner className="h-8 w-8" />
           <p className="text-sm text-muted-foreground">
             {t('training.loadingPlan', 'טוען את תוכנית האימון...')}
           </p>
@@ -737,7 +737,7 @@ const ExerciseHistoryDialog: React.FC<{ exerciseId: number }> = ({ exerciseId })
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <EcSpinner className="h-6 w-6" />
       </div>
     );
   }

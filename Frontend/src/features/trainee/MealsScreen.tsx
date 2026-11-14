@@ -121,19 +121,19 @@ const MealsScreen: React.FC = () => {
                   <CountUp value={Math.max(0, Math.round(macros?.remaining.calories ?? 0))} className="tp-num text-4xl" />
                   <span className="text-sm text-muted-foreground">{t('trainee.common.kcal')}</span>
                 </p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+              </div>
+            </div>
+                <div className="mt-4 grid grid-cols-3 gap-2">
                   {(['protein', 'carbs', 'fat'] as const).map((k) => (
-                    <div key={k} className="flex items-center gap-2">
-                      <Ring value={(macros?.consumed[k] ?? 0) / (macros?.targets[k] || 1)} size={40} stroke={5} color={MACRO_COLOR[k]} />
+                    <div key={k} className="flex min-w-0 flex-col items-center gap-1 rounded-2xl bg-foreground/[.05] px-1 py-2 text-center sm:flex-row sm:gap-2 sm:px-2 sm:text-start">
+                      <Ring value={(macros?.consumed[k] ?? 0) / (macros?.targets[k] || 1)} size={36} stroke={4} color={MACRO_COLOR[k]} />
                       <div className="min-w-0 leading-tight">
                         <span className="block truncate text-[11px] text-muted-foreground">{t(`trainee.macros.${k}`)}</span>
-                        <span className="block text-sm font-bold" dir="ltr">{fmtNum(macros?.consumed[k])}<span className="font-normal text-muted-foreground">/{fmtNum(macros?.targets[k])}g</span></span>
+                        <span className="block text-xs font-bold sm:text-sm" dir="ltr">{fmtNum(macros?.consumed[k])}<span className="font-normal text-muted-foreground">/{fmtNum(macros?.targets[k])}g</span></span>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
           </section>
 
           <ol className="mt-4 space-y-3">
@@ -209,7 +209,7 @@ const MealsScreen: React.FC = () => {
                               <li key={f.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
                                 <span className="min-w-0 truncate font-medium" dir="auto">{foodName(f)}</span>
                                 <span className="flex-none text-sm text-muted-foreground" dir="ltr">
-                                  {f.measurement_type === 'per_portion' ? `${f.quantity_label} ×` : f.quantity_label} · {fmtNum(f.calories)} kcal
+                                  {f.measurement_type === 'per_portion' ? `×${f.quantity_label}` : f.quantity_label} · {fmtNum(f.calories)} kcal
                                 </span>
                               </li>
                             ))}
@@ -286,8 +286,8 @@ const MealsScreen: React.FC = () => {
                           <button type="button" onClick={() => completeSlot(slot, data)} disabled={variants.length > 0 && !selected && !rows.length && !extras.length} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1 sm:flex-none">
                             <Check className="h-4 w-4" />{t('trainee.meals.complete')}
                           </button>
-                          <button type="button" onClick={() => setCustomSlot(slot)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">
-                            <Plus className="h-4 w-4" />{t('trainee.meals.addFood')}
+                          <button type="button" onClick={() => setCustomSlot(slot)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press px-3 min-[420px]:px-4" aria-label={t('trainee.meals.addFood')}>
+                            <Plus className="h-4 w-4" /><span className="hidden min-[420px]:inline">{t('trainee.meals.addFood')}</span>
                           </button>
                           <button type="button" onClick={() => setAskSlot(slot)} className="tp-icon-btn tp-press" aria-label={t('trainee.meals.askCoach')}>
                             <MessageCircle className="h-4 w-4" />

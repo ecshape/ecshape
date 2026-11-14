@@ -155,7 +155,7 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 
 /* Rest timer pill */
 .tp-rest { position: fixed; z-index: 55; inset-inline: .75rem; bottom: calc(max(.75rem, var(--tp-safe-b)) + 4.75rem); animation: tpRise .4s var(--ease-out) both; }
-@media (min-width: 1024px) { .tp-rest { inset-inline: auto 2rem; bottom: 2rem; width: 24rem; } [dir="rtl"] .tp-rest { inset-inline: 2rem auto; } }
+@media (min-width: 1024px) { .tp-rest { inset-inline: auto 2rem; bottom: 6.5rem; width: 24rem; } [dir="rtl"] .tp-rest { inset-inline: 2rem auto; } }
 
 /* Celebration */
 .tp-celebrate { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 1rem; background: hsl(var(--background) / .82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: tpFade .35s ease both; }

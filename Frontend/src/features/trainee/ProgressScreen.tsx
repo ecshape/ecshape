@@ -134,8 +134,8 @@ const ProgressScreen: React.FC = () => {
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {weighed.length > 1 && (
-                    <span className={cn('me-2 font-bold', change <= 0 ? 'text-[hsl(var(--tp-ok))]' : 'text-primary')} dir="ltr">
-                      {fmtSigned(change)} {t('trainee.common.kg')}
+                    <span className={cn('me-2 font-bold', change <= 0 ? 'text-[hsl(var(--tp-ok))]' : 'text-primary')}>
+                      <bdi dir="ltr">{fmtSigned(change)}</bdi> {t('trainee.common.kg')}
                     </span>
                   )}
                   {t('trainee.progress.since', { date: fmtDate(first.date, { day: 'numeric', month: 'short', year: 'numeric' }) })}
@@ -191,7 +191,7 @@ const ProgressScreen: React.FC = () => {
                       <span className="tp-num text-3xl">{fmtNum(m.value, 1)}</span>
                       <span className="text-xs text-muted-foreground">{t('trainee.common.cm')}</span>
                     </div>
-                    {m.delta !== null && <span className={cn('tp-chip mt-2', m.delta <= 0 ? 'tp-chip--ok' : '')} dir="ltr">{fmtSigned(m.delta)} {t('trainee.common.cm')}</span>}
+                    {m.delta !== null && <span className={cn('tp-chip mt-2', m.delta <= 0 ? 'tp-chip--ok' : '')}><bdi dir="ltr">{fmtSigned(m.delta)}</bdi> {t('trainee.common.cm')}</span>}
                   </div>
                 ))}
               </div>
@@ -254,7 +254,7 @@ const ProgressScreen: React.FC = () => {
                     <p className="flex items-baseline gap-2">
                       <span className="tp-num text-xl">{fmtNum(e.weight, 1)}</span>
                       <span className="text-xs text-muted-foreground">{t('trainee.common.kg')}</span>
-                      {d !== null && d !== 0 && <span className={cn('text-xs font-semibold', d < 0 ? 'text-[hsl(var(--tp-ok))]' : 'text-primary')} dir="ltr">{fmtSigned(d)}</span>}
+                      {d !== null && d !== 0 && <span className={cn('text-xs font-semibold', d < 0 ? 'text-[hsl(var(--tp-ok))]' : 'text-primary')} dir="ltr"><bdi dir="ltr">{fmtSigned(d)}</bdi></span>}
                     </p>
                     <p className="truncate text-xs text-muted-foreground" dir="auto">
                       {[nMeasures ? t('trainee.progress.nMeasures', { count: nMeasures }) : null, photoList(e).length ? t('trainee.progress.nPhotos', { count: photoList(e).length }) : null, e.notes].filter(Boolean).join(' · ')}

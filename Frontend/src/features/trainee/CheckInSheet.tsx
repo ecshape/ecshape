@@ -8,7 +8,7 @@ import { useCreateCheckIn } from './hooks';
 import { haptic } from './format';
 
 const Scale: React.FC<{ value: number | null; onChange: (v: number) => void; from: number; to: number; label: string }> = ({ value, onChange, from, to, label }) => (
-  <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-label={label} dir="ltr">
+  <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-label={label}>
     {Array.from({ length: to - from + 1 }, (_, i) => from + i).map((n) => (
       <button
         key={n}

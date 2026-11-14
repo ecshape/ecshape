@@ -189,7 +189,7 @@ const TodayScreen: React.FC = () => {
                   <span className="min-w-0 text-sm">
                     <span className="text-muted-foreground">{t('trainee.today.nextMeal')} </span>
                     <span className="font-semibold">{nextMeal.name}</span>
-                    {nextMeal.time_suggestion && <span className="text-muted-foreground" dir="ltr"> · {nextMeal.time_suggestion}</span>}
+                    {nextMeal.time_suggestion && <span className="text-muted-foreground"> · <bdi dir="ltr">{nextMeal.time_suggestion}</bdi></span>}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--tp-ok))]"><Check className="h-4 w-4" />{t('trainee.today.allMealsDone')}</span>
@@ -254,8 +254,8 @@ const TodayScreen: React.FC = () => {
                       <span className="ms-1 text-sm text-muted-foreground">{t('trainee.common.kg')}</span>
                     </div>
                     {weightDelta !== null && (
-                      <span className={cn('tp-chip', weightDelta <= 0 ? 'tp-chip--ok' : 'tp-chip--primary')} dir="ltr">
-                        {fmtSigned(weightDelta)} {t('trainee.common.kg')}
+                      <span className={cn('tp-chip', weightDelta <= 0 ? 'tp-chip--ok' : 'tp-chip--primary')}>
+                        <bdi dir="ltr">{fmtSigned(weightDelta)}</bdi> {t('trainee.common.kg')}
                       </span>
                     )}
                   </div>
@@ -320,7 +320,7 @@ const WorkoutHero: React.FC<{
   const label = kind === 'continue' ? 'trainee.today.inProgress' : kind === 'done' ? 'trainee.today.doneToday' : 'trainee.today.upNext';
   return (
     <button type="button" onClick={onGo} className="tp-card tp-card--accent tp-press relative flex h-full min-h-[260px] w-full flex-col overflow-hidden p-5 text-start sm:p-7">
-      <Dumbbell className="pointer-events-none absolute -bottom-10 -end-8 h-56 w-56 -rotate-12 text-white/[.08]" aria-hidden />
+      <Dumbbell className="pointer-events-none absolute -bottom-10 -end-8 h-56 w-56 -rotate-12 text-white/[.06]" aria-hidden />
       <div className="flex items-center justify-between gap-2">
         <span className="tp-chip tp-chip--onaccent">
           {kind === 'done' ? <Trophy className="h-3.5 w-3.5" /> : <Dumbbell className="h-3.5 w-3.5" />}

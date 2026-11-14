@@ -402,7 +402,7 @@ const RestTimer: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => void
   const over = left <= 0;
   return (
     <div className="tp-rest" role="timer" aria-live="polite">
-      <div className={cn('ec-glass flex items-center gap-3 rounded-[1.5rem] p-2.5 pe-3', over && 'ring-2 ring-[hsl(var(--tp-ok))]')}>
+      <div className={cn('tp-card flex items-center gap-3 rounded-[1.5rem] p-2.5 pe-3 shadow-[0_24px_60px_-20px_rgba(0,0,0,.9)]', over && 'ring-2 ring-[hsl(var(--tp-ok))]')}>
         <Ring value={left / rest.total} size={52} stroke={5} color={over ? 'hsl(var(--tp-ok))' : undefined}>
           <span className="tp-num text-xs" dir="ltr">{over ? <Check className="h-5 w-5 text-[hsl(var(--tp-ok))]" /> : Math.ceil(left)}</span>
         </Ring>

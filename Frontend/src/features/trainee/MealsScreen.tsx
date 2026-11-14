@@ -62,10 +62,8 @@ const MealsScreen: React.FC = () => {
     g.eaten ?? g.rows.find((r) => r.food.id === picks[pickKey(slot.meal_slot_id, g.macro)]) ?? g.rows[0];
 
   const completeSlot = (slot: V3MealSlotView, data: V3DayViewResponse) => {
-    const hasOverall = data.choices.some((c) => c.meal_slot_id === slot.meal_slot_id && isOverallCustom(c));
-    const logs: V3MealLogCreateRequest[] = hasOverall
-      ? []
-      : groupRows(planRows(slot, data.choices))
+    // Extra foods are added on top of the plan: they never cancel the planned foods.
+    const logs: V3MealLogCreateRequest[] = groupRows(planRows(slot, data.choices))
           .filter((g) => !g.eaten && !skipped[`${date}:${slot.meal_slot_id}:${g.macro}`])
           .map((g) => pickOf(g, slot))
           .map((r) => ({ date, meal_slot_id: slot.meal_slot_id, macro_type: r.macro, food_option_id: r.food.id, quantity: r.qty }));

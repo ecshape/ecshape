@@ -38,6 +38,11 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
 
   usePortalRoot(true);
   useEffect(() => {
+    // overflow-x: clip (not hidden) on the page roots so sticky bars work inside the trainee app.
+    document.documentElement.classList.add('tp-on');
+    return () => document.documentElement.classList.remove('tp-on');
+  }, []);
+  useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [pathname]);
 

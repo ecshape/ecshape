@@ -16,10 +16,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { studioApi } from '@/lib/studioApi';
+import TraineeShell from '@/features/trainee/TraineeShell';
 
 interface LayoutProps {
   children: React.ReactNode;
   currentPage?: string;
+  /** Trainee only: hide the bottom tab bar (focused screens such as the workout player). */
+  immersive?: boolean;
 }
 
 const getInitials = (name?: string) =>
@@ -281,6 +284,16 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   );
 };
 
-const Layout = (props: LayoutProps) => <LayoutInner {...props} />;
+const Layout = (props: LayoutProps) => {
+  const { user } = useAuth();
+  if (user?.role === 'CLIENT') {
+    return (
+      <TraineeShell current={props.currentPage || 'dashboard'} immersive={props.immersive}>
+        {props.children}
+      </TraineeShell>
+    );
+  }
+  return <LayoutInner {...props} />;
+};
 
 export default Layout;

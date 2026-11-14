@@ -13,6 +13,7 @@ import { DailyCheckInCardV2 } from '../components/DailyCheckInCardV2';
 import { PageHeader } from '../components/PageHeader';
 import { DashboardWeightCard } from '../components/DashboardWeightCard';
 import { DashboardCaloriesCard } from '../components/DashboardCaloriesCard';
+import TodayScreen from '@/features/trainee/TodayScreen';
 
 interface DashboardStats {
   totalClients: number;
@@ -548,4 +549,17 @@ const Index = () => {
   );
 };
 
-export default Index;
+/** Trainees get the "Today" home; trainers/admins keep their dashboards (they are redirected from here). */
+const IndexRoute = () => {
+  const { user } = useAuth();
+  if (user?.role === 'CLIENT') {
+    return (
+      <Layout currentPage="dashboard">
+        <TodayScreen />
+      </Layout>
+    );
+  }
+  return <Index />;
+};
+
+export default IndexRoute;

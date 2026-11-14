@@ -10,6 +10,8 @@
   --tp-fat: 350 70% 62%;
 }
 
+html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
+
 /* Surfaces */
 .tp-card {
   position: relative;

@@ -36,6 +36,7 @@ import MealsPageV3 from './pages/MealsPageV3';
 import SandboxMealsV3 from './pages/SandboxMealsV3';
 import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
 import ClientFavoritesPage from './pages/ClientFavoritesPage';
+import TraineeProfilePage from './features/trainee/ProfilePage';
 import ProspectsPage from './pages/studio/ProspectsPage';
 import MySitePage from './pages/studio/MySitePage';
 import SeoPage from './pages/studio/SeoPage';
@@ -113,7 +114,11 @@ const RedirectGate = () => {
   );
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 },
+  },
+});
 
 /** Agent EC lives at app level so it stays open from page to page (trainer studio only). */
 const AgentHost = () => {
@@ -307,6 +312,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/me" element={<ProtectedRoute requiredRole="CLIENT"><TraineeProfilePage /></ProtectedRoute>} />
       <Route path="/meals-v3" element={<Navigate to="/meals" replace />} />
       <Route
         path="/sandbox/meals-v3"

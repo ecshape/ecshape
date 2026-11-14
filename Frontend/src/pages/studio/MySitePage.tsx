@@ -37,6 +37,7 @@ import {
 import { GLOBAL_GROUPS, SITE_SECTIONS, hiddenSections, sectionOfPath, sectionOrder, type SectionKey } from '@/site/sections';
 import '@/styles/my-site.css';
 import '@/i18n/ticketsStudio';
+import '@/features/trainee/qa2I18n';
 
 const LANG_LABEL: Record<SiteLang, string> = { he: 'עברית', en: 'English', fr: 'Français' };
 type Device = 'desktop' | 'tablet' | 'mobile';
@@ -375,7 +376,15 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
     setPublishing(true);
     try {
       await draft.publish();
-      toast({ title: t('mysite.studio.publishedToast') });
+      const { synced, syncOk } = draft.lastSync.current;
+      if (synced.length) {
+        await draft.refreshFromServer(); // the translated languages now show in the editor too
+        toast({ title: t('mysite.studio.publishedToast'), description: t('mysite.studio.syncedLangs', { langs: synced.map((l) => l.toUpperCase()).join(', ') }) });
+      } else if (!syncOk) {
+        toast({ title: t('mysite.studio.publishedToast'), description: t('mysite.studio.syncUnavailable') });
+      } else {
+        toast({ title: t('mysite.studio.publishedToast') });
+      }
     } catch (e) {
       toast({ title: t('mysite.studio.publishFailed'), description: e instanceof Error ? e.message : undefined, variant: 'destructive' });
     } finally {

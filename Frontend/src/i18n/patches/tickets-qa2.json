@@ -15,6 +15,12 @@
         "tapHeart": "tap ♥ on a food below.",
         "filter": "Filter"
       }
+    },
+    "mysite": {
+      "studio": {
+        "syncedLangs": "Also translated into {{langs}}.",
+        "syncUnavailable": "Other languages were not updated: add an AI key in Settings → AI keys to translate automatically."
+      }
     }
   },
   "he": {
@@ -33,6 +39,12 @@
         "tapHeart": "הקישו ♥ על מזון למטה.",
         "filter": "סינון"
       }
+    },
+    "mysite": {
+      "studio": {
+        "syncedLangs": "תורגם גם ל־{{langs}}.",
+        "syncUnavailable": "השפות האחרות לא עודכנו: הוסיפו מפתח AI בהגדרות ← מפתחות AI כדי לתרגם אוטומטית."
+      }
     }
   },
   "fr": {
@@ -50,6 +62,12 @@
       "favorites": {
         "tapHeart": "touchez ♥ sur un aliment ci-dessous.",
         "filter": "Filtrer"
+      }
+    },
+    "mysite": {
+      "studio": {
+        "syncedLangs": "Aussi traduit en {{langs}}.",
+        "syncUnavailable": "Les autres langues n'ont pas été mises à jour : ajoutez une clé IA dans Réglages → Clés IA pour traduire automatiquement."
       }
     }
   }

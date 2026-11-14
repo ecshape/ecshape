@@ -10,6 +10,7 @@ Public (no auth):
 Trainer / admin only (/api/studio):
   overview, prospects (leads), site content per language, SEO, Atelier QA, Agent EC chat
 """
+import json
 import re
 import copy
 import time
@@ -271,17 +272,88 @@ class SiteContentIn(BaseModel):
 
 
 @router.put("/site/{lang}")
-def put_site_content(lang: str, payload: SiteContentIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+def put_site_content(lang: str, payload: SiteContentIn, sync: bool = True, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """Save one language of the site. ``sync`` (default): texts changed here are translated into the other languages."""
     if lang not in LANGS:
         raise HTTPException(status_code=404, detail="Unknown language")
     # Photos are stored inline (resized in the browser): cap the size so the public site stays fast.
     import json as _json
     if len(_json.dumps(payload.content, ensure_ascii=False)) > SITE_CONTENT_MAX:
         raise HTTPException(status_code=413, detail="Site content too large: use smaller photos")
+    before = get_setting(db, f"content:{lang}") or {}
     put_setting(db, f"content:{lang}", payload.content, user.id)
     if payload.brand is not None:
         put_setting(db, "brand", payload.brand, user.id)
-    return {"ok": True}
+    synced: Dict[str, int] = {}
+    sync_ok = True
+    if sync:
+        synced, sync_ok = _sync_languages(db, user, lang, before, payload.content)
+    return {"ok": True, "synced": synced, "sync_ok": sync_ok}
+
+
+# ------------------------------------------------------------------ QA #48: one edit, every language
+_NOT_TEXT = re.compile(r"^(https?:|data:|mailto:|tel:|#[0-9a-fA-F]{3,8}$|/|\d+(\.\d+)?$)")
+
+
+def _is_text(v: Any) -> bool:
+    return isinstance(v, str) and bool(v.strip()) and len(v) <= 4000 and not _NOT_TEXT.match(v.strip()) and bool(re.search(r"[^\W\d_]", v))
+
+
+def _changed_texts(old: Any, new: Any, path: tuple = ()) -> List[tuple]:
+    """(path, new text) for every text leaf that is new or different from the previous save."""
+    out: List[tuple] = []
+    if isinstance(new, dict):
+        for k, v in new.items():
+            out += _changed_texts(old.get(k) if isinstance(old, dict) else None, v, path + (k,))
+    elif isinstance(new, list):
+        for i, v in enumerate(new):
+            out += _changed_texts(old[i] if isinstance(old, list) and i < len(old) else None, v, path + (i,))
+    elif _is_text(new) and new != old:
+        out.append((path, new))
+    return out
+
+
+def _put_at(root: Any, path: tuple, value: Any) -> Any:
+    if not path:
+        return value
+    key = path[0]
+    if isinstance(key, int):
+        node = root if isinstance(root, list) else []
+        while len(node) <= key:
+            node.append(None)
+        node[key] = _put_at(node[key], path[1:], value)
+        return node
+    node = root if isinstance(root, dict) else {}
+    node[key] = _put_at(node.get(key), path[1:], value)
+    return node
+
+
+def _sync_languages(db: Session, user: UserResponse, lang: str, before: Dict[str, Any], after: Dict[str, Any]):
+    """Translate the texts that changed in ``lang`` into the other site languages and save them there."""
+    from app.services import translate as tr
+
+    changes = _changed_texts(before, after)
+    if not changes:
+        return {}, True
+    synced: Dict[str, int] = {}
+    ok = True
+    for other in LANGS:
+        if other == lang:
+            continue
+        content = get_setting(db, f"content:{other}") or {}  # a detached copy
+        todo = changes
+        if not content:  # language never edited: start from a full translated copy of this one
+            content = copy.deepcopy(after)
+            todo = _changed_texts({}, after)
+        res = tr.translate(db, user.id, [t for _, t in todo], other, src_lang=lang)
+        if not res.get("translated"):
+            ok = False
+            continue
+        for (path, _), text in zip(todo, res["texts"]):
+            content = _put_at(content, path, text)
+        put_setting(db, f"content:{other}", content, user.id)
+        synced[other] = len(todo)
+    return synced, ok
 
 
 @router.get("/seo")

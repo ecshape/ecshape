@@ -183,14 +183,26 @@ export function useSiteDraft() {
     setRestored(false);
   }, [commit]);
 
-  /** Save the overrides of every changed language. Returns the languages published. */
+  /** Languages the last publish translated into, and whether translation worked. */
+  const lastSync = useRef<{ synced: SiteLang[]; syncOk: boolean }>({ synced: [], syncOk: true });
+  /**
+   * Save the overrides of every changed language. When only one language was edited, the server also translates
+   * the changed texts into the other languages (QA #48); several edited languages are saved as typed.
+   */
   const publish = useCallback(async () => {
     if (!loaded) throw new Error('site not loaded');
     const cur = draftsRef.current;
     const langs = SITE_LANGS.filter((l) => !same(cur[l], publishedRef.current[l]));
+    const sync = langs.length === 1;
+    let synced: SiteLang[] = [];
+    let syncOk = true;
     for (const l of langs) {
       const overrides = (diffContent(DEFAULT_CONTENT[l], cur[l]) || {}) as Record<string, unknown>;
-      await studioApi.saveSiteContent(l, overrides);
+      const res = await studioApi.saveSiteContent(l, overrides, sync);
+      if (sync) {
+        synced = Object.keys(res?.synced ?? {}) as SiteLang[];
+        syncOk = res?.sync_ok !== false;
+      }
     }
     const nextPub = { ...publishedRef.current };
     langs.forEach((l) => {
@@ -199,6 +211,7 @@ export function useSiteDraft() {
     });
     setPublished(nextPub);
     setRestored(false);
+    lastSync.current = { synced, syncOk: !sync || syncOk };
     return langs;
   }, [loaded]);
 
@@ -245,6 +258,7 @@ export function useSiteDraft() {
     discard,
     publish,
     refreshFromServer,
+    lastSync,
     reload: load,
   };
 }

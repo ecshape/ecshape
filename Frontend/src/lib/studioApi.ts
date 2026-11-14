@@ -190,8 +190,9 @@ export const studioApi = {
   deleteLead: (id: number) => request<void>(`/leads/${id}`, { method: 'DELETE' }),
 
   siteContent: (lang: string) => request<{ content: Record<string, unknown>; brand: Record<string, unknown> }>(`/site/${lang}`),
-  saveSiteContent: (lang: string, content: Record<string, unknown>) =>
-    request<{ ok: boolean }>(`/site/${lang}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+  /** sync (QA #48): texts changed in this language are translated into the other languages on the server. */
+  saveSiteContent: (lang: string, content: Record<string, unknown>, sync = false) =>
+    request<{ ok: boolean; synced?: Record<string, number>; sync_ok?: boolean }>(`/site/${lang}?sync=${sync}`, { method: 'PUT', body: JSON.stringify({ content }) }),
 
   seo: () => request<SeoSettings>('/seo'),
   saveSeo: (data: SeoSettings) => request<SeoSettings>('/seo', { method: 'PUT', body: JSON.stringify(data) }),

@@ -1054,7 +1054,9 @@ def record_set_completion(
         rest_taken=set_data.rest_taken,
         rpe=set_data.rpe,
         form_rating=set_data.form_rating,
-        notes=set_data.notes
+        notes=set_data.notes,
+        performed_exercise_name=set_data.performed_exercise_name,
+        performed_library_id=set_data.performed_library_id,
     )
     
     db.add(set_completion)
@@ -1114,7 +1116,9 @@ def create_set_completion_direct(
         rpe=set_data.rpe,
         form_rating=set_data.form_rating,
         notes=set_data.notes,
-        completed_at=set_data.completed_at or datetime.now()
+        completed_at=set_data.completed_at or datetime.now(),
+        performed_exercise_name=set_data.performed_exercise_name,
+        performed_library_id=set_data.performed_library_id,
     )
     
     db.add(set_completion)
@@ -1228,3 +1232,26 @@ def get_personal_records(
     
     return query.all()
 
+
+
+def ensure_set_substitution_columns(engine) -> None:
+    """Additive migration: set_completions_v2.performed_* (SQLite and Postgres, idempotent)."""
+    import logging
+    from sqlalchemy import inspect, text
+    try:
+        insp = inspect(engine)
+        if "set_completions_v2" not in insp.get_table_names():
+            return
+        cols = {c["name"] for c in insp.get_columns("set_completions_v2")}
+        with engine.begin() as conn:
+            if "performed_exercise_name" not in cols:
+                conn.execute(text("ALTER TABLE set_completions_v2 ADD COLUMN performed_exercise_name VARCHAR(200)"))
+            if "performed_library_id" not in cols:
+                conn.execute(text("ALTER TABLE set_completions_v2 ADD COLUMN performed_library_id VARCHAR(120)"))
+    except Exception as e:  # never block startup
+        logging.getLogger(__name__).error("set substitution migration failed: %s", e)
+
+
+from app.database import engine as _ws_engine  # noqa: E402
+
+ensure_set_substitution_columns(_ws_engine)

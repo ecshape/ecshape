@@ -1,5 +1,5 @@
 import { UserAvatar } from '@/components/ui/user-avatar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Dumbbell, House, MessageCircle, TrendingUp, UtensilsCrossed } from 'lucide-react';
@@ -7,18 +7,22 @@ import { cn } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortalRoot } from '@/lib/portalMotion';
+import LanguageSelector from '@/components/LanguageSelector';
+import ThemeToggle from '@/components/ThemeToggle';
+import { useLiquid } from '@/features/trainer/ui';
 import { useConversations } from './hooks';
 import './trainee.css';
+import '@/features/trainer/trainer.css';
 
 export type TraineeTab = 'dashboard' | 'training' | 'meals' | 'progress' | 'chat' | 'profile';
 
 
-const Brand: React.FC<{ size?: 'sm' | 'md' }> = ({ size = 'md' }) => (
-  <span className="flex select-none items-center gap-2" dir="ltr">
-    <EcMark variant="trainer" className={cn('w-auto', size === 'sm' ? 'h-8' : 'h-10')} />
-    <span className={cn('font-num leading-none tracking-wide', size === 'sm' ? 'text-base' : 'text-xl')}>
-      EC<span className="text-primary">SHAPE</span>
-    </span>
+const APP_OPENED_AT = typeof performance !== 'undefined' ? performance.now() : 0;
+const drawBrandOnce = () => typeof performance !== 'undefined' && performance.now() - APP_OPENED_AT < 2500;
+
+const Wordmark: React.FC = () => (
+  <span className="font-num text-lg leading-none tracking-wide" dir="ltr">
+    EC<span className="text-primary">SHAPE</span>
   </span>
 );
 
@@ -34,6 +38,10 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
   const dir = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
   const { data: convs } = useConversations();
   const unread = (convs ?? []).reduce((n, c) => n + (c.unread_count || 0), 0);
+
+  const sideRef = useRef<HTMLElement>(null);
+  const footRef = useRef<HTMLElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
 
   usePortalRoot(true);
   useEffect(() => {
@@ -57,61 +65,72 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
     if (href !== pathname) navigate(href);
   };
 
+  const active = tabs.find((x) => x.id === current);
+  const crumb = active?.label ?? (current === 'profile' ? t('trainee.nav.profile') : '');
+  const sideBlob = useLiquid(sideRef, current, 'y', 'trainee-side');
+  const footBlob = useLiquid(footRef, current === 'profile' ? 'profile' : null, 'y', 'trainee-foot');
+  const barBlob = useLiquid(barRef, current, 'x', 'trainee-bar');
+
   return (
-    <div className="tp-root tp-shell bg-background" dir={dir}>
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 start-0 z-40 hidden w-[264px] flex-col border-e border-border/50 bg-background/80 px-4 pb-5 pt-6 backdrop-blur-xl lg:flex">
-        <button type="button" onClick={() => go('/')} className="tp-press mb-8 rounded-2xl px-2 py-1 text-start">
-          <Brand />
+    <div className="tr-root tp-root tp-shell bg-background" dir={dir}>
+      {/* Desktop sidebar: same glass rail and liquid indicator as the trainer app */}
+      <aside className="tr-side tp-side-fixed ec-glass" aria-label={t('trainee.nav.label')}>
+        <button type="button" onClick={() => go('/')} className="tp-press mb-5 flex min-h-[3rem] items-center gap-2.5 overflow-hidden rounded-2xl px-2 text-start">
+          <EcMark variant="trainer" className={cn('h-10 w-auto flex-none', drawBrandOnce() && 'ec-brand-mark')} />
+          <Wordmark />
         </button>
-        <nav className="flex flex-1 flex-col gap-1" aria-label={t('trainee.nav.label')}>
-          {tabs.map((tab) => (
-            <button key={tab.id} type="button" onClick={() => go(tab.href)} aria-current={current === tab.id ? 'page' : undefined} className="tp-side-link tp-press">
-              <tab.icon className="h-5 w-5 flex-none" />
-              <span className="min-w-0 flex-1 truncate text-start">{tab.label}</span>
-              {!!tab.badge && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">{tab.badge}</span>}
-            </button>
-          ))}
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+          <nav ref={sideRef} className="tr-nav" aria-label={t('trainee.nav.label')}>
+            <span className="tr-blob" data-phase={sideBlob.phase} style={sideBlob.style} aria-hidden />
+            {tabs.map((tab) => (
+              <button key={tab.id} type="button" onClick={() => go(tab.href)} aria-current={current === tab.id ? 'page' : undefined} data-liquid-active={current === tab.id || undefined} className="tr-nav-link">
+                <tab.icon className="tr-nav-ico" />
+                <span className="min-w-0 flex-1 truncate text-start">{tab.label}</span>
+                {!!tab.badge && <span className="tr-nav-badge">{tab.badge > 99 ? '99+' : tab.badge}</span>}
+              </button>
+            ))}
+          </nav>
+        </div>
+        <nav ref={footRef} className="tr-nav mt-3 border-t border-border/50 pt-3" aria-label={t('trainee.nav.profile')}>
+          <span className="tr-blob" data-phase={footBlob.phase} style={footBlob.style} aria-hidden />
+          <button type="button" onClick={() => go('/me')} aria-current={current === 'profile' ? 'page' : undefined} data-liquid-active={current === 'profile' || undefined} className="tr-nav-link !min-h-[3.4rem]">
+            <UserAvatar name={user?.full_name} src={user?.avatar_url} className="h-9 w-9 flex-none bg-primary text-xs text-primary-foreground" />
+            <span className="min-w-0 text-start leading-tight">
+              <span className="block truncate text-sm font-semibold">{user?.full_name}</span>
+              <span className="block truncate text-xs opacity-70">{t('trainee.nav.profile')}</span>
+            </span>
+          </button>
         </nav>
-        <button
-          type="button"
-          onClick={() => go('/me')}
-          aria-current={current === 'profile' ? 'page' : undefined}
-          className={cn('tp-press flex items-center gap-3 rounded-2xl p-2.5 text-start transition-colors hover:bg-foreground/5', current === 'profile' && 'bg-primary/10')}
-        >
-          <UserAvatar name={user?.full_name} src={user?.avatar_url} className="h-11 w-11 bg-primary text-sm text-primary-foreground" />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold">{user?.full_name}</span>
-            <span className="block truncate text-xs text-muted-foreground">{t('trainee.nav.profile')}</span>
-          </span>
-        </button>
       </aside>
 
-      {/* Phone top bar */}
-      <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border/40 bg-background/75 px-4 backdrop-blur-xl lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top)', boxSizing: 'content-box' }}>
-        <button type="button" onClick={() => go('/')} className="tp-press rounded-xl">
-          <Brand size="sm" />
-        </button>
-        <button
-          type="button"
-          onClick={() => go('/me')}
-          className="tp-press grid h-11 w-11 place-items-center rounded-full"
-          aria-label={t('trainee.nav.profile')}
-        >
-          <UserAvatar name={user?.full_name} src={user?.avatar_url} className={cn('h-9 w-9 text-xs', current === 'profile' ? 'bg-primary text-primary-foreground ring-2 ring-primary' : 'bg-foreground/10')} />
-        </button>
-      </header>
+      <div className="min-w-0 lg:ps-[calc(var(--tr-side-w)+1.5rem)]">
+        <header className="tr-topbar tp-topbar">
+          <button type="button" onClick={() => go('/')} className="tp-press flex items-center gap-2 rounded-xl lg:hidden" aria-label={t('trainee.nav.today')}>
+            <EcMark variant="trainer" className="h-9 w-auto" />
+            <Wordmark />
+          </button>
+          <div className="tr-crumb hidden lg:flex">{crumb && <b className="truncate">{crumb}</b>}</div>
+          <div className="flex items-center gap-1.5">
+            <LanguageSelector compact />
+            <ThemeToggle />
+            <button type="button" onClick={() => go('/me')} className="tp-press grid h-11 w-11 place-items-center rounded-full lg:hidden" aria-label={t('trainee.nav.profile')}>
+              <UserAvatar name={user?.full_name} src={user?.avatar_url} className={cn('h-9 w-9 text-xs', current === 'profile' ? 'bg-primary text-primary-foreground ring-2 ring-primary' : 'bg-foreground/10')} />
+            </button>
+          </div>
+        </header>
 
-      <main className={cn('min-w-0 pt-[calc(3.5rem+env(safe-area-inset-top))] lg:ps-[264px] lg:pt-0', immersive ? 'pb-36 lg:pb-10' : 'pb-32 lg:pb-8')}>{children}</main>
+        <main className={cn('min-w-0', immersive ? 'pb-36 lg:pb-10' : 'pb-32 lg:pb-8')}>
+          <div className="tr-route" key={pathname}>{children}</div>
+        </main>
+      </div>
 
       {!immersive && (
-        <nav className="tp-tabbar lg:hidden" aria-label={t('trainee.nav.label')}>
-          <div className="ec-glass flex items-stretch gap-0.5 rounded-[1.6rem] p-1.5">
+        <nav className="tr-tabbar" aria-label={t('trainee.nav.label')}>
+          <div ref={barRef} className="ec-glass relative flex items-stretch gap-0.5 rounded-[1.6rem] p-1.5">
+            <span className="tr-hblob" data-phase={barBlob.phase} style={barBlob.style} aria-hidden />
             {tabs.map((tab) => (
-              <button key={tab.id} type="button" onClick={() => go(tab.href)} aria-current={current === tab.id ? 'page' : undefined} className="tp-tab tp-press">
-                <span className="tp-tab-ico">
-                  <tab.icon className="h-[19px] w-[19px]" />
-                </span>
+              <button key={tab.id} type="button" onClick={() => go(tab.href)} aria-current={current === tab.id ? 'page' : undefined} data-liquid-active={current === tab.id || undefined} className="tr-tab">
+                <tab.icon className="h-[19px] w-[19px]" />
                 <span className="max-w-full truncate px-0.5 leading-none">{tab.label}</span>
                 {!!tab.badge && <span className="tp-dot">{tab.badge > 9 ? '9+' : tab.badge}</span>}
               </button>

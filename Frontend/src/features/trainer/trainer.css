@@ -1,7 +1,7 @@
 /* Trainer portal: shell, cockpit and builders. Extends the trainee kit (tp-*) in features/trainee/trainee.css.
    Logical properties only (RTL first). Motion: transform / opacity / clip-path / CSS vars, never layout. */
 
-.tr-root, body:has(.tr-shell) :is(.tp-sheet, .tr-xs-panel) {
+.tr-root, body:has(.tr-shell, .tp-shell) :is(.tp-sheet, .tr-xs-panel) {
   --tr-side-w: 268px;
   --tr-rail-w: 88px;
   --tr-bar-h: 4.25rem;
@@ -438,7 +438,7 @@
 .tr-ci-mini { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .35rem .2rem; border-radius: .6rem; background: hsl(var(--foreground) / .045); color: hsl(var(--muted-foreground)); font-size: .7rem; min-width: 0; }
 .tr-ci-mini b { color: hsl(var(--foreground)); font-size: .8rem; font-variant-numeric: tabular-nums; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .tr-ci-yesno { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .9rem; border-radius: 1rem; background: hsl(var(--foreground) / .04); }
-body:has(.tr-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
+body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
 
 /* ------------------------------------------------------------------ calm motion for the shared kit (#9) */
 /* The trainee kit (tp-*) and portal buttons are springy by default; inside the trainer shell they stay subtle. */

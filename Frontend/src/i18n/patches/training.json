@@ -215,6 +215,18 @@
           "beginner": "מתחילים",
           "intermediate": "בינוני",
           "expert": "מתקדמים"
+        },
+        "swap": {
+          "button": "החלפת תרגיל",
+          "title": "החלפה בתרגיל דומה",
+          "help": "ההתאמות הקרובות ביותר קודם: אותו שריר, תנועה וציוד. הסטים נרשמים תחת התרגיל החדש והמאמן רואה את השינוי.",
+          "loading": "מחפש תרגילים דומים…",
+          "none": "לא נמצא תרגיל דומה.",
+          "current": "הוחלף ב-{{name}}",
+          "restore": "חזרה לתרגיל המתוכנן",
+          "planned": "מתוכנן: {{name}}",
+          "locked": "יש להחליף לפני רישום הסט הראשון",
+          "failed": "טעינת תרגילים דומים נכשלה"
         }
       }
     }
@@ -431,6 +443,18 @@
           "beginner": "Beginner",
           "intermediate": "Intermediate",
           "expert": "Advanced"
+        },
+        "swap": {
+          "button": "Swap exercise",
+          "title": "Swap for a similar exercise",
+          "help": "Closest matches first: same muscle, movement and equipment. Your sets are logged under the swapped exercise and your coach sees the change.",
+          "loading": "Finding similar exercises…",
+          "none": "No similar exercise found.",
+          "current": "Swapped for {{name}}",
+          "restore": "Back to the planned exercise",
+          "planned": "Planned: {{name}}",
+          "locked": "Swap before logging the first set",
+          "failed": "Could not load similar exercises"
         }
       }
     }
@@ -651,6 +675,18 @@
           "beginner": "Débutant",
           "intermediate": "Intermédiaire",
           "expert": "Avancé"
+        },
+        "swap": {
+          "button": "Remplacer l’exercice",
+          "title": "Remplacer par un exercice proche",
+          "help": "Les plus proches d’abord : même muscle, même mouvement, même matériel. Vos séries sont enregistrées sous le nouvel exercice et votre coach voit le changement.",
+          "loading": "Recherche d’exercices proches…",
+          "none": "Aucun exercice proche trouvé.",
+          "current": "Remplacé par {{name}}",
+          "restore": "Revenir à l’exercice prévu",
+          "planned": "Prévu : {{name}}",
+          "locked": "Remplacez avant d’enregistrer la première série",
+          "failed": "Impossible de charger les exercices proches"
         }
       }
     }

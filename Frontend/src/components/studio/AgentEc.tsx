@@ -1,3 +1,4 @@
+import { floatingToolProps, floatingTouchProps, installFloatingToolGuard } from '@/lib/floatingTools';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -251,6 +252,7 @@ export function AgentEc() {
   const articleBridge = useArticleBridge();
   const navigate = useNavigate();
   const { open, setOpen, width, setWidth, seed, clearSeed } = useAgentSidekick();
+  useEffect(() => installFloatingToolGuard(), []);
   const rtl = i18n.language?.startsWith('he');
   const pathname = location.pathname;
   const userId = user?.id ?? 'me';
@@ -436,10 +438,10 @@ export function AgentEc() {
   const recPrompt = (r: AgentRecommendation) => t(`agent.recPrompt.${r.id}`);
 
   return (
-    <>
+    <div style={{ display: 'contents' }} {...floatingToolProps}>
       {!open ? <AgentEdgeTab rtl={!!rtl} onOpen={() => setOpen(true)} /> : null}
       {open ? (
-        <aside className="ec-psk" aria-label="Agent EC" style={{ width: `min(${width}px, 100vw)` }} data-qa-ignore>
+        <aside className="ec-psk" aria-label="Agent EC" style={{ width: `min(${width}px, 100vw)` }} data-qa-ignore {...floatingTouchProps}>
           <div className="ec-psk-resize" role="separator" aria-orientation="vertical" aria-label={t('agent.resize')} title={t('agent.resize')} onPointerDown={startResize} />
           <header className="ec-psk-head">
             <AgentEcIcon busy={busy} />
@@ -619,7 +621,7 @@ export function AgentEc() {
           </form>
         </aside>
       ) : null}
-    </>
+    </div>
   );
 }
 

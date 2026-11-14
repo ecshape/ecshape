@@ -175,6 +175,57 @@ def browse_library(
     return {"total": len(res), "items": [_public(e) for e in res[offset: offset + limit]]}
 
 
+def _similarity(src: Dict, e: Dict) -> float:
+    """How well `e` can stand in for `src`: same target muscle first, then movement type, equipment and level."""
+    sp, ep = set(src.get("primaryMuscles") or []), set(e.get("primaryMuscles") or [])
+    if not sp or not (sp & ep):
+        return 0.0
+    score = 10.0 * len(sp & ep) / len(sp | ep)
+    score += 0.5 * len(set(src.get("secondaryMuscles") or []) & set(e.get("secondaryMuscles") or []))
+    if src.get("mechanic") and src.get("mechanic") == e.get("mechanic"):
+        score += 3
+    if src.get("force") and src.get("force") == e.get("force"):
+        score += 2
+    if src.get("equipment") and src.get("equipment") == e.get("equipment"):
+        score += 2.5
+    if src.get("category") and src.get("category") == e.get("category"):
+        score += 1
+    order = {"beginner": 0, "intermediate": 1, "expert": 2}
+    if src.get("level") in order and e.get("level") in order:
+        score -= 0.6 * abs(order[src["level"]] - order[e["level"]])
+    return score
+
+
+@router.get("/similar")
+def similar_exercises(
+    library_id: Optional[str] = None,
+    name: Optional[str] = None,
+    muscle: Optional[str] = None,
+    equipment: Optional[str] = None,
+    limit: int = Query(8, ge=1, le=24),
+    user: UserResponse = Depends(get_current_user),
+):
+    """Exercises that resemble the given one (for swapping during a workout). Any signed-in user."""
+    lib = _library()
+    src = next((e for e in lib if e.get("id") == library_id), None) if library_id else None
+    if src is None and name:
+        n = name.strip().lower()
+        src = next((e for e in lib if e["name"].lower() == n), None)
+    if src is None and muscle:
+        src = {"primaryMuscles": [muscle], "equipment": equipment}
+    if src is None:
+        return {"items": []}
+    scored = []
+    for e in lib:
+        if e.get("id") == src.get("id") or e["name"].lower() == str(src.get("name", "")).lower():
+            continue
+        sc = _similarity(src, e)
+        if sc > 0:
+            scored.append((sc, e))
+    scored.sort(key=lambda t: (-t[0], len(t[1]["name"])))
+    return {"items": [_public(e) for _, e in scored[:limit]]}
+
+
 def _imported_ids(db: Session, user_id: int) -> set:
     try:
         rows = db.execute(text("select library_id from exercises where library_id is not null")).fetchall()

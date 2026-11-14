@@ -2,12 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, ArrowRight, Check, ChevronDown, ChevronUp, Dumbbell, Flag, History, Info, Minus, Play, Plus, RotateCcw, SkipForward, Timer, Trophy, X,
+  ArrowLeft, ArrowLeftRight, ArrowRight, Check, ChevronDown, ChevronUp, Dumbbell, Flag, History, Info, Minus, Play, Plus, RotateCcw, SkipForward, Timer, Trophy, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InfoTip } from '@/components/ui/info-tip';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
-import { exerciseFrames } from '@/lib/exerciseLibrary';
+import { exerciseFrames, libraryFrames, type LibraryExercise } from '@/lib/exerciseLibrary';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../api';
 import '@/styles/exercises.css';
 import {
   previousSetsFor, sortExercises, todaySessionFor, useDeleteSet, useFinishWorkout, useLogSet, useSessions, useWorkoutDay,
@@ -23,6 +25,7 @@ const repsFloor = (r?: string | null) => (r || '').match(/\d+/)?.[0] ?? '';
 const youtubeId = (url?: string | null) => url?.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{6,})/)?.[1] ?? null;
 const DEFAULT_REST = 90;
 
+type Swap = { name: string; libraryId: string };
 type Rest = { endsAt: number; total: number; next?: string } | null;
 type Summary = { minutes: number; sets: number; volume: number; prs: string[]; sessionId?: number };
 
@@ -54,6 +57,15 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
   const [startMs, setStartMs] = useState<number | null>(() => sessionStart.get(dayId));
   const [drafts, setDrafts] = useState<Record<string, { w?: string; r?: string }>>({});
   const [extra, setExtra] = useState<Record<number, number>>({});
+  const swapKey = `ec-swap-${dayId}-${todayISO()}`;
+  const [swaps, setSwaps] = useState<Record<number, Swap>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(swapKey) || '{}');
+    } catch {
+      return {};
+    }
+  });
+  const [swapOpen, setSwapOpen] = useState(false);
   const [rest, setRest] = useState<Rest>(null);
   const [info, setInfo] = useState(false);
   const [history, setHistory] = useState(false);
@@ -94,6 +106,25 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     const done = setsFor(ex.id);
     const maxLogged = done.length ? Math.max(...done.map((d) => d.set_number)) : 0;
     return Math.max(1, maxLogged, Math.max(1, ex.target_sets || 1) + (extra[ex.id] ?? 0));
+  };
+  /** The exercise actually being done: a swap saved on a logged set wins, then today's local choice. */
+  const swapFor = (exId: number): Swap | null => {
+    const c = setsFor(exId).find((x) => x.performed_exercise_name);
+    if (c) return { name: c.performed_exercise_name!, libraryId: c.performed_library_id || '' };
+    return swaps[exId] ?? null;
+  };
+  const chooseSwap = (exId: number, sw: Swap | null) => {
+    setSwaps((cur) => {
+      const next = { ...cur };
+      if (sw) next[exId] = sw;
+      else delete next[exId];
+      try {
+        localStorage.setItem(swapKey, JSON.stringify(next));
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
   };
   const totalTarget = exercises.reduce((n, e) => n + countFor(e), 0);
 
@@ -137,7 +168,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     if (!started) startSession();
     haptic(14);
     logSet.mutate(
-      { dayId, workoutExerciseId: ex.id, setNumber: n, reps: r, weight: Number.isFinite(w) ? w : 0 },
+      { dayId, workoutExerciseId: ex.id, setNumber: n, reps: r, weight: Number.isFinite(w) ? w : 0, performedName: swapFor(ex.id)?.name, performedLibraryId: swapFor(ex.id)?.libraryId || undefined },
       { onError: () => toast.error(t('trainee.player.logError')) },
     );
     const doneAfter = setsFor(ex.id).length + 1;
@@ -154,7 +185,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     deleteSet.mutate(c.id, {
       onSuccess: () =>
         toast(t('trainee.player.setRemoved'), {
-          action: { label: t('trainee.player.undo'), onClick: () => logSet.mutate({ dayId, workoutExerciseId: ex.id, setNumber: c.set_number, reps: c.reps_completed, weight: c.weight_used }) },
+          action: { label: t('trainee.player.undo'), onClick: () => logSet.mutate({ dayId, workoutExerciseId: ex.id, setNumber: c.set_number, reps: c.reps_completed, weight: c.weight_used, performedName: c.performed_exercise_name, performedLibraryId: c.performed_library_id }) },
         }),
       onError: () => toast.error(t('trainee.player.logError')),
     });
@@ -214,8 +245,10 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
 
   const i = Math.min(idx, exercises.length - 1);
   const ex = exercises[i];
-  const name = ex.exercise?.name || ex.exercise_name || t('trainee.player.exercise');
-  const frames = ex.exercise ? exerciseFrames(ex.exercise) : [];
+  const plannedName = ex.exercise?.name || ex.exercise_name || t('trainee.player.exercise');
+  const sw = swapFor(ex.id);
+  const name = sw?.name || plannedName;
+  const frames = sw ? (sw.libraryId ? libraryFrames(sw.libraryId) : []) : ex.exercise ? exerciseFrames(ex.exercise) : [];
   const done = setsFor(ex.id);
   const count = countFor(ex);
   const nextSet = Array.from({ length: count }, (_, k) => k + 1).find((n) => !done.some((d) => d.set_number === n));
@@ -323,7 +356,17 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                 {exerciseMuscles(ex.exercise).primary.map((m) => muscleLabel(tt, m)).join(' · ')}
                 {ex.tempo ? <> · {t('trainee.player.tempo', { tempo: ex.tempo })}</> : null}
               </p>
+              {sw && <p className="mt-1 text-xs font-semibold text-primary">{tt('swap.planned', { name: plannedName })}</p>}
             </div>
+            {!completed && (
+              <button
+                type="button" onClick={() => setSwapOpen(true)} disabled={done.length > 0}
+                className={cn('tp-icon-btn tp-press disabled:opacity-40', sw && '!bg-primary/15 !text-primary')}
+                aria-label={done.length > 0 ? tt('swap.locked') : tt('swap.button')} title={done.length > 0 ? tt('swap.locked') : tt('swap.button')}
+              >
+                <ArrowLeftRight className="h-5 w-5" />
+              </button>
+            )}
             <button type="button" onClick={() => setHistory(true)} className="tp-icon-btn tp-press" aria-label={t('trainee.player.history')}><History className="h-5 w-5" /></button>
             <button type="button" onClick={() => setInfo(true)} className="tp-icon-btn tp-press !bg-primary/15 !text-primary" aria-label={t('trainee.player.howTo')}><Info className="h-5 w-5" /></button>
           </div>
@@ -446,6 +489,15 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
       {fab && <div className="tr-float">{fab}</div>}
       {rest && <RestOverlay rest={rest} onChange={setRest} />}
 
+      <Sheet open={swapOpen} onOpenChange={setSwapOpen} title={tt('swap.title')} description={tt('swap.planned', { name: plannedName })}>
+        {swapOpen && (
+          <SwapPicker
+            ex={ex} current={sw}
+            onPick={(item) => { chooseSwap(ex.id, { name: item.name, libraryId: item.id }); setSwapOpen(false); haptic(10); }}
+            onRestore={() => { chooseSwap(ex.id, null); setSwapOpen(false); }}
+          />
+        )}
+      </Sheet>
       <Sheet open={info} onOpenChange={setInfo} title={name} description={[ex.exercise?.equipment || ex.exercise?.equipment_needed, ex.exercise?.level].filter(Boolean).join(' · ') || undefined}>
         <ExerciseDetails ex={ex} />
       </Sheet>
@@ -480,6 +532,54 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
         />
       )}
     </>
+  );
+};
+
+/* ------------------------------------------------------------------ swap */
+
+const SwapPicker: React.FC<{ ex: WorkoutExercise; current: Swap | null; onPick: (e: LibraryExercise) => void; onRestore: () => void }> = ({ ex, current, onPick, onRestore }) => {
+  const { tt } = useTT();
+  const info = ex.exercise;
+  const q = useQuery({
+    queryKey: ['trainee', 'similar', info?.library_id, info?.name, ex.exercise_name],
+    staleTime: 10 * 60_000,
+    queryFn: () => {
+      const qs = new URLSearchParams({ limit: '10' });
+      if (info?.library_id) qs.set('library_id', info.library_id);
+      const nm = info?.name || ex.exercise_name;
+      if (nm) qs.set('name', nm);
+      const m = info?.primary_muscles?.[0] || info?.muscle_group;
+      if (m) qs.set('muscle', m.toLowerCase());
+      if (info?.equipment) qs.set('equipment', info.equipment);
+      return api<{ items: LibraryExercise[] }>(`/exercise-library/similar?${qs}`);
+    },
+  });
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">{tt('swap.help')}</p>
+      {current && (
+        <button type="button" onClick={onRestore} className="tp-btn tp-btn--ghost tp-press w-full"><RotateCcw className="h-4 w-4" />{tt('swap.restore')}</button>
+      )}
+      {q.isLoading && <p className="py-6 text-center text-sm text-muted-foreground">{tt('swap.loading')}</p>}
+      {q.isError && <p className="py-6 text-center text-sm text-destructive">{tt('swap.failed')}</p>}
+      {q.data && !q.data.items.length && <p className="py-6 text-center text-sm text-muted-foreground">{tt('swap.none')}</p>}
+      <ul className="space-y-2">
+        {(q.data?.items ?? []).map((it) => (
+          <li key={it.id}>
+            <button type="button" onClick={() => onPick(it)} className="tp-press flex w-full items-center gap-3 rounded-2xl bg-foreground/[.04] p-2 text-start hover:bg-foreground/[.08]" aria-pressed={current?.libraryId === it.id}>
+              <span className="h-14 w-14 flex-none overflow-hidden rounded-xl bg-white">
+                <img src={libraryFrames(it.id)[0]} alt="" loading="lazy" className="h-full w-full object-cover" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold" dir="auto">{it.name}</span>
+                <span className="block truncate text-xs text-muted-foreground">{[it.primaryMuscles?.[0], it.equipment, it.level].filter(Boolean).join(' · ')}</span>
+              </span>
+              {current?.libraryId === it.id && <Check className="h-5 w-5 flex-none text-primary" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 

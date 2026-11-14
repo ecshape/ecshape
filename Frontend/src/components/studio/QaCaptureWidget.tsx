@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { studioApi, type QaPriority } from '@/lib/studioApi';
 import { spotlight } from '@/lib/agentOps';
 import { cn } from '@/lib/utils';
+import { floatingToolProps, floatingTouchProps, installFloatingToolGuard } from '@/lib/floatingTools';
 
 /** "Show on page" from a QA ticket: the selector to highlight after navigation. */
 export const QA_SPOTLIGHT_KEY = 'ec-qa-spotlight';
@@ -130,9 +131,13 @@ const QaCaptureWidget = () => {
   const [fabPos, setFabPos] = useState<{ left: number; top: number } | null>(null);
   const hoverRef = useRef<Element | null>(null);
 
-  const allowed = user?.role === 'TRAINER' || user?.role === 'ADMIN';
+  const allowed = !!user;
+  const canReadTickets = user?.role === 'TRAINER' || user?.role === 'ADMIN';
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    installFloatingToolGuard();
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     try {
@@ -385,7 +390,7 @@ const QaCaptureWidget = () => {
   const fabBusy = mode === 'picking' || mode === 'form' || mode === 'done';
 
   const ui = (
-    <div className="ec-qa-capture" data-qa-ignore>
+    <div className="ec-qa-capture" data-qa-ignore {...floatingToolProps} {...floatingTouchProps}>
       <div
         className={cn('ec-qa-fab-stack', fabPos && 'is-moved')}
         style={fabPos ? { left: fabPos.left, top: fabPos.top } : undefined}
@@ -526,9 +531,11 @@ const QaCaptureWidget = () => {
               <div className="ec-qa-done">
                 <p>{t('qaWidget.saved', { id: ticketId ?? '' })}</p>
                 <div className="ec-qa-actions">
-                  <button type="button" className="ec-qa-btn" onClick={() => { closeForm(); navigate(ticketId ? `/studio/qa?ticket=${ticketId}` : '/studio/qa'); }}>
-                    {t('qaWidget.openTicket')}
-                  </button>
+                  {canReadTickets && (
+                    <button type="button" className="ec-qa-btn" onClick={() => { closeForm(); navigate(ticketId ? `/studio/qa?ticket=${ticketId}` : '/studio/qa'); }}>
+                      {t('qaWidget.openTicket')}
+                    </button>
+                  )}
                   <button type="button" className="ec-qa-btn ghost" onClick={closeForm}>
                     {t('qaWidget.keepBrowsing')}
                   </button>

@@ -117,7 +117,7 @@ export function computeUpNext(plan: WorkoutPlan | null, sessions: WorkoutSession
 
 let tempId = -1;
 
-type LogSetVars = { dayId: number; workoutExerciseId: number; setNumber: number; reps: number; weight: number };
+type LogSetVars = { dayId: number; workoutExerciseId: number; setNumber: number; reps: number; weight: number; performedName?: string | null; performedLibraryId?: string | null };
 
 /** Logs a set optimistically into today's session; rolls back if the server refuses. */
 export function useLogSet() {
@@ -132,6 +132,8 @@ export function useLogSet() {
           set_number: v.setNumber,
           reps_completed: v.reps,
           weight_used: v.weight,
+          performed_exercise_name: v.performedName ?? null,
+          performed_library_id: v.performedLibraryId ?? null,
         },
       }),
     onMutate: async (v) => {
@@ -141,6 +143,7 @@ export function useLogSet() {
       const row: SetCompletion = {
         id: tempId--, workout_exercise_id: v.workoutExerciseId, set_number: v.setNumber,
         reps_completed: v.reps, weight_used: v.weight, completed_at: now, pending: true,
+        performed_exercise_name: v.performedName ?? null, performed_library_id: v.performedLibraryId ?? null,
       };
       qc.setQueryData<WorkoutSession[]>(qk.sessions, (old = []) => {
         const s = todaySessionFor(old, v.dayId);

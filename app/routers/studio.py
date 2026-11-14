@@ -312,7 +312,8 @@ def list_tickets(status: Optional[str] = None, user: UserResponse = Depends(requ
 
 
 @router.post("/qa", status_code=201)
-def create_ticket(payload: TicketIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+def create_ticket(payload: TicketIn, user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Any signed-in user (trainer, admin, trainee) can report from the QA widget; reading/triage stays trainer-only.
     t = QaTicket(**payload.model_dump(), status="new", created_by=user.id)
     db.add(t)
     db.commit()

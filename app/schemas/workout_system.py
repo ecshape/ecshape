@@ -204,6 +204,8 @@ class SetCompletionCreate(BaseModel):
     form_rating: Optional[int] = Field(None, ge=1, le=5)
     notes: Optional[str] = None
     completed_at: Optional[datetime] = None
+    performed_exercise_name: Optional[str] = Field(None, max_length=200)
+    performed_library_id: Optional[str] = Field(None, max_length=120)
 
 class SetCompletionResponse(SetCompletionCreate):
     id: int

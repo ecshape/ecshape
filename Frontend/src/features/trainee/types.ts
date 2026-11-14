@@ -74,6 +74,9 @@ export interface SetCompletion {
   reps_completed: number;
   weight_used: number;
   rpe?: number | null;
+  /** Set when the trainee swapped the planned exercise for a similar one. */
+  performed_exercise_name?: string | null;
+  performed_library_id?: string | null;
   completed_at: string;
   /** Client-only flag for optimistic rows not yet confirmed by the server. */
   pending?: boolean;

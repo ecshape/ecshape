@@ -199,3 +199,9 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
   .tp-burst { display: none; }
   .tp-ring-value, .tp-bar > span, .tp-press { transition: none !important; }
 }
+
+/* Trainee shell = trainer shell look (glass rail, liquid pill, calm motion); the page itself still scrolls with the window. */
+.tr-side.tp-side-fixed { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 40; margin-block: .75rem; }
+.tr-topbar.tp-topbar { height: calc(3.5rem + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
+@media (min-width: 1024px) { .tr-topbar.tp-topbar { position: static; height: 4rem; padding-top: 0; } }
+.tp-root .tp-tab-ico { transition: none; }

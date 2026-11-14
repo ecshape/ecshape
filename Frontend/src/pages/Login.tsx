@@ -11,6 +11,11 @@ import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../components/LanguageSelector';
 import ThemeToggle from '../components/ThemeToggle';
 
+/** Back to the page the trainee was on, but never to a trainer/admin page (it would 404 until the redirect). */
+const CLIENT_PATHS = ['/training', '/meals', '/progress', '/chat', '/me'];
+const clientLanding = (from?: string) =>
+  from && CLIENT_PATHS.some((p) => from === p || from.startsWith(`${p}/`)) ? from : '/';
+
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +39,7 @@ const Login = () => {
   const goHome = (role?: string) => {
     if (role === 'ADMIN') navigate('/admin', { replace: true });
     else if (role === 'TRAINER') navigate('/trainer-dashboard', { replace: true });
-    else navigate(location.state?.from?.pathname || '/', { replace: true });
+    else navigate(clientLanding(location.state?.from?.pathname), { replace: true });
   };
 
   const handleDemo = async (role: 'trainer' | 'client') => {
@@ -65,8 +70,7 @@ const Login = () => {
         } else if (loggedInUser.role === 'CLIENT') {
           navigate('/', { replace: true });
         } else {
-          const from = location.state?.from?.pathname || '/';
-          navigate(from, { replace: true });
+          navigate(clientLanding(location.state?.from?.pathname), { replace: true });
         }
       } else {
         setError(t('auth.invalidCredentials'));

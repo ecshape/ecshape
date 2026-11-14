@@ -219,8 +219,9 @@ html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
   font-size: 0.95rem;
 }
 
-/* Hide the QA launcher while a modal dialog is open */
-body[data-scroll-locked] .ec-qa-fab-stack { opacity: 0; pointer-events: none; }
+/* Radix modals set pointer-events:none on <body>; the QA tool stays usable on top of every pop-up */
+.ec-qa-capture, .ec-qa-capture * { pointer-events: auto; }
+.ec-qa-capture .ec-qa-pick-box { pointer-events: none; }
 
 /* ── QA workshop board + sheet ───────────────────────────────────── */
 .ec-qa-col { position: relative; border: 1px solid transparent; }

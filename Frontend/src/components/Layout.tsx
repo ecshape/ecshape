@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   Dumbbell, Home, Utensils, Target, TrendingUp, LogOut, User, Settings, MessageSquare, ChevronDown,
-  Users2, Sparkles, Globe2, Megaphone, Bug, LayoutGrid, X, ExternalLink, SlidersHorizontal,
+  Users2, Globe2, Megaphone, Bug, ExternalLink, SlidersHorizontal,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -13,10 +13,12 @@ import ThemeToggle from './ThemeToggle';
 import LiquidNav, { type LiquidItem } from './LiquidNav';
 import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
 import { useAuth } from '../contexts/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { studioApi } from '@/lib/studioApi';
 import TraineeShell from '@/features/trainee/TraineeShell';
+import TrainerShell from '@/features/trainer/TrainerShell';
+import { useQuery } from '@tanstack/react-query';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -46,11 +48,8 @@ type NavEntry = { id: string; label: string; icon: React.ElementType; href: stri
 const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { t, i18n } = useTranslation();
   const dir = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [newLeads, setNewLeads] = useState(0);
   const mainRef = useRef<HTMLElement>(null);
 
   const isTrainer = user?.role === 'TRAINER';
@@ -59,13 +58,14 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   usePortalRoot(true);
   usePortalMotion(mainRef);
 
-  useEffect(() => {
-    if (!isTrainer) return;
-    studioApi.overview().then((o) => setNewLeads(o.leads_new)).catch(() => setNewLeads(0));
-  }, [isTrainer, location.pathname]);
-  useEffect(() => {
-    setMoreOpen(false);
-  }, [location.pathname]);
+  const { data: overview } = useQuery({
+    queryKey: ['trainer', 'overview'],
+    queryFn: () => studioApi.overview(),
+    enabled: isTrainer,
+    staleTime: 30_000,
+    refetchInterval: 90_000,
+  });
+  const newLeads = overview?.leads_new ?? 0;
 
   const go = (href: string) => navigate(href);
 
@@ -107,7 +107,6 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
       ],
     },
   ];
-  const trainerAll = trainerGroups.flatMap((g) => g.items);
   const topNav = isAdmin ? adminNav : clientNav;
   const toLiquid = (items: NavEntry[]): LiquidItem[] => items.map((i) => ({ id: i.id, label: i.label, icon: i.icon, badge: i.badge, onClick: () => go(i.href) }));
 
@@ -152,91 +151,10 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   );
 
   if (isTrainer) {
-    const mobilePrimary = ['dashboard', 'prospects', 'site', 'chat'].map((id) => trainerAll.find((i) => i.id === id)!) as NavEntry[];
     return (
-      <div className="ec-portal-shell flex h-screen overflow-hidden bg-background" dir={dir} data-ec-shell>
-        <aside className="ec-glass relative z-40 m-3 hidden w-[264px] flex-none flex-col rounded-[1.75rem] p-4 lg:flex" data-ec-enter>
-          <button onClick={() => go('/trainer-dashboard')} className="mb-6 flex items-center justify-between rounded-2xl px-2 py-1 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Brand compact />
-            <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">{t('studio.name')}</span>
-          </button>
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pe-1">
-            {trainerGroups.map((g) => (
-              <div key={g.title}>
-                <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[.14em] text-muted-foreground/80">{g.title}</p>
-                <LiquidNav orientation="vertical" items={toLiquid(g.items)} active={g.items.some((i) => i.id === currentPage) ? currentPage : '__none'} />
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/60 pt-4">
-            <UserMenu showName={false} />
-            <div className="flex items-center gap-1.5">
-              <LanguageSelector compact />
-              <ThemeToggle />
-            </div>
-          </div>
-        </aside>
-
-        <div className="ec-portal-main flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-border/50 bg-background/70 px-3 backdrop-blur-xl lg:hidden">
-            <button onClick={() => go('/trainer-dashboard')}><Brand compact /></button>
-            <div className="flex items-center gap-1.5">
-              <LanguageSelector compact />
-              <ThemeToggle />
-              <UserMenu showName={false} />
-            </div>
-          </header>
-
-          <main ref={mainRef} className="ec-portal-body min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0" data-ec-main>
-            <div className="ec-page-enter">{children}</div>
-          </main>
-        </div>
-
-        <nav className="fixed inset-x-3 z-50 lg:hidden" style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-          <div className="ec-glass flex items-stretch justify-between gap-1 rounded-[1.6rem] p-1.5">
-            {mobilePrimary.map((item) => {
-              const active = currentPage === item.id;
-              return (
-                <button key={item.id} onClick={() => go(item.href)} aria-current={active ? 'page' : undefined} className={cn('relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-[1.2rem] px-1 py-2 text-[11px] font-semibold transition-all duration-300 active:scale-95', active ? 'text-primary' : 'text-muted-foreground')}>
-                  <span className={cn('grid h-8 w-8 place-items-center rounded-full transition-all duration-300', active && 'bg-primary text-primary-foreground shadow-[0_6px_14px_-6px_hsl(var(--primary)/.9)]')}>
-                    <item.icon className="h-[18px] w-[18px]" />
-                  </span>
-                  <span className="max-w-full truncate leading-none">{item.label}</span>
-                  {!!item.badge && <span className="absolute end-3 top-1 min-w-4 rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground">{item.badge}</span>}
-                </button>
-              );
-            })}
-            <button onClick={() => setMoreOpen(true)} className={cn('flex min-w-0 flex-1 flex-col items-center gap-1 rounded-[1.2rem] px-1 py-2 text-[11px] font-semibold text-muted-foreground transition-all active:scale-95', !mobilePrimary.some((m) => m.id === currentPage) && 'text-primary')}>
-              <span className="grid h-8 w-8 place-items-center rounded-full"><LayoutGrid className="h-[18px] w-[18px]" /></span>
-              <span className="leading-none">{t('navigation.menu')}</span>
-            </button>
-          </div>
-        </nav>
-
-        <div className={cn('fixed inset-0 z-[60] lg:hidden', moreOpen ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!moreOpen}>
-          <div className={cn('absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300', moreOpen ? 'opacity-100' : 'opacity-0')} onClick={() => setMoreOpen(false)} />
-          <div className={cn('ec-glass absolute inset-x-3 bottom-3 rounded-[1.75rem] p-4 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]', moreOpen ? 'translate-y-0' : 'translate-y-[110%]')}>
-            <div className="mb-3 flex items-center justify-between">
-              <span className="font-display text-3xl">{t('studio.name')}</span>
-              <button onClick={() => setMoreOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-muted"><X className="h-4 w-4" /></button>
-            </div>
-            {trainerGroups.map((g) => (
-              <div key={g.title} className="mb-3">
-                <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[.14em] text-muted-foreground">{g.title}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {g.items.map((i) => (
-                    <button key={i.id} onClick={() => go(i.href)} className={cn('flex flex-col items-center gap-1.5 rounded-2xl border border-border/60 px-2 py-3 text-xs font-semibold transition-colors', currentPage === i.id ? 'border-transparent bg-primary text-primary-foreground' : 'bg-card/60')}>
-                      <i.icon className="h-5 w-5" />
-                      <span className="truncate">{i.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
+      <TrainerShell groups={trainerGroups} currentPage={currentPage} mobilePrimary={['dashboard', 'prospects', 'site', 'chat']} userMenu={<UserMenu showName={false} />}>
+        {children}
+      </TrainerShell>
     );
   }
 

@@ -142,8 +142,8 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
       </div>
     </div>
     <div class="manifesto__art" aria-hidden="true">
-      <svg class="mart__ring" viewBox="0 0 200 200">${Array.from({ length: 60 }, (_, k) => `<line x1="100" y1="4" x2="100" y2="${k % 5 ? 9 : 14}" transform="rotate(${k * 6} 100 100)"/>`).join('')}<circle class="mart__arc" cx="100" cy="100" r="88" pathLength="100"/></svg>
-      <figure class="mart__photo"><img src="${esc(storyImg)}" alt="" loading="lazy" data-parallax></figure>
+      <svg class="mart__ring" viewBox="0 0 200 200"><g class="mart__spin">${Array.from({ length: 60 }, (_, k) => `<line x1="100" y1="4" x2="100" y2="${k % 5 ? 9 : 14}" transform="rotate(${k * 6} 100 100)"/>`).join('')}<circle class="mart__arc" cx="100" cy="100" r="88" pathLength="100"/></g></svg>
+      <figure class="mart__photo"><img src="${P}opt/trainer_portrait.jpg" alt="" loading="lazy"></figure>
       ${c.hero.stats.slice(0, 3).map((s, i) => `<div class="mart__chip mart__chip--${i}"><span class="num" dir="ltr">${esc(s.value)}${esc(s.suffix)}</span><small>${esc(s.label)}</small></div>`).join('')}
     </div>
   </div>

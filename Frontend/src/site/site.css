@@ -373,14 +373,15 @@ html.lenis, html.lenis body { height: auto; }
 .ec-site .manifesto__sig small { color: var(--ink-3); }
 /* Visual: arched portrait inside a slowly turning dial, with the key numbers floating around it */
 .ec-site .manifesto__art { position: relative; width: min(100%, 460px); aspect-ratio: 1; justify-self: center; }
-.ec-site .mart__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; animation: artSpin 60s linear infinite; }
+.ec-site .mart__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.ec-site .mart__spin { transform-origin: 100px 100px; animation: artSpin 60s linear infinite; }
 .ec-site .mart__ring line { stroke: var(--line-2); stroke-width: 1.2; stroke-linecap: round; }
 .ec-site .mart__arc { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 28 100; transform: rotate(-90deg); transform-origin: 100px 100px; }
 .ec-site .mart__photo {
   position: absolute; inset: 15% 22% 9%; overflow: hidden; border-radius: 999px 999px 28px 28px; background: var(--surface);
   box-shadow: 0 0 0 1px var(--line), 0 40px 80px -30px rgba(0, 0, 0, .9);
 }
-.ec-site .mart__photo img { width: 100%; height: 120%; object-fit: cover; object-position: 50% 18%; }
+.ec-site .mart__photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; }
 .ec-site .mart__photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(11, 10, 8, .55)); }
 .ec-site .mart__chip {
   position: absolute; z-index: 2; display: flex; align-items: center; gap: 10px; max-width: 62%;
@@ -876,7 +877,7 @@ html.lenis, html.lenis body { height: auto; }
 
   .ec-site .hero { height: auto; min-height: 0; display: flex; flex-direction: column; }
   .ec-site .hero__media { position: relative; order: 2; clip-path: none !important; height: min(62svh, 128vw); margin: 0 var(--gutter); border-radius: var(--radius-lg); overflow: hidden; }
-  .ec-site .hero__media img { transform: scale(1.32); transform-origin: 58% 46%; object-position: 58% 40%; }
+  .ec-site .hero__media img { transform: scale(1.55); transform-origin: 58% 44%; object-position: 58% 40%; }
   .ec-site .hero__content { max-width: none; padding-bottom: 32px; padding-top: calc(var(--nav-h) + 48px); }
   .ec-site .hero__ctas .btn { flex: 1 1 auto; justify-content: space-between; }
   .ec-site .hero__stats { position: relative; order: 3; inset: auto; margin: 16px var(--gutter) 0; flex-wrap: wrap; }
@@ -1050,7 +1051,7 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 
 @media (prefers-reduced-motion: reduce) {
   .ec-site .art-clock__arc, .ec-site .art-clock__h, .ec-site .art-clock__m, .ec-site .art-list__tick, .ec-site .art-list__row,
-  .ec-site .art-phone, .ec-site .art-chip, .ec-site .prog__crowd i, .ec-site .mart__ring, .ec-site .mart__chip { animation: none; }
+  .ec-site .art-phone, .ec-site .art-chip, .ec-site .prog__crowd i, .ec-site .mart__spin, .ec-site .mart__chip { animation: none; }
   .ec-site .art-list__tick { stroke-dashoffset: 0; }
 }
 @media (max-width: 900px) {
@@ -1071,4 +1072,16 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
   .ec-site .mart__chip small { font-size: .7rem; }
   .ec-site .rcard__meta { padding: 16px 16px 18px; gap: 10px; }
   .ec-site .rcard__kg { padding: 8px 11px 7px; }
+}
+
+/* ---- Desktop nav on narrower laptops / tablets in landscape: keep everything inside the pill ---- */
+@media (min-width: 901px) and (max-width: 1280px) {
+  .ec-site .nav { gap: 10px; }
+  .ec-site .nav .nav__login { display: none; }
+  .ec-site .nav__links { gap: 0; min-width: 0; }
+  .ec-site .nav__links a { padding: 8px 10px; font-size: .88rem; white-space: nowrap; }
+  .ec-site .nav__logo b { font-size: 1.15rem; }
+}
+@media (min-width: 901px) and (max-width: 1060px) {
+  .ec-site .nav__logo b { display: none; }
 }

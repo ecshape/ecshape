@@ -500,14 +500,6 @@ const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: Seo
         </ul>
         <div className="ec-seo-page-actions">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => askAgent(t('studio.seo.pages.agentPrompt', { lang: LANG_LABEL[lang] }))}
-          >
-            <Sparkles />
-            {t('studio.seo.writeWithAgent')}
-          </Button>
-          <Button
             size="sm"
             disabled={busy}
             onClick={async () => {

@@ -1,12 +1,10 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MealMenuV3 } from "./SandboxMealsV3";
+import Layout from "../components/Layout";
+import MealsScreen from "@/features/trainee/MealsScreen";
 import { useAuth } from "../contexts/AuthContext";
 
-/**
- * Production trainee meals: same component tree as `/sandbox/meals-v3` (real API).
- * `MealMenuV3` wraps itself in `Layout` — do not add a second Layout here.
- */
+/** Trainee meal day (live data from /v3/meals). `/sandbox/meals-v3` keeps the old mock playground. */
 const MealsPageV3 = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -25,7 +23,11 @@ const MealsPageV3 = () => {
     return null;
   }
 
-  return <MealMenuV3 mode="real" />;
+  return (
+    <Layout currentPage="meals">
+      <MealsScreen />
+    </Layout>
+  );
 };
 
 export default MealsPageV3;

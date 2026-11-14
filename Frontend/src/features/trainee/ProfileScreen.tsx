@@ -10,6 +10,7 @@ import { api } from './api';
 import { useCheckInSummary, useConversations, useSessions } from './hooks';
 import { Screen, ScreenHeader, SectionTitle, Sheet } from './ui';
 import { fmtDate, fmtNum } from './format';
+import { AvatarEditor } from '@/components/avatar/AvatarEditor';
 
 const ProfileScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -21,14 +22,14 @@ const ProfileScreen: React.FC = () => {
   const [pwOpen, setPwOpen] = useState(false);
   const coach = convs.data?.[0]?.client_name;
   const workouts = (sessions.data ?? []).filter((s) => s.is_completed).length;
-  const initials = (user?.full_name || '?').split(' ').filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <Screen>
       <ScreenHeader eyebrow={t('trainee.profile.eyebrow')} title={t('trainee.profile.title')} />
 
       <section className="tp-card tp-card--hero tp-rise flex flex-wrap items-center gap-4 p-5 sm:p-6" style={{ ['--i' as string]: 2 }}>
-        <span className="grid h-20 w-20 flex-none place-items-center rounded-[1.6rem] bg-primary text-2xl font-bold text-primary-foreground shadow-[0_16px_32px_-16px_hsl(var(--primary))]">{initials}</span>
+        {/* Profile photo (tap to change) */}
+        <AvatarEditor compact rounded="rounded-[1.6rem]" className="h-20 w-20 text-2xl shadow-[0_16px_32px_-16px_hsl(var(--primary))]" />
         <div className="min-w-0 flex-1">
           <h2 className="tp-title break-words text-[2.4rem]">{user?.full_name}</h2>
           <p className="truncate text-sm text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{user?.email}</p>

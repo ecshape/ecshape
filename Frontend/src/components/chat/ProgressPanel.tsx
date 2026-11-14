@@ -70,13 +70,14 @@ export const EntryList: React.FC<{
 /** Trainer side panel: who you are talking to, latest numbers and their progress entries. */
 export const ClientPanel: React.FC<{
   name: string;
+  avatar?: string | null;
   entries: ProgressEntry[] | null;
   attachedId: number | null;
   onAttach: (e: ProgressEntry) => void;
   onOpenProfile: () => void;
   onClose?: () => void;
   className?: string;
-}> = ({ name, entries, attachedId, onAttach, onOpenProfile, onClose, className }) => {
+}> = ({ name, avatar, entries, attachedId, onAttach, onOpenProfile, onClose, className }) => {
   const { t } = useTranslation();
   const latest = entries?.[0];
   const oldest = entries && entries.length > 1 ? entries[entries.length - 1] : undefined;
@@ -90,7 +91,7 @@ export const ClientPanel: React.FC<{
             <X className="h-5 w-5" />
           </IconButton>
         )}
-        <ChatAvatar name={name} size="xl" className="mx-auto" />
+        <ChatAvatar name={name} src={avatar} size="xl" className="mx-auto" />
         <p className="mt-3 truncate text-lg font-semibold text-foreground">{name}</p>
         <p className="text-xs text-muted-foreground">{t('chat.ui.roleClient')}</p>
         <button

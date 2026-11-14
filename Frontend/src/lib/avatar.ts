@@ -63,3 +63,33 @@ export async function cropSquare(src: string, zoom: number, ox: number, oy: numb
   if (blob) return blob;
   return new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode'))), 'image/jpeg', 0.9));
 }
+
+/* ------------------------------------------------ last signed-in user on this device (public site bubble) */
+const LAST_USER_KEY = 'ec-last-user';
+export type LastUser = { name: string; avatar_url: string | null; role: string };
+
+export function rememberLastUser(u: LastUser) {
+  try {
+    localStorage.setItem(LAST_USER_KEY, JSON.stringify(u));
+  } catch {
+    /* storage blocked */
+  }
+}
+
+export function forgetLastUser() {
+  try {
+    localStorage.removeItem(LAST_USER_KEY);
+  } catch {
+    /* storage blocked */
+  }
+}
+
+export function readLastUser(): LastUser | null {
+  try {
+    const raw = localStorage.getItem(LAST_USER_KEY);
+    const u = raw ? JSON.parse(raw) : null;
+    return u && typeof u.name === 'string' ? u : null;
+  } catch {
+    return null;
+  }
+}

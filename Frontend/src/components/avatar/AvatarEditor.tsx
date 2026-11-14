@@ -124,7 +124,7 @@ export const AvatarEditor: React.FC<{ className?: string; rounded?: string; comp
       <Dialog open={!!img} onOpenChange={(o) => !o && !busy && setImg(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="tp-title text-4xl">{t('tix.avatar.cropTitle')}</DialogTitle>
+            <DialogTitle className="ec-page-title !text-4xl">{t('tix.avatar.cropTitle')}</DialogTitle>
             <DialogDescription>{t('tix.avatar.cropHint')}</DialogDescription>
           </DialogHeader>
           {img && (

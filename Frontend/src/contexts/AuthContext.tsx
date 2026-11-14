@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
 import { requestNotificationPermission } from '../lib/notifications';
+import { forgetLastUser, rememberLastUser } from '../lib/avatar';
 
 export type UserRole = 'ADMIN' | 'TRAINER' | 'CLIENT';
 
@@ -235,7 +236,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     removeToken();
+    forgetLastUser();
   };
+
+  // Remember who was signed in on this device (name + photo only) for the small bubble on the public site
+  useEffect(() => {
+    if (user) rememberLastUser({ name: user.full_name, avatar_url: user.avatar_url ?? null, role: user.role });
+  }, [user]);
 
   // Check for stored token and fetch user data on mount
   useEffect(() => {

@@ -6,6 +6,7 @@ import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AgentEcIcon } from '@/components/studio/AgentEcIcon';
+import { AvatarEditor } from '@/components/avatar/AvatarEditor';
 import { studioApi, type AiKey, type AiProvider } from '@/lib/studioApi';
 import { spotlight } from '@/lib/agentOps';
 import { cn } from '@/lib/utils';
@@ -106,7 +107,15 @@ const SettingsPage = () => {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 md:py-10">
         <StudioHeader eyebrow={t('studio.groupStudio')} title={t('studio.settings.title')} lead={t('studio.settings.subtitle')} />
 
-        <section id="ai-keys" className="ec-settings-card mt-8 rounded-[1.75rem] p-5 sm:p-7" data-ec-enter>
+        <section id="profile" className="ec-settings-card mt-8 rounded-[1.75rem] p-5 sm:p-7" data-ec-enter>
+          <h2 className="font-display text-3xl leading-none">{t('tix.avatar.sectionTitle')}</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">{t('tix.avatar.sectionHint')}</p>
+          <div className="mt-5">
+            <AvatarEditor />
+          </div>
+        </section>
+
+        <section id="ai-keys" className="ec-settings-card mt-6 rounded-[1.75rem] p-5 sm:p-7" data-ec-enter>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <AgentEcIcon size="md" />

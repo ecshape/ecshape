@@ -113,7 +113,7 @@ const ConversationList: React.FC<Props> = ({ conversations, loading, error, onRe
                       active ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-muted/60',
                     )}
                   >
-                    <ChatAvatar name={c.client_name} size="lg" />
+                    <ChatAvatar name={c.client_name} src={c.client_avatar} size="lg" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
                         <span className={cn('truncate text-[15px]', unread ? 'font-bold text-foreground' : 'font-semibold text-foreground')}>{c.client_name}</span>

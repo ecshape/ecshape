@@ -432,7 +432,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
           onClick={() => (isWide ? setProfileOpen(true) : setProfileSheet(true))}
           className={cn('flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-start', isTrainer && 'transition-colors hover:bg-muted/60', isDesktop && 'ps-2')}
         >
-          <ChatAvatar name={otherName} />
+          <ChatAvatar name={otherName} src={activeConv?.client_avatar} />
           <span className="min-w-0">
             <span className="block truncate text-[15px] font-semibold text-foreground">{otherName}</span>
             <span className="block truncate text-xs text-muted-foreground">{isTrainer ? t('chat.ui.roleClient') : t('chat.ui.roleCoach')}</span>
@@ -496,6 +496,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
         <ChatSheet open={profileSheet} onOpenChange={setProfileSheet} title={t('chat.ui.profile')} side={isDesktop ? 'end' : 'bottom'}>
           <ClientPanel
             name={otherName}
+            avatar={activeConv?.client_avatar}
             entries={entries}
             attachedId={attachment?.id ?? null}
             onAttach={attachEntry}
@@ -590,6 +591,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
           <ClientPanel
             key={convKey}
             name={otherName}
+            avatar={activeConv?.client_avatar}
             entries={entries}
             attachedId={attachment?.id ?? null}
             onAttach={attachEntry}

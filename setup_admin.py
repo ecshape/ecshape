@@ -87,6 +87,11 @@ def ensure_admin_exists():
         
         print("Running meal calorie goal migration...")
         run_meal_calorie_goal_migration()
+
+        # users.avatar_url / avatar_path must exist before the admin query below (the User model selects them)
+        print("Running user avatar migration...")
+        from app.migrations.user_avatar_migration import run_user_avatar_migration
+        run_user_avatar_migration()
         
     except Exception as migration_error:
         print(f"⚠️ Warning: Some migrations encountered errors: {migration_error}")

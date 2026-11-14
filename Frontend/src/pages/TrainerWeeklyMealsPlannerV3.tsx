@@ -19,6 +19,7 @@ type MealTargetsState = {
 };
 import { formatDateForAPI } from "../utils/dashboard";
 import type { TFunction } from "i18next";
+import { PortalSelect } from '@/components/ui/portal-select';
 
 type QuantityMode = "per_100g" | "per_portion";
 
@@ -890,18 +891,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
               ) : (
                 <div className="min-w-[220px]">
                   <label className="text-sm font-medium">{t("meals.weeklyMeals.client", "Client")}</label>
-                  <select
-                    className="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background"
-                    value={clientId ?? ""}
-                    onChange={(e) => setClientId(e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">{t("meals.weeklyMeals.selectClient", "Select client...")}</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.full_name}
-                      </option>
-                    ))}
-                  </select>
+                  <PortalSelect
+                    className="mt-1 w-full"
+                    label={t("meals.weeklyMeals.client", "Client")}
+                    placeholder={t("meals.weeklyMeals.selectClient", "Select client...")}
+                    value={clientId ? String(clientId) : ""}
+                    onChange={(v) => setClientId(v ? Number(v) : null)}
+                    options={clients.map((c) => ({ value: String(c.id), label: c.full_name }))}
+                  />
                 </div>
               )}
             </div>

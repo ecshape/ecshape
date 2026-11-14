@@ -477,7 +477,7 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
   .tr-root .tr-actions:not(:has(> :nth-child(4))) { flex-wrap: nowrap; }
   .tr-act { width: 2.75rem; flex: none; padding: 0 !important; }
   .tr-act .tr-act-label { display: none; }
-  .tr-filter > svg { display: none; }
+  .tr-filter > svg:first-child { display: none; }
   .tr-filter { padding-inline: .7rem .35rem; }
 }
 

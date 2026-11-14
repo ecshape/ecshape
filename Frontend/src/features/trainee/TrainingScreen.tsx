@@ -75,7 +75,7 @@ const TrainingScreen: React.FC = () => {
       <button
         type="button"
         onClick={() => navigate(upNext.kind === 'done' ? `/training/day/${heroDay.id}` : `/training/day/${heroDay.id}/session`)}
-        className="tr-hero tr-grad tp-press tp-rise flex w-full items-center gap-4 p-5 text-start sm:p-6"
+        className="tt-hero tr-grad tp-press tp-rise flex w-full items-center gap-4 p-5 text-start sm:p-6"
         style={{ ['--i' as string]: 3 }}
       >
         <span className="relative z-[1] min-w-0 flex-1">

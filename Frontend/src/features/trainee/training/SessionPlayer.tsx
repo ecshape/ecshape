@@ -321,7 +321,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
               </>
             ) : (
               <>
-                <span className="tr-live flex-none" aria-hidden />
+                <span className="tt-live flex-none" aria-hidden />
                 <span className="tp-num text-xl leading-none" dir="ltr" role="timer" aria-label={tt('player.duration')}>{fmtClock(elapsed)}</span>
                 <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                   <span dir="ltr">{logged.length}/{totalTarget}</span> {tt('player.setsDone')}

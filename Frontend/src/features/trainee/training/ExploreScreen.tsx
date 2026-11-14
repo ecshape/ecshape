@@ -104,14 +104,14 @@ const ExploreScreen: React.FC = () => {
           </div>
 
           {lib.isLoading ? (
-            <div className="tr-ex-grid">{Array.from({ length: 8 }, (_, i) => <Skel key={i} className="aspect-[4/5]" />)}</div>
+            <div className="tt-ex-grid">{Array.from({ length: 8 }, (_, i) => <Skel key={i} className="aspect-[4/5]" />)}</div>
           ) : lib.isError ? (
             <ErrorState onRetry={() => lib.refetch()} />
           ) : !items.length ? (
             <EmptyState icon={Compass} title={tt('explore.emptyTitle')} body={tt('explore.emptyBody')} />
           ) : (
             <>
-              <div className="tr-ex-grid">
+              <div className="tt-ex-grid">
                 {items.map((e) => (
                   <button key={e.id} type="button" onClick={() => setOpen(e)} className="tp-card tp-press flex flex-col overflow-hidden text-start">
                     <span className="block aspect-[4/3] w-full bg-white">

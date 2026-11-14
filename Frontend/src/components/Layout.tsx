@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Dumbbell, Home, Utensils, Target, TrendingUp, LogOut, User, Settings, MessageSquare, ChevronDown,
-  Users2, Globe2, Megaphone, Bug, ExternalLink, SlidersHorizontal,
+  Users2, Globe2, Megaphone, Bug, ExternalLink, SlidersHorizontal, UserRound,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -46,6 +46,60 @@ const Brand = ({ compact = false }: { compact?: boolean }) => (
 );
 
 type NavEntry = { id: string; label: string; icon: React.ElementType; href: string; badge?: number };
+
+/** Account menu (avatar + chevron) shared by the trainer and trainee headers (QA #37). */
+const AccountMenu = ({ showName = false }: { showName?: boolean }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const isTrainer = user?.role === 'TRAINER';
+  const isAdmin = user?.role === 'ADMIN';
+  const areaLabel = isAdmin ? t('layout.adminPanel') : isTrainer ? t('layout.trainerDashboard') : t('layout.clientPortal');
+  const go = (href: string) => navigate(href);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="group flex items-center gap-2.5 rounded-full p-1 pe-3 transition-colors hover:bg-foreground/[.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={user?.full_name || 'account'}>
+          <UserAvatar name={user?.full_name} src={user?.avatar_url} className="h-9 w-9 bg-primary text-sm text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]" />
+          {showName && (
+            <span className="hidden text-start leading-tight xl:block">
+              <span className="block max-w-[140px] truncate text-sm font-semibold">{user?.full_name}</span>
+              <span className="block text-xs text-muted-foreground">{user?.role ? t(`roles.${user.role}`) : ''}</span>
+            </span>
+          )}
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="font-normal">
+          <p className="truncate text-sm font-semibold">{user?.full_name}</p>
+          <p className="text-xs text-muted-foreground">{areaLabel}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {!isTrainer && !isAdmin && (
+          <DropdownMenuItem onClick={() => go('/me')} className="gap-2">
+            <UserRound className="h-4 w-4" />
+            {t('trainee.nav.profile')}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={() => window.open('/home', '_blank')} className="gap-2">
+          <ExternalLink className="h-4 w-4" />
+          {t('studio.site.open')}
+        </DropdownMenuItem>
+        {isTrainer && (
+          <DropdownMenuItem onClick={() => go('/studio/settings')} className="gap-2">
+            <SlidersHorizontal className="h-4 w-4" />
+            {t('studio.nav.settings')}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={logout} className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive">
+          <LogOut className="h-4 w-4" />
+          {t('auth.logout')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   const { user, logout } = useAuth();
@@ -136,47 +190,9 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
 
   const areaLabel = isAdmin ? t('layout.adminPanel') : isTrainer ? t('layout.trainerDashboard') : t('layout.clientPortal');
 
-  const UserMenu = ({ showName }: { showName: boolean }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="group flex items-center gap-2.5 rounded-full p-1 pe-3 transition-colors hover:bg-foreground/[.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={user?.full_name || 'account'}>
-          <UserAvatar name={user?.full_name} src={user?.avatar_url} className="h-9 w-9 bg-primary text-sm text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]" />
-          {showName && (
-            <span className="hidden text-start leading-tight xl:block">
-              <span className="block max-w-[140px] truncate text-sm font-semibold">{user?.full_name}</span>
-              <span className="block text-xs text-muted-foreground">{user?.role ? t(`roles.${user.role}`) : ''}</span>
-            </span>
-          )}
-          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <p className="truncate text-sm font-semibold">{user?.full_name}</p>
-          <p className="text-xs text-muted-foreground">{areaLabel}</p>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => window.open('/home', '_blank')} className="gap-2">
-          <ExternalLink className="h-4 w-4" />
-          {t('studio.site.open')}
-        </DropdownMenuItem>
-        {isTrainer && (
-          <DropdownMenuItem onClick={() => go('/studio/settings')} className="gap-2">
-            <SlidersHorizontal className="h-4 w-4" />
-            {t('studio.nav.settings')}
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={logout} className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive">
-          <LogOut className="h-4 w-4" />
-          {t('auth.logout')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
   if (isTrainer) {
     return (
-      <TrainerShell groups={trainerGroups} currentPage={currentPage} mobilePrimary={['dashboard', 'prospects', 'site', 'chat']} userMenu={<UserMenu showName={false} />}>
+      <TrainerShell groups={trainerGroups} currentPage={currentPage} mobilePrimary={['dashboard', 'prospects', 'site', 'chat']} userMenu={<AccountMenu />}>
         {children}
       </TrainerShell>
     );
@@ -198,7 +214,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <LanguageSelector />
             <ThemeToggle />
-            <UserMenu showName />
+            <AccountMenu showName />
           </div>
         </div>
       </header>
@@ -230,7 +246,7 @@ const Layout = (props: LayoutProps) => {
   const { user } = useAuth();
   if (user?.role === 'CLIENT') {
     return (
-      <TraineeShell current={props.currentPage || 'dashboard'} immersive={props.immersive}>
+      <TraineeShell current={props.currentPage || 'dashboard'} immersive={props.immersive} userMenu={<AccountMenu />}>
         {props.children}
       </TraineeShell>
     );

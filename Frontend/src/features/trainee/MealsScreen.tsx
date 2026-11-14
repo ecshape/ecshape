@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Trash2, UtensilsCrossed,
+  AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mediaUrl } from '@/lib/mediaUrl';
 import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest, V3MealSlotView } from '@/types/meals-v3';
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
+import AddMealSheet from './AddMealSheet';
+import { useLogSaved, useSavedMeals } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
 import {
@@ -45,13 +47,19 @@ const MealsScreen: React.FC = () => {
   /** Foods in one category are alternatives: the trainee eats ONE of them (default: the first). */
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [swapRow, setSwapRow] = useState<{ slot: V3MealSlotView; row: PlanRow } | null>(null);
-  const [customSlot, setCustomSlot] = useState<V3MealSlotView | null>(null);
+  /** Add-a-meal launcher (photo / barcode / manual / saved). slot null = free entry outside the plan. */
+  const [addTarget, setAddTarget] = useState<{ slot: V3MealSlotView | null } | null>(null);
+  const [manualTarget, setManualTarget] = useState<{ slot: V3MealSlotView | null } | null>(null);
+  const savedMeals = useSavedMeals();
+  const logSaved = useLogSaved(date);
   const [askSlot, setAskSlot] = useState<V3MealSlotView | null>(null);
 
   const foodName = (f: { name: string; name_hebrew?: string | null }) => (he ? f.name_hebrew || f.name : f.name);
   const doneIds = new Set((completions.data ?? []).filter((c) => c.is_completed).map((c) => c.meal_slot_id));
   const slots = useMemo(() => [...(day.data?.slots ?? [])].sort((a, b) => a.order_index - b.order_index), [day.data]);
   const macros = day.data?.daily_macros;
+  /** Foods added outside the plan (no meal slot). They are already inside the day's totals. */
+  const freeEntries = useMemo(() => (day.data?.choices ?? []).filter((c) => c.meal_slot_id == null && !!c.custom_food_name), [day.data]);
 
   const Prev = he ? ChevronRight : ChevronLeft;
   const Next = he ? ChevronLeft : ChevronRight;
@@ -78,10 +86,16 @@ const MealsScreen: React.FC = () => {
         eyebrow={day.data?.meal_plan_name || t('trainee.meals.eyebrow')}
         title={t('trainee.meals.title')}
         actions={
-          <button type="button" onClick={() => navigate('/meals/favorites')} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">
-            <Heart className="h-4 w-4" />
-            {t('trainee.meals.favorites')}
-          </button>
+          <>
+            <button type="button" onClick={() => setAddTarget({ slot: null })} className="tp-btn tp-btn--primary tp-btn--sm tp-press">
+              <Plus className="h-4 w-4" />
+              {t('trainee.mealTools.logMeal')}
+            </button>
+            <button type="button" onClick={() => navigate('/meals/favorites')} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">
+              <Heart className="h-4 w-4" />
+              {t('trainee.meals.favorites')}
+            </button>
+          </>
         }
       />
 
@@ -327,7 +341,7 @@ const MealsScreen: React.FC = () => {
                           <button type="button" onClick={() => completeSlot(slot, data)} disabled={variants.length > 0 && !selected && !rows.length && !extras.length} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1 sm:flex-none">
                             <Check className="h-4 w-4" />{t('trainee.meals.complete')}
                           </button>
-                          <button type="button" onClick={() => setCustomSlot(slot)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press px-3 min-[420px]:px-4" aria-label={t('trainee.meals.addFood')}>
+                          <button type="button" onClick={() => setAddTarget({ slot })} className="tp-btn tp-btn--ghost tp-btn--sm tp-press px-3 min-[420px]:px-4" aria-label={t('trainee.meals.addFood')}>
                             <Plus className="h-4 w-4" /><span className="hidden min-[420px]:inline">{t('trainee.meals.addFood')}</span>
                           </button>
                           <button type="button" onClick={() => setAskSlot(slot)} className="tp-icon-btn tp-press" aria-label={t('trainee.meals.askCoach')}>
@@ -344,8 +358,65 @@ const MealsScreen: React.FC = () => {
         </>
       )}
 
+      {day.data && (
+        <section className="mt-6" aria-label={t('trainee.mealTools.outsidePlan')}>
+          {!!savedMeals.data?.length && date === today && (
+            <div className="mb-4">
+              <p className="tp-label mb-2">{t('trainee.mealTools.quickLog')}</p>
+              <div className="tp-scroll-x -mx-4 px-4">
+                {savedMeals.data.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={logSaved.isPending}
+                    onClick={() => { haptic(); logSaved.mutate({ id: m.id, slotId: null }, { onSuccess: () => toast.success(t('trainee.mealTools.logged')), onError: onWriteError }); }}
+                    className="tp-press flex flex-none items-center gap-2 rounded-full bg-primary/12 px-4 py-2.5 text-sm font-semibold text-primary"
+                  >
+                    <Heart className="h-4 w-4" /><span className="max-w-[10rem] truncate" dir="auto">{m.name}</span><span className="opacity-70" dir="ltr">{fmtNum(m.totals.calories)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="tp-card overflow-hidden border border-dashed border-primary/40">
+            <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
+              <div className="min-w-0">
+                <h3 className="tp-title text-[1.8rem]">{t('trainee.mealTools.outsidePlan')}</h3>
+                <p className="text-sm text-muted-foreground">{t('trainee.mealTools.outsideBody')}</p>
+              </div>
+              <button type="button" onClick={() => setAddTarget({ slot: null })} className="tp-btn tp-btn--ghost tp-btn--sm tp-press flex-none">
+                <Plus className="h-4 w-4" />{t('trainee.meals.addFood')}
+              </button>
+            </div>
+            {freeEntries.length > 0 && (
+              <ul className="space-y-2 px-4 pb-4 sm:px-5" data-testid="free-entries">
+                {freeEntries.map((c) => (
+                  <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-primary/[.07] p-1.5 ps-3.5">
+                    <Sparkles className="h-4 w-4 flex-none text-primary" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium" dir="auto">{c.custom_food_name} <span className="tp-chip tp-chip--primary ms-1 align-middle">{t('trainee.mealTools.freeTag')}</span></p>
+                      <p className="text-xs text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{c.quantity ? `${c.quantity} · ` : ''}{fmtNum(c.custom_calories)} kcal · P{fmtNum(c.custom_protein)} C{fmtNum(c.custom_carbs)} F{fmtNum(c.custom_fat)}</p>
+                    </div>
+                    <button type="button" onClick={() => write.mutate({ kind: 'delete', id: c.id }, { onError: onWriteError })} className="tp-icon-btn tp-press bg-transparent text-muted-foreground" aria-label={t('trainee.common.delete')}>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
+
       <SwapSheet target={swapRow} date={date} onClose={() => setSwapRow(null)} foodName={foodName} />
-      <AddFoodSheet slot={customSlot} date={date} day={day.data ?? null} onClose={() => setCustomSlot(null)} foodName={foodName} />
+      <AddMealSheet
+        open={!!addTarget}
+        slot={addTarget?.slot ?? null}
+        date={date}
+        onClose={() => setAddTarget(null)}
+        onManual={() => { setManualTarget(addTarget); setAddTarget(null); }}
+      />
+      <AddFoodSheet open={!!manualTarget} slot={manualTarget?.slot ?? null} date={date} day={day.data ?? null} onClose={() => setManualTarget(null)} foodName={foodName} />
       <AskCoachSheet slot={askSlot} onClose={() => setAskSlot(null)} />
     </Screen>
   );
@@ -436,19 +507,19 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
 
 type AddTab = 'menu' | 'bank' | 'custom';
 
-const AddFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; day: V3DayViewResponse | null; onClose: () => void; foodName: (f: V3FoodOption) => string }> = ({ slot, date, day, onClose, foodName }) => {
+const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date: string; day: V3DayViewResponse | null; onClose: () => void; foodName: (f: V3FoodOption) => string }> = ({ open, slot, date, day, onClose, foodName }) => {
   const { t } = useTranslation();
   const [tab, setTab] = useState<AddTab>('menu');
   const [q, setQ] = useState('');
   const [chosen, setChosen] = useState<V3FoodOption | null>(null);
   const [amount, setAmount] = useState(100);
   const write = useMealWrite(date);
-  const bank = useFoodBank(!!slot && tab === 'bank');
+  const bank = useFoodBank(open && tab === 'bank');
 
   // Every food the coach put in today's plan, this meal first.
   const menu = useMemo(() => {
-    if (!day || !slot) return [] as V3FoodOption[];
-    const ordered = [slot, ...day.slots.filter((s) => s.meal_slot_id !== slot.meal_slot_id)];
+    if (!day) return [] as V3FoodOption[];
+    const ordered = slot ? [slot, ...day.slots.filter((s) => s.meal_slot_id !== slot.meal_slot_id)] : day.slots;
     const seen = new Set<string>();
     const out: V3FoodOption[] = [];
     for (const s of ordered)
@@ -480,12 +551,12 @@ const AddFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; day: V
     setAmount(f.measurement_type === 'per_portion' ? 1 : 100);
   };
   const addChosen = () => {
-    if (!slot || !chosen || !preview) return;
+    if (!chosen || !preview) return;
     write.mutate(
       {
         kind: 'log',
         body: {
-          date, meal_slot_id: slot.meal_slot_id, macro_type: (chosen.macro_type as MacroType) || 'protein', food_option_id: null,
+          date, meal_slot_id: slot?.meal_slot_id ?? null, macro_type: slot ? (chosen.macro_type as MacroType) || 'protein' : null, food_option_id: null,
           quantity: portion ? `×${amount}` : qty, custom_food_name: safeName(foodName(chosen)),
           custom_calories: preview.calories, custom_protein: preview.protein, custom_carbs: preview.carbs, custom_fat: preview.fat,
         },
@@ -503,10 +574,10 @@ const AddFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; day: V
 
   return (
     <Sheet
-      open={!!slot}
+      open={open}
       onOpenChange={(o) => !o && close()}
       title={t('trainee.meals.addFood')}
-      description={slot ? t('trainee.meals.customFor', { meal: slot.name }) : undefined}
+      description={slot ? t('trainee.meals.customFor', { meal: slot.name }) : t('trainee.mealTools.outsideBody')}
       footer={
         tab !== 'custom' && chosen && preview ? (
           <button type="button" onClick={addChosen} className="tp-btn tp-btn--primary tp-press w-full">
@@ -594,12 +665,12 @@ const CustomFoodForm: React.FC<{ slot: V3MealSlotView | null; date: string; onDo
   const valid = f.name.trim() && num(f.grams) > 0;
 
   const save = () => {
-    if (!slot || !valid) return;
+    if (!valid) return;
     write.mutate(
       {
         kind: 'log',
         body: {
-          date, meal_slot_id: slot.meal_slot_id, macro_type: 'protein', food_option_id: null, quantity: `${num(f.grams)}g`,
+          date, meal_slot_id: slot?.meal_slot_id ?? null, macro_type: slot ? 'protein' : null, food_option_id: null, quantity: `${num(f.grams)}g`,
           custom_food_name: f.name.trim(), custom_calories: num(f.kcal) * scale, custom_protein: num(f.p) * scale, custom_carbs: num(f.c) * scale, custom_fat: num(f.fat) * scale,
         },
       },

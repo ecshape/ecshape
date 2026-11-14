@@ -547,12 +547,18 @@ def get_v3_day_view(
             target_day=target_day,
             meal_plan=None,
         )
+        free = (
+            db.query(ClientMealChoice)
+            .filter(ClientMealChoice.client_id == target_client_id, ClientMealChoice.date >= start_of_day, ClientMealChoice.date < end_of_day)
+            .order_by(ClientMealChoice.date.desc())
+            .all()
+        )
         return V3DayViewResponse(
             date=target_day.date().isoformat(),
             meal_plan=None,
             slots=[],
             daily_macros=daily_macros,
-            choices=[],
+            choices=[ClientMealChoiceResponse.model_validate(c) for c in free],
         )
 
     # Load raw choices for the day.

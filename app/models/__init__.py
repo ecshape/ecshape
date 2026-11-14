@@ -12,6 +12,7 @@ from app.models.notification import Notification
 from app.models.client_notification_setting import ClientNotificationSetting
 from app.models.chat import ChatMessage
 from app.models.check_in import DailyCheckIn
+from app.models.saved_meals import ClientSavedMeal  # noqa: F401
 from app.models.meal_variants import (
     ClientFavoriteFood,
     MealVariant,

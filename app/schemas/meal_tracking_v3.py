@@ -296,8 +296,8 @@ class V3MealLogCreateRequest(BaseModel):
 
     date: str  # YYYY-MM-DD or ISO datetime (backend will normalize)
 
-    meal_slot_id: int
-    macro_type: MacroType
+    meal_slot_id: Optional[int] = None  # None = free entry outside the plan
+    macro_type: Optional[MacroType] = None
 
     # Plan food
     food_option_id: Optional[int] = None

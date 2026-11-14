@@ -36,6 +36,7 @@ import {
   type ExerciseImportPreviewRow,
   type ExerciseImportDecision,
 } from '../components/ExerciseImportReviewDialog';
+import { PortalSelect } from '@/components/ui/portal-select';
 interface Exercise {
   id: number;
   name: string;
@@ -817,31 +818,30 @@ const ExerciseBank = () => {
               )}
             </label>
             <div className="grid grid-cols-3 gap-2 lg:flex">
-              <label className="tr-filter">
-                <span className="sr-only">{t('tt.bank.equipment')}</span>
-                <Weight className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />
-                <select value={equipmentFilter} onChange={(e) => setEquipmentFilter(e.target.value)} title={t('tt.bank.equipment')}>
-                  <option value="all">{t('tt.bank.anyEquipment')}</option>
-                  {equipmentOptions.map((eq) => <option key={eq} value={eq}>{t(`exerciseLibrary.equipment.${eq}`, { defaultValue: eq })}</option>)}
-                </select>
-              </label>
-              <label className="tr-filter">
-                <span className="sr-only">{t('tt.bank.level')}</span>
-                <Gauge className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />
-                <select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)} title={t('tt.bank.level')}>
-                  <option value="all">{t('tt.bank.anyLevel')}</option>
-                  {['beginner', 'intermediate', 'expert'].map((l) => <option key={l} value={l}>{t(`exerciseLibrary.level.${l}`, { defaultValue: l })}</option>)}
-                </select>
-              </label>
-              <label className="tr-filter">
-                <span className="sr-only">{t('tt.bank.source')}</span>
-                <Library className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />
-                <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as 'all' | 'library' | 'custom')} title={t('tt.bank.source')}>
-                  <option value="all">{t('tt.bank.anySource')}</option>
-                  <option value="library">{t('tt.bank.fromLibrary')}</option>
-                  <option value="custom">{t('tt.bank.custom')}</option>
-                </select>
-              </label>
+              <PortalSelect
+                className="tr-filter"
+                icon={Weight}
+                label={t('tt.bank.equipment')}
+                value={equipmentFilter}
+                onChange={setEquipmentFilter}
+                options={[{ value: 'all', label: t('tt.bank.anyEquipment') }, ...equipmentOptions.map((eq) => ({ value: eq, label: t(`exerciseLibrary.equipment.${eq}`, { defaultValue: eq }) }))]}
+              />
+              <PortalSelect
+                className="tr-filter"
+                icon={Gauge}
+                label={t('tt.bank.level')}
+                value={levelFilter}
+                onChange={setLevelFilter}
+                options={[{ value: 'all', label: t('tt.bank.anyLevel') }, ...['beginner', 'intermediate', 'expert'].map((l) => ({ value: l, label: t(`exerciseLibrary.level.${l}`, { defaultValue: l }) }))]}
+              />
+              <PortalSelect
+                className="tr-filter"
+                icon={Library}
+                label={t('tt.bank.source')}
+                value={sourceFilter}
+                onChange={(v) => setSourceFilter(v as 'all' | 'library' | 'custom')}
+                options={[{ value: 'all', label: t('tt.bank.anySource') }, { value: 'library', label: t('tt.bank.fromLibrary') }, { value: 'custom', label: t('tt.bank.custom') }]}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -19,15 +19,15 @@
 .light .bm-region { stroke: #fff; }
 
 /* Segmented sub navigation */
-.tr-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: .25rem; padding: .3rem; border-radius: 9999px; background: hsl(var(--foreground) / .06); }
-.tr-seg > a, .tr-seg > button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 2.6rem; padding: 0 .75rem; border-radius: 9999px; font-size: .85rem; font-weight: 700; color: hsl(var(--muted-foreground)); white-space: nowrap; }
-.tr-seg > [aria-current="page"], .tr-seg > [aria-pressed="true"] { background: hsl(var(--card)); color: hsl(var(--foreground)); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .8), inset 0 0 0 1px hsl(var(--foreground) / .08); }
-.tr-seg > [aria-current="page"] svg { color: hsl(var(--primary)); }
+.tt-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: .25rem; padding: .3rem; border-radius: 9999px; background: hsl(var(--foreground) / .06); }
+.tt-seg > a, .tt-seg > button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 2.6rem; padding: 0 .75rem; border-radius: 9999px; font-size: .85rem; font-weight: 700; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.tt-seg > [aria-current="page"], .tt-seg > [aria-pressed="true"] { background: hsl(var(--card)); color: hsl(var(--foreground)); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .8), inset 0 0 0 1px hsl(var(--foreground) / .08); }
+.tt-seg > [aria-current="page"] svg { color: hsl(var(--primary)); }
 
 /* Brand gradient surfaces */
 .tr-grad { background: linear-gradient(135deg, #F59532, #D8361E); color: #fff; }
-.tr-hero { position: relative; overflow: hidden; border-radius: 1.75rem; box-shadow: 0 26px 50px -26px rgba(216, 54, 30, .9), inset 0 1px 0 rgba(255, 255, 255, .25); }
-.tr-hero::after { content: ""; position: absolute; inset-block: -40%; inset-inline-end: -10%; width: 55%; background: radial-gradient(closest-side, rgba(255, 255, 255, .22), transparent); pointer-events: none; }
+.tt-hero { position: relative; overflow: hidden; border-radius: 1.75rem; box-shadow: 0 26px 50px -26px rgba(216, 54, 30, .9), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.tt-hero::after { content: ""; position: absolute; inset-block: -40%; inset-inline-end: -10%; width: 55%; background: radial-gradient(closest-side, rgba(255, 255, 255, .22), transparent); pointer-events: none; }
 .tr-play { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; flex: none; border-radius: 9999px; background: #140c08; color: #fff; }
 
 /* Routine cards */
@@ -61,7 +61,7 @@
 /* Session bar */
 .tr-sessionbar { position: sticky; z-index: 30; top: calc(3.75rem + env(safe-area-inset-top)); }
 @media (min-width: 1024px) { .tr-sessionbar { top: 4rem; } }
-.tr-live { width: .55rem; height: .55rem; border-radius: 9999px; background: #F59532; box-shadow: 0 0 0 0 rgba(245, 149, 50, .7); animation: trLive 1.8s ease-out infinite; }
+.tt-live { width: .55rem; height: .55rem; border-radius: 9999px; background: #F59532; box-shadow: 0 0 0 0 rgba(245, 149, 50, .7); animation: trLive 1.8s ease-out infinite; }
 @keyframes trLive { 0% { box-shadow: 0 0 0 0 rgba(245, 149, 50, .6); } 80%, 100% { box-shadow: 0 0 0 .55rem rgba(245, 149, 50, 0); } }
 
 /* Rest overlay */
@@ -74,11 +74,11 @@
 .tr-cal [data-today="true"]:not([data-done="true"]) { box-shadow: inset 0 0 0 2px hsl(var(--primary) / .6); }
 
 /* Explore grid */
-.tr-ex-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
-@media (min-width: 640px) { .tr-ex-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1024px) { .tr-ex-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tt-ex-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+@media (min-width: 640px) { .tt-ex-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .tt-ex-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .bm-anim, .tr-slide-next, .tr-slide-prev, .tr-live, .tr-rest-overlay { animation: none !important; }
+  .bm-anim, .tr-slide-next, .tr-slide-prev, .tt-live, .tr-rest-overlay { animation: none !important; }
   .bm-region { transition: none; }
 }

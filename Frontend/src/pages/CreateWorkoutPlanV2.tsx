@@ -14,6 +14,7 @@ import { API_BASE_URL } from '../config/api';
 import { cn } from '@/lib/utils';
 import { Avatar, BackLink, Field, PageTitle, SectionCard } from '@/features/trainer/ui';
 import ExercisePicker, { ExerciseThumb, type PickableExercise } from '@/features/trainer/ExercisePicker';
+import { PortalSelect } from '@/components/ui/portal-select';
 
 interface WorkoutExercise {
   /** Existing workout exercise id: sent back so the server edits it in place (its logged sets stay attached). */
@@ -440,20 +441,16 @@ const CreateWorkoutPlanV2: React.FC = () => {
               </div>
             ) : (
               <Field label={`${t('workoutCreation.selectClient')} *`} htmlFor="client" className="md:col-span-2">
-                <div className="relative">
-                  <User className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <select
-                    id="client"
-                    className="tp-input appearance-none ps-11"
-                    value={formData.client_id}
-                    onChange={(e) => setFormData({ ...formData, client_id: parseInt(e.target.value) })}
-                  >
-                    <option value={0}>{t('workoutCreation.selectClientPlaceholder')}</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>{c.full_name} ({c.email})</option>
-                    ))}
-                  </select>
-                </div>
+                <PortalSelect
+                  id="client"
+                  className="tp-input w-full"
+                  icon={User}
+                  label={t('workoutCreation.selectClient')}
+                  placeholder={t('workoutCreation.selectClientPlaceholder')}
+                  value={formData.client_id ? String(formData.client_id) : ''}
+                  onChange={(v) => setFormData({ ...formData, client_id: parseInt(v) })}
+                  options={clients.map((c) => ({ value: String(c.id), label: c.full_name, hint: c.email }))}
+                />
               </Field>
             )}
             <Field label={t('workoutCreation.planNameRequired')} htmlFor="name">

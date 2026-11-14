@@ -42,6 +42,7 @@ import { IconOf, MACRO_ICON, PlateIcon } from '../components/foodbank/FoodIcons'
 import { FoodCard, FoodCardSkeleton, FoodPhoto, PropertyChip } from '../components/foodbank/FoodParts';
 import { FoodLibraryDrawer, libraryKey } from '../components/foodbank/FoodLibraryDrawer';
 import '../components/foodbank/foodbank.css';
+import { PortalSelect } from '@/components/ui/portal-select';
 
 type MacroFilter = 'all' | MacroType;
 type SortKey = 'name' | 'protein' | 'kcalAsc' | 'recent';
@@ -584,20 +585,15 @@ const MealBank = () => {
               )}
             </div>
             <MacroSegmented value={macroFilter} onChange={setMacroFilter} counts={macroCounts} />
-            <label className="relative flex h-11 shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <span className="sr-only">{t('foodBankPro.sort.label')}</span>
-              <select
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-                className="h-full bg-transparent pe-1 text-sm outline-none"
-              >
-                <option value="name">{t('foodBankPro.sort.name')}</option>
-                <option value="protein">{t('foodBankPro.sort.protein')}</option>
-                <option value="kcalAsc">{t('foodBankPro.sort.kcalAsc')}</option>
-                <option value="recent">{t('foodBankPro.sort.recent')}</option>
-              </select>
-            </label>
+            <PortalSelect
+              className="shrink-0"
+              icon={ArrowUpDown}
+              label={t('foodBankPro.sort.label')}
+              value={sortKey}
+              onChange={(v) => setSortKey(v as SortKey)}
+              align="end"
+              options={(['name', 'protein', 'kcalAsc', 'recent'] as const).map((k) => ({ value: k, label: t(`foodBankPro.sort.${k}`) }))}
+            />
           </div>
 
           {presentTags.length > 0 && (

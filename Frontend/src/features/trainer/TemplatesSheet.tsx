@@ -14,6 +14,7 @@ import {
   FOODS, MEAL_TEMPLATES, WORKOUT_TEMPLATES, libName, pick,
   type MealTemplate, type RefFood, type WorkoutTemplate,
 } from './planTemplates';
+import { PortalSelect } from '@/components/ui/portal-select';
 
 type Kind = 'workout' | 'meal';
 interface BankExercise { id: number; library_id?: string | null }
@@ -139,14 +140,15 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
       description={current ? pick(current.goal, lang) : t('tt.tpl.lead')}
       footer={current ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="tr-tpl-client">
-            <UserRound className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />
-            <span className="sr-only">{t('tt.tpl.client')}</span>
-            <select value={clientId} onChange={(e) => setClientId(e.target.value ? Number(e.target.value) : '')}>
-              <option value="">{t('tt.tpl.pickClient')}</option>
-              {activeClients.map((c) => <option key={c.id} value={c.id}>{c.full_name || c.username}</option>)}
-            </select>
-          </label>
+          <PortalSelect
+            className="flex-1 bg-foreground/[.06]"
+            icon={UserRound}
+            label={t('tt.tpl.client')}
+            placeholder={t('tt.tpl.pickClient')}
+            value={clientId === '' ? '' : String(clientId)}
+            onChange={(v) => setClientId(v ? Number(v) : '')}
+            options={activeClients.map((c) => ({ value: String(c.id), label: c.full_name || c.username }))}
+          />
           <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press" disabled={!clientId || busy} onClick={assign}>
             {busy && <EcSpinner className="h-4 w-4" mono />}
             {t('tt.tpl.assign')}

@@ -38,7 +38,7 @@ export const SubNav: React.FC<{ items: { to: string; label: string; icon: React.
   const navigate = useNavigate();
   const { pathname } = useLocation();
   return (
-    <nav className={`tr-seg ${className ?? ''}`} aria-label={label}>
+    <nav className={`tt-seg ${className ?? ''}`} aria-label={label}>
       {items.map((it) => {
         const on = it.match ? it.match(pathname) : pathname === it.to;
         return (

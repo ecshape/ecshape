@@ -30,7 +30,7 @@ const Wordmark: React.FC = () => (
  * App shell for the trainee: bottom tab bar on phones (safe-area aware), a calm sidebar from 1024px.
  * `immersive` hides the tab bar (the workout player owns the bottom of the screen).
  */
-const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immersive?: boolean }> = ({ current, children, immersive }) => {
+const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immersive?: boolean; /** Same account menu as the trainer header (QA #37). */ userMenu?: React.ReactNode }> = ({ current, children, immersive, userMenu }) => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -123,9 +123,9 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
           <div className="flex items-center gap-1.5">
             <LanguageSelector compact />
             <ThemeToggle />
-            <button type="button" onClick={() => go('/me')} className="tp-press grid h-11 w-11 place-items-center rounded-full" aria-label={t('trainee.nav.profile')}>
+            {userMenu ?? <button type="button" onClick={() => go('/me')} className="tp-press grid h-11 w-11 place-items-center rounded-full" aria-label={t('trainee.nav.profile')}>
               <UserAvatar name={user?.full_name} src={user?.avatar_url} className={cn('h-9 w-9 text-xs', 'bg-primary text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]', current === 'profile' && 'ring-2 ring-primary ring-offset-2 ring-offset-background')} />
-            </button>
+            </button>}
           </div>
         </header>
 

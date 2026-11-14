@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ExerciseDemo } from './ExerciseDemo';
 import { exerciseLibrary, LIBRARY_MUSCLES, type LibraryExercise, type LibraryFacets, type LibrarySource, type LibrarySources } from '@/lib/exerciseLibrary';
 import { cn } from '@/lib/utils';
+import { PortalSelect } from '@/components/ui/portal-select';
 
 const PAGE = 36;
 const LEVELS = ['beginner', 'intermediate', 'expert'] as const;
@@ -163,12 +164,13 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
             ))}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <select value={equipment} onChange={(e) => setEquipment(e.target.value)} className="h-11 rounded-full border border-border/70 bg-card px-3 text-sm sm:h-9">
-              <option value="">{t('exerciseLibrary.allEquipment')}</option>
-              {equipmentKeys.map((k) => (
-                <option key={k} value={k}>{label('equipment', k)}</option>
-              ))}
-            </select>
+            <PortalSelect
+              className="min-h-[2.75rem] sm:min-h-[2.25rem]"
+              label={t('exerciseLibrary.allEquipment')}
+              value={equipment}
+              onChange={setEquipment}
+              options={[{ value: '', label: t('exerciseLibrary.allEquipment') }, ...equipmentKeys.map((k) => ({ value: k, label: label('equipment', k) }))]}
+            />
             {source === 'library' && LEVELS.map((l) => (
               <Chip key={l} small active={level === l} onClick={() => setLevel(level === l ? '' : l)}>
                 <LevelBars level={l} />

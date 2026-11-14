@@ -15,8 +15,9 @@ import UnmatchedQuestionnaires from '../components/meals/UnmatchedQuestionnaires
 import { cn } from '@/lib/utils';
 import { studioApi } from '@/lib/studioApi';
 import { fmtDate, fmtNum, fmtRelative } from '@/features/trainee/format';
+import { InfoTip } from '@/components/ui/info-tip';
 import {
-  Avatar, CountUp, EmptyState, ErrorState, Field, PageTitle, Ring, SectionCard, Seg, Sheet, Skel, spotlight,
+  ActionBtn, Avatar, CountUp, EmptyState, ErrorState, Field, PageTitle, Ring, SectionCard, Seg, Sheet, Skel, spotlight,
 } from '@/features/trainer/ui';
 import { tk, useCockpit, useLibraryStats, type ClientPulse, type FeedItem, type TrainerClient } from '@/features/trainer/hooks';
 
@@ -103,11 +104,8 @@ const TrainerDashboard = () => {
           accent={firstName || t('trainer.dash.headline')}
           actions={
             <>
-              <button type="button" onClick={() => navigate('/create-workout-plan-v2')} className="tp-btn tp-btn--ghost tp-press">
-                <Dumbbell className="h-4 w-4" />
-                {t('trainer.dash.newPlan')}
-              </button>
-              <button type="button" onClick={() => setAddOpen(true)} className="tp-btn tp-btn--primary tp-press">
+              <ActionBtn icon={Dumbbell} label={t('trainer.dash.newPlan')} onClick={() => navigate('/create-workout-plan-v2')} className="sm:!min-h-12 sm:!px-5 sm:!text-[.95rem]" />
+              <button type="button" onClick={() => setAddOpen(true)} className="tp-btn tp-btn--primary tp-press max-sm:!min-h-11 max-sm:min-w-0 max-sm:flex-1">
                 <UserPlus className="h-4 w-4" />
                 {t('client.addClient')}
               </button>
@@ -126,7 +124,7 @@ const TrainerDashboard = () => {
             </div>
             <div>
               <div className="tr-kpi-value">{cockpit.loading ? '–' : <CountUp value={total} />}</div>
-              <p className="mt-1 text-sm font-semibold text-white/85">{t('trainerDashboard.totalClients')}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-white/85">{t('trainerDashboard.totalClients')}<InfoTip>{t('tt.info.kpiClients')}</InfoTip></p>
             </div>
           </div>
 
@@ -142,7 +140,7 @@ const TrainerDashboard = () => {
                 {cockpit.loading ? '–' : <CountUp value={checkedIn} />}
                 <span className="text-xl text-muted-foreground">/{fmtNum(total)}</span>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">{t('trainer.dash.checkInsToday')}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">{t('trainer.dash.checkInsToday')}<InfoTip>{t('tt.info.kpiCheckins')}</InfoTip></p>
             </div>
           </div>
 
@@ -167,7 +165,7 @@ const TrainerDashboard = () => {
             <div>
               <div className="tr-kpi-value">{cockpit.activityLoading && !workoutsWeek ? '–' : <CountUp value={workoutsWeek} />}</div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {t('trainer.dash.workoutsWeek')}
+                <span className="inline-flex items-center gap-1">{t('trainer.dash.workoutsWeek')}<InfoTip>{t('tt.info.kpiWorkouts')}</InfoTip></span>
                 {lib.data && lib.data.planCompletion > 0 && (
                   <span className="block text-xs">{t('trainerDashboard.workoutCompletion')} {fmtNum(lib.data.planCompletion, 1)}%</span>
                 )}
@@ -199,7 +197,7 @@ const TrainerDashboard = () => {
           {/* Clients */}
           <section aria-labelledby="tr-clients-title" className="min-w-0">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <h2 id="tr-clients-title" className="tp-title text-[2.6rem] sm:text-5xl">{t('client.yourClients')}</h2>
+              <h2 id="tr-clients-title" className="tp-title flex items-center gap-2 text-[2.6rem] sm:text-5xl">{t('client.yourClients')}<InfoTip>{t('tt.info.clients')}</InfoTip></h2>
               <div className="tr-search w-full sm:w-72">
                 <Search />
                 <input
@@ -268,6 +266,7 @@ const TrainerDashboard = () => {
             <SectionCard
               icon={Activity}
               title={t('trainer.dash.today')}
+              info={t('tt.info.today')}
               className="tp-rise"
               style={{ ['--i' as string]: 2 }}
               action={<span className="tp-chip tp-chip--ok"><span className="tr-live" aria-hidden />{t('trainer.dash.live')}</span>}
@@ -275,7 +274,7 @@ const TrainerDashboard = () => {
               <TodayFeed items={feed} loading={cockpit.loading || cockpit.activityLoading} />
             </SectionCard>
 
-            <SectionCard icon={Zap} title={t('trainer.dash.quick')} className="tp-rise" style={{ ['--i' as string]: 3 }}>
+            <SectionCard icon={Zap} title={t('trainer.dash.quick')} info={t('tt.info.quick')} className="tp-rise" style={{ ['--i' as string]: 3 }}>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { icon: Dumbbell, label: t('trainer.dash.newPlan'), to: '/create-workout-plan-v2' },

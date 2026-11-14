@@ -217,7 +217,7 @@ const CreateWorkout = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="tr-grid-2">
-            <SectionCard icon={ClipboardList} title={t('workoutCreation.workoutInformation')} className={cn('tp-rise', !client && 'col-span-full')}>
+            <SectionCard icon={ClipboardList} title={t('workoutCreation.workoutInformation')} info={t('tt.info.planInfo')} className={cn('tp-rise', !client && 'col-span-full')}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t('workoutCreation.workoutNameRequired')} htmlFor="name" className="sm:col-span-2">
                   <input id="name" className="tp-input" value={formData.name} onChange={(e) => handleInputChange('name', e.target.value)} placeholder={t('workoutCreation.workoutNamePlaceholder')} required />

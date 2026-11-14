@@ -120,6 +120,29 @@
         "useEstimate": "שימוש בחישוב מהמאקרו",
         "kcalMismatch": "הקלוריות רחוקות מהחישוב לפי המאקרו (~{{est}}). כדאי לבדוק את הערכים.",
         "publicInfo": "מזון ציבורי זמין גם למאמנים אחרים. מזון פרטי רק אצלך ואצל המתאמנים שלך."
+      },
+      "info": {
+        "kpiClients": "כל המתאמנים שלך. התג מראה כמה מהם פעילים.",
+        "kpiCheckins": "כמה מתאמנים כבר מילאו צ׳ק-אין היום, מתוך כולם.",
+        "kpiWorkouts": "אימונים שהמתאמנים סיימו השבוע. העמודות מראות כל יום.",
+        "clients": "כל המתאמנים עם הסטטוס של היום. לחיצה פותחת את הפרופיל.",
+        "today": "מה קרה היום: צ׳ק-אינים, אימונים, ארוחות ולידים חדשים.",
+        "quick": "קיצורי דרך לפעולות הנפוצות.",
+        "physical": "גובה, משקל ונתוני גוף שמשמשים לחישוב יעדים.",
+        "goals": "המטרות, הפציעות וההעדפות של המתאמן. כדאי לקרוא לפני בניית תוכנית.",
+        "workoutPlan": "תוכנית האימון הפעילה שהמתאמן רואה באפליקציה.",
+        "mealPlan": "התפריט הפעיל שהמתאמן רואה באפליקציה.",
+        "notify": "בחר אם לקבל התראה על כל פעולה של המתאמן או סיכום שבועי.",
+        "weightTrend": "המשקל מהשקילות ומהצ׳ק-אינים לאורך זמן.",
+        "consistency": "כמה ימים בשבועות האחרונים המתאמן עמד בצ׳ק-אין, אימונים וארוחות.",
+        "timeline": "כל הפעילות של המתאמן לפי סדר כרונולוגי.",
+        "planInfo": "שם, משך ותיאור התוכנית. המתאמן רואה את השם והתיאור.",
+        "day": "יום אימון אחד בשבוע עם התרגילים שלו, לפי הסדר.",
+        "duration": "כמה שבועות התוכנית נמשכת לפני שמתחלפת.",
+        "dayDuration": "הערכה בדקות, מוצגת למתאמן.",
+        "sets": "מספר הסטים לתרגיל.",
+        "reps": "חזרות בכל סט. אפשר טווח (8-10) או זמן (30s).",
+        "password": "קביעת סיסמה חדשה למתאמן. הוא יצטרך להתחבר מחדש."
       }
     }
   },
@@ -239,6 +262,29 @@
         "useEstimate": "Use the estimate from the macros",
         "kcalMismatch": "Calories are far from the macro estimate (~{{est}}). Worth double-checking.",
         "publicInfo": "A public food is available to other trainers too. A private one stays with you and your clients."
+      },
+      "info": {
+        "kpiClients": "All your clients. The badge shows how many are active.",
+        "kpiCheckins": "How many clients have filled in today’s check-in, out of all of them.",
+        "kpiWorkouts": "Workouts your clients finished this week. The bars show each day.",
+        "clients": "All clients with today’s status. Tap one to open the profile.",
+        "today": "What happened today: check-ins, workouts, meals and new leads.",
+        "quick": "Shortcuts to the most common actions.",
+        "physical": "Height, weight and body data used to compute targets.",
+        "goals": "The client’s goals, injuries and preferences. Worth reading before building a plan.",
+        "workoutPlan": "The active workout plan the client sees in the app.",
+        "mealPlan": "The active menu the client sees in the app.",
+        "notify": "Choose between a notification for every client action or a weekly digest.",
+        "weightTrend": "Weight from weigh-ins and check-ins over time.",
+        "consistency": "How many days recently the client kept up check-ins, workouts and meals.",
+        "timeline": "All of the client’s activity in chronological order.",
+        "planInfo": "Plan name, length and description. The client sees the name and description.",
+        "day": "One training day of the week with its exercises, in order.",
+        "duration": "How many weeks the plan runs before it changes.",
+        "dayDuration": "Estimate in minutes, shown to the client.",
+        "sets": "Number of sets for the exercise.",
+        "reps": "Reps per set. A range (8-10) or a time (30s) works.",
+        "password": "Set a new password for the client. They will need to sign in again."
       }
     }
   },
@@ -358,6 +404,29 @@
         "useEstimate": "Utiliser l’estimation des macros",
         "kcalMismatch": "Les calories s’écartent de l’estimation (~{{est}}). À vérifier.",
         "publicInfo": "Un aliment public est visible par les autres coachs. Un aliment privé reste chez vous et vos clients."
+      },
+      "info": {
+        "kpiClients": "Tous vos clients. Le badge indique combien sont actifs.",
+        "kpiCheckins": "Combien de clients ont rempli le check-in du jour, sur le total.",
+        "kpiWorkouts": "Séances terminées cette semaine. Les barres montrent chaque jour.",
+        "clients": "Tous les clients avec leur statut du jour. Touchez pour ouvrir le profil.",
+        "today": "Ce qui s’est passé aujourd’hui : check-ins, séances, repas, prospects.",
+        "quick": "Raccourcis vers les actions courantes.",
+        "physical": "Taille, poids et données corporelles pour calculer les objectifs.",
+        "goals": "Objectifs, blessures et préférences du client. À lire avant de créer un plan.",
+        "workoutPlan": "Le programme actif que le client voit dans l’app.",
+        "mealPlan": "Le menu actif que le client voit dans l’app.",
+        "notify": "Notification à chaque action du client ou résumé hebdomadaire.",
+        "weightTrend": "Le poids des pesées et check-ins dans le temps.",
+        "consistency": "Régularité récente : check-ins, séances et repas.",
+        "timeline": "Toute l’activité du client par ordre chronologique.",
+        "planInfo": "Nom, durée et description. Le client voit le nom et la description.",
+        "day": "Un jour d’entraînement avec ses exercices, dans l’ordre.",
+        "duration": "Nombre de semaines avant de changer de programme.",
+        "dayDuration": "Estimation en minutes, affichée au client.",
+        "sets": "Nombre de séries.",
+        "reps": "Répétitions par série. Plage (8-10) ou durée (30s).",
+        "password": "Définir un nouveau mot de passe ; le client devra se reconnecter."
       }
     }
   }

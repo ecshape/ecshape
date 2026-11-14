@@ -414,7 +414,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
         )}
 
         {/* Plan */}
-        <SectionCard icon={ClipboardList} title={t('workoutCreation.planInformation', 'Plan information')} className="tp-rise mb-5">
+        <SectionCard icon={ClipboardList} title={t('workoutCreation.planInformation', 'Plan information')} info={t('tt.info.planInfo')} className="tp-rise mb-5">
           <div className="grid gap-4 md:grid-cols-2">
             {client ? (
               <div className="flex items-center gap-3 rounded-[1.1rem] bg-foreground/[.04] p-3 md:col-span-2">
@@ -446,7 +446,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
             <Field label={t('workoutCreation.planNameRequired')} htmlFor="name">
               <input id="name" className="tp-input" placeholder={t('workoutCreation.planNamePlaceholder')} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </Field>
-            <Field label={t('workoutCreation.durationWeeks')} htmlFor="duration_weeks">
+            <Field label={t('workoutCreation.durationWeeks')} htmlFor="duration_weeks" info={t('tt.info.duration')}>
               <input id="duration_weeks" type="number" inputMode="numeric" min={1} className="tp-input" placeholder="8" value={formData.duration_weeks || ''} onChange={(e) => setFormData({ ...formData, duration_weeks: parseInt(e.target.value) || null })} />
             </Field>
             <Field label={t('workoutCreation.description')} htmlFor="description" className="md:col-span-2">
@@ -518,6 +518,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
               <SectionCard
                 icon={CalendarDays}
                 title={day.name || dayLabel(dayIndex + 1)}
+                info={t('tt.info.day')}
                 action={
                   formData.workout_days.length > 1 ? (
                     <button type="button" className="tr-handle tr-handle--danger" onClick={() => removeWorkoutDay(dayIndex)} aria-label={t('workoutCreation.removeDay')} title={t('workoutCreation.removeDay')}>
@@ -530,7 +531,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
                   <Field label={`${t('workoutCreation.dayName')} *`} htmlFor="day-name" error={day.name.trim() === '' ? t('workoutCreation.errorDayName') : undefined}>
                     <input id="day-name" className="tp-input" placeholder={t('workoutCreation.dayNamePlaceholder')} value={day.name} onChange={(e) => updateWorkoutDay(dayIndex, 'name', e.target.value)} required />
                   </Field>
-                  <Field label={t('workoutCreation.estimatedDuration')} htmlFor="day-dur">
+                  <Field label={t('workoutCreation.estimatedDuration')} htmlFor="day-dur" info={t('tt.info.dayDuration')}>
                     <div className="relative">
                       <Clock className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <input id="day-dur" type="number" inputMode="numeric" className="tp-input pe-11" placeholder="60" value={day.estimated_duration || ''} onChange={(e) => updateWorkoutDay(dayIndex, 'estimated_duration', parseInt(e.target.value) || null)} />
@@ -572,10 +573,10 @@ const CreateWorkoutPlanV2: React.FC = () => {
                           </div>
                         </div>
                         <div className="tr-ex-params">
-                          <Field label={t('workoutCreation.sets')} htmlFor={`${id}s`}>
+                          <Field label={t('workoutCreation.sets')} htmlFor={`${id}s`} info={t('tt.info.sets')}>
                             <input id={`${id}s`} type="number" inputMode="numeric" min={1} max={10} className="tp-input tr-input-sm" placeholder={t('workoutCreation.setsPlaceholder')} value={exercise.target_sets ?? ''} onChange={(e) => updateExercise(dayIndex, exerciseIndex, 'target_sets', e.target.value ? parseInt(e.target.value) : null)} />
                           </Field>
-                          <Field label={t('workoutCreation.reps')} htmlFor={`${id}r`}>
+                          <Field label={t('workoutCreation.reps')} htmlFor={`${id}r`} info={t('tt.info.reps')}>
                             <input id={`${id}r`} className="tp-input tr-input-sm" placeholder="8-12" dir="ltr" value={exercise.target_reps} onChange={(e) => updateExercise(dayIndex, exerciseIndex, 'target_reps', e.target.value)} />
                           </Field>
                           <Field label={t('workoutCreation.weight')} htmlFor={`${id}w`}>

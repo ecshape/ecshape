@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/info-tip';
 import { prefersReducedMotion } from '@/features/trainee/format';
 import './i18n';
 import '@/features/trainee/trainee.css';
@@ -189,12 +190,14 @@ export const BackLink: React.FC<{ to?: string; onClick?: () => void; label?: Rea
 export const SectionCard: React.FC<{
   icon?: React.ElementType;
   title?: React.ReactNode;
+  /** Short help shown in an "i" next to the title (#18). */
+  info?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
   style?: React.CSSProperties;
-}> = ({ icon: Icon, title, action, children, className, bodyClassName, style }) => (
+}> = ({ icon: Icon, title, info, action, children, className, bodyClassName, style }) => (
   <section className={cn('tp-card p-5 sm:p-6', className)} style={style}>
     {(title || action) && (
       <div className="tr-section-title justify-between">
@@ -205,6 +208,7 @@ export const SectionCard: React.FC<{
             </span>
           )}
           {title && <h2 className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">{title}</h2>}
+          {info && <InfoTip className="flex-none">{info}</InfoTip>}
         </div>
         {action}
       </div>
@@ -220,11 +224,15 @@ export const spotlight = (e: React.PointerEvent<HTMLElement>) => {
   e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
 };
 
-export const Field: React.FC<{ label: React.ReactNode; htmlFor?: string; hint?: React.ReactNode; error?: React.ReactNode; children: React.ReactNode; className?: string }> = ({
-  label, htmlFor, hint, error, children, className,
+export const Field: React.FC<{ label: React.ReactNode; htmlFor?: string; hint?: React.ReactNode; error?: React.ReactNode; info?: React.ReactNode; children: React.ReactNode; className?: string }> = ({
+  label, htmlFor, hint, error, info, children, className,
 }) => (
   <div className={cn('tr-field', className)}>
-    <label htmlFor={htmlFor}>{label}</label>
+    {info ? (
+      <span className="flex items-center gap-1"><label htmlFor={htmlFor}>{label}</label><InfoTip>{info}</InfoTip></span>
+    ) : (
+      <label htmlFor={htmlFor}>{label}</label>
+    )}
     {children}
     {error ? <p className="text-xs font-semibold text-[hsl(var(--tr-bad))]">{error}</p> : hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
   </div>

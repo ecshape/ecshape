@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SetCompletion, WorkoutExercise, WorkoutSession } from './types';
+import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
+import { exerciseFrames } from '@/lib/exerciseLibrary';
+import '@/styles/exercises.css';
 import {
   previousSetsFor, sortExercises, todaySessionFor, useDeleteSet, useFinishWorkout, useLogSet, useSessions, useWorkoutDay,
 } from './hooks';
@@ -220,9 +223,18 @@ const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                     aria-expanded={expanded}
                     className="tp-press flex w-full items-center gap-3 p-4 text-start sm:p-5"
                   >
-                    <span className={cn('tp-num grid h-12 w-12 flex-none place-items-center rounded-2xl text-xl', finished ? 'bg-[hsl(var(--tp-ok))] text-white' : 'bg-foreground/[.07]')} dir="ltr">
-                      {finished ? <Check className="h-6 w-6" /> : i + 1}
-                    </span>
+                    {ex.exercise && exerciseFrames(ex.exercise).length > 0 ? (
+                      <span className="relative h-14 w-14 flex-none overflow-hidden rounded-2xl">
+                        <ExerciseDemo frames={exerciseFrames(ex.exercise)} alt={name} className="h-full w-full" />
+                        <span className={cn('tp-num absolute bottom-0.5 end-0.5 grid h-5 min-w-5 place-items-center rounded-full px-1 text-[11px]', finished ? 'bg-[hsl(var(--tp-ok))] text-white' : 'bg-black/70 text-white')} dir="ltr">
+                          {finished ? <Check className="h-3 w-3" /> : i + 1}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className={cn('tp-num grid h-12 w-12 flex-none place-items-center rounded-2xl text-xl', finished ? 'bg-[hsl(var(--tp-ok))] text-white' : 'bg-foreground/[.07]')} dir="ltr">
+                        {finished ? <Check className="h-6 w-6" /> : i + 1}
+                      </span>
+                    )}
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="break-words text-lg font-bold leading-tight" dir="auto">{name}</span>
@@ -317,7 +329,7 @@ const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                         <button type="button" onClick={() => setHistory(ex)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">
                           <History className="h-4 w-4" />{t('trainee.player.history')}
                         </button>
-                        {(ex.exercise?.instructions || ex.exercise?.description || ex.video_url || ex.exercise?.video_url) && (
+                        {(ex.exercise?.instructions || ex.exercise?.description || ex.video_url || ex.exercise?.video_url || (ex.exercise && exerciseFrames(ex.exercise).length > 0)) && (
                           <button type="button" onClick={() => setInfo(ex)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">
                             <Info className="h-4 w-4" />{t('trainee.player.howTo')}
                           </button>
@@ -434,8 +446,10 @@ const ExerciseInfo: React.FC<{ ex: WorkoutExercise }> = ({ ex }) => {
   const { t } = useTranslation();
   const url = ex.video_url || ex.exercise?.video_url;
   const yt = youtubeId(url);
+  const frames = ex.exercise ? exerciseFrames(ex.exercise) : [];
   return (
     <div className="space-y-4 pb-2">
+      {frames.length > 0 && <ExerciseDemo frames={frames} alt={ex.exercise?.name || ''} className="aspect-[4/3] w-full rounded-2xl" playing />}
       {yt ? (
         <div className="aspect-video overflow-hidden rounded-2xl bg-black">
           <iframe className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${yt}`} title={ex.exercise?.name || 'video'} allow="accelerometer; encrypted-media; picture-in-picture" allowFullScreen />

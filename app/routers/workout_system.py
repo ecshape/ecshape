@@ -464,7 +464,14 @@ def get_workout_plans(
                     "video_url": ex.video_url,
                     "group_name": ex.group_name,
                             "created_at": ex.created_at.isoformat() if ex.created_at else None,
-                            "exercise_name": ex.exercise.name if ex.exercise else None
+                            "exercise_name": ex.exercise.name if ex.exercise else None,
+                            "exercise": {
+                                "id": ex.exercise.id,
+                                "name": ex.exercise.name,
+                                "muscle_group": ex.exercise.muscle_group,
+                                "image_path": ex.exercise.image_path,
+                                "library_id": getattr(ex.exercise, "library_id", None),
+                            } if ex.exercise else None,
                         }
                         for ex in day.workout_exercises
                     ]
@@ -761,6 +768,8 @@ def get_workout_day(
                 "muscle_group": ex.exercise.muscle_group,
                 "equipment_needed": ex.exercise.equipment_needed,
                 "instructions": ex.exercise.instructions,
+                "image_path": ex.exercise.image_path,
+                "library_id": getattr(ex.exercise, "library_id", None),
             }
         
         exercises_data.append({

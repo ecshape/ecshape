@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, NotebookPen, Plus, RotateCcw, Search, Trash2, UtensilsCrossed,
+  AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest, V3MealSlotView } from '@/types/meals-v3';
-import { useCatalog, useCompleteMeal, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
+import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
 import {
@@ -16,6 +16,19 @@ import {
 
 const MACRO_COLOR: Record<string, string> = { protein: 'hsl(var(--tp-protein))', carbs: 'hsl(var(--tp-carbs))', carb: 'hsl(var(--tp-carbs))', fat: 'hsl(var(--tp-fat))' };
 const macroKey = (m: MacroType) => (m === 'carb' ? 'carbs' : m);
+
+type RowGroup = { macro: PlanRow['macro']; rows: PlanRow[]; eaten?: PlanRow };
+/** Plan rows grouped by macro category: the foods of a category are alternatives. */
+const groupRows = (rows: PlanRow[]): RowGroup[] => {
+  const out: RowGroup[] = [];
+  for (const r of rows) {
+    let g = out.find((x) => x.macro === r.macro);
+    if (!g) out.push((g = { macro: r.macro, rows: [] }));
+    g.rows.push(r);
+    if (r.choice && !g.eaten) g.eaten = r;
+  }
+  return out;
+};
 
 const MealsScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -28,6 +41,8 @@ const MealsScreen: React.FC = () => {
   const write = useMealWrite(date);
   const complete = useCompleteMeal(date);
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
+  /** Foods in one category are alternatives: the trainee eats ONE of them (default: the first). */
+  const [picks, setPicks] = useState<Record<string, number>>({});
   const [swapRow, setSwapRow] = useState<{ slot: V3MealSlotView; row: PlanRow } | null>(null);
   const [customSlot, setCustomSlot] = useState<V3MealSlotView | null>(null);
   const [askSlot, setAskSlot] = useState<V3MealSlotView | null>(null);
@@ -42,13 +57,17 @@ const MealsScreen: React.FC = () => {
   const strip = Array.from({ length: 7 }, (_, i) => addDays(date, i - 3));
 
   const onWriteError = () => toast.error(t('trainee.meals.saveError'));
+  const pickKey = (slotId: number, macro: string) => `${date}:${slotId}:${macro}`;
+  const pickOf = (g: RowGroup, slot: V3MealSlotView) =>
+    g.eaten ?? g.rows.find((r) => r.food.id === picks[pickKey(slot.meal_slot_id, g.macro)]) ?? g.rows[0];
 
   const completeSlot = (slot: V3MealSlotView, data: V3DayViewResponse) => {
     const hasOverall = data.choices.some((c) => c.meal_slot_id === slot.meal_slot_id && isOverallCustom(c));
     const logs: V3MealLogCreateRequest[] = hasOverall
       ? []
-      : planRows(slot, data.choices)
-          .filter((r) => !r.choice && !skipped[`${date}:${slot.meal_slot_id}:${r.food.id}`])
+      : groupRows(planRows(slot, data.choices))
+          .filter((g) => !g.eaten && !skipped[`${date}:${slot.meal_slot_id}:${g.macro}`])
+          .map((g) => pickOf(g, slot))
           .map((r) => ({ date, meal_slot_id: slot.meal_slot_id, macro_type: r.macro, food_option_id: r.food.id, quantity: r.qty }));
     haptic([10, 30, 10]);
     complete.mutate({ slotId: slot.meal_slot_id, done: true, logs }, { onError: onWriteError });
@@ -222,39 +241,62 @@ const MealsScreen: React.FC = () => {
                     )}
 
                     {rows.length > 0 && (
-                      <ul className="space-y-1.5">
-                        {rows.map((r) => {
-                          const key = `${date}:${slot.meal_slot_id}:${r.food.id}`;
-                          const isSkipped = !r.choice && !!skipped[key];
-                          const eaten = !!r.choice;
+                      <ul className="space-y-2">
+                        {groupRows(rows).map((g) => {
+                          const key = pickKey(slot.meal_slot_id, g.macro);
+                          const r = pickOf(g, slot);
+                          const isSkipped = !g.eaten && !!skipped[key];
+                          const eaten = !!g.eaten;
                           const m = rowMacros(r);
+                          const alts = g.rows.filter((x) => x.food.id !== r.food.id);
+                          const choose = (alt: PlanRow) => {
+                            haptic(6);
+                            if (g.eaten?.choice) {
+                              write.mutate(
+                                { kind: 'replace', deleteId: g.eaten.choice.id, body: { date, meal_slot_id: slot.meal_slot_id, macro_type: alt.macro, food_option_id: alt.food.id, quantity: alt.qty } },
+                                { onError: onWriteError },
+                              );
+                            } else setPicks((p) => ({ ...p, [key]: alt.food.id }));
+                          };
                           return (
-                            <li key={r.food.id} className={cn('flex items-center gap-2 rounded-2xl bg-foreground/[.04] p-1.5 pe-1', isSkipped && 'opacity-50')}>
-                              <button
-                                type="button"
-                                disabled={done}
-                                onClick={() => {
-                                  haptic(6);
-                                  if (eaten && r.choice) write.mutate({ kind: 'delete', id: r.choice.id }, { onError: onWriteError });
-                                  else setSkipped((s) => ({ ...s, [key]: !s[key] }));
-                                }}
-                                aria-pressed={!isSkipped}
-                                aria-label={isSkipped ? t('trainee.meals.include') : t('trainee.meals.skip')}
-                                className={cn('tp-press grid h-11 w-11 flex-none place-items-center rounded-xl', eaten ? 'bg-[hsl(var(--tp-ok))] text-white' : isSkipped ? 'bg-foreground/[.06]' : 'bg-primary/15 text-primary')}
-                              >
-                                {!isSkipped && <Check className="h-5 w-5" strokeWidth={3} />}
-                              </button>
-                              <span className="h-8 w-1 flex-none rounded-full" style={{ background: MACRO_COLOR[r.macro] }} aria-hidden />
-                              <div className="min-w-0 flex-1">
-                                <p className={cn('truncate font-medium', isSkipped && 'line-through')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</p>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {t(`trainee.macros.${macroKey(r.macro)}`)} · <span dir="ltr">{r.qty} · {fmtNum(m.calories)} kcal</span>
-                                  {r.swap && <> · {t('trainee.meals.swapped')}</>}
-                                </p>
+                            <li key={g.macro} className={cn('rounded-2xl bg-foreground/[.04] p-1.5', isSkipped && 'opacity-50')}>
+                              <div className="flex items-center gap-2 pe-1">
+                                <button
+                                  type="button"
+                                  disabled={done}
+                                  onClick={() => {
+                                    haptic(6);
+                                    if (eaten && r.choice) write.mutate({ kind: 'delete', id: r.choice.id }, { onError: onWriteError });
+                                    else setSkipped((sk) => ({ ...sk, [key]: !sk[key] }));
+                                  }}
+                                  aria-pressed={!isSkipped}
+                                  aria-label={isSkipped ? t('trainee.meals.include') : t('trainee.meals.skip')}
+                                  className={cn('tp-press grid h-11 w-11 flex-none place-items-center rounded-xl', eaten ? 'bg-[hsl(var(--tp-ok))] text-white' : isSkipped ? 'bg-foreground/[.06]' : 'bg-primary/15 text-primary')}
+                                >
+                                  {!isSkipped && <Check className="h-5 w-5" strokeWidth={3} />}
+                                </button>
+                                <span className="h-8 w-1 flex-none rounded-full" style={{ background: MACRO_COLOR[r.macro] }} aria-hidden />
+                                <div className="min-w-0 flex-1">
+                                  <p className={cn('truncate font-medium', isSkipped && 'line-through')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</p>
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {t(`trainee.macros.${macroKey(r.macro)}`)} · <span dir="ltr">{r.qty} · {fmtNum(m.calories)} kcal</span>
+                                    {r.swap && <> · {t('trainee.meals.swapped')}</>}
+                                  </p>
+                                </div>
+                                <button type="button" disabled={done} onClick={() => setSwapRow({ slot, row: r })} className="tp-icon-btn tp-press bg-transparent" aria-label={t('trainee.meals.swap')}>
+                                  <ArrowLeftRight className="h-4 w-4" />
+                                </button>
                               </div>
-                              <button type="button" disabled={done} onClick={() => setSwapRow({ slot, row: r })} className="tp-icon-btn tp-press bg-transparent" aria-label={t('trainee.meals.swap')}>
-                                <ArrowLeftRight className="h-4 w-4" />
-                              </button>
+                              {alts.length > 0 && !done && (
+                                <div className="tp-scroll-x mt-1.5 flex gap-1.5 px-1 pb-0.5">
+                                  <span className="flex-none self-center text-[11px] text-muted-foreground">{t('trainee.meals.orInstead')}</span>
+                                  {alts.map((alt) => (
+                                    <button key={alt.food.id} type="button" onClick={() => choose(alt)} className="tp-press flex-none rounded-full border border-border/60 bg-background/60 px-3 py-1.5 text-xs font-semibold hover:border-primary/50 hover:text-primary" dir="auto">
+                                      {foodName(alt.food)}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </li>
                           );
                         })}
@@ -304,7 +346,7 @@ const MealsScreen: React.FC = () => {
       )}
 
       <SwapSheet target={swapRow} date={date} onClose={() => setSwapRow(null)} foodName={foodName} />
-      <CustomFoodSheet slot={customSlot} date={date} onClose={() => setCustomSlot(null)} />
+      <AddFoodSheet slot={customSlot} date={date} day={day.data ?? null} onClose={() => setCustomSlot(null)} foodName={foodName} />
       <AskCoachSheet slot={askSlot} onClose={() => setAskSlot(null)} />
     </Screen>
   );
@@ -393,7 +435,158 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
   );
 };
 
-const CustomFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; onClose: () => void }> = ({ slot, date, onClose }) => {
+type AddTab = 'menu' | 'bank' | 'custom';
+
+const AddFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; day: V3DayViewResponse | null; onClose: () => void; foodName: (f: V3FoodOption) => string }> = ({ slot, date, day, onClose, foodName }) => {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<AddTab>('menu');
+  const [q, setQ] = useState('');
+  const [chosen, setChosen] = useState<V3FoodOption | null>(null);
+  const [amount, setAmount] = useState(100);
+  const write = useMealWrite(date);
+  const bank = useFoodBank(!!slot && tab === 'bank');
+
+  // Every food the coach put in today's plan, this meal first.
+  const menu = useMemo(() => {
+    if (!day || !slot) return [] as V3FoodOption[];
+    const ordered = [slot, ...day.slots.filter((s) => s.meal_slot_id !== slot.meal_slot_id)];
+    const seen = new Set<string>();
+    const out: V3FoodOption[] = [];
+    for (const s of ordered)
+      for (const c of s.categories)
+        for (const f of c.recommended_foods ?? []) {
+          const k = (f.name || '').toLowerCase();
+          if (seen.has(k)) continue;
+          seen.add(k);
+          out.push({ ...f, macro_type: c.macro_type });
+        }
+    return out;
+  }, [day, slot]);
+
+  const source = tab === 'menu' ? menu : bank.data ?? [];
+  const needle = q.trim().toLowerCase();
+  const list = source.filter((f) => !needle || f.name.toLowerCase().includes(needle) || (f.name_hebrew || '').toLowerCase().includes(needle));
+  const portion = chosen?.measurement_type === 'per_portion';
+  const qty = portion ? `${amount}` : `${amount}g`;
+  const preview = chosen ? foodMacros(chosen, qty) : null;
+
+  const close = () => {
+    setChosen(null);
+    setQ('');
+    onClose();
+  };
+  const choose = (f: V3FoodOption) => {
+    haptic(6);
+    setChosen(f);
+    setAmount(f.measurement_type === 'per_portion' ? 1 : 100);
+  };
+  const addChosen = () => {
+    if (!slot || !chosen || !preview) return;
+    write.mutate(
+      {
+        kind: 'log',
+        body: {
+          date, meal_slot_id: slot.meal_slot_id, macro_type: (chosen.macro_type as MacroType) || 'protein', food_option_id: null,
+          quantity: portion ? `×${amount}` : qty, custom_food_name: safeName(foodName(chosen)),
+          custom_calories: preview.calories, custom_protein: preview.protein, custom_carbs: preview.carbs, custom_fat: preview.fat,
+        },
+      },
+      { onSuccess: () => toast.success(t('trainee.meals.foodAdded')), onError: () => toast.error(t('trainee.meals.saveError')) },
+    );
+    close();
+  };
+
+  const tabs: { id: AddTab; label: string }[] = [
+    { id: 'menu', label: t('trainee.meals.tabMenu') },
+    { id: 'bank', label: t('trainee.meals.tabBank') },
+    { id: 'custom', label: t('trainee.meals.tabCustom') },
+  ];
+
+  return (
+    <Sheet
+      open={!!slot}
+      onOpenChange={(o) => !o && close()}
+      title={t('trainee.meals.addFood')}
+      description={slot ? t('trainee.meals.customFor', { meal: slot.name }) : undefined}
+      footer={
+        tab !== 'custom' && chosen && preview ? (
+          <button type="button" onClick={addChosen} className="tp-btn tp-btn--primary tp-press w-full">
+            <Plus className="h-5 w-5" />
+            {t('trainee.meals.customSave')}
+            <span className="opacity-80" dir="ltr">· {fmtNum(preview.calories)} kcal</span>
+          </button>
+        ) : undefined
+      }
+    >
+      <div className="tp-seg mb-3 grid grid-cols-3 gap-1 rounded-2xl bg-foreground/[.06] p-1" role="tablist">
+        {tabs.map((x) => (
+          <button key={x.id} type="button" role="tab" aria-selected={tab === x.id} onClick={() => { setTab(x.id); setChosen(null); }} className={cn('tp-press rounded-xl py-2 text-sm font-semibold', tab === x.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'custom' ? (
+        <CustomFoodForm slot={slot} date={date} onDone={close} />
+      ) : chosen && preview ? (
+        <div className="space-y-4 pb-2">
+          <button type="button" onClick={() => setChosen(null)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">{t('trainee.meals.backToList')}</button>
+          <div className="flex items-center gap-3">
+            {chosen.image_url ? <img src={chosen.image_url} alt="" className="h-16 w-16 flex-none rounded-2xl object-cover" /> : <span className="grid h-16 w-16 flex-none place-items-center rounded-2xl bg-foreground/[.06]"><UtensilsCrossed className="h-6 w-6 text-muted-foreground" /></span>}
+            <div className="min-w-0">
+              <p className="truncate text-lg font-bold" dir="auto">{foodName(chosen)}</p>
+              {chosen.macro_type && <p className="text-xs text-muted-foreground">{t(`trainee.macros.${macroKey(chosen.macro_type as MacroType)}`)}</p>}
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-4">
+            <button type="button" className="tp-icon-btn tp-press" onClick={() => setAmount((a) => Math.max(portion ? 0.5 : 10, +(a - (portion ? 0.5 : 10)).toFixed(1)))} aria-label="-"><Minus className="h-5 w-5" /></button>
+            <span className="tp-num min-w-[6rem] text-center text-4xl" dir="ltr">{portion ? `×${amount}` : `${amount}g`}</span>
+            <button type="button" className="tp-icon-btn tp-press" onClick={() => setAmount((a) => +(a + (portion ? 0.5 : 10)).toFixed(1))} aria-label="+"><Plus className="h-5 w-5" /></button>
+          </div>
+          <div className="grid grid-cols-4 gap-2 text-center" dir="ltr">
+            {([['kcal', preview.calories], ['P', preview.protein], ['C', preview.carbs], ['F', preview.fat]] as const).map(([k, v]) => (
+              <div key={k} className="rounded-2xl bg-foreground/[.05] py-2"><span className="tp-num block text-xl">{fmtNum(v)}</span><span className="text-[11px] text-muted-foreground">{k}</span></div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3 pb-2">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input className="tp-input ps-10" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('trainee.meals.search')} dir="auto" />
+          </label>
+          {tab === 'bank' && bank.isLoading ? (
+            <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skel key={i} className="h-14" />)}</div>
+          ) : tab === 'bank' && bank.isError ? (
+            <ErrorState compact onRetry={() => bank.refetch()} />
+          ) : !list.length ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">{tab === 'menu' && !menu.length ? t('trainee.meals.menuEmpty') : t('trainee.meals.noResults')}</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {list.slice(0, 120).map((f) => {
+                const m = foodMacros(f, f.measurement_type === 'per_portion' ? '1' : '100g');
+                return (
+                  <li key={`${f.id ?? ''}-${f.name}`}>
+                    <button type="button" onClick={() => choose(f)} className="tp-press flex min-h-[3.5rem] w-full items-center gap-3 rounded-2xl bg-foreground/[.04] px-2 py-2 text-start hover:bg-foreground/[.08]">
+                      {f.image_url ? <img src={f.image_url} alt="" loading="lazy" className="h-11 w-11 flex-none rounded-xl object-cover" /> : <span className="h-11 w-1.5 flex-none rounded-full" style={{ background: MACRO_COLOR[f.macro_type || 'protein'] }} aria-hidden />}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium" dir="auto">{foodName(f)}</span>
+                        <span className="block text-xs text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{f.measurement_type === 'per_portion' ? '×1' : '100g'} · {fmtNum(m.calories)} kcal · P{fmtNum(m.protein)} C{fmtNum(m.carbs)} F{fmtNum(m.fat)}</span>
+                      </span>
+                      <Plus className="h-4 w-4 flex-none text-primary" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+    </Sheet>
+  );
+};
+
+const CustomFoodForm: React.FC<{ slot: V3MealSlotView | null; date: string; onDone: () => void }> = ({ slot, date, onDone }) => {
   const { t } = useTranslation();
   const write = useMealWrite(date);
   const [f, setF] = useState({ name: '', grams: '100', kcal: '', p: '', c: '', fat: '' });
@@ -414,7 +607,7 @@ const CustomFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; onC
       { onSuccess: () => toast.success(t('trainee.meals.foodAdded')), onError: () => toast.error(t('trainee.meals.saveError')) },
     );
     setF({ name: '', grams: '100', kcal: '', p: '', c: '', fat: '' });
-    onClose();
+    onDone();
   };
 
   const field = (k: keyof typeof f, label: string, mode: 'text' | 'decimal' = 'decimal') => (
@@ -425,31 +618,22 @@ const CustomFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; onC
   );
 
   return (
-    <Sheet
-      open={!!slot}
-      onOpenChange={(o) => !o && onClose()}
-      title={t('trainee.meals.customTitle')}
-      description={slot ? t('trainee.meals.customFor', { meal: slot.name }) : undefined}
-      footer={
-        <button type="button" onClick={save} disabled={!valid} className="tp-btn tp-btn--primary tp-press w-full">
-          <Plus className="h-5 w-5" />
-          {t('trainee.meals.customSave')}
-          {valid && <span className="opacity-80" dir="ltr">· {fmtNum(num(f.kcal) * scale)} kcal</span>}
-        </button>
-      }
-    >
-      <div className="space-y-4 pb-2 pt-1">
-        {field('name', t('trainee.meals.customName'), 'text')}
-        {field('grams', t('trainee.meals.customGrams'))}
-        <p className="tp-label">{t('trainee.meals.per100')}</p>
-        <div className="grid grid-cols-2 gap-3">
-          {field('kcal', t('trainee.common.kcal'))}
-          {field('p', t('trainee.macros.protein'))}
-          {field('c', t('trainee.macros.carbs'))}
-          {field('fat', t('trainee.macros.fat'))}
-        </div>
+    <div className="space-y-4 pb-2 pt-1">
+      {field('name', t('trainee.meals.customName'), 'text')}
+      {field('grams', t('trainee.meals.customGrams'))}
+      <p className="tp-label">{t('trainee.meals.per100')}</p>
+      <div className="grid grid-cols-2 gap-3">
+        {field('kcal', t('trainee.common.kcal'))}
+        {field('p', t('trainee.macros.protein'))}
+        {field('c', t('trainee.macros.carbs'))}
+        {field('fat', t('trainee.macros.fat'))}
       </div>
-    </Sheet>
+      <button type="button" onClick={save} disabled={!valid} className="tp-btn tp-btn--primary tp-press w-full">
+        <Plus className="h-5 w-5" />
+        {t('trainee.meals.customSave')}
+        {valid && <span className="opacity-80" dir="ltr">· {fmtNum(num(f.kcal) * scale)} kcal</span>}
+      </button>
+    </div>
   );
 };
 

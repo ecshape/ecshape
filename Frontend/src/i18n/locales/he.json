@@ -2905,7 +2905,13 @@
       "per100": "ערכים ל-100 גרם",
       "customSave": "הוספה",
       "foodAdded": "המאכל נוסף",
-      "saveError": "לא נשמר. נסו שוב."
+      "saveError": "לא נשמר. נסו שוב.",
+      "tabMenu": "התפריט שלי",
+      "tabBank": "בנק מזון",
+      "tabCustom": "ידני",
+      "orInstead": "או במקום:",
+      "backToList": "חזרה לרשימה",
+      "menuEmpty": "המאמן עוד לא שייך מאכלים. אפשר לבחור מבנק המזון."
     },
     "progress": {
       "eyebrow": "הדרך שלך",

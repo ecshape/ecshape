@@ -40,6 +40,15 @@ export interface LibraryFacets {
 const CDN = 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises';
 export const libraryFrames = (libraryId: string) => [`${CDN}/${libraryId}/0.jpg`, `${CDN}/${libraryId}/1.jpg`];
 
+/** Demo frames for any exercise: library animation, wger / uploaded image, or none. */
+export const exerciseFrames = (e: { library_id?: string | null; image_path?: string | null }): string[] => {
+  if (e.library_id && !e.library_id.startsWith('wger:')) return libraryFrames(e.library_id);
+  if (!e.image_path) return [];
+  if (/^https?:\/\//.test(e.image_path) || e.image_path.startsWith(API_BASE_URL)) return [e.image_path];
+  const file = e.image_path.split('/').pop() || e.image_path.split('\\').pop();
+  return [`${API_BASE_URL}/files/media/exercise_images/${file}`];
+};
+
 /** Muscle order used for chips (most used first). */
 export const LIBRARY_MUSCLES = [
   'chest', 'shoulders', 'lats', 'middle back', 'lower back', 'traps', 'biceps', 'triceps', 'forearms',

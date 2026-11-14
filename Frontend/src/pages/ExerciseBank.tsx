@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ExerciseLibrary, LevelBars } from '@/components/exercises/ExerciseLibrary';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
-import { libraryFrames } from '@/lib/exerciseLibrary';
+import { exerciseFrames } from '@/lib/exerciseLibrary';
 import '@/styles/exercises.css';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
@@ -44,14 +44,6 @@ interface Exercise {
   created_at: string;
 }
 
-/** Demo frames for a bank exercise: library animation, uploaded image, or none. */
-const exerciseFrames = (e: Exercise): string[] => {
-  if (e.library_id && !e.library_id.startsWith('wger:')) return libraryFrames(e.library_id);
-  if (!e.image_path) return [];
-  if (/^https?:\/\//.test(e.image_path) || e.image_path.startsWith(API_BASE_URL)) return [e.image_path];
-  const file = e.image_path.split('/').pop() || e.image_path.split('\\').pop();
-  return [`${API_BASE_URL}/files/media/exercise_images/${file}`];
-};
 const levelOf = (e: Exercise) => (/\bexpert\b/.test(e.description || '') ? 'expert' : /\bintermediate\b/.test(e.description || '') ? 'intermediate' : /\bbeginner\b/.test(e.description || '') ? 'beginner' : '');
 
 const staticMuscleGroups = [

@@ -14,6 +14,8 @@ export interface V3FoodOption {
   measurement_type?: MeasurementType;
   notes?: string | null;
   macro_type?: MacroType;
+  /** Photo from the food bank (Open Food Facts / Wikimedia), when available. */
+  image_url?: string | null;
 }
 
 export interface V3FoodCatalogItem extends V3FoodOption {

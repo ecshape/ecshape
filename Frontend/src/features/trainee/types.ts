@@ -6,6 +6,9 @@ export interface ExerciseInfo {
   muscle_group?: string | null;
   equipment_needed?: string | null;
   instructions?: string | null;
+  image_path?: string | null;
+  /** Exercise library id: animated two-frame demo (see lib/exerciseLibrary). */
+  library_id?: string | null;
 }
 
 export interface WorkoutExercise {

@@ -321,6 +321,7 @@ class V3MealLogDeleteResponse(BaseModel):
 # ============ Catalog response ============
 
 class V3FoodCatalogItemResponse(V3FoodOption):
+    image_url: Optional[str] = None
     is_public: Optional[bool] = None
     created_by: Optional[int] = None
     macro_type: Optional[MacroType] = None

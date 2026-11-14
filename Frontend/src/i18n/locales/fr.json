@@ -2905,7 +2905,13 @@
       "per100": "Valeurs pour 100 g",
       "customSave": "Ajouter",
       "foodAdded": "Aliment ajouté",
-      "saveError": "Non enregistré. Réessayez."
+      "saveError": "Non enregistré. Réessayez.",
+      "tabMenu": "Mon menu",
+      "tabBank": "Banque d’aliments",
+      "tabCustom": "Perso",
+      "orInstead": "ou à la place :",
+      "backToList": "Retour à la liste",
+      "menuEmpty": "Ton coach n’a pas encore assigné d’aliments. Choisis dans la banque."
     },
     "progress": {
       "eyebrow": "Votre parcours",

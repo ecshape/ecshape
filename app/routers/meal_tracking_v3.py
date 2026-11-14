@@ -142,6 +142,7 @@ def get_food_catalog(
                 is_public=item.is_public,
                 created_by=item.created_by,
                 macro_type=item.macro_type,
+                image_url=getattr(item, "image_url", None),
             )
         )
     return payload

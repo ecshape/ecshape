@@ -2899,7 +2899,13 @@
       "per100": "Values per 100 g",
       "customSave": "Add",
       "foodAdded": "Food added",
-      "saveError": "Didn't save. Try again."
+      "saveError": "Didn't save. Try again.",
+      "tabMenu": "My menu",
+      "tabBank": "Food bank",
+      "tabCustom": "Custom",
+      "orInstead": "or instead:",
+      "backToList": "Back to the list",
+      "menuEmpty": "Your coach hasn't assigned foods yet. Pick from the food bank."
     },
     "progress": {
       "eyebrow": "Your journey",

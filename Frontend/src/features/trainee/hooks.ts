@@ -239,6 +239,16 @@ export function useMealCompletions(date: string, live = false) {
   });
 }
 
+/** The whole food bank (all macros) for "Add food". */
+export function useFoodBank(enabled: boolean) {
+  return useQuery({
+    queryKey: ['trainee', 'food-bank'],
+    enabled,
+    staleTime: 5 * 60_000,
+    queryFn: () => api<V3FoodOption[]>(`/v3/meals/catalog?include_public=true`),
+  });
+}
+
 export function useCatalog(macro: MacroType, enabled: boolean) {
   return useQuery({
     queryKey: qk.catalog(macro),

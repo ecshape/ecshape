@@ -8,6 +8,7 @@ import {
 } from './hooks';
 import { CountUp, EmptyState, ErrorState, Screen, ScreenHeader, SectionTitle, Skel } from './ui';
 import { dayOf, fmtDate, fmtNum, fmtRelative, fmtWeekday, isoDay, parseDate, todayISO, weekStart } from './format';
+import { exerciseFrames } from '@/lib/exerciseLibrary';
 
 const TrainingScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -134,6 +135,14 @@ const TrainingScreen: React.FC = () => {
               <p className="mt-3 line-clamp-1 text-sm text-foreground/75" dir="auto">
                 {exs.map((e) => e.exercise?.name || e.exercise_name).filter(Boolean).join(' · ')}
               </p>
+              {(() => {
+                const thumbs = exs.map((e) => (e.exercise ? exerciseFrames(e.exercise)[0] : undefined)).filter((u): u is string => !!u).slice(0, 6);
+                return thumbs.length ? (
+                  <span className="mt-3 flex gap-1.5" aria-hidden>
+                    {thumbs.map((u) => <img key={u} src={u} alt="" loading="lazy" className="h-11 w-11 rounded-xl object-cover" />)}
+                  </span>
+                ) : null;
+              })()}
               {last && <p className="mt-1 text-xs text-muted-foreground">{t('trainee.training.lastDone', { when: fmtRelative(last.completed_at || last.started_at) })}</p>}
             </button>
           );

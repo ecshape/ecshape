@@ -73,6 +73,7 @@ def run_if_enabled(engine) -> None:
     _run_seed(engine)
     _backfill_library_links(engine)
     _backfill_food_photos(engine)
+    _backfill_demo_menu(engine)
 
 
 def _run_seed(engine) -> None:
@@ -123,3 +124,43 @@ def _run_seed(engine) -> None:
         logger.info("dev seed: done")
     except Exception as e:  # never block startup
         logger.error("dev seed failed: %s", e)
+
+
+# Default menu for the demo plan: meals created without foods show nothing to log.
+DEMO_MENU_QTY = {"protein": "150g", "carb": "120g", "fat": "15g"}
+
+
+def _backfill_demo_menu(engine) -> None:
+    """Idempotent: every demo meal with no assigned foods gets protein / carb / fat options from the bank."""
+    try:
+        from sqlalchemy.orm import Session
+
+        from app.models.meal_system import FoodOption, MacroCategory, MacroType, MealBank, MealPlanV2, MealSlot
+
+        with Session(engine) as db:
+            bank = db.query(MealBank).filter(MealBank.is_public == True).order_by(MealBank.id).all()  # noqa: E712
+            by_macro = {m: [b for b in bank if b.macro_type == m] for m in (MacroType.PROTEIN, MacroType.CARB, MacroType.FAT)}
+            changed = False
+            demo_plans = {pid for (pid,) in db.query(MealPlanV2.id).filter(MealPlanV2.name.like("Demo%")).all()}
+            for slot in db.query(MealSlot).filter(MealSlot.meal_plan_id.in_(demo_plans)).all() if demo_plans else []:
+                if slot.macro_categories:
+                    continue
+                for i, (macro, foods) in enumerate(by_macro.items()):
+                    if not foods:
+                        continue
+                    cat = MacroCategory(meal_slot_id=slot.id, macro_type=macro, quantity_instruction=DEMO_MENU_QTY[macro.value])
+                    db.add(cat)
+                    db.flush()
+                    picks = [foods[(slot.id + k) % len(foods)] for k in range(min(3, len(foods)))]
+                    for order, b in enumerate(dict((f.id, f) for f in picks).values()):
+                        db.add(FoodOption(
+                            macro_category_id=cat.id, name=b.name, name_hebrew=b.name_hebrew,
+                            calories=int(round(b.calories or 0)), protein=b.protein, carbs=b.carbs, fat=b.fat,
+                            serving_size=b.serving_size or "100g", measurement_type=b.measurement_type, order_index=order,
+                        ))
+                    changed = True
+            if changed:
+                db.commit()
+                logger.info("dev seed: demo menu filled")
+    except Exception as e:  # never block startup
+        logger.error("dev seed menu backfill failed: %s", e)

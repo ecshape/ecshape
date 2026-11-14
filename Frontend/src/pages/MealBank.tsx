@@ -16,7 +16,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowUpDown, Download, Library, Plus, Search, Upload, X } from 'lucide-react';
+import { ArrowUpDown, Download, LayoutTemplate, Library, Plus, Search, Upload, X } from 'lucide-react';
+import { ActionBtn, PageTitle } from '@/features/trainer/ui';
+import { InfoTip } from '@/components/ui/info-tip';
+import { TemplatesSheet } from '@/features/trainer/TemplatesSheet';
+import { FoodFormSheet, isStorablePhoto } from '../components/foodbank/FoodFormSheet';
+import { FoodDetailSheet } from '../components/foodbank/FoodDetailSheet';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { useToast } from '../hooks/use-toast';
@@ -142,6 +147,9 @@ const MealBank = () => {
   const [itemForm, setItemForm] = useState<ItemFormState>(emptyForm);
   const [pendingDelete, setPendingDelete] = useState<MealBankItem | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<MealBankItem | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -315,7 +323,7 @@ const MealBank = () => {
       return;
     }
     const imageUrl = itemForm.image_url.trim();
-    if (imageUrl && !imageUrl.startsWith('https://')) {
+    if (imageUrl && !isStorablePhoto(imageUrl)) {
       toast({ title: t('common.error'), description: t('foodBankPro.form.photoHint'), variant: 'destructive' });
       return;
     }
@@ -340,6 +348,7 @@ const MealBank = () => {
       payload.image_credit = null;
     }
 
+    setSaving(true);
     try {
       const url = editingItem
         ? `${API_BASE_URL}/v2/meals/meal-bank/${editingItem.id}`
@@ -367,6 +376,8 @@ const MealBank = () => {
     } catch (error) {
       console.error('Error saving meal bank item:', error);
       toast({ title: t('common.error'), description: t('foodBank.errorCreate'), variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -504,95 +515,51 @@ const MealBank = () => {
   return (
     <Layout currentPage="meal-bank">
       <div className="fb-root container mx-auto space-y-6 p-4 md:p-6">
-        {/* Header */}
-        <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex min-w-0 items-start gap-4">
-            <div className="fb-reveal fb-hero-mark hidden h-14 w-14 shrink-0 place-items-center rounded-2xl border border-border/70 text-primary sm:grid">
-              <PlateIcon size={28} />
-            </div>
-            <div className="min-w-0">
-              <p className="fb-reveal fb-eyebrow text-[11px] font-semibold uppercase text-primary" style={{ ['--d' as string]: 0 }}>
-                {t('foodBankPro.eyebrow')}
-              </p>
-              <h1 className="fb-reveal text-3xl font-bold tracking-tight text-foreground sm:text-4xl" style={{ ['--d' as string]: 1 }}>
-                {t('foodBankPro.title')}
-              </h1>
-              <p className="fb-reveal mt-1 max-w-xl text-sm text-muted-foreground sm:text-base" style={{ ['--d' as string]: 2 }}>
-                {t('foodBankPro.subtitle')}
-              </p>
-              <div className="fb-reveal mt-3 flex flex-wrap gap-2 text-xs" style={{ ['--d' as string]: 3 }}>
-                {loading ? (
-                  <>
-                    <span className="fb-skel h-6 w-20 rounded-full" />
-                    <span className="fb-skel h-6 w-24 rounded-full" />
-                  </>
-                ) : (
-                  <>
-                    <span className="rounded-full border border-border/70 bg-card px-2.5 py-1 font-medium tabular-nums">
-                      {t('foodBankPro.countFoods', { count: stats.total })}
-                    </span>
-                    <span className="rounded-full border border-border/70 bg-card px-2.5 py-1 text-muted-foreground tabular-nums">
-                      {t('foodBankPro.countPhotos', { count: stats.photos })}
-                    </span>
-                    {stats.library > 0 && (
-                      <span className="rounded-full border border-border/70 bg-card px-2.5 py-1 text-muted-foreground tabular-nums">
-                        {t('foodBankPro.countLibrary', { count: stats.library })}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <p className="fb-reveal -mb-2 text-xs text-muted-foreground" style={{ ['--d' as string]: 2 }}>
-            {t('banks.food.ctaScale')}
-          </p>
-          <div className="fb-reveal flex flex-wrap gap-2" style={{ ['--d' as string]: 2 }}>
-            <Button onClick={() => setLibraryOpen(true)} className="h-11 flex-1 gap-2 rounded-xl px-4 shadow-lg shadow-primary/20 transition-transform active:scale-[.97] sm:flex-none">
-              <Library className="h-4 w-4" />
-              {t('foodBankPro.openLibrary')}
-            </Button>
-            <Button variant="outline" onClick={openCreate} className="h-11 flex-1 gap-2 rounded-xl px-4 transition-transform active:scale-[.97] sm:flex-none">
-              <Plus className="h-4 w-4" />
-              {t('foodBankPro.addManual')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleExportExcel}
-              className="h-11 gap-2 rounded-xl px-3 transition-transform active:scale-[.97]"
-              title={t('common.exportExcel')}
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden md:inline">{t('common.exportExcel')}</span>
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              disabled={isImporting}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setImportFile(file);
-                  handleImportExcel(file);
-                }
-              }}
-            />
-            <Button
-              variant="outline"
-              disabled={isImporting}
-              onClick={() => fileInputRef.current?.click()}
-              className="h-11 gap-2 rounded-xl px-3 transition-transform active:scale-[.97]"
-              title={t('common.importExcel')}
-            >
-              <Upload className="h-4 w-4" />
-              <span className="hidden md:inline">{isImporting ? t('common.importing') : t('common.importExcel')}</span>
-            </Button>
-          </div>
-        </header>
-
+        {/* Header (#27): same page title as the rest of the portal, no icon */}
+        <PageTitle
+          className="!mb-0"
+          eyebrow={
+            <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+              {loading ? t('foodBankPro.eyebrow') : t('foodBankPro.countFoods', { count: stats.total })}
+              {!loading && <span className="text-muted-foreground">· {t('foodBankPro.countPhotos', { count: stats.photos })}</span>}
+              <InfoTip>{t('banks.food.ctaScale')}</InfoTip>
+            </span>
+          }
+          title={t('foodBankPro.title')}
+          lead={t('foodBankPro.subtitle')}
+          actions={
+            <>
+              <button type="button" onClick={() => setLibraryOpen(true)} className="tp-btn tp-btn--primary tp-btn--sm tp-press max-sm:flex-1">
+                <Library className="h-4 w-4" />
+                {t('foodBankPro.openLibrary')}
+              </button>
+              <ActionBtn icon={Plus} label={t('foodBankPro.addManual')} onClick={openCreate} />
+              <ActionBtn icon={LayoutTemplate} label={t('tt.tpl.mealButton')} onClick={() => setTemplatesOpen(true)} />
+              <ActionBtn icon={Download} label={t('common.exportExcel')} onClick={handleExportExcel} compact />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                disabled={isImporting}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImportFile(file);
+                    handleImportExcel(file);
+                  }
+                }}
+              />
+              <ActionBtn
+                icon={Upload}
+                label={isImporting ? t('common.importing') : t('common.importExcel')}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+                compact
+              />
+            </>
+          }
+        />
         {/* Toolbar */}
         <section className="fb-reveal space-y-3 rounded-2xl border border-border/70 bg-card/60 p-3 sm:p-4" style={{ ['--d' as string]: 3 }}>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -682,6 +649,7 @@ const MealBank = () => {
                 onToggleTag={toggleTag}
                 onEdit={() => startEdit(item)}
                 onDelete={() => setPendingDelete(item)}
+                onOpen={() => setDetailItem(item)}
               />
             ))}
           </div>
@@ -727,208 +695,27 @@ const MealBank = () => {
         onImported={(item) => setItems((prev) => [...prev, item])}
       />
 
-      {/* Create / edit dialog */}
-      <Dialog
+      {/* Create / edit (#25) */}
+      <FoodFormSheet
         open={createDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) handleCloseDialog();
-          else setCreateDialogOpen(true);
-        }}
-      >
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border border-border bg-background text-foreground shadow-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? t('foodBank.editFoodItem') : t('foodBank.addNewFoodItem')}</DialogTitle>
-            <DialogDescription>
-              {editingItem ? t('foodBank.editDescription') : t('foodBank.createDescription')}
-            </DialogDescription>
-          </DialogHeader>
+        editing={editingItem}
+        form={itemForm}
+        setForm={setItemForm}
+        onSubmit={handleSubmit}
+        onClose={handleCloseDialog}
+        saving={saving}
+      />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList>
-                <TabsTrigger value="details">{t('common.details')}</TabsTrigger>
-                <TabsTrigger value="nutrition">{t('common.nutrition')}</TabsTrigger>
-              </TabsList>
+      {/* Detail (#16) */}
+      <FoodDetailSheet
+        item={detailItem}
+        canEdit={!!detailItem && canEdit(detailItem)}
+        onClose={() => setDetailItem(null)}
+        onEdit={(item) => { setDetailItem(null); startEdit(item); }}
+        onDelete={(item) => { setDetailItem(null); setPendingDelete(item); }}
+      />
 
-              <TabsContent value="details" className="space-y-4">
-                <div className="space-y-2">
-                  <Label>{t('foodBank.macroType')} *</Label>
-                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('foodBank.macroType')}>
-                    {MACROS.map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        role="radio"
-                        aria-checked={itemForm.macro_type === m}
-                        onClick={() => setItemForm({ ...itemForm, macro_type: m })}
-                        className={cn(
-                          'flex flex-col items-center gap-1 rounded-xl border px-2 py-3 text-sm font-medium transition-all active:scale-[.97]',
-                          itemForm.macro_type === m
-                            ? `fb-macro-badge fb-accent-${m} border-transparent shadow-md`
-                            : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                        )}
-                      >
-                        <IconOf icon={MACRO_ICON[m]} size={22} />
-                        {t(`foodBankPro.macro.${m}`)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="min-w-0 space-y-2">
-                    <Label htmlFor="name_hebrew">{t('foodBank.foodNameHebrew')} *</Label>
-                    <Input
-                      id="name_hebrew"
-                      placeholder={t('foodBank.foodNameHebrewPlaceholder')}
-                      value={itemForm.name_hebrew}
-                      onChange={(e) => setItemForm({ ...itemForm, name_hebrew: e.target.value })}
-                      dir="rtl"
-                      required
-                    />
-                  </div>
-                  <div className="min-w-0 space-y-2">
-                    <Label htmlFor="name">{t('foodBank.foodName')}</Label>
-                    <Input
-                      id="name"
-                      placeholder={t('foodBank.foodNamePlaceholder')}
-                      value={itemForm.name}
-                      onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                      dir="auto"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">{t('foodBankPro.form.photo')}</Label>
-                  <div className="flex items-center gap-3">
-                    <FoodPhoto
-                      src={itemForm.image_url.startsWith('https://') ? itemForm.image_url : null}
-                      alt=""
-                      macro={itemForm.macro_type}
-                      iconSize={22}
-                      className="!aspect-square w-14 shrink-0 rounded-xl"
-                    />
-                    <Input
-                      id="image_url"
-                      type="url"
-                      inputMode="url"
-                      placeholder="https://"
-                      value={itemForm.image_url}
-                      onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
-                      dir="ltr"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t('foodBankPro.form.photoHint')}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t('foodBankPro.form.properties')}</Label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {MANUAL_TAGS.map((tag) => (
-                      <PropertyChip
-                        key={tag}
-                        tag={tag}
-                        active={itemForm.tags.includes(tag)}
-                        onClick={() =>
-                          setItemForm((f) => ({
-                            ...f,
-                            tags: f.tags.includes(tag) ? f.tags.filter((x) => x !== tag) : [...f.tags, tag],
-                          }))
-                        }
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t('foodBankPro.form.propertiesHint')}</p>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-                  <Label htmlFor="is_public" className="cursor-pointer">
-                    {t('foodBankPro.form.isPublic')}
-                  </Label>
-                  <Switch
-                    id="is_public"
-                    checked={itemForm.is_public}
-                    onCheckedChange={(checked) => setItemForm({ ...itemForm, is_public: checked })}
-                  />
-                </div>
-
-                {editingItem?.source && (
-                  <p className="text-xs text-muted-foreground">
-                    {t('foodBankPro.form.source', {
-                      source: editingItem.source === 'openfoodfacts' ? 'Open Food Facts' : t('foodBankPro.library.staples'),
-                    })}
-                  </p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="nutrition" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="min-w-0 space-y-2">
-                    <Label htmlFor="measurement_type">{t('foodBank.measurementType')}</Label>
-                    <select
-                      id="measurement_type"
-                      value={itemForm.measurement_type}
-                      onChange={(e) =>
-                        setItemForm({ ...itemForm, measurement_type: e.target.value as 'per_100g' | 'per_portion' })
-                      }
-                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    >
-                      <option value="per_100g">{t('foodBankPro.per100g')}</option>
-                      <option value="per_portion">{t('foodBankPro.perPortion')}</option>
-                    </select>
-                  </div>
-                  <div className="min-w-0 space-y-2">
-                    <Label htmlFor="serving_size">{t('foodBank.servingSize')}</Label>
-                    <Input
-                      id="serving_size"
-                      placeholder={
-                        itemForm.measurement_type === 'per_100g' ? '100g' : t('foodBank.servingSizePlaceholderPerPortion')
-                      }
-                      value={itemForm.serving_size}
-                      onChange={(e) => setItemForm({ ...itemForm, serving_size: e.target.value })}
-                    />
-                  </div>
-                  {(
-                    [
-                      ['calories', t('foodBank.calories'), '165', '1'],
-                      ['protein', t('foodBank.protein'), '31', '0.1'],
-                      ['carbs', t('foodBank.carbs'), '0', '0.1'],
-                      ['fat', t('foodBank.fat'), '3.6', '0.1'],
-                      ['fiber', t('foodBankPro.form.fiber'), '0', '0.1'],
-                    ] as Array<[keyof ItemFormState, string, string, string]>
-                  ).map(([field, label, placeholder, step]) => (
-                    <div key={field} className="min-w-0 space-y-2">
-                      <Label htmlFor={field}>
-                        {label} <span className="text-muted-foreground">({perLabel})</span>
-                      </Label>
-                      <Input
-                        id={field}
-                        type="number"
-                        min="0"
-                        step={step}
-                        placeholder={placeholder}
-                        value={itemForm[field] as string}
-                        onChange={(e) => setItemForm({ ...itemForm, [field]: e.target.value })}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex gap-3 border-t pt-4">
-              <Button type="button" variant="outline" className="flex-1" onClick={handleCloseDialog}>
-                {t('foodBank.cancel')}
-              </Button>
-              <Button type="submit" className="flex-1">
-                {editingItem ? t('foodBank.updateFoodItem') : t('foodBank.createFoodItem')}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
+      <TemplatesSheet open={templatesOpen} onOpenChange={setTemplatesOpen} initialKind="meal" />
       {/* Delete confirmation */}
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>

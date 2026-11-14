@@ -271,7 +271,7 @@ const EditClient: React.FC = () => {
             </div>
           </SectionCard>
 
-          <SectionCard icon={HeartPulse} title={t('clientProfile.profileInformation', 'Profile Information')} className="tp-rise" style={{ ['--i' as string]: 2 }}>
+          <SectionCard icon={HeartPulse} title={t('clientProfile.profileInformation', 'Profile Information')} info={t('tt.info.physical')} className="tp-rise" style={{ ['--i' as string]: 2 }}>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={`${t('clientProfile.weight')} (${t('trainer.common.kg')})`} htmlFor="weight">
                 <input id="weight" type="number" inputMode="decimal" step="0.1" className="tp-input" value={formData.weight} onChange={set('weight')} />
@@ -282,7 +282,7 @@ const EditClient: React.FC = () => {
             </div>
           </SectionCard>
 
-          <SectionCard icon={Target} title={t('clientProfile.goalsAndPreferences', 'Goals & Preferences')} className="tp-rise" style={{ ['--i' as string]: 3 }}>
+          <SectionCard icon={Target} title={t('clientProfile.goalsAndPreferences', 'Goals & Preferences')} info={t('tt.info.goals')} className="tp-rise" style={{ ['--i' as string]: 3 }}>
             <div className="grid gap-4">
               <Field label={t('clientProfile.goals')} htmlFor="goals">
                 <textarea id="goals" className="tp-input tr-textarea" value={formData.goals} onChange={set('goals')} rows={3} />
@@ -310,7 +310,7 @@ const EditClient: React.FC = () => {
             </div>
           </SectionCard>
 
-          <SectionCard icon={Lock} title={t('clientProfile.changePassword', 'Change Password')} className="tp-rise" style={{ ['--i' as string]: 5 }}>
+          <SectionCard icon={Lock} title={t('clientProfile.changePassword', 'Change Password')} info={t('tt.info.password')} className="tp-rise" style={{ ['--i' as string]: 5 }}>
             <div className="tr-toggle">
               <label htmlFor="change_password" className="min-w-0 flex-1 cursor-pointer font-semibold">{t('clientProfile.changePasswordToggle')}</label>
               <Switch id="change_password" checked={changePassword} onCheckedChange={setChangePassword} />

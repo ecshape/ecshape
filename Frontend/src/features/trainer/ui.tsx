@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/info-tip';
 import { prefersReducedMotion } from '@/features/trainee/format';
 import './i18n';
 import '@/features/trainee/trainee.css';
@@ -20,7 +21,7 @@ const liquidMemory: Record<string, Box> = {};
 
 /**
  * Measures the element marked `data-liquid-active="true"` inside `ref` and returns CSS vars for a blob that
- * first stretches from the previous item to the new one, then springs into place.
+ * glides from the previous item to the new one.
  */
 export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string | null | undefined, axis: 'x' | 'y', memoryKey?: string) {
   const [box, setBox] = useState<(Box & { phase: Phase }) | null>(null);
@@ -29,7 +30,6 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
   useLayoutEffect(() => {
     const wrap = ref.current;
     if (!wrap) return;
-    const timers: number[] = [];
     const measure = (): Box | null => {
       const el = wrap.querySelector<HTMLElement>('[data-liquid-active="true"]');
       if (!el) return null;
@@ -44,19 +44,8 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       setBox(null);
       return;
     }
-    const prev = last.current;
-    const moved = prev && (axis === 'y' ? Math.abs(prev.y - target.y) > 2 : Math.abs(prev.x - target.x) > 2);
-    if (prev && moved && !prefersReducedMotion()) {
-      setBox({ ...prev, phase: 'jump' });
-      const span: Box =
-        axis === 'y'
-          ? { ...target, y: Math.min(prev.y, target.y), h: Math.max(prev.y + prev.h, target.y + target.h) - Math.min(prev.y, target.y) }
-          : { ...target, x: Math.min(prev.x, target.x), w: Math.max(prev.x + prev.w, target.x + target.w) - Math.min(prev.x, target.x) };
-      timers.push(window.setTimeout(() => setBox({ ...span, phase: 'stretch' }), 30));
-      timers.push(window.setTimeout(() => setBox({ ...target, phase: 'settle' }), 270));
-    } else {
-      setBox({ ...target, phase: prev ? 'settle' : 'jump' });
-    }
+    // Calm slide: the indicator glides straight to the new item (no stretch / overshoot).
+    setBox({ ...target, phase: last.current ? 'settle' : 'jump' });
     remember(target);
 
     const ro = new ResizeObserver(() => {
@@ -67,7 +56,6 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
     });
     ro.observe(wrap);
     return () => {
-      timers.forEach(clearTimeout);
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,12 +190,14 @@ export const BackLink: React.FC<{ to?: string; onClick?: () => void; label?: Rea
 export const SectionCard: React.FC<{
   icon?: React.ElementType;
   title?: React.ReactNode;
+  /** Short help shown in an "i" next to the title (#18). */
+  info?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
   style?: React.CSSProperties;
-}> = ({ icon: Icon, title, action, children, className, bodyClassName, style }) => (
+}> = ({ icon: Icon, title, info, action, children, className, bodyClassName, style }) => (
   <section className={cn('tp-card p-5 sm:p-6', className)} style={style}>
     {(title || action) && (
       <div className="tr-section-title justify-between">
@@ -218,6 +208,7 @@ export const SectionCard: React.FC<{
             </span>
           )}
           {title && <h2 className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">{title}</h2>}
+          {info && <InfoTip className="flex-none">{info}</InfoTip>}
         </div>
         {action}
       </div>
@@ -233,11 +224,15 @@ export const spotlight = (e: React.PointerEvent<HTMLElement>) => {
   e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
 };
 
-export const Field: React.FC<{ label: React.ReactNode; htmlFor?: string; hint?: React.ReactNode; error?: React.ReactNode; children: React.ReactNode; className?: string }> = ({
-  label, htmlFor, hint, error, children, className,
+export const Field: React.FC<{ label: React.ReactNode; htmlFor?: string; hint?: React.ReactNode; error?: React.ReactNode; info?: React.ReactNode; children: React.ReactNode; className?: string }> = ({
+  label, htmlFor, hint, error, info, children, className,
 }) => (
   <div className={cn('tr-field', className)}>
-    <label htmlFor={htmlFor}>{label}</label>
+    {info ? (
+      <span className="flex items-center gap-1"><label htmlFor={htmlFor}>{label}</label><InfoTip>{info}</InfoTip></span>
+    ) : (
+      <label htmlFor={htmlFor}>{label}</label>
+    )}
     {children}
     {error ? <p className="text-xs font-semibold text-[hsl(var(--tr-bad))]">{error}</p> : hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
   </div>
@@ -255,6 +250,31 @@ export const PageTitle: React.FC<{ eyebrow?: React.ReactNode; title: React.React
       </h1>
       {lead && <p className="tp-rise mt-3 max-w-xl text-muted-foreground" style={{ ['--i' as string]: 2 }}>{lead}</p>}
     </div>
-    {actions && <div className="tp-rise flex flex-wrap items-center gap-2" style={{ ['--i' as string]: 2 }}>{actions}</div>}
+    {actions && <div className="tp-rise tr-actions flex flex-wrap items-center gap-2" style={{ ['--i' as string]: 2 }}>{actions}</div>}
   </header>
+);
+
+/**
+ * Secondary page action (#23): icon + label on wide screens, icon-only square on phones (label kept for screen readers
+ * and as a tooltip). `compact` keeps it icon-only at every size (utility actions like export/import).
+ */
+export const ActionBtn: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  compact?: boolean;
+  className?: string;
+}> = ({ icon: Icon, label, onClick, disabled, compact, className }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    aria-label={label}
+    title={label}
+    className={cn('tp-btn tp-btn--ghost tp-btn--sm tp-press tr-act', compact && 'tr-act--compact', className)}
+  >
+    <Icon className="h-4 w-4" aria-hidden />
+    <span className="tr-act-label" aria-hidden>{label}</span>
+  </button>
 );

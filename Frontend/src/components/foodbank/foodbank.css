@@ -4,7 +4,8 @@
    and everything is disabled under prefers-reduced-motion. */
 
 .fb-root,
-.fb-drawer {
+.fb-drawer,
+.tp-sheet {
   --fb-ease-out: cubic-bezier(.22, 1, .36, 1);
   --fb-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   --fb-protein: 18 88% 56%;
@@ -14,7 +15,8 @@
 }
 [dir='rtl'] .fb-root,
 [dir='rtl'] .fb-drawer,
-.fb-drawer[dir='rtl'] {
+.fb-drawer[dir='rtl'],
+.tp-sheet[dir='rtl'] {
   --fb-dir: -1;
 }
 
@@ -285,6 +287,17 @@
 }
 
 /* ---------- Reduced motion ---------- */
+/* Whole card opens the detail sheet (stretched title button) */
+.fb-stretch { cursor: pointer; }
+.fb-stretch::after { content: ''; position: absolute; inset: 0; }
+.fb-card:has(.fb-stretch:focus-visible) { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.tr-root .fb-card:hover { transform: translateY(-1px); }
+
+/* Food form: photo picker + live calories (#25) */
+.fb-photo-pick { position: relative; width: 7.5rem; flex: none; }
+.fb-kcal-live { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; border-radius: 1rem; background: hsl(var(--primary) / .08); }
+.fb-section + .fb-section { border-top: 1px solid hsl(var(--border) / .6); padding-top: 1.1rem; }
+
 @media (prefers-reduced-motion: reduce) {
   .fb-root *,
   .fb-root *::before,

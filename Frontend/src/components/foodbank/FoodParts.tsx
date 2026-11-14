@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Lock, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { API_BASE_URL } from '@/config/api';
 import { CATEGORY_ICON, IconOf, MACRO_ICON, PROPERTY_ICON } from './FoodIcons';
 import {
   fmt,
@@ -40,7 +41,13 @@ export function FoodPhoto({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const showImg = !!src && !failed;
+  // Photos uploaded to this API are stored as a path (/files/media/food_photos/...).
+  const url = src && src.startsWith('/files/') ? `${API_BASE_URL}${src}` : src;
+  useEffect(() => {
+    setFailed(false);
+    setLoaded(false);
+  }, [url]);
+  const showImg = !!url && !failed;
   return (
     <div className={cn('fb-photo', `fb-accent-${macro}`, contain && 'fb-photo--contain', className)}>
       {(!showImg || !loaded) && (
@@ -50,7 +57,7 @@ export function FoodPhoto({
       )}
       {showImg && (
         <img
-          src={src!}
+          src={url!}
           alt={alt}
           loading="lazy"
           decoding="async"
@@ -244,6 +251,7 @@ export function FoodCard({
   onToggleTag,
   onEdit,
   onDelete,
+  onOpen,
 }: {
   item: MealBankItem;
   index: number;
@@ -252,6 +260,8 @@ export function FoodCard({
   onToggleTag: (tag: PropertyTag) => void;
   onEdit: () => void;
   onDelete: () => void;
+  /** Opens the detail sheet; the whole card becomes clickable (stretched link on the title). */
+  onOpen?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.slice(0, 2) || 'he';
@@ -265,13 +275,13 @@ export function FoodCard({
 
   return (
     <article
-      className="fb-card group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
+      className="fb-card group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
       style={{ ['--i' as string]: index }}
     >
       <FoodPhoto src={item.image_url} alt={primary} macro={item.macro_type} contain={isOff}>
         <div className="fb-photo__shade" />
         {/* top row: macro badge + actions */}
-        <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2.5">
+        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-2.5">
           <span className={cn('fb-macro-badge inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm', `fb-accent-${item.macro_type}`)}>
             <IconOf icon={MACRO_ICON[item.macro_type]} size={13} />
             {t(`foodBankPro.macro.${item.macro_type}`)}
@@ -302,7 +312,7 @@ export function FoodCard({
         {/* bottom row: kcal + credit */}
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5">
           <div className="min-w-0 flex-1">
-            <PhotoCredit credit={item.image_url ? item.image_credit : null} className="block" />
+            <PhotoCredit credit={item.image_url ? item.image_credit : null} className="relative z-10 block" />
           </div>
           <div className="fb-glass shrink-0 rounded-xl px-2.5 py-1 text-end leading-none">
             <span className="text-base font-bold tabular-nums">{item.calories ?? '—'}</span>
@@ -315,7 +325,13 @@ export function FoodCard({
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-2">
             <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground" dir="auto">
-              {primary}
+              {onOpen ? (
+                <button type="button" onClick={onOpen} className="fb-stretch text-start focus-visible:outline-none">
+                  {primary}
+                </button>
+              ) : (
+                primary
+              )}
             </h3>
             <span
               className="mt-0.5 shrink-0 text-muted-foreground"
@@ -343,7 +359,7 @@ export function FoodCard({
         </div>
 
         {tags.length > 0 && (
-          <div className="mt-auto flex flex-wrap gap-1.5">
+          <div className="relative z-10 mt-auto flex flex-wrap gap-1.5">
             {tags.map((tag) => (
               <PropertyChip key={tag} tag={tag} size="xs" active={activeTags.includes(tag)} onClick={() => onToggleTag(tag)} />
             ))}

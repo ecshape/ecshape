@@ -16,16 +16,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import ClientWeightProgress from '../components/ClientWeightProgress';
 import MealHistory from '../components/MealHistory';
-import { ClientCheckInSummary } from '../components/ClientCheckInSummary';
-import { ClientCheckInHistory } from '../components/ClientCheckInHistory';
-import { ClientCheckInDetail } from '../components/ClientCheckInDetail';
+import { CheckInsPanel, type CheckInSummaryData } from '@/features/trainer/CheckInsPanel';
 import ClientExerciseHistoryMatrix from '../components/ClientExerciseHistoryMatrix';
 import NutritionProfileCard from '../components/meals/NutritionProfileCard';
 import { cn } from '@/lib/utils';
 import { api } from '@/features/trainee/api';
 import { dayOf, fmtDate, fmtNum, fmtRelative, fmtSigned, parseDate } from '@/features/trainee/format';
 import type { WorkoutSession } from '@/features/trainee/types';
-import { Avatar, BackLink, CountUp, EmptyState, Ring, SectionCard, Skel, TabStrip } from '@/features/trainer/ui';
+import { ActionBtn, Avatar, BackLink, CountUp, EmptyState, Ring, SectionCard, Skel, TabStrip } from '@/features/trainer/ui';
 import TrendChart from '@/features/trainer/TrendChart';
 
 interface Client {
@@ -141,8 +139,6 @@ const ClientProfile = () => {
   const [mealPlanToDelete, setMealPlanToDelete] = useState<MealPlan | null>(null);
   const [workoutPlanToDelete, setWorkoutPlanToDelete] = useState<WorkoutPlan | null>(null);
   const [actionError, setActionError] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
   const [checkInSummary, setCheckInSummary] = useState<CheckInSummary | null>(null);
   const [notificationMode, setNotificationMode] = useState<'EVERYTHING' | 'WEEKLY_DIGEST'>('WEEKLY_DIGEST');
   const [notificationSettingLoading, setNotificationSettingLoading] = useState(false);
@@ -419,16 +415,10 @@ const ClientProfile = () => {
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {isStaff && (
-                <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={() => navigate(`/chat?clientId=${client.id}`)}>
-                  <MessageCircle className="h-4 w-4" />{t('trainer.dash.message')}
-                </button>
-              )}
-              <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={handleEditClient}>
-                <Pencil className="h-4 w-4" />{t('clientProfile.editProfile')}
-              </button>
-              <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press" onClick={handleEditWorkoutPlan}>
+            <div className="tr-actions flex flex-wrap gap-2 max-sm:flex-nowrap">
+              {isStaff && <ActionBtn icon={MessageCircle} label={t('trainer.dash.message')} onClick={() => navigate(`/chat?clientId=${client.id}`)} />}
+              <ActionBtn icon={Pencil} label={t('clientProfile.editProfile')} onClick={handleEditClient} />
+              <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press max-sm:min-w-0 max-sm:flex-1" onClick={handleEditWorkoutPlan}>
                 {activeWorkoutPlan ? <Dumbbell className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {activeWorkoutPlan ? t('clientProfile.updateWorkoutPlan') : t('clientProfile.createWorkout')}
               </button>
@@ -498,14 +488,14 @@ const ClientProfile = () => {
                   {client.profile?.emergency_contact && <Row icon={Heart} label={t('clientProfile.emergencyContact')} value={client.profile.emergency_contact} />}
                 </dl>
               </SectionCard>
-              <SectionCard icon={Ruler} title={t('clientProfile.physicalInformation', 'Physical Information')}>
+              <SectionCard icon={Ruler} title={t('clientProfile.physicalInformation', 'Physical Information')} info={t('tt.info.physical')}>
                 <dl className="tr-dl">
                   <Row icon={Scale} label={t('clientProfile.currentWeight', 'Current Weight')} value={latestWeight ? `${fmtNum(latestWeight, 1)} ${t('trainer.common.kg')}` : t('clientProfile.notRecorded', 'Not recorded')} />
                   <Row icon={Ruler} label={t('clientProfile.height', 'Height')} value={client.profile?.height ? `${client.profile.height} ${t('trainer.common.cm')}` : t('clientProfile.notRecorded', 'Not recorded')} />
                   {client.profile?.weight ? <Row icon={Target} label={t('clientProfile.targetWeight', 'Target Weight')} value={`${client.profile.weight} ${t('trainer.common.kg')}`} /> : null}
                 </dl>
               </SectionCard>
-              <SectionCard icon={Target} title={t('clientProfile.goalsAndPreferences', 'Goals & Preferences')} className="col-span-full">
+              <SectionCard icon={Target} title={t('clientProfile.goalsAndPreferences', 'Goals & Preferences')} info={t('tt.info.goals')} className="col-span-full">
                 <dl className="tr-dl">
                   <Row label={t('clientProfile.goals', 'Fitness Goals')} value={client.profile?.goals || t('clientProfile.notSpecified', 'Not specified')} />
                   <Row label={t('clientProfile.preferences', 'Preferences')} value={client.profile?.preferences || t('clientProfile.notSpecified', 'Not specified')} />
@@ -530,6 +520,7 @@ const ClientProfile = () => {
               <SectionCard
                 icon={Dumbbell}
                 title={activeWorkoutPlan.name}
+                info={t('tt.info.workoutPlan')}
                 action={
                   <div className="flex items-center gap-1">
                     <span className="tp-chip tp-chip--primary me-1 hidden sm:inline-flex">{t('clientProfile.activePlan')}</span>
@@ -616,6 +607,7 @@ const ClientProfile = () => {
                 <SectionCard
                   icon={UtensilsCrossed}
                   title={activeMealPlan.name || activeMealPlan.title}
+                  info={t('tt.info.mealPlan')}
                   action={
                     <div className="flex items-center gap-1">
                       <span className="tp-chip tp-chip--primary me-1 hidden sm:inline-flex">{t('clientProfile.activePlan')}</span>
@@ -688,19 +680,10 @@ const ClientProfile = () => {
             </div>
           )}
 
-          {tab === 'checkins' && (
-            <div className="tr-legacy space-y-5">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <ClientCheckInSummary summary={checkInSummary as any} loading={false} />
-              <div className="tr-grid-2">
-                <ClientCheckInHistory clientId={client.id} onSelectCheckIn={setSelectedCheckIn} />
-                <ClientCheckInDetail checkIn={selectedCheckIn} />
-              </div>
-            </div>
-          )}
+          {tab === 'checkins' && <CheckInsPanel clientId={client.id} summary={checkInSummary as CheckInSummaryData | null} />}
 
           {tab === 'notifications' && isStaff && (
-            <SectionCard icon={BellRing} title={t('notifications.notifyMeAboutClient', 'Notify me about this client')}>
+            <SectionCard icon={BellRing} title={t('notifications.notifyMeAboutClient', 'Notify me about this client')} info={t('tt.info.notify')}>
               <p className="-mt-2 mb-4 max-w-2xl text-sm text-muted-foreground">
                 {t('notifications.notifyMeAboutClientDescription', 'Choose how you want to be notified when this client logs weight, completes meals, or completes training.')}
               </p>
@@ -846,6 +829,7 @@ const Overview: React.FC<{
       <SectionCard
         icon={TrendingUp}
         title={t('trainer.client.weightTrend')}
+        info={t('tt.info.weightTrend')}
         action={<button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={() => onTab('progress')}>{t('trainer.client.details')}</button>}
       >
         {weights.length > 1 ? (
@@ -859,7 +843,7 @@ const Overview: React.FC<{
         )}
       </SectionCard>
 
-      <SectionCard icon={Activity} title={t('trainer.client.consistency')}>
+      <SectionCard icon={Activity} title={t('trainer.client.consistency')} info={t('tt.info.consistency')}>
         <div className="grid grid-cols-[auto_1fr] items-center gap-5">
           <Ring value={summary ? summary.completion_rate / 100 : 0} size={112} stroke={11} color="hsl(var(--tr-ok))">
             <span>
@@ -891,7 +875,7 @@ const Overview: React.FC<{
         </div>
       </SectionCard>
 
-      <SectionCard icon={History} title={t('trainer.client.timeline')} className="col-span-full">
+      <SectionCard icon={History} title={t('trainer.client.timeline')} info={t('tt.info.timeline')} className="col-span-full">
         {timeline.length ? (
           <ol className="tr-timeline space-y-1">
             {timeline.map((it, i) => (

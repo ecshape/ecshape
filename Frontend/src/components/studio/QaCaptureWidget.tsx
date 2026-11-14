@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { studioApi, type QaPriority } from '@/lib/studioApi';
 import { spotlight } from '@/lib/agentOps';
 import { cn } from '@/lib/utils';
-import { floatingToolProps, floatingTouchProps, installFloatingToolGuard } from '@/lib/floatingTools';
+import { FLOAT_ESCAPE, floatingToolProps, floatingTouchProps, installFloatingToolGuard } from '@/lib/floatingTools';
 
 /** "Show on page" from a QA ticket: the selector to highlight after navigation. */
 export const QA_SPOTLIGHT_KEY = 'ec-qa-spotlight';
@@ -27,9 +27,10 @@ const FAB_KEY = 'ec-qa-fab-pos';
 function cssPath(el: Element): string {
   const parts: string[] = [];
   let cur: Element | null = el;
-  while (cur && cur !== document.body && parts.length < 7) {
+  while (cur && cur !== document.body && parts.length < 9) {
     let part = cur.tagName.toLowerCase();
-    if (cur.id) {
+    // Stable ids only: Radix / React generate ids (radix-:r5:, :r12:) that change on every render (QA F3)
+    if (cur.id && !/^radix-|:/.test(cur.id)) {
       parts.unshift(`#${CSS.escape(cur.id)}`);
       break;
     }
@@ -142,10 +143,20 @@ const QaCaptureWidget = () => {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(FAB_KEY);
-      if (raw) setFabPos(JSON.parse(raw));
+      if (raw) {
+        const pos = JSON.parse(raw);
+        if (typeof pos?.left === 'number' && typeof pos?.top === 'number') setFabPos(clampFab(pos.left, pos.top));
+      }
     } catch {
       /* ignore */
     }
+  }, []);
+
+  // Keep the button on screen when the window shrinks (or a position saved on a bigger screen is restored)
+  useEffect(() => {
+    const onResize = () => setFabPos((p) => (p ? clampFab(p.left, p.top) : p));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const clearHover = useCallback(() => {
@@ -176,6 +187,19 @@ const QaCaptureWidget = () => {
     stopPicking();
     closeForm();
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escape inside the QA form closes the form only (never the pop-up behind it)
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const onEsc = () => {
+      if (mode === 'picking') stopPicking();
+      else if (mode === 'form' || mode === 'done') closeForm();
+    };
+    el.addEventListener(FLOAT_ESCAPE, onEsc);
+    return () => el.removeEventListener(FLOAT_ESCAPE, onEsc);
+  });
 
   // Text the trainer selected just before opening QA mode (the capture layer would block selecting it later).
   const lastSelection = useRef<{ text: string; el: Element | null; at: number } | null>(null);
@@ -390,7 +414,7 @@ const QaCaptureWidget = () => {
   const fabBusy = mode === 'picking' || mode === 'form' || mode === 'done';
 
   const ui = (
-    <div className="ec-qa-capture" data-qa-ignore {...floatingToolProps} {...floatingTouchProps}>
+    <div ref={rootRef} className="ec-qa-capture" data-qa-ignore {...floatingToolProps} {...floatingTouchProps}>
       <div
         className={cn('ec-qa-fab-stack', fabPos && 'is-moved')}
         style={fabPos ? { left: fabPos.left, top: fabPos.top } : undefined}
@@ -519,6 +543,17 @@ const QaCaptureWidget = () => {
             onSubmit={(e) => void submit(e)}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              // Focus trap: Tab cycles inside the QA card (the page's own traps never get it)
+              if (e.key !== 'Tab') return;
+              const els = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), input, textarea, [tabindex]:not([tabindex="-1"])'));
+              if (!els.length) return;
+              const first = els[0];
+              const last = els[els.length - 1];
+              const i = els.indexOf(document.activeElement as HTMLElement);
+              if (e.shiftKey && (i <= 0)) { e.preventDefault(); last.focus(); }
+              else if (!e.shiftKey && (i === -1 || i === els.length - 1)) { e.preventDefault(); first.focus(); }
+            }}
           >
             <div className="ec-qa-capture-head">
               <h2>{mode === 'done' ? t('qaWidget.created') : t('qaWidget.newReport')}</h2>

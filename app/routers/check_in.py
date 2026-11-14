@@ -349,6 +349,27 @@ def get_check_in(
     
     return check_in
 
+@router.put("/{check_in_id}", response_model=DailyCheckInResponse)
+def update_check_in(
+    check_in_id: int,
+    payload: DailyCheckInUpdate,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """The client corrects their own check-in (A2A trainee F2). Fields sent as null are cleared."""
+    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
+    if not check_in:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Check-in not found")
+    if current_user.role != UserRole.ADMIN and check_in.client_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only edit your own check-ins")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(check_in, field, value)
+    if hasattr(check_in, "updated_at"):
+        check_in.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(check_in)
+    return check_in
+
 @router.get("/trainer/dashboard", response_model=List[dict])
 def get_trainer_dashboard(
     current_user: UserResponse = Depends(get_current_user),

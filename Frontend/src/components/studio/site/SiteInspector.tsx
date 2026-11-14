@@ -22,6 +22,15 @@ const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'objec
 export const humanize = (k: string) =>
   /^\d+$/.test(k) ? `#${Number(k) + 1}` : k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/(\D)(\d+)$/, '$1 $2');
 
+/** Field name in the trainer's language ("title1" -> "כותרת 1"); unknown keys fall back to humanize (QA F6). */
+export const fieldLabel = (k: string, t: (key: string, o?: Record<string, unknown>) => string) => {
+  if (/^\d+$/.test(k)) return humanize(k);
+  const m = k.match(/^(.*?)(\d+)$/);
+  const base = m ? m[1] : k;
+  const label = t(`mysite.field.${base}`, { defaultValue: humanize(base) });
+  return m ? `${label} ${m[2]}` : label;
+};
+
 export type ListOp = 'up' | 'down' | 'duplicate' | 'remove' | 'add';
 
 /** Innermost list item that contains a path: "faq.items.2.q" -> "faq.items.2". */
@@ -290,7 +299,7 @@ const ValueEditor: React.FC<{ path: string; ctx: EditorCtx; label?: string }> = 
   const value = getIn(ctx.content, parts);
   const base = getIn(ctx.base, parts);
   const key = String(parts[parts.length - 1]);
-  const name = label ?? humanize(key);
+  const name = label ?? fieldLabel(key, t);
   const changed = JSON.stringify(value) !== JSON.stringify(base);
 
   if (key === 'image' && typeof value === 'string') {
@@ -444,7 +453,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
     lang: p.lang, sectionName: p.sectionLabel(sectionKey),
   };
   const kindLabel = t(`mysite.studio.kinds.${select.kind}`);
-  const title = select.kind === 'section' ? p.sectionLabel(select.path) : humanize(select.path.split('.').pop() || '');
+  const title = select.kind === 'section' ? p.sectionLabel(select.path) : fieldLabel(select.path.split('.').pop() || '', t);
   const sub = select.kind === 'section' ? kindLabel : `${kindLabel} · ${p.sectionLabel(sectionKey)}`;
   const itemPath = select.kind === 'section' ? null : itemPathOf(content, select.path);
   const listPath = itemPath ? itemPath.split('.').slice(0, -1).join('.') : null;

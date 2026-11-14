@@ -12,14 +12,16 @@ export const addDays = (iso: string, n: number) => {
   return isoDay(new Date(y, m - 1, d + n));
 };
 
-/** Parses API datetimes. Naive strings (no zone) are server-local and read as local time. */
+/** Parses API datetimes. Day-only strings are local days; naive datetimes (no zone) are UTC, which is what the API
+ *  stores (func.now / utcnow). Reading them as local time put every timestamp 2 hours off in Israel (A2A cross M2). */
 export const parseDate = (s?: string | null): Date | null => {
   if (!s) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     const [y, m, d] = s.split('-').map(Number);
     return new Date(y, m - 1, d);
   }
-  const d = new Date(s);
+  const naive = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(s);
+  const d = new Date(naive ? `${s.replace(' ', 'T')}Z` : s);
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
@@ -60,11 +62,15 @@ export const fmtTime = (s: string | Date) => {
 export const fmtRelative = (s: string | Date | null | undefined) => {
   const d = s instanceof Date ? s : parseDate(s ?? null);
   if (!d) return '';
-  const rtf = new Intl.RelativeTimeFormat(uiLocale(), { numeric: 'auto' });
+  const base = new Intl.RelativeTimeFormat(uiLocale(), { numeric: 'auto' });
+  // Hebrew dual forms come out as "לפני שעתיים (2)": drop the redundant count
+  const rtf = { format: (v: number, u: Intl.RelativeTimeFormatUnit) => base.format(v, u).replace(/\s*\(\d+\)\s*$/, '') };
+  // A day-only date ("2026-11-14") has no time: say "today" / "yesterday", never "12 hours ago" (A2A trainee F9)
+  const dayOnly = typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
   const diffMin = Math.round((d.getTime() - Date.now()) / 60000);
-  if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
+  if (!dayOnly && Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
   const diffH = Math.round(diffMin / 60);
-  if (Math.abs(diffH) < 24) return rtf.format(diffH, 'hour');
+  if (!dayOnly && Math.abs(diffH) < 24) return rtf.format(diffH, 'hour');
   const startToday = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
   const startThen = new Date(new Date(d).setHours(0, 0, 0, 0)).getTime();
   const diffD = Math.round((startThen - startToday) / 86400000);

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -9,18 +9,23 @@ class DailyCheckInBase(BaseModel):
     walked_10000_steps: Optional[bool] = None
     sun_exposure_10min: Optional[bool] = None
     hunger_level: Optional[int] = None  # 1-10
-    sleep_hours: Optional[int] = None  # 1-10
+    sleep_hours: Optional[int] = None  # hours
 
 class DailyCheckInCreate(DailyCheckInBase):
-    pass
+    # Same bounds as the app (weigh-in 20-400 kg); out-of-range input is rejected with 422 (A2A trainee F3).
+    # Only on input: responses must still serve rows saved before the bounds existed.
+    weight: Optional[float] = Field(None, ge=20, le=400)
+    steps: Optional[int] = Field(None, ge=0, le=100000)
+    hunger_level: Optional[int] = Field(None, ge=1, le=10)
+    sleep_hours: Optional[int] = Field(None, ge=0, le=24)
 
 class DailyCheckInUpdate(BaseModel):
-    weight: Optional[float] = None
-    steps: Optional[int] = None
+    weight: Optional[float] = Field(None, ge=20, le=400)
+    steps: Optional[int] = Field(None, ge=0, le=100000)
     walked_10000_steps: Optional[bool] = None
     sun_exposure_10min: Optional[bool] = None
-    hunger_level: Optional[int] = None
-    sleep_hours: Optional[int] = None
+    hunger_level: Optional[int] = Field(None, ge=1, le=10)
+    sleep_hours: Optional[int] = Field(None, ge=0, le=24)
 
 class DailyCheckInResponse(DailyCheckInBase):
     id: int

@@ -111,7 +111,7 @@ export function useClientsActivity(clients: TrainerClient[] | undefined) {
     queries: list.map((c) => ({
       queryKey: tk.activity(c.id),
       staleTime: 45_000,
-      refetchInterval: 90_000,
+      refetchInterval: 45_000,
       queryFn: async (): Promise<ClientActivity> => {
         const [sessions, meals] = await Promise.all([
           soft(api<WorkoutSession[]>(`/v2/workouts/sessions?client_id=${c.id}`), []),

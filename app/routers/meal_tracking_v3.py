@@ -625,7 +625,12 @@ def get_v3_meal_completions(
                 .first()
             )
             if not plan_exists:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+                # A trainer's own client without an active meal plan simply has no completions (was a 403 on every
+                # dashboard load, A2A studio F9); other trainers' clients stay forbidden.
+                own = db.query(User).filter(User.id == target_client_id, User.trainer_id == current_user.id).first()
+                if not own:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+                return []
 
     target_date = _parse_v3_date_to_day(date) if date else datetime.utcnow()
     normalized_date = _normalize_completion_datetime_to_day(target_date)

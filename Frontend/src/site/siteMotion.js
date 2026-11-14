@@ -297,6 +297,13 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     data.lang = lang;
     data.source = form.dataset.source || 'site';
     msg.textContent = '';
+    const emailInput = form.querySelector('input[name="email"]');
+    if (String(data.email || '').trim() && emailInput && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(String(data.email).trim())) {
+      // a typo in the email would lose the lead: say so (browser-localized message) and focus the field
+      msg.textContent = emailInput.validationMessage || btn.dataset.required;
+      emailInput.focus();
+      return;
+    }
     if (!String(data.name || '').trim() || !(String(data.phone || '').trim() || String(data.email || '').trim())) {
       msg.textContent = btn.dataset.required;
       return;
@@ -398,6 +405,7 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     const pos = (heroMedia.getAttribute('data-pos') || '.58,.27').split(',').map(Number);
     const dw = Math.max(W, H * a), dh = dw / a;
     heroPic.classList.add('is-framed');
+    heroMedia.style.setProperty('--hero-src', `url("${heroPic.currentSrc || heroPic.src}")`);
     heroPic.style.width = `${dw}px`;
     heroPic.style.height = `${dh}px`;
     return { W, H, dw, dh, ox: (W - dw) * pos[0], oy: (H - dh) * pos[1] };
@@ -414,12 +422,16 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     const R = { x0: f[0] * g.dw, x1: f[2] * g.dw, y0: Math.max(0, f[1] - pad) * g.dh, y1: Math.min(1, f[3] + pad) * g.dh };
     const F = heroFrame(g.W, g.H);
     const fw = F.x1 - F.x0, fh = F.y1 - F.y0;
-    const s = Math.max(Math.min(fw / (R.x1 - R.x0), fh / (R.y1 - R.y0)), fw / g.dw, fh / g.dh);
+    // The whole body always fits. When the frame is wider than the photo allows (short phone / tablet / editor
+    // frames), the photo sits centred over a blurred copy of itself instead of being zoomed in (QA F1).
+    const s = Math.min(fw / (R.x1 - R.x0), fh / (R.y1 - R.y0));
     const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
-    // centre the focus box in the frame, but never let an edge of the photo show inside the frame
-    const x = clamp((F.x0 + F.x1) / 2 - s * (R.x0 + R.x1) / 2, F.x1 - s * g.dw, F.x0);
-    const y = clamp((F.y0 + F.y1) / 2 - s * (R.y0 + R.y1) / 2, F.y1 - s * g.dh, F.y0);
-    return { scale: s, x, y };
+    const place = (f0, f1, r0, r1, size) => {
+      const centred = (f0 + f1) / 2 - s * (r0 + r1) / 2;
+      // photo bigger than the frame: never show its edge; smaller: centre it
+      return s * size >= f1 - f0 ? clamp(centred, f1 - s * size, f0) : (f0 + f1) / 2 - (s * size) / 2;
+    };
+    return { scale: s, x: place(F.x0, F.x1, R.x0, R.x1, g.dw), y: place(F.y0, F.y1, R.y0, R.y1, g.dh) };
   };
   const heroReady = (fn) => {
     if (!heroPic) return;

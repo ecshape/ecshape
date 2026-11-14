@@ -20,6 +20,7 @@ import TraineeShell from '@/features/trainee/TraineeShell';
 import TrainerShell from '@/features/trainer/TrainerShell';
 import { useQuery } from '@tanstack/react-query';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { API_BASE_URL } from '@/config/api';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -67,6 +68,19 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
     refetchInterval: 90_000,
   });
   const newLeads = overview?.leads_new ?? 0;
+  // Unread chat messages from clients (A2A cross M5): same conversations endpoint as the trainee app
+  const { data: convs } = useQuery({
+    queryKey: ['chat', 'conversations'],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const r = await fetch(`${API_BASE_URL}/v2/chat/conversations`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      return r.ok ? ((await r.json()) as { unread_count?: number }[]) : [];
+    },
+    enabled: isTrainer,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
+  });
+  const unreadChats = (convs ?? []).reduce((n, c) => n + (c.unread_count || 0), 0);
 
   const go = (href: string) => navigate(href);
 
@@ -89,7 +103,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
         { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/trainer-dashboard' },
         { id: 'exercises', label: t('navigation.exercises'), icon: Dumbbell, href: '/exercises' },
         { id: 'meal-bank', label: t('foodBank.title'), icon: Utensils, href: '/meal-bank' },
-        { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat' },
+        { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat', badge: unreadChats },
       ],
     },
     {

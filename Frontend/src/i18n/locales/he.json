@@ -1170,7 +1170,7 @@
     "noClientsFound": "לא נמצאו לקוחות.",
     "weightProgress": "התקדמות משקל",
     "loading": "טוען...",
-    "addNewClient": "הוסף לקוח חדש",
+    "addNewClient": "הוספת מתאמן חדש",
     "registerNewClient": "הירשם לקוח חדש והקצה אותו אליך.",
     "passwordsDoNotMatch": "הסיסמאות אינן תואמות",
     "failedToRegisterClient": "נכשל ברישום הלקוח",
@@ -1183,7 +1183,7 @@
     "confirmPassword": "אישור סיסמה",
     "cancel": "ביטול",
     "adding": "מוסיף...",
-    "addClient": "הוסף לקוח"
+    "addClient": "הוסף מתאמן"
   },
   "clientProfile": {
     "title": "פרופיל לקוח",

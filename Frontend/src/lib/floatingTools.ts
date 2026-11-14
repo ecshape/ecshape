@@ -35,4 +35,19 @@ export function installFloatingToolGuard() {
   };
   window.addEventListener('focusin', guard, true);
   window.addEventListener('focusout', guard, true);
+  // Escape typed inside a tool belongs to that tool only: Radix listens on the document in the capture phase and would
+  // close the dialog / sheet behind it. Stop it at the window and tell the tool instead (FLOAT_ESCAPE on its root).
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key !== 'Escape' || !inFloat(e.target)) return;
+      e.stopPropagation();
+      const root = (e.target as Element).closest(`[${FLOAT_ATTR}]`);
+      root?.dispatchEvent(new CustomEvent(FLOAT_ESCAPE, { bubbles: true }));
+    },
+    true,
+  );
 }
+
+/** Fired (bubbling) on a floating tool's root when Escape is pressed inside it. */
+export const FLOAT_ESCAPE = 'ec-float-escape';

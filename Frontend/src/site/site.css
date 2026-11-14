@@ -308,6 +308,10 @@ html.lenis, html.lenis body { height: auto; }
 /* Without JS the photo simply covers the box. siteMotion.js (heroFit) sizes the <img> to the whole photo and frames it
    with one transform, so the trainer's whole body fits the hero frame at any size (QA #33). */
 .ec-site .hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: 58% 27%; }
+.ec-site .hero__media::before { /* blurred backdrop when the whole body is narrower than the frame */
+  content: ''; position: absolute; inset: -40px; background: var(--hero-src, none) center / cover no-repeat;
+  filter: blur(28px) brightness(.5) saturate(1.1);
+}
 .ec-site .hero__media img.is-framed { position: absolute; top: 0; left: 0; max-width: none; object-fit: fill; transform-origin: 0 0; }
 .ec-site .hero__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 10, 8, 0) 40%, rgba(11, 10, 8, .85)); opacity: var(--shade, 0); }
 .ec-site .hero__content {
@@ -900,6 +904,7 @@ html.lenis, html.lenis body { height: auto; }
   .ec-site .hero__stats { position: relative; order: 3; inset: auto; margin: 16px var(--gutter) 0; flex-wrap: wrap; }
   .ec-site .hero__stats .chip { flex: 1 1 30%; padding: 10px 12px; }
   .ec-site .hero__stats .chip .num { font-size: 1.5rem; }
+  .ec-site .hero__media::before { inset: -20px; }
   .ec-site .hero__scroll, .ec-site .hero__caption { display: none; }
 
   .ec-site .section-head--split { grid-template-columns: 1fr; }
@@ -1127,3 +1132,15 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 @media (min-width: 901px) and (max-width: 1060px) {
   .ec-site .nav__logo b { display: none; }
 }
+
+/* Short desktop screens (e.g. 1280x640): the title shrinks with the height and the content clears the stat chips,
+   which used to sit on top of the CTA buttons (A2A site #1) */
+@media (min-width: 901px) and (max-height: 780px) {
+  .ec-site .hero__content { padding-top: calc(var(--nav-h) + 16px); padding-bottom: 104px; }
+  .ec-site .hero__title { margin: 10px 0 16px; }
+  .ec-site .hero__title.h-xl, .ec-site .hero .h-xl { font-size: clamp(3rem, 13vh, 9rem); }
+  .ec-site .hero__sub { margin-bottom: 20px; }
+}
+
+/* Phones: the floating WhatsApp button never covers the last footer links (A2A site #9) */
+@media (max-width: 900px) { .ec-site .footer { padding-bottom: 100px; } }

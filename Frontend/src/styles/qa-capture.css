@@ -347,3 +347,12 @@ html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
     width: 40px; height: 44px; border-radius: 12px 0 0 12px; font-size: 0.72rem; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   }
 }
+
+/* Phones: slimmer, translucent edge tab so it covers less content; full strength on touch / while active (A2A F10) */
+@media (max-width: 640px) {
+  .ec-qa-fab-stack:not([style*="left"]) .ec-qa-fab:not(.is-busy) { width: 28px; height: 40px; font-size: 0.62rem; letter-spacing: 0; opacity: 0.72; }
+  .ec-qa-fab-stack:not([style*="left"]) .ec-qa-fab:active { opacity: 1; }
+  .ec-qa-pick-bar { gap: 0.4rem 0.6rem; padding: 0.55rem 0.75rem; }
+  .ec-qa-pick-bar strong { display: none; }
+  .ec-qa-pick-cancel { margin-inline-start: auto; }
+}

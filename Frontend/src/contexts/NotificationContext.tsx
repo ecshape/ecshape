@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { notificationService } from '../services/notificationService';
@@ -55,6 +56,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [serverNotifications, setServerNotifications] = useState<ServerNotification[]>([]);
   const [serverUnreadCount, setServerUnreadCount] = useState(0);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const lastLiveRefresh = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -157,10 +160,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
               console.log('WebSocket connection established');
               return;
             }
+            // Anything live (a workout finished, a meal, a weigh-in, a chat message, a QA ticket...) refreshes the
+            // data on screen right away instead of waiting for the next poll (A2A cross M4); throttled.
+            const now = Date.now();
+            if (now - lastLiveRefresh.current > 2500) {
+              lastLiveRefresh.current = now;
+              queryClient.invalidateQueries({ refetchType: 'active' });
+            }
             if (data.type === 'new_notification') {
               refetchServerNotifications();
               return;
             }
+            // Frames without any text (read receipts, typing...) never become an empty "Notification" toast
+            if (!data.title && !data.message && !data.data?.message) return;
 
             // Map backend notification types to frontend types
             let notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';

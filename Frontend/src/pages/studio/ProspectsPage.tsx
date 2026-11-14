@@ -102,7 +102,8 @@ const ProspectsPage = () => {
     const needle = q.toLowerCase();
     return [l.name, l.phone, l.email].some((v) => (v || '').toLowerCase().includes(needle));
   });
-  const selected = leads.find((l) => l.id === selectedId) || null;
+  // The detail follows the filtered list: a lead hidden by the filter / search is not shown beside an empty list
+  const selected = visible.find((l) => l.id === selectedId) || null;
 
   useEffect(() => {
     setNotes(selected?.notes || '');
@@ -177,6 +178,12 @@ const ProspectsPage = () => {
           <div data-ec-board="prospects" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
             {/* List */}
             <div className="ec-stagger space-y-2">
+              {visible.length === 0 && (
+                <div className="flex flex-col items-center gap-2 rounded-[1.25rem] border border-dashed border-border py-14 text-center text-muted-foreground">
+                  <Inbox className="h-8 w-8" />
+                  <p>{t('studio.prospects.noMatch', 'אין לידים שמתאימים לסינון')}</p>
+                </div>
+              )}
               {visible.map((l) => (
                 <button
                   key={l.id}

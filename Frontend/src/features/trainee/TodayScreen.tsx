@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, ArrowRight, Check, ClipboardCheck, Clock, Dumbbell, Flame, MessageCircle, Play, Scale, Sparkles, Trophy, X,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -208,7 +209,12 @@ const TodayScreen: React.FC = () => {
             <div className="tp-card flex h-full flex-col p-5">
               <div className="flex items-center justify-between">
                 <span className="tp-label">{t('trainee.today.checkin')}</span>
-                <span className="tp-chip tp-chip--ok"><Check className="h-3.5 w-3.5" />{t('trainee.today.checkinDone')}</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="tp-chip tp-chip--ok"><Check className="h-3.5 w-3.5" />{t('trainee.today.checkinDone')}</span>
+                  <button type="button" onClick={() => setCheckInOpen(true)} className="tp-icon-btn tp-press !h-9 !w-9" aria-label={t('trainee.checkin.edit', { defaultValue: 'Edit check-in' })} title={t('trainee.checkin.edit', { defaultValue: 'Edit check-in' })}>
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                </span>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <Metric label={t('trainee.checkin.weightShort')} value={checkIn.data.weight ? fmtNum(checkIn.data.weight, 1) : '–'} />
@@ -296,7 +302,7 @@ const TodayScreen: React.FC = () => {
         </section>
       </div>
 
-      <CheckInSheet open={checkInOpen} onOpenChange={setCheckInOpen} lastWeight={lastWeight?.weight} />
+      <CheckInSheet open={checkInOpen} onOpenChange={setCheckInOpen} lastWeight={lastWeight?.weight} existing={checkIn.data ?? null} />
     </Screen>
   );
 };

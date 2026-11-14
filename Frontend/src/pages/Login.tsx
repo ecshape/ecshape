@@ -234,7 +234,7 @@ const Login = () => {
           <img
             src={`/elior-login-cutout.webp?v=${__STATIC_BUST__}`}
             alt=""
-            fetchPriority="high"
+            {...{ fetchpriority: 'high' }}
             decoding="async"
             onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
             className="ec-login-photo absolute bottom-0 left-1/2 h-[86%] w-auto max-w-none -translate-x-1/2 object-contain object-bottom drop-shadow-[0_30px_40px_rgba(0,0,0,.35)]"

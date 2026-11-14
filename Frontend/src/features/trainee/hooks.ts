@@ -350,6 +350,18 @@ export function useCheckInSummary() {
 
 export type CheckInInput = Omit<CheckIn, 'id' | 'date'>;
 
+/** Corrects an existing check-in (A2A trainee F2). */
+export function useUpdateCheckIn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...v }: CheckInInput & { id: number }) => api<CheckIn>(`/check-ins/${id}`, { method: 'PUT', body: v }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: qk.checkInToday });
+      qc.invalidateQueries({ queryKey: qk.checkInSummary });
+    },
+  });
+}
+
 export function useCreateCheckIn() {
   const qc = useQueryClient();
   return useMutation({

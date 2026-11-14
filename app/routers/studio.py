@@ -10,6 +10,7 @@ Public (no auth):
 Trainer / admin only (/api/studio):
   overview, prospects (leads), site content per language, SEO, Atelier QA, Agent EC chat
 """
+import re
 import copy
 import time
 from collections import defaultdict, deque
@@ -18,7 +19,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, field_validator, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -126,6 +127,16 @@ class LeadIn(BaseModel):
     lang: Optional[str] = Field(None, max_length=5)
     source: Optional[str] = Field(None, max_length=80)
     website: Optional[str] = None  # honeypot: real visitors never fill it
+
+    @field_validator("email")
+    @classmethod
+    def _email_format(cls, v: Optional[str]) -> Optional[str]:
+        v = (v or "").strip()
+        if not v:
+            return None
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]{2,}", v):
+            raise ValueError("invalid email")
+        return v
 
 
 @public_router.post("/leads", status_code=201)

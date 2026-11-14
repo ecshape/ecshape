@@ -14,6 +14,8 @@ import { Avatar, BackLink, Field, PageTitle, SectionCard } from '@/features/trai
 import ExercisePicker, { ExerciseThumb, type PickableExercise } from '@/features/trainer/ExercisePicker';
 
 interface WorkoutExercise {
+  /** Existing workout exercise id: sent back so the server edits it in place (its logged sets stay attached). */
+  id?: number;
   exercise_id: number;
   exercise_name?: string;
   order_index: number;
@@ -29,6 +31,8 @@ interface WorkoutExercise {
 }
 
 interface WorkoutDay {
+  /** Existing day id (sessions of the client hang on it) */
+  id?: number;
   name: string;
   day_type: string;
   order_index: number;
@@ -133,6 +137,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
     if (!existingPlan || hasHydratedExistingPlan.current) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mappedDays: WorkoutDay[] = (existingPlan.workout_days || []).map((day: any, idx: number) => ({
+      id: day.id,
       name: day.name,
       day_type: day.day_type || 'custom',
       order_index: idx,
@@ -140,6 +145,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
       estimated_duration: day.estimated_duration ?? null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       exercises: (day.workout_exercises || []).map((exercise: any, exerciseIndex: number) => ({
+        id: exercise.id,
         exercise_id: exercise.exercise_id,
         exercise_name: exercise.exercise?.name || exercise.exercise_name || '',
         order_index: exerciseIndex,
@@ -253,10 +259,11 @@ const CreateWorkoutPlanV2: React.FC = () => {
                   exercise_id: exercise.id,
                   exercise_name: exercise.name,
                   order_index: d.exercises.length,
-                  target_sets: null,
-                  target_reps: '',
+                  // sensible defaults: an exercise without sets / reps blocked the trainee's session (A2A cross M6)
+                  target_sets: 3,
+                  target_reps: '10',
                   target_weight: null,
-                  rest_seconds: null,
+                  rest_seconds: 90,
                   notes: '',
                   group_name: '',
                   video_url: exercise.video_url || null,
@@ -324,15 +331,17 @@ const CreateWorkoutPlanV2: React.FC = () => {
         workout_days: formData.workout_days.map((day, dayIdx) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const dayPayload: any = {
+            id: day.id,
             name: day.name.trim(),
             order_index: dayIdx,
             notes: sanitizeString(day.notes) || null,
             estimated_duration: day.estimated_duration || null,
             exercises: day.exercises.map((exercise, exerciseIdx) => ({
+              id: exercise.id,
               exercise_id: exercise.exercise_id,
               order_index: exerciseIdx,
-              target_sets: exercise.target_sets && exercise.target_sets >= 1 ? exercise.target_sets : null,
-              target_reps: sanitizeString(exercise.target_reps) || null,
+              target_sets: exercise.target_sets && exercise.target_sets >= 1 ? exercise.target_sets : 3,
+              target_reps: sanitizeString(exercise.target_reps) || '10',
               target_weight: exercise.target_weight || null,
               rest_seconds: exercise.rest_seconds && exercise.rest_seconds >= 0 ? exercise.rest_seconds : null,
               notes: sanitizeString(exercise.notes) || null,
@@ -340,7 +349,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
               video_url: exercise.video_url || null,
             })),
           };
-          if (day.day_type) dayPayload.day_type = day.day_type;
+          if (day.day_type) dayPayload.day_type = day.day_type; // unknown / "None" values are normalised by the API
           return dayPayload;
         }),
       };

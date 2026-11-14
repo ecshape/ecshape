@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { FLOAT_ESCAPE } from '@/lib/floatingTools';
 
 const OPEN_KEY = 'ec-psk-open';
 const WIDTH_KEY = 'ec-psk-w';
@@ -91,11 +92,26 @@ export const AgentSidekickProvider: React.FC<{ children: React.ReactNode; enable
 
   useEffect(() => {
     if (!open) return;
+    // Escape closes the panel only when nothing else owns it: an open menu, select, dialog or sheet closes first,
+    // and Escape typed inside the QA widget is the widget's (QA F4).
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      const t = e.target instanceof Element ? e.target : null;
+      if (t?.closest('[data-radix-popper-content-wrapper], [role="dialog"], [role="menu"], [role="listbox"], .ec-qa-capture')) return;
+      if (document.querySelector('[data-radix-popper-content-wrapper], [role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return;
+      setOpen(false);
+    };
+    // Escape inside the Agent EC panel itself (stopped before the page by the floating-tool guard)
+    const onFloatEscape = (e: Event) => {
+      const t = e.target instanceof Element ? e.target : null;
+      if (t && !t.closest('.ec-qa-capture') && !document.querySelector('[data-radix-popper-content-wrapper]')) setOpen(false);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    document.addEventListener(FLOAT_ESCAPE, onFloatEscape);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener(FLOAT_ESCAPE, onFloatEscape);
+    };
   }, [open, setOpen]);
 
   // askAgent() (lib/agentOps) opens the panel from anywhere, with an optional pre-filled request.

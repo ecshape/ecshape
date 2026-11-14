@@ -238,7 +238,13 @@ const ClientProfile = () => {
 
         setWorkoutPlans(transformedWorkouts.slice(0, 1));
         setMealPlans(normalizedMealPlans.slice(0, 1));
-        setProgressEntries(Array.isArray(progressData) ? progressData : []);
+        // /api/progress returns `date` (the trainee's weigh-in day); this page reads `recorded_at` (A2A cross M1)
+        setProgressEntries(
+          (Array.isArray(progressData) ? progressData : []).map((e: ProgressEntry & { date?: string }) => ({
+            ...e,
+            recorded_at: e.recorded_at || e.date || e.created_at || '',
+          })),
+        );
       }
     } catch (error) {
       console.error('Error fetching client data:', error);

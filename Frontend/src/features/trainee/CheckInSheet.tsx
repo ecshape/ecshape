@@ -4,7 +4,9 @@ import { Check, Footprints, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Sheet, Stepper } from './ui';
-import { useCreateCheckIn } from './hooks';
+import { useCreateCheckIn, useUpdateCheckIn } from './hooks';
+import type { CheckIn } from './types';
+import '@/i18n/ticketsStudio';
 import { haptic } from './format';
 
 const Scale: React.FC<{ value: number | null; onChange: (v: number) => void; from: number; to: number; label: string }> = ({ value, onChange, from, to, label }) => (
@@ -45,9 +47,10 @@ const Toggle: React.FC<{ on: boolean | null; onChange: (v: boolean) => void; ico
 );
 
 /** Daily check-in: weight, steps, sleep, hunger and two habits. One screen, big targets. */
-const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void; lastWeight?: number | null }> = ({ open, onOpenChange, lastWeight }) => {
+const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void; lastWeight?: number | null; existing?: CheckIn | null }> = ({ open, onOpenChange, lastWeight, existing }) => {
   const { t } = useTranslation();
   const create = useCreateCheckIn();
+  const update = useUpdateCheckIn();
   const [weight, setWeight] = useState('');
   const [steps, setSteps] = useState('');
   const [sleep, setSleep] = useState<number | null>(null);
@@ -57,36 +60,46 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
 
   useEffect(() => {
     if (open) {
-      setWeight(lastWeight ? String(lastWeight) : '');
-      setSteps('');
-      setSleep(null);
-      setHunger(null);
-      setWalked(null);
-      setSun(null);
+      // Editing today's check-in starts from what was saved
+      setWeight(existing?.weight ? String(existing.weight) : lastWeight ? String(lastWeight) : '');
+      setSteps(existing?.steps != null ? String(existing.steps) : '');
+      setSleep(existing?.sleep_hours ?? null);
+      setHunger(existing?.hunger_level ?? null);
+      setWalked(existing?.walked_10000_steps ?? null);
+      setSun(existing?.sun_exposure_10min ?? null);
     }
-  }, [open, lastWeight]);
+  }, [open, lastWeight, existing]);
+
+  // Same limits as the weigh-in and the API: 20-400 kg, 0-100,000 steps (A2A trainee F3)
+  const wNum = parseFloat(weight.replace(',', '.'));
+  const sNum = parseInt(steps, 10);
+  const weightBad = weight.trim() !== '' && (!Number.isFinite(wNum) || wNum < 20 || wNum > 400);
+  const stepsBad = steps.trim() !== '' && (!Number.isFinite(sNum) || sNum > 100000);
+  const busy = create.isPending || update.isPending;
 
   const submit = () => {
-    const w = parseFloat(weight.replace(',', '.'));
-    const s = parseInt(steps, 10);
-    create.mutate(
-      {
+    if (weightBad || stepsBad || busy) return;
+    const w = wNum;
+    const s = sNum;
+    const body = {
         weight: Number.isFinite(w) && w > 0 ? w : null,
         steps: Number.isFinite(s) ? s : null,
         sleep_hours: sleep,
         hunger_level: hunger,
         walked_10000_steps: walked ?? (Number.isFinite(s) ? s >= 10000 : null),
         sun_exposure_10min: sun,
+    };
+    const opts = {
+      // the sheet closes once the save really succeeded; on error it stays open with the values
+      onSuccess: () => {
+        haptic([10, 40, 10]);
+        toast.success(t('trainee.checkin.saved'));
+        onOpenChange(false);
       },
-      {
-        onSuccess: () => {
-          haptic([10, 40, 10]);
-          toast.success(t('trainee.checkin.saved'));
-        },
-        onError: () => toast.error(t('trainee.checkin.saveError')),
-      },
-    );
-    onOpenChange(false);
+      onError: () => toast.error(t('trainee.checkin.saveError')),
+    };
+    if (existing && existing.id > 0) update.mutate({ id: existing.id, ...body }, opts);
+    else create.mutate(body, opts);
   };
 
   return (
@@ -96,7 +109,7 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
       title={t('trainee.checkin.title')}
       description={t('trainee.checkin.subtitle')}
       footer={
-        <button type="button" onClick={submit} className="tp-btn tp-btn--primary tp-press w-full">
+        <button type="button" onClick={submit} disabled={weightBad || stepsBad || busy} className="tp-btn tp-btn--primary tp-press w-full">
           <Check className="h-5 w-5" />
           {t('trainee.checkin.submit')}
         </button>
@@ -107,10 +120,12 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
           <label className="block">
             <span className="tp-label mb-2 block">{t('trainee.checkin.weight')}</span>
             <Stepper value={weight} onChange={setWeight} step={0.1} decimal label={t('trainee.checkin.weight')} placeholder="kg" />
+            {weightBad && <span className="mt-1.5 block text-xs text-destructive" role="alert">{t('trainee.checkin.weightRange', { defaultValue: '20–400 kg' })}</span>}
           </label>
           <label className="block">
             <span className="tp-label mb-2 block">{t('trainee.checkin.steps')}</span>
             <input className="tp-input text-center font-semibold" inputMode="numeric" value={steps} onChange={(e) => setSteps(e.target.value.replace(/\D/g, ''))} placeholder="8000" dir="ltr" />
+            {stepsBad && <span className="mt-1.5 block text-xs text-destructive" role="alert">{t('trainee.checkin.stepsRange', { defaultValue: '0–100,000' })}</span>}
           </label>
         </div>
         <div>

@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
+import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 import { API_BASE_URL } from '../config/api';
 import { 
   Activity, 
@@ -120,6 +122,7 @@ interface TestRunResult {
 const SystemPage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
   const [testResults, setTestResults] = useState<TestRunResult | null>(null);
@@ -175,7 +178,7 @@ const SystemPage: React.FC = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to load system data",
+        description: t('systemPage.failed_to_load_system_data', t('systemPage.failed_to_load_system_data', 'Failed to load system data')),
         variant: "destructive"
       });
     } finally {
@@ -211,19 +214,19 @@ const SystemPage: React.FC = () => {
         const results = await response.json();
         setTestResults(results);
         toast({
-          title: "Tests Completed",
+          title: t('systemPage.tests_completed', t('systemPage.tests_completed', 'Tests Completed')),
           description: `${results.passed} passed, ${results.failed} failed, ${results.skipped} skipped`,
           variant: results.failed > 0 ? "destructive" : "default"
         });
       } else {
-        throw new Error('Failed to run tests');
+        throw new Error(t('systemPage.failed_to_run_tests', 'Failed to run tests'));
       }
     } catch (error) {
       clearInterval(progressInterval);
       setTestProgress(0);
       toast({
         title: "Error",
-        description: "Failed to run tests",
+        description: t('systemPage.failed_to_run_tests', t('systemPage.failed_to_run_tests', 'Failed to run tests')),
         variant: "destructive"
       });
     } finally {
@@ -249,7 +252,7 @@ const SystemPage: React.FC = () => {
           description: result.message
         });
       } else {
-        throw new Error('Action failed');
+        throw new Error(t('systemPage.action_failed', 'Action failed'));
       }
     } catch (error) {
       toast({
@@ -295,8 +298,8 @@ const SystemPage: React.FC = () => {
       <div className="container mx-auto p-4 sm:p-6 space-y-6 w-full max-w-full overflow-x-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="ec-page-title">System Management</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Monitor and manage system health and performance</p>
+            <h1 className="ec-page-title">{t('systemPage.system_management', t('systemPage.system_management', 'System Management'))}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">{t('systemPage.monitor_and_manage_system_health_and_performance', t('systemPage.monitor_and_manage_system_health_and_performance', 'Monitor and manage system health and performance'))}</p>
           </div>
           <Button onClick={loadSystemData} variant="outline" className="w-full sm:w-auto">
             <RotateCcw className="h-4 w-4 mr-2" />
@@ -306,17 +309,17 @@ const SystemPage: React.FC = () => {
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="flex-wrap w-full sm:w-auto">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="logs" className="text-xs sm:text-sm">System Logs</TabsTrigger>
-          <TabsTrigger value="tests" className="text-xs sm:text-sm">Test Suite</TabsTrigger>
-          <TabsTrigger value="actions" className="text-xs sm:text-sm">Quick Actions</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">{t('systemPage.overview', t('systemPage.overview', 'Overview'))}</TabsTrigger>
+          <TabsTrigger value="logs" className="text-xs sm:text-sm">{t('systemPage.system_logs', t('systemPage.system_logs', 'System Logs'))}</TabsTrigger>
+          <TabsTrigger value="tests" className="text-xs sm:text-sm">{t('systemPage.test_suite', t('systemPage.test_suite', 'Test Suite'))}</TabsTrigger>
+          <TabsTrigger value="actions" className="text-xs sm:text-sm">{t('systemPage.quick_actions', t('systemPage.quick_actions', 'Quick Actions'))}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('systemPage.system_health', t('systemPage.system_health', 'System Health'))}</CardTitle>
                 <Server className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -330,7 +333,7 @@ const SystemPage: React.FC = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('systemPage.active_users', t('systemPage.active_users', 'Active Users'))}</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -341,7 +344,7 @@ const SystemPage: React.FC = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('systemPage.memory_usage', t('systemPage.memory_usage', 'Memory Usage'))}</CardTitle>
                 <HardDrive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -352,7 +355,7 @@ const SystemPage: React.FC = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('systemPage.cpu_usage', t('systemPage.cpu_usage', 'CPU Usage'))}</CardTitle>
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -365,24 +368,24 @@ const SystemPage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Database Status</CardTitle>
-                <CardDescription>Connection pool and performance metrics</CardDescription>
+                <CardTitle>{t('systemPage.database_status', t('systemPage.database_status', 'Database Status'))}</CardTitle>
+                <CardDescription>{t('systemPage.connection_pool_and_performance_metrics', t('systemPage.connection_pool_and_performance_metrics', 'Connection pool and performance metrics'))}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span>Active Connections</span>
+                  <span>{t('systemPage.active_connections', t('systemPage.active_connections', 'Active Connections'))}</span>
                   <span className="font-medium">{systemStatus?.database_connections || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Database Size</span>
+                  <span>{t('systemPage.database_size', t('systemPage.database_size', 'Database Size'))}</span>
                   <span className="font-medium">{systemStatus?.database?.database_size_mb || 0} MB</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Last Backup</span>
+                  <span>{t('systemPage.last_backup', t('systemPage.last_backup', 'Last Backup'))}</span>
                   <span className="font-medium">{systemStatus?.last_backup || 'Never'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Total Records</span>
+                  <span>{t('systemPage.total_records', t('systemPage.total_records', 'Total Records'))}</span>
                   <span className="font-medium">
                     {systemStatus?.database?.table_counts 
                       ? Object.values(systemStatus.database.table_counts).reduce((a, b) => a + b, 0)
@@ -394,24 +397,24 @@ const SystemPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>System Information</CardTitle>
-                <CardDescription>Current system configuration</CardDescription>
+                <CardTitle>{t('systemPage.system_information', t('systemPage.system_information', 'System Information'))}</CardTitle>
+                <CardDescription>{t('systemPage.current_system_configuration', t('systemPage.current_system_configuration', 'Current system configuration'))}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span>API Version</span>
+                  <span>{t('systemPage.api_version', t('systemPage.api_version', 'API Version'))}</span>
                   <span className="font-medium">{systemStatus?.application?.version || '1.2.0'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Environment</span>
+                  <span>{t('systemPage.environment', t('systemPage.environment', 'Environment'))}</span>
                   <span className="font-medium">{systemStatus?.application?.environment || 'Production'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Platform</span>
+                  <span>{t('systemPage.platform', t('systemPage.platform', 'Platform'))}</span>
                   <span className="font-medium text-xs">{systemStatus?.application?.platform?.split('-')[0] || 'Unknown'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Python Version</span>
+                  <span>{t('systemPage.python_version', t('systemPage.python_version', 'Python Version'))}</span>
                   <span className="font-medium">{systemStatus?.application?.python_version || 'Unknown'}</span>
                 </div>
               </CardContent>
@@ -422,11 +425,11 @@ const SystemPage: React.FC = () => {
           {systemStatus?.docker_stats && (
             <Card>
               <CardHeader>
-                <CardTitle>Docker Container Status</CardTitle>
+                <CardTitle>{t('systemPage.docker_container_status', t('systemPage.docker_container_status', 'Docker Container Status'))}</CardTitle>
                 <CardDescription>
                   {systemStatus.docker_stats.docker_available 
                     ? `${systemStatus.docker_stats.containers_running} running containers out of ${systemStatus.docker_stats.containers_total} total`
-                    : systemStatus.docker_stats.docker_info || 'Docker is not available on this system'
+                    : systemStatus.docker_stats.docker_info || t('systemPage.docker_is_not_available_on_this_system', 'Docker is not available on this system')
                   }
                 </CardDescription>
               </CardHeader>
@@ -435,26 +438,26 @@ const SystemPage: React.FC = () => {
                   <>
                     <div className="grid gap-4 md:grid-cols-4">
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Containers</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.containers', t('systemPage.containers', 'Containers'))}</p>
                         <p className="text-2xl font-bold">{systemStatus.docker_stats.containers_running}/{systemStatus.docker_stats.containers_total}</p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Images</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.images', t('systemPage.images', 'Images'))}</p>
                         <p className="text-2xl font-bold">{systemStatus.docker_stats.images_total}</p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Volumes</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.volumes', t('systemPage.volumes', 'Volumes'))}</p>
                         <p className="text-2xl font-bold">{systemStatus.docker_stats.volumes_total}</p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Docker Version</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.docker_version', t('systemPage.docker_version', 'Docker Version'))}</p>
                         <p className="text-xl font-bold">{systemStatus.docker_stats.docker_version}</p>
                       </div>
                     </div>
                     
                     {systemStatus.docker_stats.container_stats.length > 0 && (
                       <div className="space-y-2 mt-4">
-                        <h4 className="font-medium">Running Containers</h4>
+                        <h4 className="font-medium">{t('systemPage.running_containers', t('systemPage.running_containers', 'Running Containers'))}</h4>
                         <div className="space-y-2">
                           {systemStatus.docker_stats.container_stats.map((container) => (
                             <div key={container.id} className="p-3 border rounded-lg space-y-2">
@@ -466,11 +469,11 @@ const SystemPage: React.FC = () => {
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                  <span className="text-muted-foreground">CPU: </span>
+                                  <span className="text-muted-foreground">{t('systemPage.cpu', t('systemPage.cpu', 'CPU: '))}</span>
                                   <span className="font-medium">{container.cpu_percent}%</span>
                                 </div>
                                 <div>
-                                  <span className="text-muted-foreground">Memory: </span>
+                                  <span className="text-muted-foreground">{t('systemPage.memory', t('systemPage.memory', 'Memory: '))}</span>
                                   <span className="font-medium">
                                     {container.memory_usage_mb} MB ({container.memory_percent}%)
                                   </span>
@@ -487,16 +490,16 @@ const SystemPage: React.FC = () => {
                   <div className="space-y-4">
                     <div className="text-center py-4">
                       <Container className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-2">Docker is not available</p>
+                      <p className="text-muted-foreground mb-2">{t('systemPage.docker_is_not_available', t('systemPage.docker_is_not_available', 'Docker is not available'))}</p>
                       <p className="text-sm text-muted-foreground">
-                        {systemStatus.docker_stats.docker_info || 'Install Docker Desktop to monitor containers'}
+                        {systemStatus.docker_stats.docker_info || t('systemPage.install_docker_desktop_to_monitor_containers', 'Install Docker Desktop to monitor containers')}
                       </p>
                     </div>
                     
                     {/* Show process stats as alternative when Docker is not available */}
                     {systemStatus.process_stats && systemStatus.process_stats.length > 0 && (
                       <div className="border-t pt-4">
-                        <h4 className="font-medium mb-3">Application Processes</h4>
+                        <h4 className="font-medium mb-3">{t('systemPage.application_processes', t('systemPage.application_processes', 'Application Processes'))}</h4>
                         <div className="space-y-2">
                           {systemStatus.process_stats.map((process) => (
                             <div key={process.pid} className="p-3 border rounded-lg space-y-2">
@@ -506,11 +509,11 @@ const SystemPage: React.FC = () => {
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                  <span className="text-muted-foreground">CPU: </span>
+                                  <span className="text-muted-foreground">{t('systemPage.cpu', t('systemPage.cpu', 'CPU: '))}</span>
                                   <span className="font-medium">{process.cpu_percent}%</span>
                                 </div>
                                 <div>
-                                  <span className="text-muted-foreground">Memory: </span>
+                                  <span className="text-muted-foreground">{t('systemPage.memory', t('systemPage.memory', 'Memory: '))}</span>
                                   <span className="font-medium">{process.memory_percent}%</span>
                                 </div>
                               </div>
@@ -530,47 +533,47 @@ const SystemPage: React.FC = () => {
           {systemStatus?.resources && (
             <Card>
               <CardHeader>
-                <CardTitle>System Resources</CardTitle>
-                <CardDescription>Detailed resource utilization metrics</CardDescription>
+                <CardTitle>{t('systemPage.system_resources', t('systemPage.system_resources', 'System Resources'))}</CardTitle>
+                <CardDescription>{t('systemPage.detailed_resource_utilization_metrics', t('systemPage.detailed_resource_utilization_metrics', 'Detailed resource utilization metrics'))}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>CPU Cores</span>
+                      <span>{t('systemPage.cpu_cores', t('systemPage.cpu_cores', 'CPU Cores'))}</span>
                       <span className="font-medium">{systemStatus.resources.cpu_count}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Total Memory</span>
+                      <span>{t('systemPage.total_memory', t('systemPage.total_memory', 'Total Memory'))}</span>
                       <span className="font-medium">{systemStatus.resources.memory_total_gb} GB</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Available Memory</span>
+                      <span>{t('systemPage.available_memory', t('systemPage.available_memory', 'Available Memory'))}</span>
                       <span className="font-medium">{systemStatus.resources.memory_available_gb} GB</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Disk Usage</span>
+                      <span>{t('systemPage.disk_usage', t('systemPage.disk_usage', 'Disk Usage'))}</span>
                       <span className="font-medium">{systemStatus.resources.disk_usage}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Total Disk</span>
+                      <span>{t('systemPage.total_disk', t('systemPage.total_disk', 'Total Disk'))}</span>
                       <span className="font-medium">{systemStatus.resources.disk_total_gb} GB</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Free Disk</span>
+                      <span>{t('systemPage.free_disk', t('systemPage.free_disk', 'Free Disk'))}</span>
                       <span className="font-medium">{systemStatus.resources.disk_free_gb} GB</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Network Sent</span>
+                    <span>{t('systemPage.network_sent', t('systemPage.network_sent', 'Network Sent'))}</span>
                     <span className="font-medium">{systemStatus.resources.network_sent_mb} MB</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Network Received</span>
+                    <span>{t('systemPage.network_received', t('systemPage.network_received', 'Network Received'))}</span>
                     <span className="font-medium">{systemStatus.resources.network_recv_mb} MB</span>
                   </div>
                 </div>
@@ -582,8 +585,8 @@ const SystemPage: React.FC = () => {
         <TabsContent value="logs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recent System Logs</CardTitle>
-              <CardDescription>Latest system events and activities</CardDescription>
+              <CardTitle>{t('systemPage.recent_system_logs', t('systemPage.recent_system_logs', 'Recent System Logs'))}</CardTitle>
+              <CardDescription>{t('systemPage.latest_system_events_and_activities', t('systemPage.latest_system_events_and_activities', 'Latest system events and activities'))}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -610,8 +613,8 @@ const SystemPage: React.FC = () => {
         <TabsContent value="tests" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Test Suite</CardTitle>
-              <CardDescription>Run automated tests and view results</CardDescription>
+              <CardTitle>{t('systemPage.test_suite', t('systemPage.test_suite', 'Test Suite'))}</CardTitle>
+              <CardDescription>{t('systemPage.run_automated_tests_and_view_results', t('systemPage.run_automated_tests_and_view_results', 'Run automated tests and view results'))}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-4">
@@ -621,7 +624,7 @@ const SystemPage: React.FC = () => {
                   className="flex items-center space-x-2"
                 >
                   <Play className="h-4 w-4" />
-                  <span>{isRunningTests ? 'Running Tests...' : 'Run Tests'}</span>
+                  <span>{isRunningTests ? 'Running Tests...' : t('systemPage.run_tests', 'Run Tests')}</span>
                 </Button>
                 
                 {isRunningTests && (
@@ -641,7 +644,7 @@ const SystemPage: React.FC = () => {
                           <CheckCircle className="h-4 w-4 text-green-500" />
                           <span className="text-2xl font-bold text-green-500">{testResults.passed}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">Passed</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.passed', t('systemPage.passed', 'Passed'))}</p>
                       </CardContent>
                     </Card>
                     
@@ -651,7 +654,7 @@ const SystemPage: React.FC = () => {
                           <XCircle className="h-4 w-4 text-red-500" />
                           <span className="text-2xl font-bold text-red-500">{testResults.failed}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">Failed</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.failed', t('systemPage.failed', 'Failed'))}</p>
                       </CardContent>
                     </Card>
                     
@@ -661,7 +664,7 @@ const SystemPage: React.FC = () => {
                           <Clock className="h-4 w-4 text-yellow-500" />
                           <span className="text-2xl font-bold text-yellow-500">{testResults.skipped}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">Skipped</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.skipped', t('systemPage.skipped', 'Skipped'))}</p>
                       </CardContent>
                     </Card>
                     
@@ -671,13 +674,13 @@ const SystemPage: React.FC = () => {
                           <Shield className="h-4 w-4 text-primary" />
                           <span className="text-2xl font-bold text-primary">{testResults.coverage}%</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">Coverage</p>
+                        <p className="text-sm text-muted-foreground">{t('systemPage.coverage', t('systemPage.coverage', 'Coverage'))}</p>
                       </CardContent>
                     </Card>
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="font-medium">Test Details</h4>
+                    <h4 className="font-medium">{t('systemPage.test_details', t('systemPage.test_details', 'Test Details'))}</h4>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {testResults.details.map((test, index) => (
                         <div key={index} className="flex items-center justify-between p-2 border rounded">
@@ -703,8 +706,8 @@ const SystemPage: React.FC = () => {
         <TabsContent value="actions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common system maintenance tasks</CardDescription>
+              <CardTitle>{t('systemPage.quick_actions', t('systemPage.quick_actions', 'Quick Actions'))}</CardTitle>
+              <CardDescription>{t('systemPage.common_system_maintenance_tasks', t('systemPage.common_system_maintenance_tasks', 'Common system maintenance tasks'))}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
@@ -714,7 +717,7 @@ const SystemPage: React.FC = () => {
                   className="h-20 flex flex-col space-y-2"
                 >
                   <RotateCcw className="h-6 w-6" />
-                  <span>Restart Services</span>
+                  <span>{t('systemPage.restart_services', t('systemPage.restart_services', 'Restart Services'))}</span>
                 </Button>
                 
                 <Button 
@@ -723,7 +726,7 @@ const SystemPage: React.FC = () => {
                   className="h-20 flex flex-col space-y-2"
                 >
                   <Download className="h-6 w-6" />
-                  <span>Create Backup</span>
+                  <span>{t('systemPage.create_backup', t('systemPage.create_backup', 'Create Backup'))}</span>
                 </Button>
                 
                 <Button 
@@ -732,7 +735,7 @@ const SystemPage: React.FC = () => {
                   className="h-20 flex flex-col space-y-2"
                 >
                   <Database className="h-6 w-6" />
-                  <span>Optimize Database</span>
+                  <span>{t('systemPage.optimize_database', t('systemPage.optimize_database', 'Optimize Database'))}</span>
                 </Button>
                 
                 <Button 
@@ -741,7 +744,7 @@ const SystemPage: React.FC = () => {
                   className="h-20 flex flex-col space-y-2"
                 >
                   <Settings className="h-6 w-6" />
-                  <span>Toggle Maintenance</span>
+                  <span>{t('systemPage.toggle_maintenance', t('systemPage.toggle_maintenance', 'Toggle Maintenance'))}</span>
                 </Button>
               </div>
             </CardContent>

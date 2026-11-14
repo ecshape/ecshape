@@ -111,7 +111,7 @@
 }
 @media (min-width: 1024px) { .tr-body { padding-bottom: 0; } }
 
-.tr-route { animation: trRoute .2s var(--tr-ease) both; }
+.tr-route { animation: trRoute .2s var(--tr-ease) backwards; }
 @keyframes trRoute { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Phone bottom bar */
@@ -136,7 +136,7 @@
   transform: translateY(110%); transition: transform .26s var(--tr-ease);
 }
 .tr-more[data-open="true"] .tr-more-panel { transform: none; }
-.tr-more[data-open="true"] .tr-more-item { animation: trSoftIn .2s var(--tr-ease) both; animation-delay: calc(var(--i, 0) * 12ms + 60ms); }
+.tr-more[data-open="true"] .tr-more-item { animation: trSoftIn .2s var(--tr-ease) backwards; animation-delay: calc(var(--i, 0) * 12ms + 60ms); }
 @keyframes trSoftIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .tr-more-item {
   display: flex; flex-direction: column; align-items: center; gap: .45rem; min-height: 5rem; padding: .8rem .4rem; border-radius: 1.2rem;
@@ -258,7 +258,7 @@
 .tr-tabs { position: sticky; top: 0; z-index: 30; margin-inline: -1rem; padding: .5rem 1rem .75rem; background: linear-gradient(hsl(var(--background)) 75%, transparent); }
 @media (min-width: 640px) { .tr-tabs { margin-inline: -1.5rem; padding-inline: 1.5rem; } }
 @media (min-width: 1024px) { .tr-tabs { margin-inline: -2rem; padding-inline: 2rem; } }
-.tr-tabpanel { animation: trSoftIn .2s var(--tr-ease) both; }
+.tr-tabpanel { animation: trSoftIn .2s var(--tr-ease) backwards; }
 
 /* Hero (client profile) */
 .tr-hero { overflow: hidden; padding: 1.25rem; }
@@ -376,7 +376,7 @@
 .tr-pick-count { position: absolute; bottom: .5rem; inset-inline-start: .5rem; }
 
 /* Toast-like inline banners */
-.tr-banner { display: flex; align-items: flex-start; gap: .7rem; padding: .85rem 1rem; border-radius: 1.1rem; font-size: .9rem; animation: trSoftIn .2s var(--tr-ease) both; }
+.tr-banner { display: flex; align-items: flex-start; gap: .7rem; padding: .85rem 1rem; border-radius: 1.1rem; font-size: .9rem; animation: trSoftIn .2s var(--tr-ease) backwards; }
 .tr-banner--error { background: hsl(var(--tr-bad) / .12); color: hsl(var(--tr-bad)); box-shadow: inset 0 0 0 1px hsl(var(--tr-bad) / .3); }
 .tr-banner--ok { background: hsl(var(--tr-ok) / .12); color: hsl(var(--tr-ok)); box-shadow: inset 0 0 0 1px hsl(var(--tr-ok) / .3); }
 
@@ -387,7 +387,7 @@
 .tr-food[aria-pressed="true"] { background: hsl(var(--primary) / .09); }
 .tr-food-check { display: grid; flex: none; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 9999px; box-shadow: inset 0 0 0 1.5px hsl(var(--muted-foreground) / .45); transition: background-color var(--tr-fast), box-shadow var(--tr-fast); }
 .tr-food[aria-pressed="true"] .tr-food-check { background: hsl(var(--primary)); box-shadow: none; color: #fff; }
-.tr-tag { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .4rem .3rem .75rem; border-radius: 9999px; font-size: .82rem; font-weight: 600; background: hsl(var(--primary) / .12); color: hsl(var(--foreground)); animation: trSoftIn .18s var(--tr-ease) both; }
+.tr-tag { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .4rem .3rem .75rem; border-radius: 9999px; font-size: .82rem; font-weight: 600; background: hsl(var(--primary) / .12); color: hsl(var(--foreground)); animation: trSoftIn .18s var(--tr-ease) backwards; }
 .tr-tag button { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 9999px; }
 .tr-tag button:hover { background: hsl(var(--tr-bad) / .15); color: hsl(var(--tr-bad)); }
 
@@ -444,10 +444,10 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
 /* The trainee kit (tp-*) and portal buttons are springy by default; inside the trainer shell they stay subtle. */
 .tr-root .tp-press { transition: transform var(--tr-fast) var(--tr-ease), background-color var(--tr-fast), color var(--tr-fast), box-shadow var(--tr-fast), opacity var(--tr-fast); }
 .tr-root .tp-press:active { transform: scale(.98); transition-duration: .06s; }
-.tr-root .tp-rise { animation: trSoftIn .24s var(--tr-ease) both; animation-delay: calc(var(--i, 0) * 25ms); }
-.tr-root .tp-pop { animation: trSoftIn .2s var(--tr-ease) both; }
-.tr-root .tp-screen { animation: trSoftIn .2s var(--tr-ease) both; }
-.tr-root .ec-stagger > * { animation: trSoftIn .24s var(--tr-ease) both; }
+.tr-root .tp-rise { animation: trSoftIn .24s var(--tr-ease) backwards; animation-delay: calc(var(--i, 0) * 25ms); }
+.tr-root .tp-pop { animation: trSoftIn .2s var(--tr-ease) backwards; }
+.tr-root .tp-screen { animation: trSoftIn .2s var(--tr-ease) backwards; }
+.tr-root .ec-stagger > * { animation: trSoftIn .24s var(--tr-ease) backwards; }
 .tr-root .ec-btn--fill::before { transition: transform .26s var(--tr-ease); }
 .tr-root .ec-btn:hover > svg:last-child:not(:first-child) { transform: translateX(calc(var(--ec-nudge, 3px) * .66)); }
 .tr-root .card-hover { transition: transform var(--tr-med) var(--tr-ease), box-shadow var(--tr-med) var(--tr-ease), border-color var(--tr-fast); }
@@ -573,3 +573,7 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
 .tr-blob[data-phase="settle"], .tr-hblob[data-phase="settle"] {
   transition: transform .26s var(--tr-ease), height .26s var(--tr-ease), width .26s var(--tr-ease), opacity var(--tr-fast);
 }
+
+/* Entrance animations use fill "backwards", never "both": a filled transform animation makes the element the
+   containing block of every position:fixed child (rest timer, celebration, floating start button ended up inside the
+   page instead of on the screen — A2A trainee F1). The end state equals the element's own style, so nothing changes. */

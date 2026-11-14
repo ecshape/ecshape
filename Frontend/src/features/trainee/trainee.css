@@ -105,11 +105,11 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 @keyframes tpShimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 /* Entrances */
-.tp-rise { animation: tpRise .6s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 55ms); }
+.tp-rise { animation: tpRise .6s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 55ms); }
 @keyframes tpRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-.tp-pop { animation: tpPop .5s var(--ease-spring) both; }
+.tp-pop { animation: tpPop .5s var(--ease-spring) backwards; }
 @keyframes tpPop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
-.tp-screen { animation: tpScreen .42s var(--ease-out) both; }
+.tp-screen { animation: tpScreen .42s var(--ease-out) backwards; }
 @keyframes tpScreen { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* Rings and bars */

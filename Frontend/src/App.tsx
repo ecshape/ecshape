@@ -108,11 +108,8 @@ const RedirectGate = () => {
     };
   }, [location.pathname, navigate]);
   if (!checked) return <SiteFallback />;
-  return (
-    <ProtectedRoute>
-      <NotFound />
-    </ProtectedRoute>
-  );
+  // Visitors get the 404 page too (not the login page): unknown public URLs must answer "not found" (A2A site #5)
+  return <NotFound />;
 };
 
 const queryClient = new QueryClient({

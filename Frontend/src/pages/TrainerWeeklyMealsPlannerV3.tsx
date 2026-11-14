@@ -398,7 +398,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [viewRes, summaryRes] = useV3MockBackend
+      // Promise.all: the two fetches used to be destructured un-awaited ("viewRes.json is not a function", A2A cross B3)
+      const [viewRes, summaryRes] = await Promise.all(useV3MockBackend
         ? [
             fetch(`${API_BASE_URL}/v3/meals-mock/day?date=${planLoadDate}`),
             fetch(`${API_BASE_URL}/v3/meals-mock/day/summary?date=${planLoadDate}`),
@@ -410,7 +411,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
             fetch(`${API_BASE_URL}/v3/meals/day/summary?date=${planLoadDate}&client_id=${clientId}`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
-          ];
+          ]);
       if (!viewRes.ok) {
         throw new Error((await viewRes.json().catch(() => null))?.detail || `HTTP ${viewRes.status}`);
       }

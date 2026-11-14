@@ -240,7 +240,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
   else if (!started) {
     fab = (
       <button type="button" onClick={startSession} className="tr-grad tp-press inline-flex min-h-[3.4rem] items-center gap-2.5 rounded-full px-7 text-base font-extrabold shadow-[0_18px_40px_-14px_rgba(216,54,30,.9)]">
-        <Play className="h-5 w-5 fill-current rtl:-scale-x-100" />{tt('hero.title')}
+        <Play className="h-5 w-5 fill-current" />{tt('hero.title')}
       </button>
     );
   } else if (!exDone) {
@@ -271,7 +271,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
             <Back className="h-5 w-5" />
           </button>
           <p className="min-w-0 flex-1 text-center font-semibold" aria-live="polite">
-            <span dir="ltr" className="tp-num text-lg">{tt('player.of', { i: i + 1, n: exercises.length })}</span>
+            <span className="tp-num text-lg">{tt('player.of', { i: i + 1, n: exercises.length })}</span>
           </p>
           <div className="tr-stage-nav">
             <button type="button" className="tp-press" onClick={() => go(i - 1)} disabled={i === 0} aria-label={tt('player.prev')}><ChevronUp className="h-5 w-5" /></button>
@@ -405,7 +405,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
               <span className="text-sm text-muted-foreground">{tt('player.rest')}</span>
               <span className="tp-num flex-1 text-center text-2xl" dir="ltr">{fmtClock(restFor(ex))}</span>
               <button type="button" onClick={() => startRest(ex)} className="tp-btn tp-btn--sm tp-press !min-h-[2.4rem] bg-primary/15 text-primary" aria-label={tt('player.startRest')}>
-                <Play className="h-4 w-4 fill-current rtl:-scale-x-100" /><span className="max-[359px]:sr-only">{tt('player.restStart')}</span>
+                <Play className="h-4 w-4 fill-current" /><span className="max-[359px]:sr-only">{tt('player.restStart')}</span>
               </button>
             </div>
           </div>

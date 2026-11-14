@@ -50,7 +50,7 @@ const ExploreScreen: React.FC = () => {
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="tp-card tp-rise p-4 lg:sticky lg:top-6" style={{ ['--i' as string]: 2 }}>
+        <aside className="tp-card tp-rise min-w-0 p-4 lg:sticky lg:top-6" style={{ ['--i' as string]: 2 }}>
           <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             {tt('explore.byMuscle')}
             <InfoTip label={tt('explore.byMuscle')}>{tt('explore.byMuscleHelp')}</InfoTip>
@@ -58,7 +58,7 @@ const ExploreScreen: React.FC = () => {
           <BodyMap
             load={{}}
             size="md"
-            className="mx-auto !w-full max-w-[16rem]"
+            className="mx-auto !w-full max-w-[13rem] lg:max-w-[16rem]"
             selected={selected}
             onPick={(r) => pick(REGION_MUSCLE[r])}
             labelFor={(r) => regionLabel(tt, r)}
@@ -74,7 +74,7 @@ const ExploreScreen: React.FC = () => {
           </div>
         </aside>
 
-        <section>
+        <section className="min-w-0">
           <label className="relative block">
             <span className="sr-only">{tt('explore.search')}</span>
             <Search className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden />

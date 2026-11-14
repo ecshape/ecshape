@@ -148,7 +148,7 @@ const HistoryScreen: React.FC = () => {
           </div>
         </section>
 
-        <section>
+        <section className="min-w-0">
           <div className="mb-3 flex items-center gap-2">
             <h2 className="tp-title text-[1.9rem] sm:text-4xl">{picked ? fmtDate(picked, { weekday: 'long', day: 'numeric', month: 'long' }) : tt('history.list')}</h2>
             {picked && <button type="button" onClick={() => setPicked(null)} className="tp-chip tp-press ms-auto">{tt('history.showMonth')}</button>}
@@ -264,7 +264,7 @@ export const SessionDetail: React.FC<{ sessionId: number }> = ({ sessionId }) =>
         {Object.keys(load).length > 0 && (
           <div className="tp-card tp-rise mt-3 p-4" style={{ ['--i' as string]: 3 }}>
             <p className="tp-label mb-2">{tt('routine.muscles')}</p>
-            <BodyMap load={load} size="md" className="mx-auto !w-56" />
+            <BodyMap load={load} size="md" className="mx-auto !w-44" />
           </div>
         )}
 

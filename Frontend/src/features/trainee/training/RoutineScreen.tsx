@@ -114,7 +114,7 @@ const RoutineScreen: React.FC<{ dayId: number }> = ({ dayId }) => {
           <h2 className="tp-title text-[1.9rem] sm:text-4xl">{tt('routine.exercises')}</h2>
           {exs.length > 0 && (
             <button type="button" onClick={() => start()} className="tp-btn tp-btn--primary tp-btn--sm tp-press">
-              <Play className="h-4 w-4 fill-current rtl:-scale-x-100" />{inProgress ? tt('routine.continue') : tt('routine.start')}
+              <Play className="h-4 w-4 fill-current" />{inProgress ? tt('routine.continue') : tt('routine.start')}
             </button>
           )}
         </div>
@@ -200,7 +200,7 @@ const RoutineScreen: React.FC<{ dayId: number }> = ({ dayId }) => {
       {exs.length > 0 && (
         <div className="tr-float">
           <button type="button" onClick={() => start()} className="tr-grad tp-press inline-flex min-h-[3.4rem] items-center gap-2.5 rounded-full px-7 text-base font-extrabold shadow-[0_18px_40px_-14px_rgba(216,54,30,.9)]">
-            <Play className="h-5 w-5 fill-current rtl:-scale-x-100" />
+            <Play className="h-5 w-5 fill-current" />
             {inProgress ? tt('hero.continueTitle') : tt('hero.title')}
           </button>
         </div>

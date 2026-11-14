@@ -67,8 +67,8 @@ const MeasuresScreen: React.FC = () => {
             {tt('measures.pick')}
             <InfoTip label={tt('measures.pick')}>{tt('measures.pickHelp')}</InfoTip>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 min-[480px]:grid-cols-3 lg:grid-cols-7">
-            {METRICS.map((m, i) => {
+          <div className="grid grid-cols-2 gap-2.5 min-[480px]:grid-cols-3 lg:grid-cols-4">
+            {METRICS.filter((m) => m === 'weight' || series(m).length > 0).map((m, i) => {
               const s = series(m);
               const v = s[s.length - 1]?.v;
               const d = s.length > 1 ? s[s.length - 1].v - s[0].v : null;
@@ -78,7 +78,7 @@ const MeasuresScreen: React.FC = () => {
                   type="button"
                   onClick={() => setMetric(m)}
                   aria-pressed={metric === m}
-                  className={cn('tp-card tp-press tp-rise p-3 text-start', metric === m && 'ring-2 ring-primary', !s.length && 'opacity-55')}
+                  className={cn('tp-card tp-press tp-rise p-3 text-start', metric === m && 'ring-2 ring-primary')}
                   style={{ ['--i' as string]: 2 + i }}
                 >
                   <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">

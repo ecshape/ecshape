@@ -97,8 +97,8 @@ const Figure: React.FC<{
         const i = n++;
         const common = {
           className: cn('bm-region', hit && 'bm-hit', animate && hit && 'bm-anim', onPick && 'bm-pick', sel && 'bm-sel'),
-          style: { ['--v' as string]: sel ? 1 : 0.3 + 0.7 * v, ['--d' as string]: `${(i % 10) * 40}ms` } as React.CSSProperties,
-          fill: hit ? `url(#${gid})` : undefined,
+          // Inline style (not the fill attribute) so it wins over the neutral .bm-region fill.
+          style: { ['--v' as string]: sel ? 1 : 0.3 + 0.7 * v, ['--d' as string]: `${(i % 10) * 40}ms`, ...(hit ? { fill: `url(#${gid})` } : {}) } as React.CSSProperties,
         };
         if (!onPick) return <g key={r} {...common}>{paths.map((d) => <path key={d} d={d} />)}</g>;
         return (

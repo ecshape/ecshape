@@ -88,7 +88,7 @@ const TrainingScreen: React.FC = () => {
           </span>
         </span>
         <span className="tr-play relative z-[1]" aria-hidden>
-          {upNext.kind === 'done' ? <Check className="h-6 w-6" /> : <Play className="h-6 w-6 fill-current rtl:-scale-x-100" />}
+          {upNext.kind === 'done' ? <Check className="h-6 w-6" /> : <Play className="h-6 w-6 fill-current" />}
         </span>
       </button>
 

@@ -4,7 +4,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import { renderSite } from './render';
+import { renderSite, WA_SVG } from './render';
 import { API_BASE_URL } from '../config/api';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -78,8 +78,8 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     const pathAttr = path ? ` data-ec-path="${path.replace(/"/g, '&quot;')}"` : '';
     const icon = btn.getAttribute('data-icon');
     let iconHTML = '';
-    if (icon === 'wa') iconHTML = '<span class="btn__icon"><img src="/site/photos/icon-whatsapp.png" alt=""></span>';
-    else if (icon) { const a = rtl ? ARROW_RTL : ARROW_LTR; iconHTML = `<span class="btn__icon">${a}${a}</span>`; }
+    if (icon === 'wa') iconHTML = `<span class="btn__icon btn__icon--wa" aria-hidden="true">${WA_SVG}</span>`;
+    else if (icon) { const a = rtl ? ARROW_RTL : ARROW_LTR; iconHTML = `<span class="btn__icon" aria-hidden="true">${a}${a}</span>`; }
     btn.innerHTML = '<span class="btn__fill" aria-hidden="true"></span>' +
       `<span class="btn__label"><span data-text="${text.replace(/"/g, '&quot;')}"${pathAttr}>${escHtml(text)}</span></span>${iconHTML}`;
     btn.setAttribute('aria-label', btn.getAttribute('aria-label') || text);
@@ -167,14 +167,65 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     if (wa) wa.classList.toggle('is-on', y > innerHeight * 0.8);
   };
 
+  /* ------------------------------------------------------ overlay plumbing */
+  // One lock for every overlay (menu, lead form): Lenis stops AND native scroll is blocked (touch scrolling bypasses
+  // Lenis, and html.ec-site-active forces overflow visible, so the lock class must out-rank it).
+  let locks = 0;
+  const lockScroll = (lock) => {
+    locks = Math.max(0, locks + (lock ? 1 : -1));
+    const on_ = locks > 0;
+    if (on_ === html.classList.contains('ec-locked')) return;
+    if (on_) {
+      const sbw = window.innerWidth - html.clientWidth;
+      if (sbw > 0) html.style.setProperty('--ec-sbw', `${sbw}px`);
+      html.classList.add('ec-locked');
+      if (lenis) lenis.stop();
+    } else {
+      html.classList.remove('ec-locked');
+      html.style.removeProperty('--ec-sbw');
+      if (lenis) lenis.start();
+    }
+  };
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([tabindex="-1"]), textarea, select, [tabindex]:not([tabindex="-1"])';
+  const focusables = (els) => els.flatMap((el) => [el, ...$$(FOCUSABLE, el)])
+    .filter((el) => el.matches(FOCUSABLE) && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+  // Everything except the open overlay (and what must stay reachable) becomes inert.
+  const setInert = (keep, on_) => {
+    Array.from(root.children).forEach((el) => {
+      if (keep.includes(el)) return;
+      if (on_) el.setAttribute('inert', ''); else el.removeAttribute('inert');
+    });
+  };
+  const trap = (e, els) => {
+    const list = focusables(els);
+    if (!list.length) return;
+    const first = list[0], last = list[list.length - 1];
+    const inside = els.some((el) => el.contains(document.activeElement));
+    if (e.shiftKey && (document.activeElement === first || !inside)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !inside)) { e.preventDefault(); first.focus(); }
+  };
+  const refocus = (el) => { if (el && el.isConnected && el.focus) { try { el.focus({ preventScroll: true }); } catch (err) { /* ignore */ } } };
+
   /* ---------------------------------------------------------------- menu */
+  let menuOpen = false;
+  let menuReturn = null;
   const setMenu = (open) => {
+    if (open === menuOpen) return;
+    menuOpen = open;
     menu.classList.toggle('is-open', open);
     menu.setAttribute('aria-hidden', String(!open));
     menuBtn.setAttribute('aria-expanded', String(open));
-    if (lenis) { open ? lenis.stop() : lenis.start(); } else { document.body.style.overflow = open ? 'hidden' : ''; }
+    lockScroll(open);
+    setInert([nav, menu], open);
+    if (open) {
+      menuReturn = document.activeElement;
+      menu.scrollTop = 0;
+      timers.push(setTimeout(() => { const a = $('nav a', menu); if (menuOpen && a) a.focus({ preventScroll: true }); }, 350));
+    } else if (menuReturn === menuBtn || menu.contains(document.activeElement)) {
+      refocus(menuBtn);
+    }
   };
-  on(menuBtn, 'click', () => setMenu(!menu.classList.contains('is-open')));
+  on(menuBtn, 'click', () => setMenu(!menuOpen));
   $$('a', menu).forEach((a) => on(a, 'click', () => setMenu(false)));
 
   /* ------------------------------------------------------- language switch */
@@ -184,29 +235,46 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
   const modal = $('#leadModal');
   const form = $('#leadForm');
   const done = $('.form-done', modal);
+  const modalScroll = $('.form-modal__scroll', modal);
+  const panel = $('.form-modal__panel', modal);
   let lastFocus = null;
+  let modalOpen = false;
   const openForm = (trigger) => {
+    if (modalOpen) return;
     lastFocus = trigger || document.activeElement;
     form.hidden = false; done.hidden = true;
     const program = trigger && trigger.getAttribute('data-program');
     if (program) { const r = form.querySelector(`input[name="program"][value="${program}"]`); if (r) r.checked = true; }
     form.dataset.source = (trigger && trigger.getAttribute('data-source')) || 'site';
+    setMenu(false);
+    modalOpen = true;
+    modalScroll.scrollTop = 0;
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
-    if (lenis) lenis.stop();
-    setMenu(false);
-    timers.push(setTimeout(() => form.querySelector('input[name="name"]').focus(), 350));
+    lockScroll(true);
+    setInert([modal], true);
+    // Phones: focusing the field would pop the keyboard over the sheet; focus the dialog title instead.
+    const first = window.matchMedia('(pointer: coarse)').matches ? $('#leadTitle', modal) : form.querySelector('input[name="name"]');
+    if (first === $('#leadTitle', modal)) first.setAttribute('tabindex', '-1');
+    timers.push(setTimeout(() => { if (modalOpen) first.focus({ preventScroll: true }); }, 380));
   };
   const closeForm = () => {
-    if (!modal.classList.contains('is-open')) return;
+    if (!modalOpen) return;
+    modalOpen = false;
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
-    if (lenis) lenis.start();
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    setInert([modal], false);
+    lockScroll(false);
+    refocus(lastFocus);
   };
   $$('[data-open-form]').forEach((b) => on(b, 'click', (e) => { e.preventDefault(); openForm(b); }));
   $$('[data-close-form]', modal).forEach((b) => on(b, 'click', closeForm));
-  on(window, 'keydown', (e) => { if (e.key === 'Escape') { setMenu(false); closeForm(); } });
+  on(window, 'keydown', (e) => {
+    if (e.key === 'Escape') { if (modalOpen) closeForm(); else setMenu(false); return; }
+    if (e.key !== 'Tab') return;
+    if (modalOpen) trap(e, [panel]);
+    else if (menuOpen) trap(e, [menuBtn, menu]);
+  });
   on(form, 'submit', async (e) => {
     e.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
@@ -227,6 +295,8 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
       const res = await fetch(`${API_BASE_URL}/public/leads`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       if (!res.ok) throw new Error(String(res.status));
       form.hidden = true; done.hidden = false; form.reset();
+      modalScroll.scrollTop = 0;
+      const h = $('h3', done); if (h) h.focus({ preventScroll: true });
       if (window.gtag) window.gtag('event', 'generate_lead', { source: data.source, program: data.program });
     } catch (err) {
       msg.textContent = btn.dataset.error;
@@ -302,7 +372,8 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
       alive = false;
       ac.abort();
       timers.forEach(clearTimeout);
-      html.classList.remove('ec-site-active');
+      html.classList.remove('ec-site-active', 'ec-locked');
+      html.style.removeProperty('--ec-sbw');
       document.body.style.overflow = '';
       root.innerHTML = '';
     };
@@ -355,7 +426,7 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
   const mqDesktop = window.matchMedia('(min-width: 901px)');
   // Photo frame sits on the trailing side: left in RTL, right in LTR.
   const CLIP_START = rtl ? 'inset(15% 58% 11% 6% round 28px)' : 'inset(15% 6% 11% 58% round 28px)';
-  const SHIFT = rtl ? -30 : 24;
+  const SHIFT = rtl ? -35 : 17; // xPercent that centres the trainer inside the start frame
   const ctx = gsap.context(() => {}, root);
   const mm = gsap.matchMedia();
 
@@ -431,6 +502,15 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
         },
       });
     });
+
+    // Result cards: the "after" frame wipes open and the kg badge pops
+    if ($('.results')) {
+      const st = { trigger: $('.results'), start: 'top 65%' };
+      gsap.from($$('.rcard__half--after img'), { clipPath: rtl ? 'inset(0 0 0 100%)' : 'inset(0 100% 0 0)', duration: 1.3, stagger: 0.08, ease: 'expo.inOut', scrollTrigger: st, clearProps: 'clipPath' });
+      gsap.from($$('.rcard__kg'), { scale: 0.6, autoAlpha: 0, duration: 0.9, stagger: 0.08, delay: 0.5, ease: 'back.out(2)', scrollTrigger: { ...st } });
+    }
+    // Manifesto art: chips drift in
+    if ($('.manifesto__art')) gsap.from($$('.mart__chip, .mart__photo', $('.manifesto__art')), { y: 50, autoAlpha: 0, duration: 1.2, stagger: 0.12, ease: EASE, scrollTrigger: { trigger: $('.manifesto__art'), start: 'top 80%' } });
 
     // Manifesto: words light up
     $$('[data-words]').forEach((p) => {
@@ -535,7 +615,8 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     ScrollTrigger.getAll().forEach((t) => t.kill());
     gsap.ticker.remove(raf);
     lenis.destroy();
-    html.classList.remove('ec-site-active');
+    html.classList.remove('ec-site-active', 'ec-locked');
+    html.style.removeProperty('--ec-sbw');
     document.body.style.overflow = '';
     root.classList.remove('has-loader');
     root.innerHTML = '';

@@ -10,6 +10,7 @@ import { CountUp, EmptyState, ErrorState, Screen, ScreenHeader, SectionTitle, Sh
 import WeighInSheet, { MEASURES } from './WeighInSheet';
 import { apiBlobUrl } from './api';
 import { fmtDate, fmtNum, fmtSigned, parseDate } from './format';
+import { ProgressNav } from './training/shared';
 
 type Range = '1m' | '3m' | 'all';
 
@@ -106,12 +107,14 @@ const ProgressScreen: React.FC = () => {
         eyebrow={t('trainee.progress.eyebrow')}
         title={t('trainee.progress.title')}
         actions={
-          <button type="button" onClick={() => setAdding(true)} className="tp-btn tp-btn--primary tp-press">
+          <button type="button" onClick={() => setAdding(true)} className="tp-btn tp-btn--primary tp-press max-sm:!h-12 max-sm:!w-12 max-sm:!min-h-0 max-sm:!rounded-full max-sm:!p-0" aria-label={t('trainee.progress.add')}>
             <Plus className="h-5 w-5" />
-            {t('trainee.progress.add')}
+            <span className="max-sm:sr-only">{t('trainee.progress.add')}</span>
           </button>
         }
+        className="!mb-4 lg:!mb-5"
       />
+      <ProgressNav className="tp-rise mb-6 max-w-md" />
 
       {progress.isError ? (
         <ErrorState onRetry={() => progress.refetch()} />

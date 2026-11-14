@@ -190,7 +190,7 @@ export function useDeleteSet() {
 export function useFinishWorkout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ dayId, completed = true }: { dayId: number; completed?: boolean }) => {
+    mutationFn: async ({ dayId, completed = true, startedMs }: { dayId: number; completed?: boolean; startedMs?: number }) => {
       const sessions = qc.getQueryData<WorkoutSession[]>(qk.sessions);
       let s = todaySessionFor(sessions, dayId);
       if (!s || s.id < 0) {
@@ -203,7 +203,7 @@ export function useFinishWorkout() {
         const created = await api<WorkoutSession>('/v2/workouts/sessions', { method: 'POST', body: { workout_day_id: dayId, started_at: startedAt } });
         id = created.id;
       }
-      const started = parseDate(startedAt)?.getTime() ?? Date.now();
+      const started = startedMs ?? parseDate(startedAt)?.getTime() ?? Date.now();
       const minutes = Math.max(1, Math.round((Date.now() - started) / 60000));
       return api<WorkoutSession>(`/v2/workouts/sessions/${id}`, {
         method: 'PUT',

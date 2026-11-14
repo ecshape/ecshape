@@ -51,6 +51,33 @@ router = APIRouter()
 
 # ============ Exercise Metadata ============
 
+_LIB_INDEX = None
+
+
+def _library_muscles(library_id, with_details: bool = False) -> dict:
+    """Muscles (and, for the day view, level / equipment / instructions) of a free-exercise-db exercise.
+
+    Additive fields for the trainee app body map; empty when the exercise is not from the library.
+    """
+    global _LIB_INDEX
+    if not library_id or str(library_id).startswith("wger:"):
+        return {}
+    if _LIB_INDEX is None:
+        try:
+            from app.routers.exercise_library import _library
+            _LIB_INDEX = {e["id"]: e for e in _library()}
+        except Exception:
+            _LIB_INDEX = {}
+    e = _LIB_INDEX.get(library_id)
+    if not e:
+        return {}
+    out = {"primary_muscles": e.get("primaryMuscles", []), "secondary_muscles": e.get("secondaryMuscles", [])}
+    if with_details:
+        out.update({"level": e.get("level"), "equipment": e.get("equipment"), "mechanic": e.get("mechanic"),
+                    "library_instructions": e.get("instructions", [])})
+    return out
+
+
 @router.get("/exercises/{exercise_id}", response_model=ExerciseResponse)
 def get_exercise_detail(
     exercise_id: int,
@@ -471,6 +498,7 @@ def get_workout_plans(
                                 "muscle_group": ex.exercise.muscle_group,
                                 "image_path": ex.exercise.image_path,
                                 "library_id": getattr(ex.exercise, "library_id", None),
+                                **_library_muscles(getattr(ex.exercise, "library_id", None)),
                             } if ex.exercise else None,
                         }
                         for ex in day.workout_exercises
@@ -770,6 +798,7 @@ def get_workout_day(
                 "instructions": ex.exercise.instructions,
                 "image_path": ex.exercise.image_path,
                 "library_id": getattr(ex.exercise, "library_id", None),
+                **_library_muscles(getattr(ex.exercise, "library_id", None), with_details=True),
             }
         
         exercises_data.append({

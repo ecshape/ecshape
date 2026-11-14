@@ -1,40 +1,47 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, Check, Clock, Dumbbell, NotebookPen, Play } from 'lucide-react';
+import { Check, Dumbbell, Play, Quote } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  activePlan, completedThisWeek, computeUpNext, lastCompleted, sortExercises, sortedDays, todaySessionFor, usePlans, useSessions,
-} from './hooks';
-import { CountUp, EmptyState, ErrorState, Screen, ScreenHeader, SectionTitle, Skel } from './ui';
-import { dayOf, fmtDate, fmtNum, fmtRelative, fmtWeekday, isoDay, parseDate, todayISO, weekStart } from './format';
-import { exerciseFrames } from '@/lib/exerciseLibrary';
+import { InfoTip } from '@/components/ui/info-tip';
+import { activePlan, completedThisWeek, computeUpNext, lastCompleted, sortExercises, sortedDays, todaySessionFor, usePlans, useSessions } from './hooks';
+import { EmptyState, ErrorState, Screen, Skel } from './ui';
+import { fmtNum, fmtRelative, parseDate, weekStart } from './format';
+import BodyMap from './BodyMap';
+import { dayGoal, dayLoad } from './training/muscles';
+import { freqLabel, goalLabel, TrainingNav, useTT } from './training/shared';
 
+/** Training tab: the coach's routines (workout days), SmartGym style, with a one-tap session start. */
 const TrainingScreen: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, tt } = useTT();
   const navigate = useNavigate();
-  const Forward = i18n.language?.startsWith('he') ? ArrowLeft : ArrowRight;
   const plans = usePlans(true);
   const sessions = useSessions(true);
   const plan = activePlan(plans.data);
   const days = sortedDays(plan);
   const upNext = computeUpNext(plan, sessions.data);
 
+  const header = (
+    <header className="mb-5">
+      <p className="tp-label tp-rise">{plan?.name || t('trainee.training.eyebrow')}</p>
+      <h1 className="tp-title tp-rise mt-2 text-[2.9rem] sm:text-6xl" style={{ ['--i' as string]: 1 }}>{tt('routines.title')}</h1>
+      <TrainingNav className="tp-rise mt-4 max-w-md" />
+    </header>
+  );
+
   if (plans.isLoading || sessions.isLoading) {
     return (
       <Screen>
-        <Skel className="mb-3 h-4 w-32" />
-        <Skel className="mb-8 h-16 w-64" />
-        <div className="grid grid-cols-3 gap-3"><Skel className="h-24" /><Skel className="h-24" /><Skel className="h-24" /></div>
-        <div className="mt-8 space-y-3">{[0, 1, 2].map((i) => <Skel key={i} className="h-28" />)}</div>
+        {header}
+        <Skel className="h-28" />
+        <div className="mt-4 grid gap-3 md:grid-cols-2">{[0, 1, 2].map((i) => <Skel key={i} className="h-36" />)}</div>
       </Screen>
     );
   }
-  if (plans.isError) return <Screen><ErrorState onRetry={() => plans.refetch()} /></Screen>;
+  if (plans.isError) return <Screen>{header}<ErrorState onRetry={() => plans.refetch()} /></Screen>;
   if (!plan || !days.length) {
     return (
       <Screen>
-        <ScreenHeader eyebrow={t('trainee.training.eyebrow')} title={t('trainee.training.title')} />
+        {header}
         <EmptyState icon={Dumbbell} title={t('trainee.today.noPlanTitle')} body={t('trainee.today.noPlanBody')} />
       </Screen>
     );
@@ -42,156 +49,91 @@ const TrainingScreen: React.FC = () => {
 
   const all = sessions.data ?? [];
   const dayIds = new Set(days.map((d) => d.id));
-  const ws = weekStart();
-  const completed = all.filter((s) => s.is_completed && dayIds.has(s.workout_day_id));
-  const doneThisWeek = completed.filter((s) => (parseDate(s.completed_at || s.started_at)?.getTime() ?? 0) >= ws.getTime()).length;
-  const doneDates = new Set(completed.map((s) => dayOf(s.completed_at || s.started_at)));
-  const startDate = parseDate(plan.start_date || plan.created_at);
-  const weekNo = startDate ? Math.max(1, Math.floor((Date.now() - startDate.getTime()) / (7 * 86400000)) + 1) : null;
+  const ws = weekStart().getTime();
+  const doneThisWeek = all.filter((s) => s.is_completed && dayIds.has(s.workout_day_id) && (parseDate(s.completed_at || s.started_at)?.getTime() ?? 0) >= ws).length;
   const target = plan.days_per_week || days.length;
-  const recent = [...completed].sort((a, b) => (parseDate(b.started_at)?.getTime() ?? 0) - (parseDate(a.started_at)?.getTime() ?? 0)).slice(0, 5);
-  const today = todayISO();
+  const heroDay = upNext.kind === 'none' ? days[0] : upNext.day;
+  const heroSub =
+    upNext.kind === 'continue' ? tt('hero.continue', { name: heroDay.name })
+      : upNext.kind === 'done' ? tt('hero.doneToday', { name: heroDay.name })
+        : tt('hero.next', { name: heroDay.name });
 
   return (
     <Screen>
-      <ScreenHeader eyebrow={t('trainee.training.eyebrow')} title={plan.name} />
-      {plan.description && <p className="-mt-3 mb-6 max-w-xl text-muted-foreground" dir="auto">{plan.description}</p>}
-
-      <div className="tp-rise grid grid-cols-3 gap-2 sm:gap-3" style={{ ['--i' as string]: 2 }}>
-        <Stat label={t('trainee.training.thisWeek')} value={<><CountUp value={doneThisWeek} /><span className="text-muted-foreground">/{fmtNum(target)}</span></>} />
-        <Stat
-          label={t('trainee.training.week')}
-          value={weekNo ? <><CountUp value={Math.min(weekNo, plan.duration_weeks || weekNo)} />{plan.duration_weeks ? <span className="text-muted-foreground">/{fmtNum(plan.duration_weeks)}</span> : null}</> : '–'}
-        />
-        <Stat label={t('trainee.training.total')} value={<CountUp value={completed.length} />} />
-      </div>
-
-      {/* Week strip */}
-      <div className="tp-card tp-rise mt-3 grid grid-cols-7 gap-1 p-2 sm:p-3" style={{ ['--i' as string]: 3 }} aria-label={t('trainee.training.weekStrip')}>
-        {Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + i);
-          const iso = isoDay(d);
-          const done = doneDates.has(iso);
-          const isToday = iso === today;
-          return (
-            <div key={iso} className={cn('flex flex-col items-center gap-1.5 rounded-2xl py-2', isToday && 'bg-foreground/[.06]')}>
-              <span className={cn('text-[11px] font-semibold', isToday ? 'text-primary' : 'text-muted-foreground')}>{fmtWeekday(d, 'narrow')}</span>
-              <span className={cn('grid h-8 w-8 place-items-center rounded-full text-sm font-bold', done ? 'bg-primary text-primary-foreground' : isToday ? 'ring-2 ring-primary/60' : 'bg-foreground/[.06] text-muted-foreground')}>
-                {done ? <Check className="h-4 w-4" /> : d.getDate()}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {header}
 
       {plan.notes && (
-        <div className="tp-card tp-rise mt-3 flex gap-3 p-4" style={{ ['--i' as string]: 4 }}>
-          <NotebookPen className="mt-0.5 h-5 w-5 flex-none text-primary" />
+        <figure className="tp-rise mb-5 flex gap-3" style={{ ['--i' as string]: 2 }}>
+          <Quote className="mt-1 h-5 w-5 flex-none text-primary rtl:-scale-x-100" aria-hidden />
           <div className="min-w-0">
-            <p className="tp-label">{t('trainee.training.coachNotes')}</p>
-            <p className="mt-1 whitespace-pre-line text-sm" dir="auto">{plan.notes}</p>
+            <p className="tp-label">{tt('routines.fromCoach')}</p>
+            <blockquote className="mt-1 line-clamp-4 whitespace-pre-line text-[1.05rem] italic leading-relaxed text-foreground/90" dir="auto">{plan.notes}</blockquote>
           </div>
-        </div>
+        </figure>
       )}
 
-      <SectionTitle>{t('trainee.training.days')}</SectionTitle>
+      <button
+        type="button"
+        onClick={() => navigate(upNext.kind === 'done' ? `/training/day/${heroDay.id}` : `/training/day/${heroDay.id}/session`)}
+        className="tr-hero tr-grad tp-press tp-rise flex w-full items-center gap-4 p-5 text-start sm:p-6"
+        style={{ ['--i' as string]: 3 }}
+      >
+        <span className="relative z-[1] min-w-0 flex-1">
+          <span className="block text-[1.45rem] font-extrabold leading-tight sm:text-2xl">
+            {upNext.kind === 'continue' ? tt('hero.continueTitle') : upNext.kind === 'done' ? tt('hero.doneTitle') : tt('hero.title')}
+          </span>
+          <span className="mt-1 block truncate text-sm text-white/85" dir="auto">{heroSub}</span>
+          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/20 px-2.5 py-1 text-xs font-bold">
+            <span dir="ltr">{fmtNum(doneThisWeek)}/{fmtNum(target)}</span> {tt('hero.thisWeek')}
+          </span>
+        </span>
+        <span className="tr-play relative z-[1]" aria-hidden>
+          {upNext.kind === 'done' ? <Check className="h-6 w-6" /> : <Play className="h-6 w-6 fill-current" />}
+        </span>
+      </button>
+
+      <div className="mb-3 mt-8 flex items-center gap-2">
+        <h2 className="tp-title text-[1.9rem] sm:text-4xl">{tt('routines.list')}</h2>
+        <InfoTip label={tt('routines.list')}>{tt('routines.listHelp')}</InfoTip>
+      </div>
       <div className="grid gap-3 md:grid-cols-2">
         {days.map((day, i) => {
-          const isNext = upNext.kind !== 'none' && upNext.day.id === day.id && upNext.kind !== 'done';
+          const exs = sortExercises(day);
+          const goal = dayGoal(exs);
+          const isNext = upNext.kind !== 'none' && upNext.kind !== 'done' && upNext.day.id === day.id;
           const live = todaySessionFor(all, day.id);
           const inProgress = live && !live.is_completed && live.set_completions.length > 0;
           const doneWeek = completedThisWeek(all, day.id);
           const last = lastCompleted(all, day.id);
-          const exs = sortExercises(day);
-          const sets = exs.reduce((n, e) => n + (e.target_sets || 0), 0);
           return (
             <button
               key={day.id}
               type="button"
               onClick={() => navigate(`/training/day/${day.id}`)}
-              className={cn('tp-card tp-press tp-rise group flex w-full flex-col p-4 text-start sm:p-5', isNext && 'ring-2 ring-primary')}
+              className={cn('tp-card tp-press tp-rise tr-routine w-full', isNext && 'ring-2 ring-primary/80')}
               style={{ ['--i' as string]: 4 + i }}
             >
-              <div className="flex items-start gap-4">
-                <span className={cn('tp-num grid h-14 w-14 flex-none place-items-center rounded-2xl text-2xl', doneWeek ? 'bg-primary text-primary-foreground' : 'bg-foreground/[.07]')} dir="ltr">
-                  {doneWeek ? <Check className="h-6 w-6" /> : String(i + 1).padStart(2, '0')}
+              <span className="flex-none rounded-2xl bg-foreground/[.04] p-1.5">
+                <BodyMap load={dayLoad(exs)} size="thumb" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="tr-goal block truncate">{goalLabel(tt, goal)}</span>
+                <span className="tp-title mt-0.5 block break-words text-[2.1rem]" dir="auto">{day.name}</span>
+                <span className="mt-1 block text-sm text-muted-foreground">{freqLabel(tt, plan)}</span>
+                <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="tp-chip">{t('trainee.common.exercises', { count: exs.length })}</span>
+                  {isNext && !inProgress && <span className="tp-chip tp-chip--primary">{t('trainee.today.upNext')}</span>}
+                  {inProgress && <span className="tp-chip tp-chip--primary">{t('trainee.today.inProgress')}</span>}
+                  {doneWeek && <span className="tp-chip tp-chip--ok"><Check className="h-3 w-3" />{t('trainee.training.doneThisWeek')}</span>}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="tp-title break-words text-[2rem]">{day.name}</h3>
-                    {isNext && !inProgress && <span className="tp-chip tp-chip--primary">{t('trainee.today.upNext')}</span>}
-                    {inProgress && <span className="tp-chip tp-chip--primary">{t('trainee.today.inProgress')}</span>}
-                    {doneWeek && <span className="tp-chip tp-chip--ok">{t('trainee.training.doneThisWeek')}</span>}
-                  </div>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {t('trainee.common.exercises', { count: exs.length })} · {t('trainee.common.sets', { count: sets })}
-                    {day.estimated_duration ? <> · <Clock className="mb-0.5 inline h-3.5 w-3.5" /> {t('trainee.common.minutes', { count: day.estimated_duration })}</> : null}
-                  </p>
-                </div>
-                <span className={cn('grid h-11 w-11 flex-none place-items-center rounded-full transition-colors', isNext ? 'bg-primary text-primary-foreground' : 'bg-foreground/[.07] group-hover:bg-foreground/[.12]')}>
-                  {isNext ? <Play className="h-4 w-4 fill-current" /> : <Forward className="h-4 w-4" />}
-                </span>
-              </div>
-              <p className="mt-3 line-clamp-1 text-sm text-foreground/75" dir="auto">
-                {exs.map((e) => e.exercise?.name || e.exercise_name).filter(Boolean).join(' · ')}
-              </p>
-              {(() => {
-                const thumbs = exs.map((e) => (e.exercise ? exerciseFrames(e.exercise)[0] : undefined)).filter((u): u is string => !!u).slice(0, 6);
-                return thumbs.length ? (
-                  <span className="mt-3 flex gap-1.5" aria-hidden>
-                    {thumbs.map((u) => <img key={u} src={u} alt="" loading="lazy" className="h-11 w-11 rounded-xl object-cover" />)}
-                  </span>
-                ) : null;
-              })()}
-              {last && <p className="mt-1 text-xs text-muted-foreground">{t('trainee.training.lastDone', { when: fmtRelative(last.completed_at || last.started_at) })}</p>}
+                {last && <span className="mt-1.5 block text-xs text-muted-foreground">{t('trainee.training.lastDone', { when: fmtRelative(last.completed_at || last.started_at) })}</span>}
+              </span>
             </button>
           );
         })}
       </div>
-
-      {recent.length > 0 && (
-        <>
-          <SectionTitle>{t('trainee.training.history')}</SectionTitle>
-          <div className="tp-card divide-y divide-border/50">
-            {recent.map((s) => {
-              const day = days.find((d) => d.id === s.workout_day_id);
-              const volume = s.set_completions.reduce((v, c) => v + (c.weight_used || 0) * (c.reps_completed || 0), 0);
-              return (
-                <div key={s.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="grid h-11 w-11 flex-none place-items-center rounded-2xl bg-foreground/[.06] text-center leading-none">
-                    <span>
-                      <span className="tp-num block text-lg">{parseDate(s.started_at)?.getDate()}</span>
-                      <span className="block text-[10px] text-muted-foreground">{fmtDate(s.started_at, { month: 'short' })}</span>
-                    </span>
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{day?.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t('trainee.common.sets', { count: s.set_completions.length })}
-                      {s.duration_minutes ? ` · ${t('trainee.common.minutes', { count: s.duration_minutes })}` : ''}
-                    </p>
-                  </div>
-                  {volume > 0 && (
-                    <span className="text-end">
-                      <span className="tp-num block text-lg leading-none">{fmtNum(volume)}</span>
-                      <span className="text-[11px] text-muted-foreground">{t('trainee.training.volumeKg')}</span>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
     </Screen>
   );
 };
-
-const Stat: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
-  <div className="tp-card px-3 py-4 sm:px-5">
-    <div className="tp-num text-[1.9rem] leading-none sm:text-4xl"><span dir="ltr" className="inline-block">{value}</span></div>
-    <div className="mt-1.5 truncate text-xs text-muted-foreground sm:text-sm">{label}</div>
-  </div>
-);
 
 export default TrainingScreen;

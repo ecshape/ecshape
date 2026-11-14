@@ -15,7 +15,7 @@ import PublicRoute from "./components/PublicRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import TrainingPage from "./pages/TrainingPage";
-import TrainingDayPage from "./pages/TrainingDayPage";
+import { ExplorePage, HistoryPage, MeasuresPage, RoutinePage, SessionDetailPage, SessionPage } from "./features/trainee/training/pages";
 import ProgressPage from "./pages/ProgressPage";
 import WorkoutDetailPage from "./pages/WorkoutDetailPage";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -331,14 +331,12 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/training/day/:dayId" 
-        element={
-          <ProtectedRoute>
-            <TrainingDayPage />
-          </ProtectedRoute>
-        } 
-      />
+      <Route path="/training/day/:dayId" element={<ProtectedRoute><RoutinePage /></ProtectedRoute>} />
+      <Route path="/training/day/:dayId/session" element={<ProtectedRoute><SessionPage /></ProtectedRoute>} />
+      <Route path="/training/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+      <Route path="/training/history/:sessionId" element={<ProtectedRoute><SessionDetailPage /></ProtectedRoute>} />
+      <Route path="/training/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
+      <Route path="/progress/measures" element={<ProtectedRoute><MeasuresPage /></ProtectedRoute>} />
       <Route 
         path="/progress" 
         element={

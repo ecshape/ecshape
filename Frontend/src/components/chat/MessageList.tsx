@@ -51,6 +51,7 @@ const MessageList: React.FC<Props> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
+  const lastTop = useRef(0);
   const prev = useRef<{ key: string; first?: string; last?: string; height: number; count: number }>({ key: '', height: 0, count: 0 });
   const known = useRef<Set<string>>(new Set());
   const fresh = useRef<Set<string>>(new Set());
@@ -101,6 +102,9 @@ const MessageList: React.FC<Props> = ({
     messages.forEach((m) => known.current.add(idOf(m)));
   });
 
+  // the thread (and its content node) only exists once loading / error placeholders are gone
+  const showsThread = !(loading && messages.length === 0) && !(error && messages.length === 0);
+
   // Images and cards grow after load: stay pinned to the bottom if the reader was there
   useEffect(() => {
     const content = contentRef.current;
@@ -111,13 +115,15 @@ const MessageList: React.FC<Props> = ({
     });
     ro.observe(content);
     return () => ro.disconnect();
-  }, [scrollToBottom, conversationKey]);
+  }, [scrollToBottom, conversationKey, showsThread]);
 
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-    atBottom.current = distance < 80;
+    // while a smooth scroll toward the bottom is running, stay pinned; only an upward scroll unpins
+    atBottom.current = distance < 80 || (atBottom.current && el.scrollTop >= lastTop.current - 2);
+    lastTop.current = el.scrollTop;
     setShowJump(distance > 320);
     if (atBottom.current && unseen) setUnseen(0);
     if (el.scrollTop < 160 && hasMore && !loadingOlder) {

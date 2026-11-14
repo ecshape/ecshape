@@ -91,7 +91,7 @@ const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, a
             <textarea
               ref={area}
               rows={1}
-              dir="auto"
+              dir={value ? 'auto' : undefined}
               value={value}
               disabled={disabled}
               onChange={(e) => onChange(e.target.value)}

@@ -12,7 +12,6 @@ import {
   Instagram,
   LayoutDashboard,
   Loader2,
-  MessageCircle,
   Plus,
   Repeat2,
   Save,
@@ -24,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StudioHeader } from '@/components/studio/StudioHeader';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -463,7 +463,7 @@ const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: Seo
     ogDescription: page.ogDescription || '',
     ogImage: page.image || '',
   };
-  const ctx: RankMathContext = { title: defaults.title, slug: '', path: `/home?lang=${lang}`, origin, html, mode: 'page' };
+  const ctx: RankMathContext = { title: defaults.title, slug: '', path: `/home?lang=${lang}`, origin, html, mode: 'page', lang };
   const analysis = useSeoAnalysis(seo, ctx);
 
   const change = (p: Partial<ArticleSeo>) => {
@@ -703,7 +703,7 @@ const Connections = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: 
         </label>
         <label className="ec-rm-field">
           <span className="ec-rm-label">
-            <MessageCircle size={15} />
+            <WhatsAppIcon size={15} />
             {t('studio.seo.whatsapp')}
           </span>
           <Input dir="ltr" value={draft.social?.whatsapp || ''} placeholder="972546683867" onChange={(e) => setDraft({ ...draft, social: { ...draft.social, whatsapp: e.target.value.replace(/[^\d]/g, '') } })} />

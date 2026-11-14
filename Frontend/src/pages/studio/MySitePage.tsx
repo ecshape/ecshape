@@ -492,6 +492,7 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
               onToggleSection={toggleSection}
               onAgent={(prompt) => askAgent(prompt)}
               langName={LANG_LABEL[lang]}
+              lang={lang}
             />
           ) : (
             <div className="ec-ms-empty">

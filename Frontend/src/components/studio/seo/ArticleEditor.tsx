@@ -51,6 +51,7 @@ import { cn } from '@/lib/utils';
 import { SITE_LANGS, type SiteLang } from '@/site/content';
 import { AiBriefCard, LiveArticleCanvas, useArticleGeneration, type GenerationResult } from './AiStudio';
 import { RankMathPanel, ScoreBadge, useSeoAnalysis, type RankMathContext } from './RankMathPanel';
+import { AgentDraft, plainText } from '@/components/studio/AgentDraft';
 
 type BlockType = 'p' | 'h2' | 'h3' | 'h4' | 'blockquote';
 const BLOCK_TYPES: BlockType[] = ['p', 'h2', 'h3', 'h4', 'blockquote'];
@@ -118,8 +119,9 @@ export const ArticleEditor = ({ article, lang, aiReady, aiEngine, aiModel, autoB
       coverAlt: draft.coverAlt,
       coverImage: draft.coverImage,
       mode: 'article',
+      lang: draft.lang,
     }),
-    [draft.title, draft.slug, draft.coverAlt, draft.coverImage, origin, html],
+    [draft.title, draft.slug, draft.coverAlt, draft.coverImage, origin, html, draft.lang],
   );
   const analysis = useSeoAnalysis(draft.seo, ctx);
 
@@ -396,7 +398,16 @@ export const ArticleEditor = ({ article, lang, aiReady, aiEngine, aiModel, autoB
             )}
             <label className="ec-rm-field ec-wp-excerpt">
               <span className="ec-rm-label">{t('studio.seo.editor.excerpt')}</span>
-              <Textarea dir="auto" rows={2} value={draft.excerpt} placeholder={t('studio.seo.editor.excerptPh')} onChange={(e) => patch({ excerpt: e.target.value })} />
+              <AgentDraft
+                kind="seo"
+                field="excerpt"
+                lang={draft.lang}
+                extra={{ article_title: draft.title, focus_keyword: draft.seo.focusKeyword, article_text: plainText(html) }}
+                value={draft.excerpt}
+                onChange={(v) => patch({ excerpt: v })}
+              >
+                <Textarea dir="auto" rows={2} value={draft.excerpt} placeholder={t('studio.seo.editor.excerptPh')} onChange={(e) => patch({ excerpt: e.target.value })} />
+              </AgentDraft>
             </label>
           </main>
 

@@ -12,6 +12,7 @@ import { getIn, parsePath } from '@/lib/siteContentOps';
 import type { SiteContent } from '@/site/content';
 import { isMultilinePath, type EcSelect } from '@/site/editProtocol';
 import { SITE_SECTIONS, isSharedPath } from '@/site/sections';
+import { AgentDraft } from '@/components/studio/AgentDraft';
 
 type Json = unknown;
 const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -60,7 +61,7 @@ const Label: React.FC<{ children: React.ReactNode; changed?: boolean }> = ({ chi
   </span>
 );
 
-const AutoText: React.FC<{ value: string; onChange: (v: string) => void; multiline: boolean; autoFocus?: boolean; dir?: string }> = ({ value, onChange, multiline, autoFocus, dir }) => {
+const AutoText: React.FC<{ value: string; onChange: (v: string) => void; multiline: boolean; autoFocus?: boolean; dir?: string; className?: string; readOnly?: boolean }> = ({ value, onChange, multiline, autoFocus, dir, className, readOnly }) => {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -75,7 +76,8 @@ const AutoText: React.FC<{ value: string; onChange: (v: string) => void; multili
     <textarea
       ref={ref}
       dir={dir}
-      className="ec-studio-input"
+      className={cn('ec-studio-input', className)}
+      readOnly={readOnly}
       rows={1}
       value={value}
       onChange={(e) => onChange(multiline ? e.target.value : e.target.value.replace(/\n/g, ' '))}
@@ -164,6 +166,8 @@ interface EditorCtx {
   onSet: (path: string, value: unknown, coalesce?: boolean) => void;
   onList: (listPath: string, op: ListOp, index: number) => void;
   focusPath?: string;
+  lang?: string;
+  sectionName?: string;
 }
 
 const ItemTools: React.FC<{ listPath: string; index: number; length: number; ctx: EditorCtx; compact?: boolean }> = ({ listPath, index, length, ctx, compact }) => {
@@ -206,7 +210,20 @@ const ValueEditor: React.FC<{ path: string; ctx: EditorCtx; label?: string }> = 
     return (
       <label className={cn('ec-studio-field', ctx.focusPath === path && 'is-focus')}>
         <Label changed={changed}>{name}</Label>
-        <AutoText dir={ctx.dir} value={value} multiline={isMultilinePath(path) || value.length > 90} onChange={(v) => ctx.onSet(path, v, true)} autoFocus={ctx.focusPath === path} />
+        {ctx.focusPath === path ? (
+          <AgentDraft
+            kind="site"
+            field="text"
+            lang={ctx.lang}
+            extra={{ role: humanize(key), section: ctx.sectionName, path }}
+            value={value}
+            onChange={(v) => ctx.onSet(path, isMultilinePath(path) || value.length > 90 ? v : v.replace(/\n+/g, ' '))}
+          >
+            <AutoText dir={ctx.dir} value={value} multiline={isMultilinePath(path) || value.length > 90} onChange={(v) => ctx.onSet(path, v, true)} autoFocus />
+          </AgentDraft>
+        ) : (
+          <AutoText dir={ctx.dir} value={value} multiline={isMultilinePath(path) || value.length > 90} onChange={(v) => ctx.onSet(path, v, true)} />
+        )}
       </label>
     );
   }
@@ -316,6 +333,8 @@ export interface SiteInspectorProps {
   onToggleSection: (key: string) => void;
   onAgent: (prompt: string) => void;
   langName: string;
+  /** Site language being edited (he / en / fr): inline Agent EC drafts are written in it */
+  lang?: string;
 }
 
 export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
@@ -323,9 +342,12 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
   const { select, content } = p;
   const Back = p.dir === 'rtl' ? ArrowRight : ArrowLeft;
   if (!select) return null;
-  const ctx: EditorCtx = { content, base: p.base, dir: p.dir, onSet: p.onSet, onList: p.onList, focusPath: select.kind === 'text' ? select.path : undefined };
   const group = select.path.split('.')[0];
   const sectionKey = SITE_SECTIONS.find((s) => (s.groups as string[]).includes(group))?.key || group;
+  const ctx: EditorCtx = {
+    content, base: p.base, dir: p.dir, onSet: p.onSet, onList: p.onList, focusPath: select.kind === 'text' ? select.path : undefined,
+    lang: p.lang, sectionName: p.sectionLabel(sectionKey),
+  };
   const kindLabel = t(`mysite.studio.kinds.${select.kind}`);
   const title = select.kind === 'section' ? p.sectionLabel(select.path) : humanize(select.path.split('.').pop() || '');
   const sub = select.kind === 'section' ? kindLabel : `${kindLabel} · ${p.sectionLabel(sectionKey)}`;
@@ -395,6 +417,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
           </>
         )}
 
+        {select.kind !== 'text' && (
         <button
           type="button"
           className="ec-studio-btn is-agent is-block"
@@ -409,6 +432,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
           <Sparkles className="h-4 w-4" />
           {t('mysite.studio.rewrite')}
         </button>
+        )}
       </div>
     </div>
   );

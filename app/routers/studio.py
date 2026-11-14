@@ -77,16 +77,24 @@ def ticket_dict(t: QaTicket, db: Session, with_comments: bool = False) -> Dict[s
     d = {
         "id": t.id, "title": t.title, "body": t.body, "page": t.page, "priority": t.priority,
         "status": t.status, "created_by": t.created_by,
-        "author": (db.query(User.full_name).filter(User.id == t.created_by).scalar() if t.created_by else None),
+        "author": None,
+        "author_avatar": None,
         "created_at": t.created_at.isoformat() if t.created_at else None,
         "updated_at": t.updated_at.isoformat() if t.updated_at else None,
     }
+    if t.created_by:
+        row = db.query(User.full_name, User.avatar_url).filter(User.id == t.created_by).first()
+        if row:
+            d["author"], d["author_avatar"] = row[0], row[1]
     comments = db.query(QaComment).filter(QaComment.ticket_id == t.id).order_by(QaComment.created_at).all()
     d["comment_count"] = len(comments)
     if with_comments:
-        names = {u.id: u.full_name for u in db.query(User).filter(User.id.in_({c.author_id for c in comments if c.author_id})).all()} if comments else {}
+        people = {u.id: u for u in db.query(User).filter(User.id.in_({c.author_id for c in comments if c.author_id})).all()} if comments else {}
         d["comments"] = [
-            {"id": c.id, "body": c.body, "author": names.get(c.author_id), "created_at": c.created_at.isoformat() if c.created_at else None}
+            {"id": c.id, "body": c.body,
+             "author": people[c.author_id].full_name if c.author_id in people else None,
+             "author_avatar": people[c.author_id].avatar_url if c.author_id in people else None,
+             "created_at": c.created_at.isoformat() if c.created_at else None}
             for c in comments
         ]
     return d

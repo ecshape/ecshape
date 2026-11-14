@@ -7,7 +7,11 @@
       "mealsFold": {
         "show": "Show details",
         "hide": "Hide details",
-        "doneSummary": "Logged · {{kcal}} kcal"
+        "doneSummary": "Logged · {{kcal}} kcal",
+        "eat": "Mark {{name}} as eaten",
+        "uneat": "Undo: {{name}} not eaten",
+        "ateAll": "I ate it all",
+        "ateRest": "I ate the rest"
       },
       "measureGuide": {
         "open": "How to measure: {{name}}",
@@ -99,7 +103,11 @@
       "mealsFold": {
         "show": "הצג פרטים",
         "hide": "הסתר פרטים",
-        "doneSummary": "נרשם · {{kcal}} קק״ל"
+        "doneSummary": "נרשם · {{kcal}} קק״ל",
+        "eat": "סמן ש{{name}} נאכל",
+        "uneat": "ביטול: {{name}} לא נאכל",
+        "ateAll": "אכלתי הכול",
+        "ateRest": "אכלתי את השאר"
       },
       "measureGuide": {
         "open": "איך מודדים: {{name}}",
@@ -191,7 +199,11 @@
       "mealsFold": {
         "show": "Voir le détail",
         "hide": "Masquer le détail",
-        "doneSummary": "Enregistré · {{kcal}} kcal"
+        "doneSummary": "Enregistré · {{kcal}} kcal",
+        "eat": "Marquer {{name}} comme mangé",
+        "uneat": "Annuler : {{name}} pas mangé",
+        "ateAll": "J'ai tout mangé",
+        "ateRest": "J'ai mangé le reste"
       },
       "measureGuide": {
         "open": "Comment mesurer : {{name}}",

@@ -10,9 +10,38 @@ export const parseGrams = (value: string): number => {
 
 export const normalizeQty = (v?: string | null) => (v && v.trim() ? v.trim() : '100g');
 
+const GRAMS_RE = /(\d+(?:[.,]\d+)?)\s*(?:g\b|gr\b|grams?\b|ml\b|גרם|גר׳|מ["״]ל)/i;
+/** The gram (or ml) amount written in a quantity text: "3 eggs or 200 g" -> 200. */
+export const gramsIn = (value: string): number | null => {
+  const m = value.match(GRAMS_RE);
+  const n = m ? parseFloat(m[1].replace(',', '.')) : NaN;
+  return Number.isFinite(n) ? n : null;
+};
+/** A count of pieces / portions in a quantity text (a number not followed by a gram unit): "3 eggs or 200 g" -> 3. */
+export const countIn = (value: string): number | null => {
+  // no regex lookbehind (unsupported before iOS 16.4): walk the numbers and check what follows each one
+  for (const m of value.matchAll(/\d+(?:[.,]\d+)?/g)) {
+    const after = value.slice((m.index ?? 0) + m[0].length);
+    if (/^\s*(?:g\b|gr\b|grams?\b|ml\b|גרם|גר׳|מ["״]ל)/i.test(after)) continue;
+    const n = parseFloat(m[0].replace(',', '.'));
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+};
+
 export const foodMacros = (food: V3FoodOption, qty?: string | null) => {
-  const grams = parseGrams(normalizeQty(qty));
-  const scale = food.measurement_type === 'per_portion' ? grams : grams / 100;
+  const q = normalizeQty(qty);
+  let scale: number;
+  if (food.measurement_type === 'per_portion') {
+    // portions: an explicit count; a gram-only amount converts through the serving weight, else one portion
+    // (a "120g" instruction used to count 120 portions, e.g. 9,480 kcal of bread)
+    const count = countIn(q);
+    const g = gramsIn(q);
+    const servingG = food.serving_size ? gramsIn(food.serving_size) : null;
+    scale = count ?? (g && servingG ? g / servingG : 1);
+  } else {
+    scale = (gramsIn(q) ?? parseGrams(q)) / 100;
+  }
   return {
     calories: (food.calories ?? 0) * scale,
     protein: (food.protein ?? 0) * scale,

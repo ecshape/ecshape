@@ -81,6 +81,53 @@ def _call(engine: Engine, prompt: str) -> str:
     return (body.get("choices") or [{}])[0].get("message", {}).get("content") or ""
 
 
+MYMEMORY_URL = "https://api.mymemory.translated.net/get"
+MM_LANG = {"he": "he-IL", "fr": "fr-FR", "en": "en-GB"}
+
+
+def _mm_piece(text: str, src: str, dst: str) -> Optional[str]:
+    import urllib.parse
+
+    url = MYMEMORY_URL + "?" + urllib.parse.urlencode({"q": text, "langpair": f"{MM_LANG[src]}|{MM_LANG[dst]}"})
+    req = urllib.request.Request(url, headers={"User-Agent": "ecshape-app/1.0"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        body = json.loads(r.read().decode())
+    if body.get("quotaFinished") or int(body.get("responseStatus") or 0) != 200:
+        return None
+    out = (body.get("responseData") or {}).get("translatedText")
+    return out if isinstance(out, str) and out.strip() else None
+
+
+def _mm_text(text: str, src: str, dst: str) -> Optional[str]:
+    parts: List[str] = []
+    for line in text.split("\n"):
+        if not line.strip():
+            parts.append(line)
+            continue
+        chunks = re.findall(r".{1,450}(?:[.!?;,]\s|$)|.{1,450}", line) or [line]
+        done = []
+        for c in chunks:
+            t = _mm_piece(c, src, dst)
+            if t is None:
+                return None
+            done.append(t.strip())
+        parts.append(" ".join(done))
+    return "\n".join(parts)
+
+
+def _mymemory(texts: List[str], src: str, dst: str) -> Optional[List[str]]:
+    """Keyless fallback (QA #43 #48): MyMemory free machine translation (up to ~500 chars a request), 6 at a time."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    try:
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            out = list(pool.map(lambda t: _mm_text(t, src, dst), texts))
+    except Exception as e:  # network / quota: keep the originals
+        logger.warning("Translation fallback (MyMemory) failed: %s", e)
+        return None
+    return out if all(x is not None for x in out) else None
+
+
 def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: str = "en") -> Dict[str, object]:
     lang = (lang or "en")[:2]
     src_lang = (src_lang or "en")[:2]
@@ -94,10 +141,7 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
     complete = True
     if missing:
         engines = engines_for(db, user_id)
-        if not engines:
-            complete = False
-        else:
-            with _lock:  # one batch at a time per worker (avoids paying twice for the same texts)
+        with _lock:  # one batch at a time per worker (avoids paying twice for the same texts)
                 for i in range(0, len(missing), 40):
                     chunk = missing[i:i + 40]
                     out = None
@@ -109,6 +153,8 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
                             out = None
                         if out:
                             break
+                    if not out and src_lang in MM_LANG and lang in MM_LANG:
+                        out = _mymemory(chunk, src_lang, lang)
                     if not out:
                         complete = False
                         continue

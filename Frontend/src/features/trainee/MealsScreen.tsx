@@ -11,6 +11,7 @@ import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import AddMealSheet from './AddMealSheet';
 import { useTranslatedMap } from './useTranslated';
+import { FoodThumb } from './AddMealSheet';
 import { useLogSaved, useSavedMeals } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
@@ -44,7 +45,6 @@ const MealsScreen: React.FC = () => {
   const completions = useMealCompletions(date, date === today);
   const write = useMealWrite(date);
   const complete = useCompleteMeal(date);
-  const [skipped, setSkipped] = useState<Record<string, boolean>>({});
   /** Foods in one category are alternatives: the trainee eats ONE of them (default: the first). */
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [swapRow, setSwapRow] = useState<{ slot: V3MealSlotView; row: PlanRow } | null>(null);
@@ -56,6 +56,8 @@ const MealsScreen: React.FC = () => {
   const [askSlot, setAskSlot] = useState<V3MealSlotView | null>(null);
   /** QA #45: finished meals fold to their header; the trainee can unfold one. */
   const [unfolded, setUnfolded] = useState<Record<number, boolean>>({});
+  /** QA #59: the food group whose alternatives are open (one at a time). */
+  const [altOpen, setAltOpen] = useState<string | null>(null);
 
   /** Food names in the app language: the Hebrew name when there is one, else a cached translation (QA #43). */
   const untranslated = useMemo(() => {
@@ -88,10 +90,33 @@ const MealsScreen: React.FC = () => {
   const pickOf = (g: RowGroup, slot: V3MealSlotView) =>
     g.eaten ?? g.rows.find((r) => r.food.id === picks[pickKey(slot.meal_slot_id, g.macro)]) ?? g.rows[0];
 
+  /** QA #59: one tap = eaten (logged now); the meal completes by itself once every food group is eaten. */
+  const eatGroup = (slot: V3MealSlotView, data: V3DayViewResponse, g: RowGroup) => {
+    const r = pickOf(g, slot);
+    haptic(10);
+    if (g.eaten?.choice) {
+      write.mutate({ kind: 'delete', id: g.eaten.choice.id }, { onError: onWriteError });
+      return;
+    }
+    const remaining = groupRows(planRows(slot, data.choices)).filter((x) => !x.eaten && x.macro !== g.macro).length;
+    write.mutate(
+      { kind: 'log', body: { date, meal_slot_id: slot.meal_slot_id, macro_type: r.macro, food_option_id: r.food.id, quantity: r.qty } },
+      {
+        onSuccess: () => {
+          if (remaining === 0) {
+            haptic([10, 30, 10]);
+            complete.mutate({ slotId: slot.meal_slot_id, done: true, logs: [] }, { onError: onWriteError });
+          }
+        },
+        onError: onWriteError,
+      },
+    );
+  };
+
   const completeSlot = (slot: V3MealSlotView, data: V3DayViewResponse) => {
     // Extra foods are added on top of the plan: they never cancel the planned foods.
     const logs: V3MealLogCreateRequest[] = groupRows(planRows(slot, data.choices))
-          .filter((g) => !g.eaten && !skipped[`${date}:${slot.meal_slot_id}:${g.macro}`])
+          .filter((g) => !g.eaten)
           .map((g) => pickOf(g, slot))
           .map((r) => ({ date, meal_slot_id: slot.meal_slot_id, macro_type: r.macro, food_option_id: r.food.id, quantity: r.qty }));
     haptic([10, 30, 10]);
@@ -196,6 +221,9 @@ const MealsScreen: React.FC = () => {
               const rows = planRows(slot, data.choices);
               const extras = data.choices.filter((c) => c.meal_slot_id === slot.meal_slot_id && isOverallCustom(c));
               const folded = done && !unfolded[slot.meal_slot_id];
+              const groups = groupRows(rows);
+              const groupCount = groups.length;
+              const eatenCount = groups.filter((g) => g.eaten).length;
               const toggleFold = () => { haptic(4); setUnfolded((u) => ({ ...u, [slot.meal_slot_id]: !u[slot.meal_slot_id] })); };
               return (
                 <li key={slot.meal_slot_id} className={cn('tp-card tp-rise overflow-hidden', done && 'ring-1 ring-[hsl(var(--tp-ok)/.5)]')} style={{ ['--i' as string]: 4 + i }}>
@@ -211,8 +239,20 @@ const MealsScreen: React.FC = () => {
                       <p className="text-sm text-muted-foreground">
                         <span dir="ltr" className="inline-block">{fmtNum(consumed)} / {fmtNum(slot.target_calories)}</span> {t('trainee.common.kcal')}
                         {slot.target_protein ? <> · {t('trainee.macros.proteinShort', { g: fmtNum(slot.target_protein) })}</> : null}
+                        {groupCount > 0 && !done && <> · <span className="font-semibold text-foreground" dir="ltr">{eatenCount}/{groupCount}</span></>}
                       </p>
                     </div>
+                    {/* QA #58: add food and ask the coach are small icons next to the meal title */}
+                    {!done && (
+                      <div className="flex flex-none items-center gap-1">
+                        <button type="button" onClick={() => setAddTarget({ slot })} className="tp-icon-btn tp-press !bg-primary/15 !text-primary" aria-label={t('trainee.meals.addFood')} title={t('trainee.meals.addFood')} data-testid="meal-add">
+                          <Plus className="h-5 w-5" />
+                        </button>
+                        <button type="button" onClick={() => setAskSlot(slot)} className="tp-icon-btn tp-press" aria-label={t('trainee.meals.askCoach')} title={t('trainee.meals.askCoach')}>
+                          <MessageCircle className="h-5 w-5" />
+                        </button>
+                      </div>
+                    )}
                     {done && (
                       <button
                         type="button" onClick={toggleFold}
@@ -286,14 +326,14 @@ const MealsScreen: React.FC = () => {
                     )}
 
                     {rows.length > 0 && (
-                      <ul className="space-y-2">
-                        {groupRows(rows).map((g) => {
+                      <ul className="space-y-2" data-testid="meal-rows">
+                        {groups.map((g) => {
                           const key = pickKey(slot.meal_slot_id, g.macro);
                           const r = pickOf(g, slot);
-                          const isSkipped = !g.eaten && !!skipped[key];
                           const eaten = !!g.eaten;
                           const m = rowMacros(r);
                           const alts = g.rows.filter((x) => x.food.id !== r.food.id);
+                          const open = altOpen === key && alts.length > 0 && !done;
                           const choose = (alt: PlanRow) => {
                             haptic(6);
                             if (g.eaten?.choice) {
@@ -302,44 +342,65 @@ const MealsScreen: React.FC = () => {
                                 { onError: onWriteError },
                               );
                             } else setPicks((p) => ({ ...p, [key]: alt.food.id }));
+                            setAltOpen(null);
                           };
                           return (
-                            <li key={g.macro} className={cn('rounded-2xl bg-foreground/[.04] p-1.5', isSkipped && 'opacity-50')}>
-                              <div className="flex items-center gap-2 pe-1">
+                            <li key={g.macro} className={cn('overflow-hidden rounded-2xl transition-colors', eaten ? 'bg-[hsl(var(--tp-ok)/.09)]' : 'bg-foreground/[.04]')}>
+                              <div className="flex items-center gap-3 p-2">
+                                {/* QA #59: one tap = eaten (tap again to undo) */}
                                 <button
                                   type="button"
                                   disabled={done}
-                                  onClick={() => {
-                                    haptic(6);
-                                    if (eaten && r.choice) write.mutate({ kind: 'delete', id: r.choice.id }, { onError: onWriteError });
-                                    else setSkipped((sk) => ({ ...sk, [key]: !sk[key] }));
-                                  }}
-                                  aria-pressed={!isSkipped}
-                                  aria-label={isSkipped ? t('trainee.meals.include') : t('trainee.meals.skip')}
-                                  className={cn('tp-press grid h-11 w-11 flex-none place-items-center rounded-xl', eaten ? 'bg-[hsl(var(--tp-ok))] text-white' : isSkipped ? 'bg-foreground/[.06]' : 'bg-primary/15 text-primary')}
+                                  onClick={() => eatGroup(slot, data, g)}
+                                  aria-pressed={eaten}
+                                  aria-label={eaten ? t('trainee.mealsFold.uneat', { name: foodName(r.food) }) : t('trainee.mealsFold.eat', { name: foodName(r.food) })}
+                                  className={cn('tp-press grid h-12 w-12 flex-none place-items-center rounded-full transition-all', eaten ? 'bg-[hsl(var(--tp-ok))] text-white shadow-[0_10px_22px_-12px_hsl(var(--tp-ok))]' : 'text-transparent shadow-[inset_0_0_0_2.5px_hsl(var(--foreground)/.22)] hover:shadow-[inset_0_0_0_2.5px_hsl(var(--primary))] hover:text-primary/40')}
+                                  data-testid="meal-eat"
                                 >
-                                  {!isSkipped && <Check className="h-5 w-5" strokeWidth={3} />}
+                                  <Check className={cn('h-6 w-6', eaten && 'tp-pop-in')} strokeWidth={3} />
                                 </button>
-                                <span className="h-8 w-1 flex-none rounded-full" style={{ background: MACRO_COLOR[r.macro] }} aria-hidden />
-                                <div className="min-w-0 flex-1">
-                                  <p className={cn('truncate font-medium', isSkipped && 'line-through')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</p>
-                                  <p className="truncate text-xs text-muted-foreground">
-                                    {t(`trainee.macros.${macroKey(r.macro)}`)} · <span dir="ltr">{r.qty} · {fmtNum(m.calories)} kcal</span>
-                                    {r.swap && <> · {t('trainee.meals.swapped')}</>}
-                                  </p>
-                                </div>
-                                <button type="button" disabled={done} onClick={() => setSwapRow({ slot, row: r })} className="tp-icon-btn tp-press bg-transparent" aria-label={t('trainee.meals.swap')}>
-                                  <ArrowLeftRight className="h-4 w-4" />
+                                <button
+                                  type="button"
+                                  disabled={done || !alts.length}
+                                  onClick={() => setAltOpen(open ? null : key)}
+                                  aria-expanded={open}
+                                  className="flex min-w-0 flex-1 items-center gap-3 text-start disabled:cursor-default"
+                                >
+                                  <FoodThumb name={r.food.name} src={r.food.image_url} needsImage={!r.food.image_url} className="h-12 w-12 rounded-xl" />
+                                  <span className="min-w-0 flex-1">
+                                    <span className={cn('block truncate font-semibold', eaten && 'text-[hsl(var(--tp-ok))]')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</span>
+                                    <span className="block truncate text-xs text-muted-foreground">
+                                      <span className="me-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: MACRO_COLOR[r.macro] }} aria-hidden />
+                                      {t(`trainee.macros.${macroKey(r.macro)}`)} · <bdi dir="ltr">{fmtNum(m.calories)} kcal</bdi> · <bdi>{r.qty}</bdi>
+                                      {r.swap && <> · {t('trainee.meals.swapped')}</>}
+                                    </span>
+                                  </span>
+                                  {alts.length > 0 && !done && (
+                                    <span className="flex flex-none items-center gap-0.5 rounded-full bg-foreground/[.06] px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                                      <ArrowLeftRight className="h-3.5 w-3.5" />{alts.length}
+                                    </span>
+                                  )}
                                 </button>
+                                {!done && (
+                                  <button type="button" onClick={() => setSwapRow({ slot, row: r })} className="tp-icon-btn tp-press !h-9 !w-9 flex-none bg-transparent text-muted-foreground" aria-label={t('trainee.meals.swap')} title={t('trainee.meals.swap')}>
+                                    <Search className="h-4 w-4" />
+                                  </button>
+                                )}
                               </div>
-                              {alts.length > 0 && !done && (
-                                <div className="tp-scroll-x mt-1.5 flex gap-1.5 px-1 pb-0.5">
-                                  <span className="flex-none self-center text-[11px] text-muted-foreground">{t('trainee.meals.orInstead')}</span>
-                                  {alts.map((alt) => (
-                                    <button key={alt.food.id} type="button" onClick={() => choose(alt)} className="tp-press flex-none rounded-full border border-border/60 bg-background/60 px-3 py-1.5 text-xs font-semibold hover:border-primary/50 hover:text-primary" dir="auto">
-                                      {foodName(alt.food)}
-                                    </button>
-                                  ))}
+                              {open && (
+                                <div className="tp-scroll-x flex gap-2 px-2 pb-2.5" role="listbox" aria-label={t('trainee.meals.orInstead')}>
+                                  {alts.map((alt) => {
+                                    const am = rowMacros(alt);
+                                    return (
+                                      <button key={alt.food.id} type="button" role="option" aria-selected={false} onClick={() => choose(alt)} className="tp-press w-[6.5rem] flex-none overflow-hidden rounded-xl bg-card text-start ring-1 ring-border/60 hover:ring-primary/60">
+                                        <FoodThumb name={alt.food.name} src={alt.food.image_url} needsImage={!alt.food.image_url} className="aspect-[4/3] w-full rounded-none" />
+                                        <span className="block p-1.5">
+                                          <span className="line-clamp-2 block text-[11px] font-bold leading-tight" dir="auto">{foodName(alt.food)}</span>
+                                          <span className="block text-[10px] text-muted-foreground" dir="ltr">{alt.qty} · {fmtNum(am.calories)}</span>
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </li>
@@ -370,14 +431,8 @@ const MealsScreen: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <button type="button" onClick={() => completeSlot(slot, data)} disabled={variants.length > 0 && !selected && !rows.length && !extras.length} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1 sm:flex-none">
-                            <Check className="h-4 w-4" />{t('trainee.meals.complete')}
-                          </button>
-                          <button type="button" onClick={() => setAddTarget({ slot })} className="tp-btn tp-btn--ghost tp-btn--sm tp-press px-3 min-[420px]:px-4" aria-label={t('trainee.meals.addFood')}>
-                            <Plus className="h-4 w-4" /><span className="hidden min-[420px]:inline">{t('trainee.meals.addFood')}</span>
-                          </button>
-                          <button type="button" onClick={() => setAskSlot(slot)} className="tp-icon-btn tp-press" aria-label={t('trainee.meals.askCoach')}>
-                            <MessageCircle className="h-4 w-4" />
+                          <button type="button" onClick={() => completeSlot(slot, data)} disabled={variants.length > 0 && !selected && !rows.length && !extras.length} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1" data-testid="meal-all">
+                            <Check className="h-4 w-4" />{rows.length && eatenCount > 0 ? t('trainee.mealsFold.ateRest') : t('trainee.mealsFold.ateAll')}
                           </button>
                         </>
                       )}
@@ -412,17 +467,10 @@ const MealsScreen: React.FC = () => {
               </div>
             </div>
           )}
-          <div className="tp-card overflow-hidden border border-dashed border-primary/40">
-            <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
-              <div className="min-w-0">
-                <h3 className="tp-title text-[1.8rem]">{t('trainee.mealTools.outsidePlan')}</h3>
-                <p className="text-sm text-muted-foreground">{t('trainee.mealTools.outsideBody')}</p>
-              </div>
-              <button type="button" onClick={() => setAddTarget({ slot: null })} className="tp-btn tp-btn--ghost tp-btn--sm tp-press flex-none">
-                <Plus className="h-4 w-4" />{t('trainee.meals.addFood')}
-              </button>
-            </div>
-            {freeEntries.length > 0 && (
+          {/* QA #57: no separate "outside the plan" card; foods added freely are simply listed when there are some */}
+          {freeEntries.length > 0 && (
+          <div className="tp-card overflow-hidden">
+            <p className="tp-label px-4 pb-1 pt-4 sm:px-5">{t('trainee.mealTools.outsidePlan')}</p>
               <ul className="space-y-2 px-4 pb-4 sm:px-5" data-testid="free-entries">
                 {freeEntries.map((c) => (
                   <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-primary/[.07] p-1.5 ps-3.5">
@@ -437,8 +485,8 @@ const MealsScreen: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            )}
           </div>
+          )}
         </section>
       )}
 

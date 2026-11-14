@@ -230,3 +230,7 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 @keyframes favPop { from { opacity: 0; transform: translateY(6px) scale(.94); } to { opacity: 1; transform: none; } }
 .fav-pop { animation: favPop .32s cubic-bezier(.22, 1, .36, 1) both; }
 @media (prefers-reduced-motion: reduce) { .fav-heart, .fav-pop { animation: none; } }
+
+/* QA #59: the eaten check pops in */
+.tp-pop-in { animation: tpPop .45s var(--ease-spring) both; }
+@media (prefers-reduced-motion: reduce) { .tp-pop-in { animation: none; } }

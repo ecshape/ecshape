@@ -223,3 +223,10 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
   .tp-shell .tr-topbar.tp-topbar { height: 4rem; padding-top: 0; }
 }
 .tp-root .tp-tab-ico { transition: none; }
+
+/* Favorites (QA #46): heart pops when a food is added, shelf cards rise in */
+@keyframes favHeart { 0% { transform: scale(.6); } 55% { transform: scale(1.18); } 100% { transform: none; } }
+.fav-heart { animation: favHeart .34s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes favPop { from { opacity: 0; transform: translateY(6px) scale(.94); } to { opacity: 1; transform: none; } }
+.fav-pop { animation: favPop .32s cubic-bezier(.22, 1, .36, 1) both; }
+@media (prefers-reduced-motion: reduce) { .fav-heart, .fav-pop { animation: none; } }

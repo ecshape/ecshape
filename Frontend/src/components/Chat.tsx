@@ -404,11 +404,24 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
   const vv = useVisualViewport(mobileOverlay);
   const fill = useFillHeight(isDesktop);
 
+  // Freeze the page under the full-screen chat (QA #47). overflow:hidden alone does not stop iOS Safari from
+  // scrolling the document (and dragging the fixed layer with it), so pin the body in place.
   useEffect(() => {
     if (!mobileOverlay) return;
-    const prevBody = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prevBody; };
+    const { body, documentElement: html } = document;
+    const y = window.scrollY;
+    const prev = { bo: body.style.overflow, bp: body.style.position, bt: body.style.top, bw: body.style.width, ho: html.style.overflow, hb: html.style.overscrollBehavior };
+    html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${y}px`;
+    body.style.width = '100%';
+    return () => {
+      body.style.overflow = prev.bo; body.style.position = prev.bp; body.style.top = prev.bt; body.style.width = prev.bw;
+      html.style.overflow = prev.ho; html.style.overscrollBehavior = prev.hb;
+      window.scrollTo(0, y);
+    };
   }, [mobileOverlay]);
 
   const otherName = activeConv?.client_name || '';
@@ -545,7 +558,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
         {mobileOverlay && conversationView && createPortal(
           <div
             dir={dir}
-            className="fixed inset-x-0 top-0 z-[60] flex flex-col overflow-hidden bg-background"
+            className="fixed inset-x-0 top-0 z-[60] flex flex-col overflow-hidden overscroll-none bg-background"
             style={{ height: vv ? `${vv.height}px` : '100dvh', transform: vv ? `translateY(${vv.top}px)` : undefined }}
           >
             <div className="flex min-h-0 flex-1 flex-col pt-[env(safe-area-inset-top)]">{conversationView}</div>

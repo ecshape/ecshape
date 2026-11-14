@@ -1,5 +1,5 @@
 from pydantic import BaseModel, validator
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
 MAX_MESSAGE_LENGTH = 4000
@@ -47,6 +47,7 @@ class ChatMessageResponse(ChatMessageBase):
     created_at: datetime
     read_at: Optional[datetime] = None
     linked_entry: Optional[ChatProgressEntry] = None
+    card: Optional[Dict[str, Any]] = None  # parsed ChatMessage.payload (exercise request…)
 
     @validator('created_at', 'read_at', pre=True)
     def normalize_datetime(cls, v):

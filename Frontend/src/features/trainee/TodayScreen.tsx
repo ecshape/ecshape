@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, ArrowRight, Check, ClipboardCheck, Clock, Dumbbell, Flame, MessageCircle, Play, Scale, Sparkles, Trophy, X,
-  Pencil,
+  Pencil, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -236,9 +236,13 @@ const TodayScreen: React.FC = () => {
               </span>
               <span className="tp-title mt-4 text-[2rem]">{t('trainee.today.checkinCta')}</span>
               <span className="mt-1 text-sm text-muted-foreground">{t('trainee.today.checkinHint')}</span>
-              {summary.data && (
-                <span className="mt-auto pt-4 text-xs text-muted-foreground">{t('trainee.today.last7', { count: summary.data.last_7_days_completion })}</span>
-              )}
+              <span className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
+                {summary.data ? <span className="text-xs text-muted-foreground">{t('trainee.today.last7', { count: summary.data.last_7_days_completion })}</span> : <span />}
+                {/* QA #44: a visible action, so it is clear the card opens the check-in */}
+                <span className="tp-btn tp-btn--primary tp-btn--sm pointer-events-none" data-testid="checkin-start">
+                  {t('trainee.today.checkinStart')}<ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                </span>
+              </span>
             </button>
           )}
         </section>

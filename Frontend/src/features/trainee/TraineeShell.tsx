@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
+import './qa2I18n';
 import { useLiquid } from '@/features/trainer/ui';
 import { useConversations } from './hooks';
 import './trainee.css';

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { ChatMessage } from './api';
 import { dayKey, formatDayLabel, formatTime } from './format';
 import { LinkedEntryCard } from './LinkedEntry';
+import { ExerciseCardView } from './ExerciseCard';
 import { EmptyState } from './parts';
 
 const GROUP_GAP_MS = 5 * 60 * 1000;
@@ -186,6 +187,7 @@ const MessageList: React.FC<Props> = ({
               const isNew = fresh.current.has(idOf(m));
               const text = m.message?.trim();
               const hasEntry = !!m.progress_entry_id;
+              const hasCard = !!m.card;
               return (
                 <React.Fragment key={idOf(m)}>
                   {newDay && (
@@ -209,16 +211,17 @@ const MessageList: React.FC<Props> = ({
                           !own && !joinsNext && 'rounded-es-[6px]',
                           m.status === 'sending' && 'opacity-80',
                           m.status === 'failed' && 'opacity-70',
-                          hasEntry ? 'p-1.5' : 'px-3.5 pb-1.5 pt-2',
+                          hasEntry || hasCard ? 'p-1.5' : 'px-3.5 pb-1.5 pt-2',
                         )}
                       >
                         {hasEntry && <LinkedEntryCard entry={m.linked_entry} own={own} />}
+                        {hasCard && <ExerciseCardView m={m} own={own} />}
                         {text && (
-                          <p dir="auto" className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere]', hasEntry && 'px-2 pt-2')}>
+                          <p dir="auto" className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere]', (hasEntry || hasCard) && 'px-2 pt-1')}>
                             <Linkified text={text} own={own} />
                           </p>
                         )}
-                        <span className={cn('flex items-center justify-end gap-1 text-[11px] tabular-nums', own ? 'text-white/75' : 'text-muted-foreground', hasEntry ? 'px-2 pb-0.5 pt-1' : 'mt-0.5')}>
+                        <span className={cn('flex items-center justify-end gap-1 text-[11px] tabular-nums', own ? 'text-white/75' : 'text-muted-foreground', hasEntry || hasCard ? 'px-2 pb-0.5 pt-1' : 'mt-0.5')}>
                           <time dateTime={m.created_at}>{formatTime(m.created_at)}</time>
                           {own && (
                             m.status === 'sending' ? <Clock className="h-3 w-3" aria-label={t('chat.ui.sending')} />

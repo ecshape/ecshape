@@ -34,7 +34,12 @@ export const useVisualViewport = (enabled: boolean) => {
     let raf = 0;
     const update = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => setVv({ height: v.height, top: v.offsetTop }));
+      // Only follow the offset while the keyboard is open (QA #47): URL-bar / rubber-band movements made the
+      // fixed chat layer jump while scrolling.
+      raf = requestAnimationFrame(() => {
+        const keyboard = window.innerHeight - v.height > 120;
+        setVv({ height: Math.round(v.height), top: keyboard ? Math.round(v.offsetTop) : 0 });
+      });
     };
     update();
     v.addEventListener('resize', update);

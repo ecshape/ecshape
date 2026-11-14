@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { EcSpinner } from '@/components/brand/EcLoader';
-import { Compass, Search, X } from 'lucide-react';
+import { Check, Compass, MessageCirclePlus, Search, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useMutation } from '@tanstack/react-query';
+import { api } from '../api';
 import { cn } from '@/lib/utils';
 import { InfoTip } from '@/components/ui/info-tip';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
@@ -156,7 +160,33 @@ const LibraryDetail: React.FC<{ e: LibraryExercise }> = ({ e }) => {
         </div>
       </div>
       {e.instructions?.length > 0 && <InstructionSteps steps={e.instructions} />}
-      <p className="text-xs text-muted-foreground">{tt('explore.askCoach')}</p>
+      <AskCoachCard e={e} />
+    </div>
+  );
+};
+
+/** QA #42: send the exercise itself to the coach as a chat card ("can we add this to my plan?"). */
+const AskCoachCard: React.FC<{ e: LibraryExercise }> = ({ e }) => {
+  const { tt } = useTT();
+  const navigate = useNavigate();
+  const send = useMutation({
+    mutationFn: () => api('/v2/chat/exercise-request', {
+      method: 'POST',
+      body: {
+        library_id: e.id, name: e.name, image: (e.frames?.length ? e.frames : libraryFrames(e.id))[0] ?? null,
+        muscles: e.primaryMuscles ?? [], level: e.level ?? null, message: tt('explore.requestMessage'),
+      },
+    }),
+    onSuccess: () => toast.success(tt('explore.requestSent'), { action: { label: tt('explore.openChat'), onClick: () => navigate('/chat') } }),
+    onError: () => toast.error(tt('explore.requestFailed')),
+  });
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl bg-primary/[.08] p-3.5 sm:flex-row sm:items-center">
+      <p className="min-w-0 flex-1 text-sm">{tt('explore.askCoach')}</p>
+      <button type="button" onClick={() => send.mutate()} disabled={send.isPending || send.isSuccess} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-none" data-testid="ask-coach-exercise">
+        {send.isPending ? <EcSpinner className="h-4 w-4" mono /> : send.isSuccess ? <Check className="h-4 w-4" /> : <MessageCirclePlus className="h-4 w-4" />}
+        {send.isSuccess ? tt('explore.requestSentShort') : tt('explore.requestButton')}
+      </button>
     </div>
   );
 };

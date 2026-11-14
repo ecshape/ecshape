@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, UtensilsCrossed,
+  AlertTriangle, ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mediaUrl } from '@/lib/mediaUrl';
 import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest, V3MealSlotView } from '@/types/meals-v3';
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import AddMealSheet from './AddMealSheet';
+import { useTranslatedMap } from './useTranslated';
 import { useLogSaved, useSavedMeals } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
@@ -53,8 +54,25 @@ const MealsScreen: React.FC = () => {
   const savedMeals = useSavedMeals();
   const logSaved = useLogSaved(date);
   const [askSlot, setAskSlot] = useState<V3MealSlotView | null>(null);
+  /** QA #45: finished meals fold to their header; the trainee can unfold one. */
+  const [unfolded, setUnfolded] = useState<Record<number, boolean>>({});
 
-  const foodName = (f: { name: string; name_hebrew?: string | null }) => (he ? f.name_hebrew || f.name : f.name);
+  /** Food names in the app language: the Hebrew name when there is one, else a cached translation (QA #43). */
+  const untranslated = useMemo(() => {
+    const out: string[] = [];
+    const walk = (v: unknown) => {
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') {
+        const o = v as Record<string, unknown>;
+        if (typeof o.name === 'string' && 'name_hebrew' in o && !(he && o.name_hebrew)) out.push(o.name);
+        Object.values(o).forEach(walk);
+      }
+    };
+    walk(day.data?.slots);
+    return out;
+  }, [day.data, he]);
+  const trNames = useTranslatedMap(untranslated);
+  const foodName = (f: { name: string; name_hebrew?: string | null }) => (he && f.name_hebrew ? f.name_hebrew : trNames[f.name] || f.name);
   const doneIds = new Set((completions.data ?? []).filter((c) => c.is_completed).map((c) => c.meal_slot_id));
   const slots = useMemo(() => [...(day.data?.slots ?? [])].sort((a, b) => a.order_index - b.order_index), [day.data]);
   const macros = day.data?.daily_macros;
@@ -177,6 +195,8 @@ const MealsScreen: React.FC = () => {
               const selected = variants.find((v) => v.id === slot.selected_variant_id) ?? null;
               const rows = planRows(slot, data.choices);
               const extras = data.choices.filter((c) => c.meal_slot_id === slot.meal_slot_id && isOverallCustom(c));
+              const folded = done && !unfolded[slot.meal_slot_id];
+              const toggleFold = () => { haptic(4); setUnfolded((u) => ({ ...u, [slot.meal_slot_id]: !u[slot.meal_slot_id] })); };
               return (
                 <li key={slot.meal_slot_id} className={cn('tp-card tp-rise overflow-hidden', done && 'ring-1 ring-[hsl(var(--tp-ok)/.5)]')} style={{ ['--i' as string]: 4 + i }}>
                   <div className="flex items-start gap-3 p-4 sm:p-5">
@@ -193,8 +213,20 @@ const MealsScreen: React.FC = () => {
                         {slot.target_protein ? <> · {t('trainee.macros.proteinShort', { g: fmtNum(slot.target_protein) })}</> : null}
                       </p>
                     </div>
+                    {done && (
+                      <button
+                        type="button" onClick={toggleFold}
+                        className="tp-icon-btn tp-press flex-none" aria-expanded={!folded} aria-controls={`meal-body-${slot.meal_slot_id}`}
+                        aria-label={folded ? t('trainee.mealsFold.show') : t('trainee.mealsFold.hide')} title={folded ? t('trainee.mealsFold.show') : t('trainee.mealsFold.hide')}
+                        data-testid="meal-fold"
+                      >
+                        <ChevronDown className={cn('h-5 w-5 transition-transform duration-300', !folded && 'rotate-180')} />
+                      </button>
+                    )}
                   </div>
 
+                  <div id={`meal-body-${slot.meal_slot_id}`} className={cn('grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none', folded ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100')} aria-hidden={folded || undefined} {...(folded ? { inert: '' } : {}) as Record<string, string>}>
+                  <div className="min-h-0 overflow-hidden">
                   <div className="space-y-3 px-4 pb-4 sm:px-5">
                     {slot.notes && (
                       <p className="flex gap-2 rounded-2xl bg-primary/10 px-3 py-2 text-sm" dir="auto">
@@ -350,6 +382,8 @@ const MealsScreen: React.FC = () => {
                         </>
                       )}
                     </div>
+                  </div>
+                  </div>
                   </div>
                 </li>
               );

@@ -1,0 +1,56 @@
+{
+  "en": {
+    "trainee": {
+      "today": {
+        "checkinStart": "Start check-in"
+      },
+      "mealsFold": {
+        "show": "Show details",
+        "hide": "Hide details",
+        "doneSummary": "Logged · {{kcal}} kcal"
+      }
+    },
+    "meals": {
+      "favorites": {
+        "tapHeart": "tap ♥ on a food below.",
+        "filter": "Filter"
+      }
+    }
+  },
+  "he": {
+    "trainee": {
+      "today": {
+        "checkinStart": "התחל צ׳ק-אין"
+      },
+      "mealsFold": {
+        "show": "הצג פרטים",
+        "hide": "הסתר פרטים",
+        "doneSummary": "נרשם · {{kcal}} קק״ל"
+      }
+    },
+    "meals": {
+      "favorites": {
+        "tapHeart": "הקישו ♥ על מזון למטה.",
+        "filter": "סינון"
+      }
+    }
+  },
+  "fr": {
+    "trainee": {
+      "today": {
+        "checkinStart": "Commencer le check-in"
+      },
+      "mealsFold": {
+        "show": "Voir le détail",
+        "hide": "Masquer le détail",
+        "doneSummary": "Enregistré · {{kcal}} kcal"
+      }
+    },
+    "meals": {
+      "favorites": {
+        "tapHeart": "touchez ♥ sur un aliment ci-dessous.",
+        "filter": "Filtrer"
+      }
+    }
+  }
+}

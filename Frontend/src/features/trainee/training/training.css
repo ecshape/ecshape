@@ -66,6 +66,16 @@
 
 /* Rest overlay */
 .tr-rest-overlay { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; padding: 1.25rem; background: hsl(var(--background) / .88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: tpFade .3s ease both; }
+/* QA #39: the rest timer shrinks to a floating pill so the exercise page stays usable */
+.tt-rest-mini {
+  position: fixed; z-index: 64; inset-inline-end: max(1rem, env(safe-area-inset-right, 0px)); bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: .15rem; border-radius: 9999px; padding-inline-end: .35rem;
+  background: hsl(var(--card) / .92); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .75), inset 0 0 0 1px hsl(var(--foreground) / .08);
+  transform-origin: 85% 100%; animation: ttRestShrink .42s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes ttRestShrink { from { opacity: 0; transform: translateY(-38vh) scale(2.4); } to { opacity: 1; transform: none; } }
+@media (min-width: 1024px) { .tt-rest-mini { bottom: 2rem; } }
 
 /* Calendar */
 .tr-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; }
@@ -79,6 +89,6 @@
 @media (min-width: 1024px) { .tt-ex-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .bm-anim, .tr-slide-next, .tr-slide-prev, .tt-live, .tr-rest-overlay { animation: none !important; }
+  .bm-anim, .tr-slide-next, .tr-slide-prev, .tt-live, .tr-rest-overlay, .tt-rest-mini { animation: none !important; }
   .bm-region { transition: none; }
 }

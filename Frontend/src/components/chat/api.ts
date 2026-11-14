@@ -25,6 +25,8 @@ export interface ChatMessage {
   created_at: string;
   read_at: string | null;
   linked_entry?: LinkedEntry | null;
+  /** Structured card (exercise request / reply, QA #42) */
+  card?: Record<string, unknown> | null;
   /** client-only fields for optimistic messages */
   localId?: string;
   status?: 'sending' | 'failed';

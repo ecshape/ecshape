@@ -160,7 +160,7 @@ except Exception as e:
 
 try:
     logger.info("Importing router modules...")
-    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, meal_logging_tools, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook, studio
+    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, meal_logging_tools, translate, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook, studio
     logger.info("✅ Router modules imported successfully")
     logger.info("📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications")
 except Exception as e:
@@ -231,6 +231,9 @@ async def lifespan(app: FastAPI):
 
         from app.migrations.user_avatar_migration import run_user_avatar_migration
         run_user_avatar_migration()
+
+        from app.migrations.chat_payload_migration import run_chat_payload_migration
+        run_chat_payload_migration()
         
         logger.info("Running progress measurements migration...")
         run_progress_measurements_migration()
@@ -773,6 +776,7 @@ try:
     logger.info("Including meal_variants_v3 router (variants)...")
     app.include_router(meal_variants_v3.router, prefix="/api/v3/meals", tags=["Meal Variants V3"])
     app.include_router(meal_logging_tools.router, prefix="/api/v3/meals", tags=["Meal logging tools"])
+    app.include_router(translate.router, prefix="/api", tags=["Translate"])
     logger.info("✅ Meal Variants V3 router included")
 
     logger.info("Including workout_system router (v2)...")

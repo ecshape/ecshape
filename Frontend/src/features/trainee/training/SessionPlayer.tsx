@@ -3,7 +3,7 @@ import '@/i18n/ticketsStudio';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, ArrowLeftRight, ArrowRight, Check, ChevronDown, ChevronUp, Dumbbell, Flag, History, Info, Minus, Play, Plus, RotateCcw, SkipForward, Timer, Trophy, X,
+  ArrowLeft, ArrowLeftRight, ArrowRight, Check, ChevronDown, ChevronUp, Dumbbell, Eye, Flag, History, Info, Maximize2, Minus, Play, Plus, RotateCcw, SkipForward, Timer, Trophy, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -21,6 +21,8 @@ import { dayOf, fmtClock, fmtDate, fmtNum, haptic, parseDate, prefersReducedMoti
 import BodyMap from '../BodyMap';
 import { exerciseLoad, exerciseMuscles } from './muscles';
 import { muscleLabel, sessionStart, setVolume, useTT } from './shared';
+import { playChime, primeChime } from './chime';
+import { useTranslatedTexts } from '../useTranslated';
 
 const repsFloor = (r?: string | null) => (r || '').match(/\d+/)?.[0] ?? '';
 const youtubeId = (url?: string | null) => url?.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{6,})/)?.[1] ?? null;
@@ -152,7 +154,10 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     setDrafts((d) => ({ ...d, [`${ex.id}-${n}`]: { ...d[`${ex.id}-${n}`], [k]: v } }));
 
   const restFor = (ex: WorkoutExercise) => ex.rest_seconds || DEFAULT_REST;
-  const startRest = (ex: WorkoutExercise, next?: string) => setRest({ endsAt: Date.now() + restFor(ex) * 1000, total: restFor(ex), next });
+  const startRest = (ex: WorkoutExercise, next?: string) => {
+    primeChime(); // this tap unlocks audio for the end-of-rest chime
+    setRest({ endsAt: Date.now() + restFor(ex) * 1000, total: restFor(ex), next });
+  };
 
   const startSession = () => {
     setStartMs(sessionStart.set(dayId));
@@ -342,7 +347,12 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
         <div key={ex.id} className={cn(dir === 'next' && 'tr-slide-next', dir === 'prev' && 'tr-slide-prev')}>
           <div className="tr-stage aspect-[4/3] w-full sm:aspect-[16/10]" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
             {frames.length ? (
-              <ExerciseDemo frames={frames} alt={name} className="h-full w-full" playing />
+              <button type="button" onClick={() => setInfo(true)} className="group block h-full w-full cursor-zoom-in" aria-label={t('trainee.player.howTo')} data-testid="demo-open">
+                <ExerciseDemo frames={frames} alt={name} className="h-full w-full" playing />
+                <span className="absolute bottom-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white opacity-90 backdrop-blur transition-opacity group-hover:opacity-100">
+                  <Maximize2 className="h-3.5 w-3.5" />{tt('player.tapDemo')}
+                </span>
+              </button>
             ) : (
               <span className="grid h-full w-full place-items-center bg-card text-muted-foreground"><Dumbbell className="h-12 w-12" /></span>
             )}
@@ -484,6 +494,8 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
               })}
             </div>
           </div>
+
+          <MusclesCard ex={ex} className="mt-6" title />
         </div>
       </div>
 
@@ -589,6 +601,7 @@ const SwapPicker: React.FC<{ ex: WorkoutExercise; current: Swap | null; onPick: 
 const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => void }> = ({ rest, onChange }) => {
   const { t, tt } = useTT();
   const [now, setNow] = useState(Date.now());
+  const [mini, setMini] = useState(false);
   const buzzed = useRef(false);
   useEffect(() => {
     buzzed.current = false;
@@ -601,15 +614,31 @@ const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => vo
     if (over && !buzzed.current) {
       buzzed.current = true;
       haptic([40, 80, 40]);
+      playChime();
       const id = window.setTimeout(() => onChange(null), 1800);
       return () => window.clearTimeout(id);
     }
   }, [over, onChange]);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onChange(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (mini) onChange(null); else setMini(true); } };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onChange]);
+  }, [onChange, mini]);
+  if (mini) {
+    return (
+      <div className="tt-rest-mini tp-root" role="timer" aria-label={over ? t('trainee.player.restOver') : t('trainee.player.resting')}>
+        <button type="button" onClick={() => setMini(false)} className="tp-press flex items-center gap-2.5 py-1.5 pe-3 ps-1.5" aria-label={tt('player.restExpand')}>
+          <Ring value={left / rest.total} size={44} stroke={4} color={over ? 'hsl(var(--tp-ok))' : '#E8682A'}>
+            {over ? <Check className="h-4 w-4 text-[hsl(var(--tp-ok))]" /> : <Timer className="h-4 w-4 text-primary" />}
+          </Ring>
+          <span className="tp-num text-xl leading-none" dir="ltr">{over ? '0:00' : fmtClock(left)}</span>
+        </button>
+        <button type="button" onClick={() => onChange(null)} className="tp-icon-btn tp-press !h-9 !w-9 bg-transparent" aria-label={t('trainee.player.skipRest')}>
+          <SkipForward className="h-4 w-4 rtl:-scale-x-100" />
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="tr-rest-overlay tp-root" role="dialog" aria-modal="true" aria-label={t('trainee.player.resting')}>
       <div className="flex w-full max-w-sm flex-col items-center text-center">
@@ -627,6 +656,11 @@ const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => vo
           </button>
           <button type="button" onClick={() => onChange({ ...rest, endsAt: rest.endsAt + 15000, total: rest.total + 15 })} className="tp-icon-btn tp-press !h-14 !w-14 text-sm font-bold" aria-label={t('trainee.player.add15')}><span dir="ltr">+15</span></button>
         </div>
+        {!over && (
+          <button type="button" onClick={() => setMini(true)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press mt-4" data-testid="rest-minimize">
+            <Eye className="h-4 w-4" />{tt('player.restView')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -634,13 +668,32 @@ const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => vo
 
 /* ------------------------------------------------------------------ info + history */
 
+/** Worked muscles on the body map (QA #41: also at the bottom of the exercise page). */
+export const MusclesCard: React.FC<{ ex: WorkoutExercise; className?: string; title?: boolean }> = ({ ex, className, title }) => {
+  const { tt } = useTT();
+  const e = ex.exercise;
+  const { primary, secondary } = exerciseMuscles(e);
+  if (!primary.length && !secondary.length) return null;
+  return (
+    <section className={className} aria-label={tt('player.musclesTitle')}>
+      {title && <h2 className="tp-title mb-2 text-[1.9rem]">{tt('player.musclesTitle')}</h2>}
+      <div className="flex items-center gap-4 rounded-2xl bg-foreground/[.04] p-3 sm:gap-6 sm:p-4">
+        <BodyMap load={exerciseLoad(e)} size="md" className={cn('flex-none', title ? '!w-32 sm:!w-40' : '!w-28')} />
+        <div className="min-w-0 space-y-2 text-sm">
+          {primary.length > 0 && <div><p className="tp-label">{tt('routine.primary')}</p><p className="mt-0.5 font-semibold">{primary.map((m) => muscleLabel(tt, m)).join(', ')}</p></div>}
+          {secondary.length > 0 && <div><p className="tp-label">{tt('routine.secondary')}</p><p className="mt-0.5 text-muted-foreground">{secondary.map((m) => muscleLabel(tt, m)).join(', ')}</p></div>}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export const ExerciseDetails: React.FC<{ ex: WorkoutExercise }> = ({ ex }) => {
   const { t, tt } = useTT();
   const e = ex.exercise;
   const url = ex.video_url || e?.video_url;
   const yt = youtubeId(url);
   const frames = e ? exerciseFrames(e) : [];
-  const { primary, secondary } = exerciseMuscles(e);
   const steps = e?.library_instructions ?? [];
   return (
     <div className="space-y-4 pb-2">
@@ -650,20 +703,12 @@ export const ExerciseDetails: React.FC<{ ex: WorkoutExercise }> = ({ ex }) => {
           <iframe className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${yt}`} title={e?.name || 'video'} allow="accelerometer; encrypted-media; picture-in-picture" allowFullScreen />
         </div>
       ) : url ? <video className="w-full rounded-2xl bg-black" src={url} controls playsInline /> : null}
-      {(primary.length > 0 || secondary.length > 0) && (
-        <div className="flex items-center gap-4 rounded-2xl bg-foreground/[.04] p-3">
-          <BodyMap load={exerciseLoad(e)} size="md" className="!w-28 flex-none" />
-          <div className="min-w-0 space-y-2 text-sm">
-            {primary.length > 0 && <div><p className="tp-label">{tt('routine.primary')}</p><p className="mt-0.5 font-semibold">{primary.map((m) => muscleLabel(tt, m)).join(', ')}</p></div>}
-            {secondary.length > 0 && <div><p className="tp-label">{tt('routine.secondary')}</p><p className="mt-0.5 text-muted-foreground">{secondary.map((m) => muscleLabel(tt, m)).join(', ')}</p></div>}
-          </div>
-        </div>
-      )}
-      {e?.description && <p className="text-sm leading-relaxed" dir="auto">{e.description}</p>}
+      <MusclesCard ex={ex} />
+      {e?.description && <TranslatedText text={e.description} className="text-sm leading-relaxed" />}
       {e?.instructions ? (
         <div>
           <p className="tp-label mb-1">{t('trainee.player.instructions')}</p>
-          <p className="whitespace-pre-line text-sm leading-relaxed" dir="auto">{e.instructions}</p>
+          <TranslatedText text={e.instructions} className="whitespace-pre-line text-sm leading-relaxed" />
         </div>
       ) : steps.length > 0 ? (
         <InstructionSteps steps={steps} />
@@ -672,16 +717,26 @@ export const ExerciseDetails: React.FC<{ ex: WorkoutExercise }> = ({ ex }) => {
   );
 };
 
-/** Library steps are in English: mark them so screen readers and layout use the right language. */
-export const InstructionSteps: React.FC<{ steps: string[] }> = ({ steps }) => {
+/** A library text shown in the app language (QA #43); the English original until the translation arrives. */
+export const TranslatedText: React.FC<{ text: string; className?: string }> = ({ text, className }) => {
+  const tr = useTranslatedTexts([text]);
+  const shown = tr.texts[0];
+  return <p className={cn(className, tr.loading && 'opacity-70')} dir="auto" lang={shown === text ? undefined : tr.lang}>{shown}</p>;
+};
+
+/** Library steps come in English: shown translated into the app language when possible (QA #43). */
+export const InstructionSteps: React.FC<{ steps: string[] }> = ({ steps: original }) => {
   const { t, tt, lang } = useTT();
+  const tr = useTranslatedTexts(original);
+  const steps = tr.texts;
+  const english = lang === 'en' || !tr.translated;
   return (
     <div>
       <p className="tp-label mb-2 flex items-center gap-1.5">
         {t('trainee.player.instructions')}
-        {lang !== 'en' && <InfoTip label={t('trainee.player.instructions')}>{tt('explore.englishOnly')}</InfoTip>}
+        {lang !== 'en' && english && !tr.loading && <InfoTip label={t('trainee.player.instructions')}>{tt('explore.englishOnly')}</InfoTip>}
       </p>
-      <ol className="space-y-2" lang="en" dir="ltr">
+      <ol className={cn('space-y-2', tr.loading && 'opacity-70')} lang={english ? 'en' : lang} dir={english ? 'ltr' : 'auto'}>
         {steps.map((s, k) => (
           <li key={k} className="flex gap-3 text-sm leading-relaxed">
             <span className="tp-num grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/15 text-xs text-primary">{k + 1}</span>

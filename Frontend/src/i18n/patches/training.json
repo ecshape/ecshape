@@ -97,7 +97,11 @@
           "cancelTitle": "לבטל את האימון?",
           "cancelBody": "עוד לא נשמר אף סט, הטיימר פשוט ייעצר.",
           "cancelSession": "ביטול האימון",
-          "keepGoing": "ממשיכים"
+          "keepGoing": "ממשיכים",
+          "tapDemo": "הקש להסבר",
+          "musclesTitle": "שרירים עובדים",
+          "restView": "צפה בתרגיל",
+          "restExpand": "פתח את טיימר המנוחה"
         },
         "summary": {
           "done": "סיום",
@@ -134,7 +138,13 @@
           "emptyTitle": "לא נמצאו תרגילים",
           "emptyBody": "נסו מילה אחרת או שריר אחר.",
           "englishOnly": "ההוראות מספריית התרגילים זמינות באנגלית בלבד.",
-          "askCoach": "רוצים את התרגיל בתוכנית? כתבו למאמן."
+          "askCoach": "רוצים את התרגיל בתוכנית? שלחו אותו למאמן.",
+          "requestButton": "הצע למאמן",
+          "requestSentShort": "נשלח",
+          "requestSent": "נשלח למאמן שלך",
+          "openChat": "פתח צ'אט",
+          "requestFailed": "השליחה נכשלה. נסה שוב.",
+          "requestMessage": "אולי נוסיף את התרגיל הזה לתוכנית האימון שלי?"
         },
         "measures": {
           "title": "מדידות",
@@ -326,7 +336,11 @@
           "cancelTitle": "Cancel the session?",
           "cancelBody": "No sets are saved yet, the timer just stops.",
           "cancelSession": "Cancel session",
-          "keepGoing": "Keep going"
+          "keepGoing": "Keep going",
+          "tapDemo": "Tap for how-to",
+          "musclesTitle": "Muscles worked",
+          "restView": "View the exercise",
+          "restExpand": "Open the rest timer"
         },
         "summary": {
           "done": "Done",
@@ -362,7 +376,13 @@
           "emptyTitle": "No exercises found",
           "emptyBody": "Try another word or muscle.",
           "englishOnly": "Library instructions are available in English only.",
-          "askCoach": "Want this exercise in your plan? Message your coach."
+          "askCoach": "Want this exercise in your plan? Send it to your coach.",
+          "requestButton": "Suggest to my coach",
+          "requestSentShort": "Sent",
+          "requestSent": "Sent to your coach",
+          "openChat": "Open chat",
+          "requestFailed": "Couldn't send. Try again.",
+          "requestMessage": "Maybe we can add this exercise to my training plan?"
         },
         "measures": {
           "title": "Measures",
@@ -557,7 +577,11 @@
           "cancelTitle": "Annuler la séance ?",
           "cancelBody": "Aucune série enregistrée, le chrono s'arrête simplement.",
           "cancelSession": "Annuler la séance",
-          "keepGoing": "Continuer"
+          "keepGoing": "Continuer",
+          "tapDemo": "Touchez pour le mode d'emploi",
+          "musclesTitle": "Muscles sollicités",
+          "restView": "Voir l'exercice",
+          "restExpand": "Ouvrir le minuteur de repos"
         },
         "summary": {
           "done": "Terminer",
@@ -594,7 +618,13 @@
           "emptyTitle": "Aucun exercice trouvé",
           "emptyBody": "Essayez un autre mot ou un autre muscle.",
           "englishOnly": "Les instructions de la bibliothèque sont disponibles en anglais uniquement.",
-          "askCoach": "Vous voulez cet exercice dans votre programme ? Écrivez à votre coach."
+          "askCoach": "Vous voulez cet exercice dans votre plan ? Envoyez-le à votre coach.",
+          "requestButton": "Proposer à mon coach",
+          "requestSentShort": "Envoyé",
+          "requestSent": "Envoyé à votre coach",
+          "openChat": "Ouvrir le chat",
+          "requestFailed": "Envoi impossible. Réessayez.",
+          "requestMessage": "Peut-être qu'on pourrait ajouter cet exercice à mon plan d'entraînement ?"
         },
         "measures": {
           "title": "Mesures",

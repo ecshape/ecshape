@@ -1,9 +1,11 @@
 import os
+import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -73,6 +75,11 @@ def _serialize(messages: List[ChatMessage], db: Session) -> List[ChatMessageResp
     out = []
     for m in messages:
         item = ChatMessageResponse.model_validate(m)
+        if getattr(m, "payload", None):
+            try:
+                item.card = json.loads(m.payload)
+            except ValueError:
+                item.card = None
         if m.progress_entry_id and m.progress_entry_id in entries:
             item.linked_entry = _entry_summary(entries[m.progress_entry_id])
         out.append(item)
@@ -364,3 +371,156 @@ async def mark_message_read(
         message.read_at = datetime.now(timezone.utc)
         db.commit()
     return None
+
+
+# ------------------------------------------------------------------ exercise requests (QA #42)
+# The trainee sends an exercise from Explore as a card; the coach accepts it into a plan day, declines it, or adds an
+# alternative instead. The card's state lives in ChatMessage.payload; each answer is also a normal chat message.
+
+
+class ExerciseRequestIn(BaseModel):
+    library_id: Optional[str] = Field(default=None, max_length=120)
+    exercise_id: Optional[int] = None
+    name: str = Field(min_length=1, max_length=200)
+    image: Optional[str] = Field(default=None, max_length=500)
+    muscles: List[str] = Field(default_factory=list, max_length=8)
+    level: Optional[str] = Field(default=None, max_length=40)
+    message: str = Field(min_length=1, max_length=500)  # the trainee's words, in their language
+
+
+class ExerciseRequestResolveIn(BaseModel):
+    action: str = Field(pattern="^(accept|decline|alternative)$")
+    day_id: Optional[int] = None
+    alternative: Optional[Dict[str, Any]] = None  # {library_id, name, image}
+    sets: int = Field(default=3, ge=1, le=10)
+    reps: str = Field(default="10-12", max_length=20)
+    message: str = Field(min_length=1, max_length=500)  # the coach's reply text, in their language
+
+
+async def _push_chat(db: Session, msg: ChatMessage, recipient_id: int, sender: UserResponse) -> ChatMessageResponse:
+    data = _serialize([msg], db)[0]
+    try:
+        await websocket_service.send_personal_message(recipient_id, {
+            "type": "chat_message", "message_id": msg.id, "trainer_id": msg.trainer_id, "client_id": msg.client_id,
+            "sender_id": sender.id, "sender_name": sender.full_name or sender.username, "message": msg.message,
+            "progress_entry_id": None, "timestamp": _iso(msg.created_at), "data": data.model_dump(mode="json"),
+        })
+    except Exception as e:
+        logger.warning(f"Chat card WebSocket notification failed: {e}")
+    return data
+
+
+@router.post("/exercise-request", response_model=ChatMessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_exercise_request(body: ExerciseRequestIn, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainee: ask the coach to add an exercise to the plan (a card in the chat)."""
+    if current_user.role != UserRole.CLIENT:
+        raise HTTPException(status_code=403, detail="Only trainees send exercise requests")
+    trainer_id, client_id = _resolve_pair(current_user, db, current_user.id)
+    card = {
+        "kind": "exercise_request", "status": "pending",
+        "exercise": {"library_id": body.library_id, "exercise_id": body.exercise_id, "name": body.name.strip(),
+                     "image": body.image, "muscles": body.muscles[:8], "level": body.level},
+    }
+    msg = ChatMessage(trainer_id=trainer_id, client_id=client_id, sender_id=current_user.id, message=body.message.strip(),
+                      payload=json.dumps(card, ensure_ascii=False), created_at=datetime.now(timezone.utc))
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return await _push_chat(db, msg, trainer_id, current_user)
+
+
+def _request_for_trainer(db: Session, message_id: int, trainer: UserResponse) -> Tuple[ChatMessage, Dict[str, Any]]:
+    if trainer.role != UserRole.TRAINER:
+        raise HTTPException(status_code=403, detail="Only the coach can answer")
+    msg = db.query(ChatMessage).filter(ChatMessage.id == message_id, ChatMessage.trainer_id == trainer.id).first()
+    card = None
+    if msg and msg.payload:
+        try:
+            card = json.loads(msg.payload)
+        except ValueError:
+            card = None
+    if not msg or not card or card.get("kind") != "exercise_request":
+        raise HTTPException(status_code=404, detail="Exercise request not found")
+    return msg, card
+
+
+@router.get("/exercise-request/{message_id}/days")
+def exercise_request_days(message_id: int, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Coach: the days of the client's active plan(s), to choose where the exercise goes."""
+    from app.models.workout_system import WorkoutDay, WorkoutPlanV2
+
+    msg, _ = _request_for_trainer(db, message_id, current_user)
+    plans = (db.query(WorkoutPlanV2).filter(WorkoutPlanV2.client_id == msg.client_id, WorkoutPlanV2.trainer_id == current_user.id,
+                                            WorkoutPlanV2.is_active.is_(True)).order_by(WorkoutPlanV2.created_at.desc()).all())
+    out = []
+    for p in plans:
+        for d in sorted(p.workout_days, key=lambda d: d.order_index):
+            out.append({"id": d.id, "name": d.name, "plan": p.name, "order": d.order_index, "exercises": len(d.workout_exercises)})
+    return {"days": out}
+
+
+def _bank_exercise(db: Session, trainer: UserResponse, ex: Dict[str, Any]):
+    """The coach's bank exercise for a card exercise (imported from the library when needed)."""
+    from app.models.workout import Exercise
+
+    if ex.get("exercise_id"):
+        row = db.query(Exercise).filter(Exercise.id == ex["exercise_id"]).first()
+        if row:
+            return row
+    lid = ex.get("library_id")
+    if lid:
+        row = db.query(Exercise).filter(Exercise.library_id == lid, Exercise.created_by == trainer.id).first() \
+            or db.query(Exercise).filter(Exercise.library_id == lid).first()
+        if row:
+            return row
+        from app.routers.exercise_library import ImportIn, import_from_library
+
+        import_from_library(ImportIn(ids=[lid]), trainer, db)
+        row = db.query(Exercise).filter(Exercise.library_id == lid).first()
+        if row:
+            return row
+    name = (ex.get("name") or "").strip()
+    if name:
+        row = db.query(Exercise).filter(func.lower(Exercise.name) == name.lower()).first()
+        if row:
+            return row
+    raise HTTPException(status_code=422, detail="Exercise not found in the library")
+
+
+@router.post("/exercise-request/{message_id}/resolve", response_model=ChatMessageResponse)
+async def resolve_exercise_request(message_id: int, body: ExerciseRequestResolveIn, background_tasks: BackgroundTasks,
+                                   current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Coach: accept (add to a plan day), decline, or add an alternative exercise instead."""
+    from app.models.workout_system import WorkoutDay, WorkoutExerciseV2, WorkoutPlanV2
+
+    msg, card = _request_for_trainer(db, message_id, current_user)
+    if card.get("status") != "pending":
+        raise HTTPException(status_code=409, detail="Already answered")
+    resolution: Dict[str, Any] = {"action": body.action}
+    if body.action in ("accept", "alternative"):
+        if body.action == "alternative" and not (body.alternative and body.alternative.get("name")):
+            raise HTTPException(status_code=422, detail="Choose the alternative exercise")
+        day = (db.query(WorkoutDay).join(WorkoutPlanV2).filter(WorkoutDay.id == body.day_id, WorkoutPlanV2.client_id == msg.client_id,
+                                                                WorkoutPlanV2.trainer_id == current_user.id).first()) if body.day_id else None
+        if not day:
+            raise HTTPException(status_code=422, detail="Choose a day of the client's plan")
+        target = card["exercise"] if body.action == "accept" else {
+            "library_id": body.alternative.get("library_id"), "name": body.alternative.get("name"), "image": body.alternative.get("image")}
+        ex = _bank_exercise(db, current_user, target)
+        order = max([w.order_index for w in day.workout_exercises] or [-1]) + 1
+        db.add(WorkoutExerciseV2(workout_day_id=day.id, exercise_id=ex.id, order_index=order, target_sets=body.sets,
+                                 target_reps=body.reps, rest_seconds=90))
+        resolution.update({"day_id": day.id, "day_name": day.name, "exercise": {"name": target.get("name") or ex.name, "image": target.get("image"),
+                                                                                 "library_id": target.get("library_id")}})
+    card["status"] = {"accept": "accepted", "decline": "declined", "alternative": "alternative"}[body.action]
+    card["resolution"] = resolution
+    msg.payload = json.dumps(card, ensure_ascii=False)
+    reply_card = {"kind": "exercise_reply", "request_id": msg.id, **resolution}
+    reply = ChatMessage(trainer_id=msg.trainer_id, client_id=msg.client_id, sender_id=current_user.id, message=body.message.strip(),
+                        payload=json.dumps(reply_card, ensure_ascii=False), created_at=datetime.now(timezone.utc))
+    db.add(reply)
+    db.commit()
+    db.refresh(reply)
+    if body.action != "decline":
+        background_tasks.add_task(websocket_service.send_live_refresh, msg.client_id, "plan")
+    return await _push_chat(db, reply, msg.client_id, current_user)

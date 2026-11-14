@@ -877,7 +877,8 @@ html.lenis, html.lenis body { height: auto; }
 
   .ec-site .hero { height: auto; min-height: 0; display: flex; flex-direction: column; }
   .ec-site .hero__media { position: relative; order: 2; clip-path: none !important; height: min(62svh, 128vw); margin: 0 var(--gutter); border-radius: var(--radius-lg); overflow: hidden; }
-  .ec-site .hero__media img { transform: scale(1.55); transform-origin: 58% 44%; object-position: 58% 40%; }
+  /* Trainer stands at ~58% of the photo width: zoom on his body and shift him to the middle of the frame */
+  .ec-site .hero__media img { transform: scale(1.6) translateX(-5%); transform-origin: 58% 47%; object-position: 58% 40%; }
   .ec-site .hero__content { max-width: none; padding-bottom: 32px; padding-top: calc(var(--nav-h) + 48px); }
   .ec-site .hero__ctas .btn { flex: 1 1 auto; justify-content: space-between; }
   .ec-site .hero__stats { position: relative; order: 3; inset: auto; margin: 16px var(--gutter) 0; flex-wrap: wrap; }

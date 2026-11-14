@@ -41,19 +41,19 @@ export function usePortalMotion(scope: RefObject<HTMLElement | null>) {
           .filter((el) => el.getBoundingClientRect().top < window.innerHeight * 1.45);
         if (!items.length) return;
         gsap.fromTo(
-          items.slice(0, 36),
-          { y: 14, autoAlpha: 0 },
+          items.slice(0, 24),
+          { y: 6, autoAlpha: 0 },
           {
             y: 0,
             autoAlpha: 1,
-            duration: 0.55,
-            ease: 'power3.out',
-            stagger: 0.035,
+            duration: 0.24,
+            ease: 'power2.out',
+            stagger: 0.02,
             clearProps: 'transform,opacity,visibility',
           },
         );
       }, root);
-    }, 80);
+    }, 30);
     return () => {
       window.clearTimeout(t);
       ctx?.revert();

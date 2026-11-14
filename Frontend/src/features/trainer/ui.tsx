@@ -20,7 +20,7 @@ const liquidMemory: Record<string, Box> = {};
 
 /**
  * Measures the element marked `data-liquid-active="true"` inside `ref` and returns CSS vars for a blob that
- * first stretches from the previous item to the new one, then springs into place.
+ * glides from the previous item to the new one.
  */
 export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string | null | undefined, axis: 'x' | 'y', memoryKey?: string) {
   const [box, setBox] = useState<(Box & { phase: Phase }) | null>(null);
@@ -29,7 +29,6 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
   useLayoutEffect(() => {
     const wrap = ref.current;
     if (!wrap) return;
-    const timers: number[] = [];
     const measure = (): Box | null => {
       const el = wrap.querySelector<HTMLElement>('[data-liquid-active="true"]');
       if (!el) return null;
@@ -44,19 +43,8 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       setBox(null);
       return;
     }
-    const prev = last.current;
-    const moved = prev && (axis === 'y' ? Math.abs(prev.y - target.y) > 2 : Math.abs(prev.x - target.x) > 2);
-    if (prev && moved && !prefersReducedMotion()) {
-      setBox({ ...prev, phase: 'jump' });
-      const span: Box =
-        axis === 'y'
-          ? { ...target, y: Math.min(prev.y, target.y), h: Math.max(prev.y + prev.h, target.y + target.h) - Math.min(prev.y, target.y) }
-          : { ...target, x: Math.min(prev.x, target.x), w: Math.max(prev.x + prev.w, target.x + target.w) - Math.min(prev.x, target.x) };
-      timers.push(window.setTimeout(() => setBox({ ...span, phase: 'stretch' }), 30));
-      timers.push(window.setTimeout(() => setBox({ ...target, phase: 'settle' }), 270));
-    } else {
-      setBox({ ...target, phase: prev ? 'settle' : 'jump' });
-    }
+    // Calm slide: the indicator glides straight to the new item (no stretch / overshoot).
+    setBox({ ...target, phase: last.current ? 'settle' : 'jump' });
     remember(target);
 
     const ro = new ResizeObserver(() => {
@@ -67,7 +55,6 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
     });
     ro.observe(wrap);
     return () => {
-      timers.forEach(clearTimeout);
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

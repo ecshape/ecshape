@@ -225,23 +225,14 @@ const Login = () => {
           >
             ECSHAPE
           </div>
-          {/* Trainer photo (gym, beige shirt): fills the panel, tinted with the brand orange */}
+          {/* Trainer cut-out (gym photo, background removed), standing on the brand panel */}
           <img
-            src={`/elior-login-gym.webp?v=${__STATIC_BUST__}`}
+            src={`/elior-login-cutout.webp?v=${__STATIC_BUST__}`}
             alt=""
             fetchPriority="high"
             decoding="async"
             onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
-            className="ec-login-photo-cover absolute inset-0 h-full w-full object-cover object-[50%_18%]"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(180deg, hsl(var(--primary) / .55) 0%, hsl(var(--primary) / .18) 38%, transparent 58%, rgba(0,0,0,.55) 100%)',
-              mixBlendMode: 'multiply',
-            }}
+            className="ec-login-photo absolute bottom-0 left-1/2 h-[86%] w-auto max-w-none -translate-x-1/2 object-contain object-bottom drop-shadow-[0_30px_40px_rgba(0,0,0,.35)]"
           />
           <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4 rounded-3xl bg-black/25 p-5 text-white backdrop-blur-md">
             <p className="font-display text-4xl leading-[.95]">

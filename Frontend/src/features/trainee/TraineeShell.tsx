@@ -7,7 +7,6 @@ import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortalRoot } from '@/lib/portalMotion';
 import { useConversations } from './hooks';
-import './i18n';
 import './trainee.css';
 
 export type TraineeTab = 'dashboard' | 'training' | 'meals' | 'progress' | 'chat' | 'profile';

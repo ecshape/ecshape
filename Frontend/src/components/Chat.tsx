@@ -6,7 +6,6 @@ import { ArrowLeft, Bell, MessageSquare, PanelRightClose, PanelRightOpen, UserRo
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { hasNotificationPermission, requestNotificationPermission, showNotification } from '@/lib/notifications';
-import './chat/i18n';
 import './chat/chat.css';
 import { chatApi, toLinkedEntry, type ChatMessage, type Conversation, type LinkedEntry, type ProgressEntry } from './chat/api';
 import { useChatSocket, useFillHeight, useMediaQuery, usePageVisible, useVisualViewport, type SocketEvent } from './chat/hooks';

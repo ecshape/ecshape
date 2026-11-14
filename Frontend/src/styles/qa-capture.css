@@ -300,3 +300,11 @@ body[data-scroll-locked] .ec-qa-fab-stack { opacity: 0; pointer-events: none; }
   .ec-qa-pick-hint { order: 3; width: 100%; white-space: normal !important; }
 }
 @media (prefers-reduced-motion: reduce) { .ec-qa-pick-box { transition: none; } }
+
+/* Phones: a small tab on the side edge (clear of chat composers and the bottom tab bar) unless the trainer moved it */
+@media (max-width: 640px) {
+  .ec-qa-fab-stack:not([style*="left"]) { right: 0; bottom: auto; top: 38%; }
+  .ec-qa-fab-stack:not([style*="left"]) .ec-qa-fab {
+    width: 40px; height: 44px; border-radius: 12px 0 0 12px; font-size: 0.72rem; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+}

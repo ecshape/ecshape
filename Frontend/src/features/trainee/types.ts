@@ -9,6 +9,14 @@ export interface ExerciseInfo {
   image_path?: string | null;
   /** Exercise library id: animated two-frame demo (see lib/exerciseLibrary). */
   library_id?: string | null;
+  /** Library muscles (free-exercise-db names), when the exercise comes from the library. */
+  primary_muscles?: string[];
+  secondary_muscles?: string[];
+  level?: string | null;
+  equipment?: string | null;
+  mechanic?: string | null;
+  /** Step-by-step library instructions (English), day endpoint only. */
+  library_instructions?: string[];
 }
 
 export interface WorkoutExercise {

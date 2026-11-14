@@ -153,6 +153,28 @@ def search_library(
     return {"total": len(res), "items": page}
 
 
+@router.get("/browse")
+def browse_library(
+    q: Optional[str] = None,
+    muscle: Optional[str] = None,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(48, ge=1, le=200),
+    user: UserResponse = Depends(get_current_user),
+):
+    """Read-only browse of the built-in library for any signed-in user (trainee app "Explore")."""
+    words = [w for w in (q or "").lower().split() if w]
+    res = []
+    for e in _library():
+        if muscle and muscle not in e.get("primaryMuscles", []):
+            continue
+        if words and not all(w in e["_hay"] for w in words):
+            continue
+        res.append(e)
+    if words:
+        res.sort(key=lambda e: (not e["name"].lower().startswith(words[0]), len(e["name"])))
+    return {"total": len(res), "items": [_public(e) for e in res[offset: offset + limit]]}
+
+
 def _imported_ids(db: Session, user_id: int) -> set:
     try:
         rows = db.execute(text("select library_id from exercises where library_id is not null")).fetchall()

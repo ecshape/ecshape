@@ -75,3 +75,6 @@ logs/*.log
 logs/*.json 
 run_dev.sh
 docs/env.production.example
+
+# local agent worktrees
+.claude/worktrees/

@@ -359,20 +359,20 @@ html.lenis, html.lenis body { height: auto; }
    MANIFESTO — words light up on scroll
    ========================================================================= */
 .ec-site .manifesto { padding-block: clamp(96px, 13vw, 180px); }
-.ec-site .manifesto__grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr); gap: clamp(40px, 6vw, 110px); align-items: center; }
+.ec-site .manifesto__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(40px, 5vw, 80px); align-items: center; }
 .ec-site .manifesto__text {
   margin-top: 24px;
   font-family: var(--f-display); font-weight: 700;
-  font-size: clamp(1.9rem, 3.3vw, 3.5rem); line-height: 1.06; max-width: 26ch;
+  font-size: clamp(1.7rem, 2.75vw, 2.9rem); line-height: 1.1; max-width: 30ch;
 }
 .ec-site .manifesto__text .w { opacity: .14; transition: opacity .2s linear; }
 .ec-site .manifesto__text .w.hl { color: var(--accent); }
 .ec-site .manifesto__sig { display: flex; align-items: center; gap: 16px; margin-top: 40px; }
-.ec-site .manifesto__sig img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); }
+.ec-site .manifesto__sig img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: 50% 30%; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); }
 .ec-site .manifesto__sig b { display: block; font-size: 1.05rem; }
 .ec-site .manifesto__sig small { color: var(--ink-3); }
 /* Visual: arched portrait inside a slowly turning dial, with the key numbers floating around it */
-.ec-site .manifesto__art { position: relative; width: min(100%, 460px); aspect-ratio: 1; justify-self: center; }
+.ec-site .manifesto__art { position: relative; width: min(100%, 520px); aspect-ratio: 1; justify-self: center; }
 .ec-site .mart__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
 .ec-site .mart__spin { transform-origin: 100px 100px; animation: artSpin 60s linear infinite; }
 .ec-site .mart__ring line { stroke: var(--line-2); stroke-width: 1.2; stroke-linecap: round; }
@@ -1085,9 +1085,12 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 
 /* ---- Manifesto + result cards: smaller screens ---- */
 @media (max-width: 900px) {
+  .ec-site .manifesto__grid { gap: 28px; }
+  .ec-site .rcard { width: min(84vw, 440px); }
+}
+@media (max-width: 640px) {
   .ec-site .manifesto__grid { grid-template-columns: 1fr; gap: 56px; }
   .ec-site .manifesto__art { width: min(100%, 400px); }
-  .ec-site .rcard { width: min(84vw, 440px); }
 }
 @media (max-width: 420px) {
   .ec-site .mart__chip { max-width: 66%; gap: 8px; padding: 7px 11px 7px 9px; }

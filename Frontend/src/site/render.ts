@@ -137,7 +137,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
       <span class="eyebrow" data-reveal${P_('manifesto.eyebrow')}>${esc(c.manifesto.eyebrow)}</span>
       <p class="manifesto__text" data-words>${T('manifesto.text', c.manifesto.text)} <span class="hl"${P_('manifesto.highlight')}>${esc(c.manifesto.highlight)}</span></p>
       <div class="manifesto__sig" data-reveal>
-        <img src="${esc(storyImg)}" alt="" width="64" height="64" loading="lazy">
+        <img src="${esc(storyImg.endsWith('opt/trainer_story.jpg') ? `${P}opt/trainer_face.webp` : storyImg)}" alt="" width="64" height="64" loading="lazy">
         <div><b>${esc(name)}</b><small${P_('manifesto.role')}>${esc(c.manifesto.role)}</small></div>
       </div>
     </div>

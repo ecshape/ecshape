@@ -65,7 +65,7 @@ export function waLink(c: SiteContent) {
 
 /** Real screenshots of the client app, captured from the portal (see scripts in Frontend/scripts). */
 export function appShot(lang: SiteLang, i: number) {
-  return `${P}app/${lang}/${i + 1}.jpg?v=3`;
+  return `${P}app/${lang}/${i + 1}.jpg?v=4`;
 }
 
 export interface RenderOptions {

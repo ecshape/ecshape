@@ -121,7 +121,14 @@
       }
     },
     "exerciseLibrary": {
-      "musclesWorked": "שרירים עובדים"
+      "musclesWorked": "שרירים עובדים",
+      "meta": {
+        "compound": "מורכב",
+        "isolation": "מבודד",
+        "push": "דחיפה",
+        "pull": "משיכה",
+        "static": "סטטי"
+      }
     },
     "systemPage": {
       "system_management": "ניהול מערכת",
@@ -197,6 +204,12 @@
         "warning": "אזהרה",
         "critical": "קריטי",
         "degraded": "ירידה בביצועים"
+      },
+      "uptimeFmt": "{{d}} ימים, {{h}} שעות ו-{{m}} דקות",
+      "env": {
+        "development": "פיתוח",
+        "production": "ייצור",
+        "preview": "תצוגה מקדימה"
       }
     },
     "studio": {
@@ -261,6 +274,27 @@
         "edit": "עריכת הצ׳ק-אין",
         "weightRange": "משקל בין 20 ל-400 ק״ג",
         "stepsRange": "עד 100,000 צעדים"
+      },
+      "player": {
+        "statMinutesN_one": "דקה",
+        "statMinutesN_other": "דקות",
+        "statSetsN_one": "סט",
+        "statSetsN_other": "סטים",
+        "setsCountN_one": "סט אחד",
+        "setsCountN_other": "{{count}} סטים",
+        "minutesCountN_one": "דקה אחת",
+        "minutesCountN_other": "{{count}} דקות",
+        "statMinutesN_two": "דקות",
+        "statMinutesN_many": "דקות",
+        "statSetsN_two": "סטים",
+        "statSetsN_many": "סטים",
+        "setsCountN_two": "{{count}} סטים",
+        "setsCountN_many": "{{count}} סטים",
+        "minutesCountN_two": "{{count}} דקות",
+        "minutesCountN_many": "{{count}} דקות"
+      },
+      "today": {
+        "doneSummaryN": "{{sets}} · {{minutes}}. עבודה טובה."
       }
     },
     "exerciseBank": {
@@ -268,7 +302,13 @@
       "muscleRequired": "קבוצת שרירים היא שדה חובה"
     },
     "mealHistory": {
-      "title": "היסטוריית ארוחות יומית"
+      "title": "היסטוריית ארוחות יומית",
+      "avgTitle": "ממוצע קלוריות (7 ימים)",
+      "kcal": "{{value}} קק״ל",
+      "daysTracked_one": "יום אחד במעקב",
+      "daysTracked_two": "יומיים במעקב",
+      "daysTracked_many": "{{count}} ימים במעקב",
+      "daysTracked_other": "{{count}} ימים במעקב"
     },
     "trainerDashboard": {
       "err": {
@@ -283,6 +323,17 @@
     },
     "login": {
       "backToSite": "חזרה לאתר ECshape"
+    },
+    "trainer": {
+      "client": {
+        "daysN_one": "יום ברצף",
+        "daysN_other": "ימים ברצף",
+        "daysN_two": "ימים ברצף",
+        "daysN_many": "ימים ברצף"
+      },
+      "builder": {
+        "planSaved": "התוכנית נשמרה"
+      }
     }
   },
   "en": {
@@ -407,7 +458,14 @@
       }
     },
     "exerciseLibrary": {
-      "musclesWorked": "Muscles worked"
+      "musclesWorked": "Muscles worked",
+      "meta": {
+        "compound": "compound",
+        "isolation": "isolation",
+        "push": "push",
+        "pull": "pull",
+        "static": "static"
+      }
     },
     "systemPage": {
       "system_management": "System Management",
@@ -483,6 +541,12 @@
         "warning": "Warning",
         "critical": "Critical",
         "degraded": "Degraded"
+      },
+      "uptimeFmt": "{{d}} days, {{h}} hours, {{m}} minutes",
+      "env": {
+        "development": "Development",
+        "production": "Production",
+        "preview": "Preview"
       }
     },
     "studio": {
@@ -547,6 +611,19 @@
         "edit": "Edit check-in",
         "weightRange": "Weight between 20 and 400 kg",
         "stepsRange": "Up to 100,000 steps"
+      },
+      "player": {
+        "statMinutesN_one": "minute",
+        "statMinutesN_other": "minutes",
+        "statSetsN_one": "set",
+        "statSetsN_other": "sets",
+        "setsCountN_one": "1 set",
+        "setsCountN_other": "{{count}} sets",
+        "minutesCountN_one": "1 min",
+        "minutesCountN_other": "{{count}} min"
+      },
+      "today": {
+        "doneSummaryN": "{{sets}} · {{minutes}}. Great work."
       }
     },
     "exerciseBank": {
@@ -554,7 +631,11 @@
       "muscleRequired": "Muscle group is required"
     },
     "mealHistory": {
-      "title": "Daily meal history"
+      "title": "Daily meal history",
+      "avgTitle": "Average calories (7 days)",
+      "kcal": "{{value}} kcal",
+      "daysTracked_one": "1 day tracked",
+      "daysTracked_other": "{{count}} days tracked"
     },
     "trainerDashboard": {
       "err": {
@@ -569,6 +650,15 @@
     },
     "login": {
       "backToSite": "Back to the ECshape site"
+    },
+    "trainer": {
+      "client": {
+        "daysN_one": "day in a row",
+        "daysN_other": "days in a row"
+      },
+      "builder": {
+        "planSaved": "Plan saved"
+      }
     }
   },
   "fr": {
@@ -693,7 +783,14 @@
       }
     },
     "exerciseLibrary": {
-      "musclesWorked": "Muscles sollicités"
+      "musclesWorked": "Muscles sollicités",
+      "meta": {
+        "compound": "polyarticulaire",
+        "isolation": "isolation",
+        "push": "poussée",
+        "pull": "tirage",
+        "static": "statique"
+      }
     },
     "systemPage": {
       "system_management": "Gestion du système",
@@ -769,6 +866,12 @@
         "warning": "Attention",
         "critical": "Critique",
         "degraded": "Dégradé"
+      },
+      "uptimeFmt": "{{d}} j {{h}} h {{m}} min",
+      "env": {
+        "development": "Développement",
+        "production": "Production",
+        "preview": "Aperçu"
       }
     },
     "studio": {
@@ -833,6 +936,23 @@
         "edit": "Modifier le bilan",
         "weightRange": "Poids entre 20 et 400 kg",
         "stepsRange": "Jusqu’à 100 000 pas"
+      },
+      "player": {
+        "statMinutesN_one": "minute",
+        "statMinutesN_other": "minutes",
+        "statSetsN_one": "série",
+        "statSetsN_other": "séries",
+        "setsCountN_one": "1 série",
+        "setsCountN_other": "{{count}} séries",
+        "minutesCountN_one": "1 min",
+        "minutesCountN_other": "{{count}} min",
+        "statMinutesN_many": "minutes",
+        "statSetsN_many": "séries",
+        "setsCountN_many": "{{count}} séries",
+        "minutesCountN_many": "{{count}} min"
+      },
+      "today": {
+        "doneSummaryN": "{{sets}} · {{minutes}}. Bravo."
       }
     },
     "exerciseBank": {
@@ -840,7 +960,12 @@
       "muscleRequired": "Le groupe musculaire est obligatoire"
     },
     "mealHistory": {
-      "title": "Historique quotidien des repas"
+      "title": "Historique quotidien des repas",
+      "avgTitle": "Calories moyennes (7 jours)",
+      "kcal": "{{value}} kcal",
+      "daysTracked_one": "1 jour suivi",
+      "daysTracked_many": "{{count}} jours suivis",
+      "daysTracked_other": "{{count}} jours suivis"
     },
     "trainerDashboard": {
       "err": {
@@ -855,6 +980,16 @@
     },
     "login": {
       "backToSite": "Retour au site ECshape"
+    },
+    "trainer": {
+      "client": {
+        "daysN_one": "jour d’affilée",
+        "daysN_other": "jours d’affilée",
+        "daysN_many": "jours d’affilée"
+      },
+      "builder": {
+        "planSaved": "Programme enregistré"
+      }
     }
   }
 }

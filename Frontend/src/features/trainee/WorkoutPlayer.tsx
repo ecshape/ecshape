@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -516,8 +517,8 @@ const Celebration: React.FC<{ stats: { minutes: number; sets: number; volume: nu
         <p className="mt-2 text-muted-foreground">{t('trainee.player.doneBody')}</p>
         <div className="mt-6 grid grid-cols-3 gap-2">
           {[
-            [stats.minutes, t('trainee.player.statMinutes')],
-            [stats.sets, t('trainee.player.statSets')],
+            [stats.minutes, t('trainee.player.statMinutesN', { count: Number(stats.minutes) || 0 })],
+            [stats.sets, t('trainee.player.statSetsN', { count: Number(stats.sets) || 0 })],
             [stats.volume, t('trainee.player.statVolume')],
           ].map(([v, l]) => (
             <div key={String(l)} className="rounded-2xl bg-foreground/[.06] px-2 py-3">

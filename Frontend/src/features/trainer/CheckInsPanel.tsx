@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, Check, CheckCircle2, ClipboardCheck, Clock, Flame, Footprints, Moon, Scale, Sun, Utensils, X } from 'lucide-react';
@@ -148,7 +149,7 @@ export const CheckInsPanel: React.FC<{ clientId: number; summary: CheckInSummary
           }
         >
           <CountUp value={s?.current_streak ?? 0} />
-          <span className="ms-1 text-sm text-muted-foreground">{t('trainer.client.days')}</span>
+          <span className="ms-1 text-sm text-muted-foreground">{t('trainer.client.daysN', { count: s?.current_streak ?? 0 })}</span>
         </Tile>
         <Tile
           icon={ClipboardCheck}

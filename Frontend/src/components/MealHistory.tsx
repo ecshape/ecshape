@@ -138,16 +138,16 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Average Calories (7 Days)
+              {t('mealHistory.avgTitle', 'Average calories (7 days)')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-4">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                {averageData.average_calories} kcal
+                {t('mealHistory.kcal', { value: Math.round(averageData.average_calories).toLocaleString(i18n.language), defaultValue: '{{value}} kcal' })}
               </div>
               <p className="text-muted-foreground">
-                {averageData.total_days} days tracked
+                {t('mealHistory.daysTracked', { count: averageData.total_days, defaultValue: '{{count}} days tracked' })}
               </p>
             </div>
           </CardContent>

@@ -86,7 +86,8 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
         steps: Number.isFinite(s) ? s : null,
         sleep_hours: sleep,
         hunger_level: hunger,
-        walked_10000_steps: walked ?? (Number.isFinite(s) ? s >= 10000 : null),
+        // entered steps decide the 10,000 badge; the toggle only counts when no steps were typed (r2 P2)
+        walked_10000_steps: Number.isFinite(s) ? s >= 10000 : walked,
         sun_exposure_10min: sun,
     };
     const opts = {
@@ -106,7 +107,7 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t('trainee.checkin.title')}
+      title={existing && existing.id > 0 ? t('trainee.checkin.edit', { defaultValue: 'Edit check-in' }) : t('trainee.checkin.title')}
       description={t('trainee.checkin.subtitle')}
       footer={
         <button type="button" onClick={submit} disabled={weightBad || stepsBad || busy} className="tp-btn tp-btn--primary tp-press w-full">
@@ -124,7 +125,7 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
           </label>
           <label className="block">
             <span className="tp-label mb-2 block">{t('trainee.checkin.steps')}</span>
-            <input className="tp-input text-center font-semibold" inputMode="numeric" value={steps} onChange={(e) => setSteps(e.target.value.replace(/\D/g, ''))} placeholder="8000" dir="ltr" />
+            <input className="tp-input text-center font-semibold" inputMode="numeric" aria-label={t('trainee.checkin.steps')} value={steps} onChange={(e) => setSteps(e.target.value.replace(/\D/g, ''))} placeholder="8000" dir="ltr" />
             {stepsBad && <span className="mt-1.5 block text-xs text-destructive" role="alert">{t('trainee.checkin.stepsRange', { defaultValue: '0–100,000' })}</span>}
           </label>
         </div>
@@ -142,7 +143,7 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
           </div>
         </div>
         <div className="grid gap-2 min-[420px]:grid-cols-2">
-          <Toggle on={walked} onChange={setWalked} icon={Footprints} label={t('trainee.checkin.walked')} />
+          <Toggle on={steps.trim() && Number.isFinite(sNum) ? sNum >= 10000 : walked} onChange={setWalked} icon={Footprints} label={t('trainee.checkin.walked')} />
           <Toggle on={sun} onChange={setSun} icon={Sun} label={t('trainee.checkin.sun')} />
         </div>
       </div>

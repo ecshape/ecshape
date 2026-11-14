@@ -123,6 +123,12 @@ const SystemPage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  // The API sends "78 days, 20 hours, 44 minutes" in English: rebuild it in the interface language (r3 site #3)
+  const fmtUptime = (v?: string | null) => {
+    const m = (v || '').match(/(\d+)\s*days?,\s*(\d+)\s*hours?,\s*(\d+)\s*minutes?/i);
+    if (!m) return v || t('systemPage.unknown', 'Unknown');
+    return t('systemPage.uptimeFmt', { d: m[1], h: m[2], m: m[3], defaultValue: '{{d}} d {{h}} h {{m}} min' });
+  };
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
   const [testResults, setTestResults] = useState<TestRunResult | null>(null);
@@ -327,7 +333,7 @@ const SystemPage: React.FC = () => {
                   <div className={`w-3 h-3 rounded-full ${getHealthColor(systemStatus?.system_health || 'unknown')}`}></div>
                   <span className="text-2xl font-bold capitalize">{systemStatus?.system_health ? t(`systemPage.health.${String(systemStatus.system_health).toLowerCase()}`, String(systemStatus.system_health)) : t('systemPage.unknown', 'Unknown')}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">{t('systemPage.uptime', 'Uptime')}: <span dir="ltr">{systemStatus?.uptime || t('systemPage.unknown', 'Unknown')}</span></p>
+                <p className="text-xs text-muted-foreground">{t('systemPage.uptime', 'Uptime')}: <span>{fmtUptime(systemStatus?.uptime)}</span></p>
               </CardContent>
             </Card>
 
@@ -382,7 +388,7 @@ const SystemPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>{t('systemPage.last_backup', 'Last Backup')}</span>
-                  <span className="font-medium">{systemStatus?.last_backup || t('systemPage.never', 'Never')}</span>
+                  <span className="font-medium">{!systemStatus?.last_backup || systemStatus.last_backup === 'Never' ? t('systemPage.never', 'Never') : systemStatus.last_backup}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>{t('systemPage.total_records', 'Total Records')}</span>
@@ -407,7 +413,7 @@ const SystemPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>{t('systemPage.environment', 'Environment')}</span>
-                  <span className="font-medium">{systemStatus?.application?.environment || 'Production'}</span>
+                  <span className="font-medium">{t(`systemPage.env.${String(systemStatus?.application?.environment || 'production').toLowerCase()}`, String(systemStatus?.application?.environment || 'production'))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>{t('systemPage.platform', 'Platform')}</span>

@@ -771,13 +771,38 @@ def get_meal_history(
     # Permission check
     if current_user.role == UserRole.CLIENT and target_client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if current_user.role == UserRole.TRAINER and target_client_id != current_user.id:
+        from app.models.user import User as _User
+        if not db.query(_User).filter(_User.id == target_client_id, _User.trainer_id == current_user.id).first():
+            raise HTTPException(status_code=403, detail="Not authorized")
     
     history_entries = db.query(DailyMealHistory).filter(
         DailyMealHistory.client_id == target_client_id
     ).order_by(DailyMealHistory.date.desc()).all()
     
-    from datetime import timedelta
+    from datetime import timedelta, datetime as _dt
+    from types import SimpleNamespace
     import re
+
+    # The app logs meals as choices / completions (v3) and never fills DailyMealHistory: build those days too, so the
+    # trainer's Nutrition history is not empty (A2A cross M3). Totals are summed from the logged foods below.
+    known_days = {e.date.date() for e in history_entries}
+    since = _dt.utcnow() - timedelta(days=60)
+    logged_days = {
+        d.date() for (d,) in db.query(ClientMealChoice.date).filter(
+            ClientMealChoice.client_id == target_client_id, ClientMealChoice.date >= since).all() if d
+    } | {
+        d.date() for (d,) in db.query(MealCompletionStatus.date).filter(
+            MealCompletionStatus.client_id == target_client_id, MealCompletionStatus.date >= since,
+            MealCompletionStatus.is_completed == True).all() if d  # noqa: E712
+    }
+    for day in sorted(logged_days - known_days, reverse=True):
+        start = _dt(day.year, day.month, day.day)
+        history_entries.append(SimpleNamespace(
+            id=-int(start.strftime("%Y%m%d")), client_id=target_client_id, date=start, total_calories=None,
+            total_protein=None, total_carbs=None, total_fat=None, is_complete=False, created_at=start, updated_at=None,
+        ))
+    history_entries.sort(key=lambda e: e.date, reverse=True)
 
     detailed_history: List[Dict[str, Any]] = []
 
@@ -895,8 +920,14 @@ def get_meal_history(
                 
                 # Calculate scale based on measurement type
                 if food_option.measurement_type == MeasurementType.PER_PORTION:
-                    # For per_portion: multiply by number of portions
-                    scale = quantity_value
+                    # For per_portion: multiply by number of portions. A gram amount ("120g" of a bread slice) is not a
+                    # portion count: convert with the portion's grams when known, else count one portion (A2A r3 N4)
+                    q = (choice.quantity or "").lower()
+                    if re.search(r"\d\s*(g|gr|gram|grams|גרם|ג)\b", q):
+                        portion_g = parse_quantity(food_option.serving_size) if food_option.serving_size and re.search(r"\d\s*(g|gr|gram|grams|גרם)", food_option.serving_size.lower()) else None
+                        scale = quantity_value / portion_g if portion_g else 1
+                    else:
+                        scale = quantity_value
                 else:
                     # For per_100g: scale based on grams (default per 100g)
                     scale = quantity_value / 100 if quantity_value else 1
@@ -947,15 +978,25 @@ def get_meal_history(
         for meal in meals_list:
             meal.pop("order_index", None)
 
+        def _sum(key: str) -> float:
+            return round(sum((c.get(key) or 0) for m in meals_list for c in m["choices"]), 1)
+
+        synthetic = entry.total_calories is None
+        if synthetic and not meals_list and completion_map:
+            # completed meals without logged foods: show the completed slots
+            for sid, done in completion_map.items():
+                slot = db.query(MealSlot).filter(MealSlot.id == sid).first()
+                if slot and done:
+                    meals_list.append({"meal_slot_id": slot.id, "meal_name": slot.name, "time_suggestion": slot.time_suggestion, "choices": [], "is_completed": True})
         detailed_history.append(
             {
                 "id": entry.id,
                 "client_id": entry.client_id,
                 "date": entry.date,
-                "total_calories": entry.total_calories,
-                "total_protein": entry.total_protein,
-                "total_carbs": entry.total_carbs,
-                "total_fat": entry.total_fat,
+                "total_calories": _sum("calories") if synthetic else entry.total_calories,
+                "total_protein": _sum("protein") if synthetic else entry.total_protein,
+                "total_carbs": _sum("carbs") if synthetic else entry.total_carbs,
+                "total_fat": _sum("fat") if synthetic else entry.total_fat,
                 "is_complete": entry.is_complete,
                 "created_at": entry.created_at,
                 "updated_at": entry.updated_at,
@@ -986,12 +1027,14 @@ def get_average_calories(
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
     
-    # Get daily histories in date range
-    histories = db.query(DailyMealHistory).filter(
-        DailyMealHistory.client_id == target_client_id,
-        DailyMealHistory.date >= start_date,
-        DailyMealHistory.date <= end_date
-    ).all()
+    # Same days as the history list (stored summaries + days built from the app's meal logs, A2A cross M3);
+    # get_meal_history also checks that a trainer only reads their own clients.
+    from types import SimpleNamespace
+    histories = [
+        SimpleNamespace(date=h["date"], total_calories=h["total_calories"] or 0, is_complete=h["is_complete"])
+        for h in get_meal_history(client_id=target_client_id, current_user=current_user, db=db)
+        if start_date <= h["date"] <= end_date and (h["total_calories"] or 0) > 0
+    ]
     
     if not histories:
         return {

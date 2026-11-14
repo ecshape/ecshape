@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -732,8 +733,8 @@ const SummaryOverlay: React.FC<{ stats: Summary; dayName: string; onClose: () =>
         <h2 id="tr-done-title" className="tp-title mt-1 text-6xl">{t('trainee.player.doneTitle')}</h2>
         <div className="mt-6 grid grid-cols-3 gap-2">
           {[
-            [stats.minutes, t('trainee.player.statMinutes')],
-            [stats.sets, t('trainee.player.statSets')],
+            [stats.minutes, t('trainee.player.statMinutesN', { count: Number(stats.minutes) || 0 })],
+            [stats.sets, t('trainee.player.statSetsN', { count: Number(stats.sets) || 0 })],
             [stats.volume, t('trainee.player.statVolume')],
           ].map(([v, l]) => (
             <div key={String(l)} className="rounded-2xl bg-foreground/[.06] px-2 py-3">

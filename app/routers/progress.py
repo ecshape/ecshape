@@ -162,7 +162,7 @@ async def get_weight_history(
     
     entries = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == current_user.id
-    ).order_by(ProgressEntry.date.desc()).all()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).all()
     
     # Normalize photo_path to just filename for all entries
     normalized_entries = []
@@ -214,7 +214,7 @@ async def get_progress_entries(
     
     entries = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == query_client_id
-    ).order_by(ProgressEntry.date.desc()).all()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).all()
     
     # Normalize photo_path to just filename for all entries
     # This handles both old entries (with full paths) and new entries (just filename)
@@ -310,7 +310,7 @@ async def get_current_weight(
     
     latest_entry = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == current_user.id
-    ).order_by(ProgressEntry.date.desc()).first()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).first()
     
     if not latest_entry:
         raise HTTPException(

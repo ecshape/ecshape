@@ -378,7 +378,7 @@ const UsersPage = () => {
                             )}
                           </TableCell>
                           <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</TableCell>
-                          <TableCell className="space-x-2">
+                          <TableCell className="whitespace-nowrap [&>*+*]:ms-2">
                             <Button size="icon" variant="ghost" onClick={() => openEditDialog(u)}><Pencil className="w-4 h-4" /></Button>
                             <Button size="icon" variant="ghost" onClick={() => handleDelete(u.id)} disabled={actionLoading}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                           </TableCell>
@@ -435,7 +435,7 @@ const UsersPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex space-x-2 pt-4">
+              <div className="flex gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1">{t('admin.cancel')}</Button>
                 <Button type="submit" className="flex-1 gradient-orange text-background" disabled={actionLoading}>
                   {actionLoading ? t('admin.saving') : t('admin.saveChanges')}
@@ -527,7 +527,7 @@ const UsersPage = () => {
                 </div>
               </div>
               {passwordError && <div className="text-red-500 text-sm">{passwordError}</div>}
-              <div className="flex space-x-2 pt-4">
+              <div className="flex gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setRegisterDialogOpen(false)} className="flex-1">
                   {t('admin.cancel')}
                 </Button>

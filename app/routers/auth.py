@@ -71,8 +71,12 @@ async def get_registered_users(db: Session = Depends(get_db)):
 async def register_user_test(user: UserCreate, db: Session = Depends(get_db)):
     """
     Test-specific registration endpoint that bypasses role restrictions.
-    This should only be used in testing environments.
+    Unauthenticated and able to create any role (ADMIN included): it only exists for the automated test suite and is
+    a 404 everywhere else (A2A r3 security finding). Enabled with ENVIRONMENT=test or ALLOW_TEST_REGISTER=1.
     """
+    import os as _os_t
+    if _os_t.getenv("ENVIRONMENT", "").lower() != "test" and _os_t.getenv("ALLOW_TEST_REGISTER") != "1":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     return auth_service.create_user(db, user)
 
 # General registration endpoint (for tests and public registration)

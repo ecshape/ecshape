@@ -25,7 +25,6 @@ import SystemPage from './pages/SystemPage';
 import TrainerDashboard from './pages/TrainerDashboard';
 import ClientProfile from './pages/ClientProfile';
 import EditClient from './pages/EditClient';
-import CreateExercise from './pages/CreateExercise';
 import CreateWorkout from './pages/CreateWorkout';
 import ExerciseBank from './pages/ExerciseBank';
 import MealBank from './pages/MealBank';
@@ -210,11 +209,7 @@ const AppRoutes = () => {
       />
       <Route 
         path="/create-exercise" 
-        element={
-          <ProtectedRoute requiredRole="TRAINER">
-            <CreateExercise />
-          </ProtectedRoute>
-        } 
+        element={<Navigate to="/exercises" replace />} /* unlinked, untranslated legacy page: the bank has its own form (r3 N7) */ 
       />
       <Route 
         path="/create-workout" 

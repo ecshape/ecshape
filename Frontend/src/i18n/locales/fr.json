@@ -2915,7 +2915,7 @@
       "start": "Commencer l'entraînement",
       "continue": "Continuer",
       "review": "Voir l'entraînement",
-      "setsLogged": "{{done}} séries sur {{total}}",
+      "setsLogged": "Séries : {{done}} sur {{total}}",
       "doneSummary": "{{sets}} séries · {{minutes}} min. Bravo.",
       "noPlanTitle": "Votre coach prépare votre programme",
       "noPlanBody": "Il apparaîtra ici dès qu'il sera prêt, sans recharger.",

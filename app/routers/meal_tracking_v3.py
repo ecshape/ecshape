@@ -12,7 +12,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
@@ -651,6 +652,7 @@ def get_v3_meal_completions(
 @router.post("/completions", response_model=MealCompletionStatusResponse)
 def upsert_v3_meal_completion(
     completion_data: MealCompletionStatusCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -699,6 +701,7 @@ def upsert_v3_meal_completion(
         existing_status.completed_at = completed_at
         db.commit()
         db.refresh(existing_status)
+        queue_trainer_refresh(background_tasks, db, target_client_id, "meal")  # live trainer refresh (r2 R2)
         return MealCompletionStatusResponse.model_validate(existing_status)
 
     new_status = MealCompletionStatus(
@@ -712,12 +715,14 @@ def upsert_v3_meal_completion(
     db.add(new_status)
     db.commit()
     db.refresh(new_status)
+    queue_trainer_refresh(background_tasks, db, target_client_id, "meal")  # live trainer refresh (r2 R2)
     return MealCompletionStatusResponse.model_validate(new_status)
 
 
 @router.post("/logs", response_model=ClientMealChoiceResponse, status_code=status.HTTP_201_CREATED)
 def create_v3_log(
     payload: V3MealLogCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -756,6 +761,7 @@ def create_v3_log(
     db.commit()
     db.refresh(choice)
 
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live trainer refresh (r2 R2)
     return ClientMealChoiceResponse.model_validate(choice)
 
 
@@ -763,6 +769,7 @@ def create_v3_log(
 def update_v3_log(
     choice_id: int,
     choice_data: ClientMealChoiceUpdate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -777,6 +784,8 @@ def update_v3_log(
             setattr(choice, field, value)
 
         db.commit()
+
+        queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
         db.refresh(choice)
         return ClientMealChoiceResponse.model_validate(choice)
 
@@ -789,6 +798,8 @@ def update_v3_log(
         setattr(choice, field, value)
 
     db.commit()
+
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
     db.refresh(choice)
     return ClientMealChoiceResponse.model_validate(choice)
 
@@ -796,6 +807,7 @@ def update_v3_log(
 @router.delete("/logs/{choice_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_v3_log(
     choice_id: int,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -808,5 +820,6 @@ def delete_v3_log(
 
     db.delete(choice)
     db.commit()
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
     return None
 

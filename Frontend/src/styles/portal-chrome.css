@@ -131,3 +131,8 @@ html:not(.ec-psk-open) .ec-site-studio {
     transition: none !important;
   }
 }
+
+/* Phones / tablets: toasts sit above the floating bottom tab bar instead of on top of it (r2 P1) */
+@media (max-width: 1023px) {
+  html.ec-portal-on [data-sonner-toaster][data-y-position="bottom"] { bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px)) !important; }
+}

@@ -54,7 +54,10 @@ export interface PublicSite {
 export async function loadPublicSite(lang: SiteLang): Promise<PublicSite> {
   const base = DEFAULT_CONTENT[lang];
   try {
-    const res = await fetch(`${API_BASE_URL}/public/site?lang=${lang}`);
+    // Never leave visitors on a blank page: after 4 s the built-in content shows (r3 site #1)
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(`${API_BASE_URL}/public/site?lang=${lang}`, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
     if (!res.ok) throw new Error(String(res.status));
     const data = await res.json();
     let content = mergeContent(base, data.content || {});

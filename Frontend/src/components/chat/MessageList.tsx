@@ -189,8 +189,8 @@ const MessageList: React.FC<Props> = ({
               return (
                 <React.Fragment key={idOf(m)}>
                   {newDay && (
-                    <div className="sticky top-2 z-10 my-3 flex justify-center first:mt-0">
-                      <span className="rounded-full bg-card/85 px-3 py-1 text-[11px] font-semibold text-muted-foreground shadow-sm ring-1 ring-border/60 backdrop-blur">
+                    <div className="pointer-events-none sticky top-2 z-10 my-3 flex justify-center first:mt-0">
+                      <span className="rounded-full bg-card px-3 py-1 text-[11px] font-semibold text-muted-foreground shadow-sm ring-1 ring-border/60 backdrop-blur">
                         {formatDayLabel(m.created_at, t)}
                       </span>
                     </div>

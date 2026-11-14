@@ -161,7 +161,7 @@ const AdminDashboard = () => {
         console.error('Error fetching activity:', error);
       }
     };
-    if (user && user.role === 'admin') {
+    if (user && String(user.role).toUpperCase() === 'ADMIN') { // role is "ADMIN": the activity list never loaded (r3 site #2)
       fetchActivity();
     }
   }, [user]);
@@ -244,7 +244,7 @@ const AdminDashboard = () => {
     return (
       <Layout currentPage="dashboard">
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <EcSpinner className="w-6 h-6" />
             <span className="text-muted-foreground">{t('admin.loadingAdminDashboard')}</span>
           </div>
@@ -361,7 +361,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       {passwordError && <div className="text-red-500 text-sm">{passwordError}</div>}
-                      <div className="flex space-x-2 pt-4">
+                      <div className="flex gap-2 pt-4">
                         <Button
                           type="button"
                           variant="outline"
@@ -470,7 +470,7 @@ const AdminDashboard = () => {
             {/* User Management Section */}
             <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Users className="w-5 h-5 text-primary" />
                   <span>{t('admin.userManagement')}</span>
                 </CardTitle>
@@ -480,7 +480,7 @@ const AdminDashboard = () => {
                   <span className="text-2xl font-bold text-foreground">
                     {statsLoading ? '...' : `${stats.totalUsers} ${t('admin.totalUsers')}`}
                   </span>
-                  <Badge className="gradient-orange text-background">
+                  <Badge className="gradient-orange border-0 text-white">
                     {statsLoading ? '...' : `${stats.totalTrainers} ${t('admin.trainers')}`}
                   </Badge>
                 </div>
@@ -498,7 +498,7 @@ const AdminDashboard = () => {
             {/* System Health Section */}
             <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Shield className="w-5 h-5 text-green-500" />
                   <span>{t('admin.systemHealth')}</span>
                 </CardTitle>
@@ -527,7 +527,7 @@ const AdminDashboard = () => {
           {/* Recent Activity */}
           <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-foreground">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <TrendingUp className="w-5 h-5 text-primary" />
                 <span>{t('admin.recentSystemActivity')}</span>
               </CardTitle>
@@ -535,7 +535,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-4 bg-secondary/30 rounded-xl border border-border/30 hover:bg-secondary/50 transition-colors">
+                  <div key={index} className="flex items-center gap-4 p-4 bg-secondary/30 rounded-xl border border-border/30 hover:bg-secondary/50 transition-colors">
                     <div className={`w-10 h-10 rounded-full ${activity.color} flex items-center justify-center shadow-lg`}>
                       <activity.icon className="w-5 h-5 text-background" />
                     </div>

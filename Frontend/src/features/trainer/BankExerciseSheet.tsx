@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Pencil, Trash2, Video, Weight, X } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
@@ -79,7 +80,7 @@ export const BankExerciseSheet: React.FC<{
                 </div>
                 <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-6">
                   <div>
-                    <DialogPrimitive.Title className="tp-title text-4xl leading-none" dir="auto" style={{ textAlign: 'start' }}>{e.name}</DialogPrimitive.Title>
+                    <DialogPrimitive.Title className="tp-title pe-12 text-4xl leading-none" style={{ textAlign: 'start' }}><bdi>{e.name}</bdi></DialogPrimitive.Title>
                     <DialogPrimitive.Description className="sr-only">{muscleLabel(e.muscle_group)}</DialogPrimitive.Description>
                     <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
                       <span className="rounded-full bg-primary px-2.5 py-1 font-semibold text-primary-foreground">{muscleLabel(e.muscle_group)}</span>
@@ -87,7 +88,7 @@ export const BankExerciseSheet: React.FC<{
                       {e.equipment_needed && <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1"><Weight className="h-3 w-3" />{label('equipment', e.equipment_needed)}</span>}
                       {level && <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1"><LevelBars level={level} />{label('level', level)}</span>}
                       {e.category && <span className="rounded-full bg-muted px-2.5 py-1">{e.category}</span>}
-                      {info.meta.map((m) => <span key={m} className="rounded-full bg-muted px-2.5 py-1">{m}</span>)}
+                      {info.meta.map((m) => <span key={m} className="rounded-full bg-muted px-2.5 py-1">{label('meta', m)}</span>)}
                     </div>
                   </div>
                   {info.text && <p className="text-sm leading-relaxed text-muted-foreground" dir="auto">{info.text}</p>}

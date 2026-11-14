@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import '@/i18n/ticketsStudio';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -380,7 +382,8 @@ const CreateWorkoutPlanV2: React.FC = () => {
         }
         throw new Error(errorMessage);
       }
-      // back to the client the plan belongs to (r2 N6)
+      // back to the client the plan belongs to (r2 N6), with a confirmation (r2 P4)
+      toast.success(t('trainer.builder.planSaved', { defaultValue: 'Plan saved' }));
       navigate(formData.client_id ? `/client/${formData.client_id}` : '/trainer-dashboard');
     } catch (err) {
       console.error('Failed to create workout plan:', err);

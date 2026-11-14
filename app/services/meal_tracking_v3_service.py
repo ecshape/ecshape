@@ -105,9 +105,32 @@ def _food_option_to_v3_food(food: FoodOption) -> V3FoodOption:
     )
 
 
+_GRAM_UNIT = re.compile(r"\d\s*(g|gr|gram|grams|גרם|ג׳|ג)\b", re.IGNORECASE)
+
+
+def _portions_for_grams(food: FoodOption, grams: float) -> float:
+    """A per-portion food (egg, bread slice) under a gram instruction ("120g") is not 120 portions: give the same
+    calories as the row's per-100g food (A2A r3: 9,480 kcal for "bread slice 120g"). Halves, at least half a portion."""
+    category = getattr(food, "macro_category", None)
+    sibling = None
+    if category is not None:
+        sibling = next(
+            (f for f in sorted(category.food_options, key=lambda f: f.order_index or 0)
+             if f.id != food.id and f.measurement_type != MeasurementType.PER_PORTION and (f.calories or 0) > 0),
+            None,
+        )
+    if sibling is None or not (food.calories or 0):
+        return 1.0
+    target_kcal = (sibling.calories or 0) * grams / 100.0
+    return max(0.5, round(target_kcal / float(food.calories) * 2) / 2)
+
+
 def _compute_plan_food_macros(food: FoodOption, choice_quantity: Optional[str]) -> Tuple[float, float, float, float]:
     quantity_value = _parse_quantity_value(choice_quantity)
-    scale = _scale_from_measurement_type(food.measurement_type, quantity_value)
+    if food.measurement_type == MeasurementType.PER_PORTION and choice_quantity and _GRAM_UNIT.search(choice_quantity):
+        scale = _portions_for_grams(food, quantity_value)
+    else:
+        scale = _scale_from_measurement_type(food.measurement_type, quantity_value)
 
     calories = float((food.calories or 0) * scale)
     protein = float((food.protein or 0) * scale)

@@ -305,6 +305,7 @@ def _sync_plan_days(db: Session, plan, days_in) -> None:
 @router.post("/plans/complete", response_model=WorkoutPlanResponse, status_code=status.HTTP_201_CREATED)
 def create_complete_workout_plan(
     plan_data: CompleteWorkoutPlanCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -399,6 +400,8 @@ def create_complete_workout_plan(
         db.flush()  # Get id
     
     _sync_plan_days(db, target_plan, plan_data.workout_days)
+    # the trainee's open screens refetch the new plan (r3 #10)
+    background_tasks.add_task(websocket_service.send_live_refresh, plan_data.client_id, "plan")
 
     try:
         db.commit()

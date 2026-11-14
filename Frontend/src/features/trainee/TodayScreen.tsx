@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -332,7 +333,8 @@ const WorkoutHero: React.FC<{
           {kind === 'done' ? <Trophy className="h-3.5 w-3.5" /> : <Dumbbell className="h-3.5 w-3.5" />}
           {t(label)}
         </span>
-        {day.estimated_duration ? (
+        {/* the planned length until the workout is done; then the summary below carries the real numbers (r2 M4) */}
+        {day.estimated_duration && kind !== 'done' ? (
           <span className="flex items-center gap-1 text-sm text-white/85"><Clock className="h-4 w-4" />{t('trainee.common.minutes', { count: day.estimated_duration })}</span>
         ) : null}
       </div>
@@ -352,7 +354,7 @@ const WorkoutHero: React.FC<{
         )}
         {kind === 'done' && session && (
           <p className="mb-4 text-sm text-white/90">
-            {t('trainee.today.doneSummary', { sets: session.set_completions.length, minutes: session.duration_minutes || 0 })}
+            {t('trainee.today.doneSummaryN', { sets: t('trainee.player.setsCountN', { count: session.set_completions.length }), minutes: t('trainee.player.minutesCountN', { count: session.duration_minutes || 0 }) })}
           </p>
         )}
         <span className={cn('tp-btn', kind === 'done' ? 'bg-white/15 text-white' : 'tp-btn--light')}>

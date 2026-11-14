@@ -553,7 +553,7 @@
           "end": "Terminer ou annuler la séance",
           "endShort": "Fin",
           "endTitle": "Terminer la séance ?",
-          "endBody": "Vous avez fait {{done}} séries sur {{total}}. Elles sont enregistrées dans l'historique.",
+          "endBody": "Séries faites : {{done}} sur {{total}}. Elles sont enregistrées dans l'historique.",
           "cancelTitle": "Annuler la séance ?",
           "cancelBody": "Aucune série enregistrée, le chrono s'arrête simplement.",
           "cancelSession": "Annuler la séance",

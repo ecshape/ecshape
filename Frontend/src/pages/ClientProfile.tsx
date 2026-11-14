@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -327,7 +328,8 @@ const ClientProfile = () => {
     const d = parseDate(c.date);
     if (c.weight && d) weightByDay.set(dayOf(c.date), { t: d.getTime(), v: Number(c.weight) });
   }
-  for (const e of progressEntries) {
+  // oldest -> newest so the latest weigh-in of a day wins (the API lists newest first, r3 N3)
+  for (const e of [...progressEntries].sort((a, b) => (a.recorded_at || '').localeCompare(b.recorded_at || '') || (a.id ?? 0) - (b.id ?? 0))) {
     const d = parseDate(e.recorded_at);
     if (e.weight && d) weightByDay.set(dayOf(e.recorded_at), { t: d.getTime(), v: Number(e.weight) });
   }
@@ -462,7 +464,7 @@ const ClientProfile = () => {
             <div className="tr-stat">
               <p className="tp-label">{t('trainer.client.streak')}</p>
               <p className="tr-stat-v mt-1 flex items-center gap-1.5"><Flame className="h-5 w-5 text-primary" /><CountUp value={checkInSummary?.current_streak ?? 0} /></p>
-              <p className="text-xs text-muted-foreground">{t('trainer.client.days')}</p>
+              <p className="text-xs text-muted-foreground">{t('trainer.client.daysN', { count: checkInSummary?.current_streak ?? 0 })}</p>
             </div>
             <div className="tr-stat flex items-center justify-between gap-2">
               <div>
@@ -823,7 +825,7 @@ const Overview: React.FC<{
     }
     for (const p of progress) {
       items.push({
-        id: `p${p.id}`, at: parseDate(p.recorded_at)?.getTime() ?? 0, icon: p.photo_path || p.photos?.length ? Activity : Scale, tone: 'text-[hsl(var(--tr-ok))]',
+        id: `p${p.id}`, at: parseDate(p.created_at || p.recorded_at)?.getTime() ?? 0, // created_at: the real time, not the day's midnight (r3) icon: p.photo_path || p.photos?.length ? Activity : Scale, tone: 'text-[hsl(var(--tr-ok))]',
         title: p.weight ? t('trainer.client.tl.weight', { kg: fmtNum(p.weight, 1) }) : t('trainer.client.tl.progress'), detail: p.notes || undefined,
       });
     }

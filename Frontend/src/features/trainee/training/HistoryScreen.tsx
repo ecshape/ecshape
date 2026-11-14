@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import '@/i18n/ticketsStudio';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock, Dumbbell, History, Layers, Trophy, Weight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -105,7 +106,7 @@ const HistoryScreen: React.FC = () => {
         <section className="tp-card tp-rise p-4 sm:p-5" style={{ ['--i' as string]: 2 }} aria-label={tt('history.calendar')}>
           <div className="mb-3 flex items-center gap-2">
             <button type="button" onClick={() => shift(-1)} className="tp-icon-btn tp-press" aria-label={tt('history.prevMonth')}><Prev className="h-5 w-5" /></button>
-            <p className="min-w-0 flex-1 text-center font-bold">{month.toLocaleDateString(rtl ? 'he-IL' : undefined, { month: 'long', year: 'numeric' })}</p>
+            <p className="min-w-0 flex-1 text-center font-bold">{fmtDate(month, { month: 'long', year: 'numeric' })}</p>
             <button type="button" onClick={() => shift(1)} disabled={thisMonth} className="tp-icon-btn tp-press disabled:opacity-30" aria-label={tt('history.nextMonth')}><Next className="h-5 w-5" /></button>
           </div>
           <div className="tr-cal mb-1 text-[11px] text-muted-foreground" aria-hidden>
@@ -136,7 +137,7 @@ const HistoryScreen: React.FC = () => {
           <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border/50 pt-4 text-center">
             {[
               { icon: CalendarDays, v: fmtNum(inMonth.length), l: tt('history.sessions') },
-              { icon: Clock, v: fmtNum(totalMin), l: t('trainee.player.statMinutes') },
+              { icon: Clock, v: fmtNum(totalMin), l: t('trainee.player.statMinutesN', { count: totalMin }) },
               { icon: Weight, v: totalVol >= 10000 ? `${fmtNum(totalVol / 1000, 1)}k` : fmtNum(totalVol), l: t('trainee.player.statVolume') },
             ].map((s) => (
               <div key={s.l}>
@@ -250,7 +251,7 @@ export const SessionDetail: React.FC<{ sessionId: number }> = ({ sessionId }) =>
 
         <div className="tp-card tp-rise mt-4 grid grid-cols-3 divide-x divide-border/50 text-center rtl:divide-x-reverse" style={{ ['--i' as string]: 2 }}>
           {[
-            [min ? fmtNum(min) : '-', t('trainee.player.statMinutes')],
+            [min ? fmtNum(min) : '-', t('trainee.player.statMinutesN', { count: min || 0 })],
             [fmtNum(s.set_completions.length), t('trainee.player.statSets')],
             [fmtNum(sessionVolume(s)), t('trainee.player.statVolume')],
           ].map(([v, l]) => (

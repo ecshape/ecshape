@@ -27,3 +27,6 @@ label .ec-info-tip svg, h3 .ec-info-tip svg, .tp-label .ec-info-tip svg { width:
 .ec-login-photo { opacity: 0; transform: translate(-50%, 12px); transition: opacity .5s ease, transform .7s cubic-bezier(.22,1,.36,1); }
 .ec-login-photo.is-loaded { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .ec-login-photo { transition: none; transform: translate(-50%, 0); } }
+.ec-login-photo-cover { opacity: 0; transform: scale(1.03); transition: opacity .35s ease, transform .9s cubic-bezier(.22,1,.36,1); }
+.ec-login-photo-cover.is-loaded { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .ec-login-photo-cover { transition: none; transform: none; } }

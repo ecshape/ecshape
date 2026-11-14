@@ -1,12 +1,12 @@
 import { UserAvatar } from '@/components/ui/user-avatar';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Dumbbell, House, MessageCircle, TrendingUp, UtensilsCrossed } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePortalRoot } from '@/lib/portalMotion';
+import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useLiquid } from '@/features/trainer/ui';
@@ -42,8 +42,18 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
   const sideRef = useRef<HTMLElement>(null);
   const footRef = useRef<HTMLElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   usePortalRoot(true);
+  usePortalMotion(mainRef);
+  useEffect(() => {
+    // Same frosted top bar as the trainer app once the page scrolls.
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   useEffect(() => {
     // overflow-x: clip (not hidden) on the page roots so sticky bars work inside the trainee app.
     document.documentElement.classList.add('tp-on');
@@ -72,7 +82,7 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
   const barBlob = useLiquid(barRef, current, 'x', 'trainee-bar');
 
   return (
-    <div className="tr-root tp-root tp-shell bg-background" dir={dir}>
+    <div className="tr-root tp-root tp-shell ec-portal-shell bg-background" dir={dir}>
       {/* Desktop sidebar: same glass rail and liquid indicator as the trainer app */}
       <aside className="tr-side tp-side-fixed ec-glass" aria-label={t('trainee.nav.label')}>
         <button type="button" onClick={() => go('/')} className="tp-press mb-5 flex min-h-[3rem] items-center gap-2.5 overflow-hidden rounded-2xl px-2 text-start">
@@ -103,8 +113,8 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
         </nav>
       </aside>
 
-      <div className="min-w-0 lg:ps-[calc(var(--tr-side-w)+1.5rem)]">
-        <header className="tr-topbar tp-topbar">
+      <div className="tp-content">
+        <header className="tr-topbar tp-topbar" data-scrolled={scrolled}>
           <button type="button" onClick={() => go('/')} className="tp-press flex items-center gap-2 rounded-xl lg:hidden" aria-label={t('trainee.nav.today')}>
             <EcMark variant="trainer" className="h-9 w-auto" />
             <Wordmark />
@@ -113,13 +123,13 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
           <div className="flex items-center gap-1.5">
             <LanguageSelector compact />
             <ThemeToggle />
-            <button type="button" onClick={() => go('/me')} className="tp-press grid h-11 w-11 place-items-center rounded-full lg:hidden" aria-label={t('trainee.nav.profile')}>
-              <UserAvatar name={user?.full_name} src={user?.avatar_url} className={cn('h-9 w-9 text-xs', current === 'profile' ? 'bg-primary text-primary-foreground ring-2 ring-primary' : 'bg-foreground/10')} />
+            <button type="button" onClick={() => go('/me')} className="tp-press grid h-11 w-11 place-items-center rounded-full" aria-label={t('trainee.nav.profile')}>
+              <UserAvatar name={user?.full_name} src={user?.avatar_url} className={cn('h-9 w-9 text-xs', 'bg-primary text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]', current === 'profile' && 'ring-2 ring-primary ring-offset-2 ring-offset-background')} />
             </button>
           </div>
         </header>
 
-        <main className={cn('min-w-0', immersive ? 'pb-36 lg:pb-10' : 'pb-32 lg:pb-8')}>
+        <main ref={mainRef} data-ec-main className={cn('ec-portal-body min-w-0', immersive ? 'pb-36 lg:pb-10' : 'pb-32 lg:pb-8')}>
           <div className="tr-route" key={pathname}>{children}</div>
         </main>
       </div>

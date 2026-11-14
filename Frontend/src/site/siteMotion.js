@@ -282,6 +282,8 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
   $$('[data-open-form]').forEach((b) => on(b, 'click', (e) => { e.preventDefault(); openForm(b); }));
   $$('[data-close-form]', modal).forEach((b) => on(b, 'click', closeForm));
   on(window, 'keydown', (e) => {
+    // Keys typed in the QA widget / Agent EC (floating tools over the page) never reach the site's menu or form.
+    if (e.target instanceof Element && e.target.closest('[data-ec-float]')) return;
     if (e.key === 'Escape') { if (modalOpen) closeForm(); else setMenu(false); return; }
     if (e.key !== 'Tab') return;
     if (modalOpen) trap(e, [panel]);

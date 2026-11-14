@@ -50,7 +50,7 @@ const ExploreScreen: React.FC = () => {
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="tp-card tp-rise min-w-0 p-4 lg:sticky lg:top-6" style={{ ['--i' as string]: 2 }}>
+        <aside className="tp-card tp-rise min-w-0 p-4 lg:sticky lg:top-20" style={{ ['--i' as string]: 2 }}>
           <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             {tt('explore.byMuscle')}
             <InfoTip label={tt('explore.byMuscle')}>{tt('explore.byMuscleHelp')}</InfoTip>

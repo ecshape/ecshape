@@ -56,11 +56,11 @@
 
 .tr-float { position: fixed; z-index: 45; inset-inline: 0; bottom: max(1rem, env(safe-area-inset-bottom)); display: flex; justify-content: center; pointer-events: none; padding-inline: 1rem; }
 .tr-float > * { pointer-events: auto; }
-@media (min-width: 1024px) { .tr-float { padding-inline-start: calc(264px + 1rem); } }
+@media (min-width: 1024px) { .tr-float { padding-inline-start: calc(var(--tr-side-w, 268px) + .75rem); } }
 
 /* Session bar */
-.tr-sessionbar { position: sticky; z-index: 30; top: calc(3.5rem + env(safe-area-inset-top)); }
-@media (min-width: 1024px) { .tr-sessionbar { top: 0; } }
+.tr-sessionbar { position: sticky; z-index: 30; top: calc(3.75rem + env(safe-area-inset-top)); }
+@media (min-width: 1024px) { .tr-sessionbar { top: 4rem; } }
 .tr-live { width: .55rem; height: .55rem; border-radius: 9999px; background: #F59532; box-shadow: 0 0 0 0 rgba(245, 149, 50, .7); animation: trLive 1.8s ease-out infinite; }
 @keyframes trLive { 0% { box-shadow: 0 0 0 0 rgba(245, 149, 50, .6); } 80%, 100% { box-shadow: 0 0 0 .55rem rgba(245, 149, 50, 0); } }
 

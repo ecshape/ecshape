@@ -200,8 +200,18 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
   .tp-ring-value, .tp-bar > span, .tp-press { transition: none !important; }
 }
 
-/* Trainee shell = trainer shell look (glass rail, liquid pill, calm motion); the page itself still scrolls with the window. */
-.tr-side.tp-side-fixed { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 40; margin-block: .75rem; }
-.tr-topbar.tp-topbar { height: calc(3.5rem + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
-@media (min-width: 1024px) { .tr-topbar.tp-topbar { position: static; height: 4rem; padding-top: 0; } }
+/* Trainee shell = trainer shell look (glass rail, liquid pill, calm motion); the page itself still scrolls with the window.
+   Selectors are scoped to .tp-shell so they win over the trainer shell rules (trainer.css loads after this file). */
+.tp-shell .tr-side.tp-side-fixed {
+  position: fixed; z-index: 40; inset-block: .75rem; inset-inline-start: .75rem; margin: 0;
+  max-height: calc(100dvh - 1.5rem);
+}
+.tp-shell .tp-content { min-width: 0; }
+@media (min-width: 1024px) {
+  .tp-shell .tp-content { padding-inline-start: calc(var(--tr-side-w) + .75rem); }
+}
+.tp-shell .tr-topbar.tp-topbar { height: calc(3.75rem + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
+@media (min-width: 1024px) {
+  .tp-shell .tr-topbar.tp-topbar { height: 4rem; padding-top: 0; }
+}
 .tp-root .tp-tab-ico { transition: none; }

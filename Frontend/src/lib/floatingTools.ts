@@ -15,6 +15,7 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 /** Pointer + wheel guards (safe for tools that listen to touch gestures on window, like the Agent EC edge pull). */
 export const floatingToolProps = {
   'data-ec-float': '',
+  'data-lenis-prevent': '',
   onPointerDown: stop,
   onMouseDown: stop,
   onWheel: stop,

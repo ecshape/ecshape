@@ -163,7 +163,7 @@ const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
   return (
     <>
       {/* Sticky player bar */}
-      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl lg:top-0">
+      <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl lg:top-16">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5 sm:px-6">
           <button type="button" onClick={() => navigate('/training')} className="tp-icon-btn tp-press" aria-label={t('trainee.common.back')}>
             <Back className="h-5 w-5" />

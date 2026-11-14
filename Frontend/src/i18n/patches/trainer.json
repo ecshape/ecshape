@@ -120,6 +120,15 @@
           "mealPlan": "תוכנית תזונה עודכנה",
           "joined": "הצטרף/ה לסטודיו"
         }
+      },
+      "edit": {
+        "loadError": "לא הצלחנו לטעון את פרטי המתאמן",
+        "saveError": "השמירה נכשלה",
+        "passwordError": "איפוס הסיסמה נכשל",
+        "passwordTooShort": "לפחות 8 תווים",
+        "saved": "הפרטים נשמרו",
+        "activeHint": "מתאמן לא פעיל לא יכול להתחבר לאפליקציה",
+        "contact": "פרטי קשר"
       }
     }
   },
@@ -238,6 +247,15 @@
           "mealPlan": "Meal plan updated",
           "joined": "Joined the studio"
         }
+      },
+      "edit": {
+        "loadError": "Could not load this client",
+        "saveError": "Could not save the changes",
+        "passwordError": "Could not reset the password",
+        "passwordTooShort": "At least 8 characters",
+        "saved": "Changes saved",
+        "activeHint": "Inactive clients cannot sign in to the app",
+        "contact": "Contact details"
       }
     }
   },
@@ -362,6 +380,15 @@
           "mealPlan": "Plan alimentaire mis à jour",
           "joined": "A rejoint le studio"
         }
+      },
+      "edit": {
+        "loadError": "Impossible de charger ce client",
+        "saveError": "Impossible d'enregistrer les modifications",
+        "passwordError": "Impossible de réinitialiser le mot de passe",
+        "passwordTooShort": "8 caractères minimum",
+        "saved": "Modifications enregistrées",
+        "activeHint": "Un client inactif ne peut pas se connecter à l'application",
+        "contact": "Coordonnées"
       }
     }
   }

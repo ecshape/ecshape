@@ -1,13 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Check, Heart, Search, X } from "lucide-react";
+import { Check, Heart, Search, X } from "lucide-react";
 import Layout from "../components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BackLink, PageTitle, SectionCard, Skel, TabStrip } from "@/features/trainer/ui";
 import { API_BASE_URL } from "../config/api";
 import { useToast } from "../hooks/use-toast";
 import type { MacroType, V3FavoriteFood, V3FoodCatalogItem } from "../types/meals-v3";
@@ -169,147 +165,139 @@ const ClientFavoritesPage: React.FC = () => {
   };
 
   const goBack = () => navigate(isCoachView ? `/client/${clientId}` : "/meals");
+  const slot = slots.find((s) => String(s.order_index) === activeSlot) ?? slots[0];
+  const slotFavorites = slot ? favoritesForSlot(slot.order_index) : [];
+  const favoriteByFoodId = new Map(slotFavorites.map((f) => [f.meal_bank_id, f]));
 
   return (
     <Layout currentPage={isCoachView ? "dashboard" : "meals"}>
-      <div className="max-w-3xl mx-auto px-4 py-4 sm:py-6 pb-24 space-y-4">
-        <div className="flex items-start gap-3">
-          <Button variant="ghost" size="icon" onClick={goBack} aria-label={t("common.back", "Back")}>
-            <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
-          </Button>
-          <div className="space-y-1">
-            <h1 className="ec-page-title flex items-center gap-2">
-              <Heart className="h-5 w-5 text-primary" />
+      <div className="tr-page tr-page--narrow">
+        <BackLink onClick={goBack} className="mb-4" />
+        <PageTitle
+          eyebrow={
+            <span className="inline-flex items-center gap-1.5">
+              <Heart className="h-3.5 w-3.5 text-primary" />
               {t("meals.favorites.title", "Favorite foods")}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {t("meals.favorites.subtitle", "Pick the foods you like to eat at each meal")}
-            </p>
-          </div>
-        </div>
+            </span>
+          }
+          title={t("meals.favorites.title", "Favorite foods")}
+          lead={t("meals.favorites.subtitle", "Pick the foods you like to eat at each meal")}
+        />
 
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <div className="space-y-4" aria-busy="true" aria-label={t("common.loading")}>
+            <Skel className="h-12 w-full max-w-md rounded-full" />
+            <Skel className="h-28 rounded-[1.5rem]" />
+            <Skel className="h-96 rounded-[1.5rem]" />
           </div>
         ) : (
-          <Tabs value={activeSlot} onValueChange={setActiveSlot}>
-            <TabsList className="w-full overflow-x-auto justify-start">
-              {slots.map((slot) => (
-                <TabsTrigger key={slot.order_index} value={String(slot.order_index)} className="gap-1.5">
-                  {slot.name}
-                  <span className="text-xs text-muted-foreground" dir="ltr">
-                    ({favoritesForSlot(slot.order_index).length})
-                  </span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+          <>
+            <div className="tr-tabs">
+              <TabStrip<string>
+                value={activeSlot}
+                onChange={setActiveSlot}
+                label={t("meals.favorites.title", "Favorite foods")}
+                idPrefix="fav"
+                items={slots.map((s) => ({
+                  id: String(s.order_index),
+                  label: (
+                    <>
+                      {s.name}
+                      <span className="tr-seg-count" dir="ltr">{favoritesForSlot(s.order_index).length}</span>
+                    </>
+                  ),
+                }))}
+              />
+            </div>
 
-            {slots.map((slot) => {
-              const slotFavorites = favoritesForSlot(slot.order_index);
-              const favoriteByFoodId = new Map(slotFavorites.map((f) => [f.meal_bank_id, f]));
+            {slot && (
+              <div id="fav-panel" role="tabpanel" aria-labelledby={`fav-${activeSlot}`} className="tr-tabpanel mt-3 space-y-4" key={activeSlot}>
+                <SectionCard icon={Heart} title={t("meals.favorites.selected", "Selected")}>
+                  {slotFavorites.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t("meals.favorites.empty", "No favorites yet for this meal")}</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {slotFavorites.map((fav) => {
+                        const food = catalogById.get(fav.meal_bank_id);
+                        return (
+                          <span key={fav.id} className="tr-tag">
+                            {food ? foodName(food) : `#${fav.meal_bank_id}`}
+                            <button
+                              type="button"
+                              onClick={() => removeFavorite(fav)}
+                              disabled={pendingFoodIds.has(fav.meal_bank_id)}
+                              aria-label={`${t("meals.favorites.remove", "Remove")} ${food ? foodName(food) : ""}`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </SectionCard>
 
-              return (
-                <TabsContent key={slot.order_index} value={String(slot.order_index)} className="space-y-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">{t("meals.favorites.selected", "Selected")}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {slotFavorites.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          {t("meals.favorites.empty", "No favorites yet for this meal")}
-                        </p>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {slotFavorites.map((fav) => {
-                            const food = catalogById.get(fav.meal_bank_id);
-                            return (
-                              <Badge
-                                key={fav.id}
-                                variant="secondary"
-                                className="gap-1 py-1 ps-3 pe-1 text-sm"
-                              >
-                                {food ? foodName(food) : `#${fav.meal_bank_id}`}
-                                <button
-                                  type="button"
-                                  onClick={() => removeFavorite(fav)}
-                                  disabled={pendingFoodIds.has(fav.meal_bank_id)}
-                                  className="rounded-full p-0.5 hover:bg-destructive/15 hover:text-destructive"
-                                  aria-label={t("meals.favorites.remove", "Remove")}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                              </Badge>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <div className="relative">
-                    <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder={t("meals.favorites.search", "Search foods")}
-                      className="ps-9"
-                    />
+                <section className="tp-card overflow-hidden">
+                  <div className="border-b border-border/50 p-3 sm:p-4">
+                    <div className="tr-search">
+                      <Search />
+                      <input
+                        type="search"
+                        className="tp-input"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder={t("meals.favorites.search", "Search foods")}
+                        aria-label={t("meals.favorites.search", "Search foods")}
+                      />
+                    </div>
                   </div>
-
-                  <div className="rounded-lg border divide-y">
-                    {filteredCatalog.length === 0 ? (
-                      <p className="p-4 text-sm text-muted-foreground text-center">
-                        {t("meals.favorites.noResults", "No foods found")}
-                      </p>
-                    ) : (
-                      filteredCatalog.map((food) => {
+                  {filteredCatalog.length === 0 ? (
+                    <div className="flex flex-col items-center px-6 py-12 text-center">
+                      <span className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-primary/12 text-primary"><Search className="h-6 w-6" /></span>
+                      <p className="font-semibold">{t("meals.favorites.noResults", "No foods found")}</p>
+                    </div>
+                  ) : (
+                    <ul className="max-h-[60dvh] space-y-0.5 overflow-y-auto p-2">
+                      {filteredCatalog.map((food) => {
                         const fav = favoriteByFoodId.get(food.id);
                         const pending = pendingFoodIds.has(food.id);
                         const unit = food.measurement_type === "per_portion"
                           ? t("meals.favorites.perPortion", "per portion")
                           : t("meals.favorites.per100g", "per 100g");
                         return (
-                          <button
-                            key={food.id}
-                            type="button"
-                            disabled={pending}
-                            onClick={() => (fav ? removeFavorite(fav) : addFavorite(food.id, slot.order_index))}
-                            className={`w-full flex items-center justify-between gap-3 p-3 text-start transition-colors hover:bg-muted/50 disabled:opacity-60 ${
-                              fav ? "bg-primary/5" : ""
-                            }`}
-                          >
-                            <div className="min-w-0 space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium truncate">{foodName(food)}</span>
-                                {food.macro_type && (
-                                  <Badge variant="outline" className={`text-[10px] ${MACRO_BADGE_CLASS[food.macro_type]}`}>
-                                    {t(MACRO_LABEL_KEY[food.macro_type], food.macro_type)}
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground" dir="ltr">
-                                {Math.round(food.calories ?? 0)} kcal · P {food.protein ?? 0} · C {food.carbs ?? 0} · F{" "}
-                                {food.fat ?? 0} <span className="opacity-70">({unit})</span>
-                              </div>
-                            </div>
-                            <div
-                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                                fav ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"
-                              }`}
+                          <li key={food.id}>
+                            <button
+                              type="button"
+                              disabled={pending}
+                              aria-pressed={!!fav}
+                              onClick={() => (fav ? removeFavorite(fav) : addFavorite(food.id, slot.order_index))}
+                              className="tr-food disabled:opacity-60"
                             >
-                              {fav && <Check className="h-4 w-4" />}
-                            </div>
-                          </button>
+                              <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-2">
+                                  <span className="truncate font-semibold">{foodName(food)}</span>
+                                  {food.macro_type && (
+                                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${MACRO_BADGE_CLASS[food.macro_type]}`}>
+                                      {t(MACRO_LABEL_KEY[food.macro_type], food.macro_type)}
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="mt-0.5 block text-xs text-muted-foreground" dir="ltr">
+                                  {Math.round(food.calories ?? 0)} kcal · P {food.protein ?? 0} · C {food.carbs ?? 0} · F {food.fat ?? 0}{" "}
+                                  <span className="opacity-70">({unit})</span>
+                                </span>
+                              </span>
+                              <span className="tr-food-check" aria-hidden>{fav && <Check className="h-4 w-4" />}</span>
+                            </button>
+                          </li>
                         );
-                      })
-                    )}
-                  </div>
-                </TabsContent>
-              );
-            })}
-          </Tabs>
+                      })}
+                    </ul>
+                  )}
+                </section>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Layout>

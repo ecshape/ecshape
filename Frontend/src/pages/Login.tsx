@@ -205,7 +205,7 @@ const Login = () => {
           <Arrow className="h-4 w-4 rotate-180 transition-transform duration-300 group-hover:-translate-x-0.5" />
           {isRtl ? 'חזרה לאתר ECshape' : 'Back to the ECshape site'}
         </Link>
-        <footer className="text-xs text-muted-foreground">© {new Date().getFullYear()} ECshape · Elior Karmizi</footer>
+        <footer className="text-xs text-muted-foreground">© {new Date().getFullYear()} ECshape · Elior Cremisi</footer>
       </section>
 
       {/* ---------- Brand side (desktop) ---------- */}

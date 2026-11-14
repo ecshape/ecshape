@@ -16,7 +16,7 @@ import './training.css';
 /** t() scoped to trainee.training2 plus the usual helpers. */
 export const useTT = () => {
   const { t, i18n } = useTranslation();
-  const tt = (k: string, o?: Record<string, unknown>) => t(`trainee.training2.${k}`, o as never) as string;
+  const tt = (k: string, o?: Record<string, unknown>) => String(t(`trainee.training2.${k}`, o as never));
   const rtl = !!i18n.language?.startsWith('he');
   return { t, tt, i18n, rtl, lang: (i18n.language || 'he').slice(0, 2) };
 };

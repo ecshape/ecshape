@@ -10,6 +10,7 @@ import { CountUp, EmptyState, ErrorState, Screen, ScreenHeader, SectionTitle, Sh
 import WeighInSheet, { MEASURES } from './WeighInSheet';
 import { apiBlobUrl } from './api';
 import { fmtDate, fmtNum, fmtSigned, parseDate } from './format';
+import { ProgressNav } from './training/shared';
 
 type Range = '1m' | '3m' | 'all';
 
@@ -111,7 +112,9 @@ const ProgressScreen: React.FC = () => {
             {t('trainee.progress.add')}
           </button>
         }
+        className="!mb-4 lg:!mb-5"
       />
+      <ProgressNav className="tp-rise mb-6 max-w-md" />
 
       {progress.isError ? (
         <ErrorState onRetry={() => progress.refetch()} />

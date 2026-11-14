@@ -147,7 +147,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ load, size = 'md', onPick, sel
       role={onPick ? 'group' : 'img'}
       aria-label={title}
       aria-hidden={!title && !onPick ? true : undefined}
-      dir="ltr"
+      style={{ direction: 'ltr' }}
     >
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="0.4" y2="1">

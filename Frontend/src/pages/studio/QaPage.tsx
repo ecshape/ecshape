@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Crosshair, ExternalLink, Flag, GripVertical, MessageSquare, MousePointerClick, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/PageHeader';
+import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -129,10 +129,10 @@ const QaPage = () => {
   return (
     <Layout currentPage="qa">
       <div className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 md:py-10">
-        <PageHeader
+        <StudioHeader
           eyebrow={t('studio.groupStudio')}
           title={t('studio.qa.title')}
-          description={t('studio.qa.subtitle')}
+          lead={t('studio.qa.subtitle')}
           actions={<Button onClick={() => setCreating(true)}><Plus />{t('studio.qa.new')}</Button>}
         />
 

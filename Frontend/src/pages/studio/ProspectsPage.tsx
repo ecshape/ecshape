@@ -5,7 +5,7 @@ import { Search, Phone, Mail, MessageCircle, Trash2, UserPlus, Sparkles, Inbox, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT, askAgent } from '@/lib/agentOps';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/PageHeader';
+import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -126,10 +126,10 @@ const ProspectsPage = () => {
   return (
     <Layout currentPage="prospects">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-10">
-        <PageHeader
+        <StudioHeader
           eyebrow={t('studio.groupBusiness')}
           title={t('studio.prospects.title')}
-          description={t('studio.prospects.subtitle')}
+          lead={t('studio.prospects.subtitle')}
           actions={
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <div className="relative w-full sm:w-72">

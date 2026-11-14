@@ -23,6 +23,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { StudioHeader } from '@/components/studio/StudioHeader';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -167,23 +168,23 @@ const SeoPage = () => {
   return (
     <Layout currentPage="seo">
       <div className="ec-seo" data-ec-seo>
-        <header className="ec-seo-head">
-          <div>
-            <p className="ec-seo-eyebrow">{t('studio.seo.eyebrow')}</p>
-            <h1>{t('studio.seo.title')}</h1>
-            <p>{t('studio.seo.subtitle')}</p>
-          </div>
-          <div className="ec-seo-head-actions">
-            <Button variant="outline" onClick={() => askAgent(t('studio.seo.agentAudit'))}>
-              <Sparkles />
-              {t('studio.seo.askAgent')}
-            </Button>
-            <Button onClick={() => openNew()}>
-              <Plus />
-              {t('studio.seo.newArticle')}
-            </Button>
-          </div>
-        </header>
+        <StudioHeader
+          eyebrow={t('studio.groupStudio')}
+          title={t('studio.seo.title')}
+          lead={t('studio.seo.subtitle')}
+          actions={
+            <>
+              <Button variant="outline" onClick={() => askAgent(t('studio.seo.agentAudit'))}>
+                <Sparkles />
+                {t('studio.seo.askAgent')}
+              </Button>
+              <Button onClick={() => openNew()}>
+                <Plus />
+                {t('studio.seo.newArticle')}
+              </Button>
+            </>
+          }
+        />
 
         <nav className="ec-seo-tabs" role="tablist" aria-label={t('studio.seo.title')}>
           {TABS.map(({ id, icon: Icon }) => (

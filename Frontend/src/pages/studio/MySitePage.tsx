@@ -15,7 +15,7 @@ import {
   Redo2, RotateCcw, Smartphone, Sparkles, Tablet, Undo2, X,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/PageHeader';
+import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -83,10 +83,10 @@ const Hub: React.FC<{ draft: SiteDraftApi; onEdit: (select?: EcSelect) => void }
   return (
     <Layout currentPage="site">
       <div className="container mx-auto p-4 md:p-6">
-        <PageHeader
+        <StudioHeader
           eyebrow={t('studio.site.title')}
           title={t('mysite.home.title')}
-          description={t('mysite.home.body')}
+          lead={t('mysite.home.body')}
           actions={
             <>
               <Button variant="outline" asChild>

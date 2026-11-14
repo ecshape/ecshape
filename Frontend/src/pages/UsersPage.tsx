@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2, Eye, Shield, User, Loader2, UserPlus, EyeOff } from 'lucide-react';
+import { Pencil, Trash2, Eye, Shield, User, UserPlus, EyeOff } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 const UsersPage = () => {
@@ -293,7 +294,7 @@ const UsersPage = () => {
               </Button>
             </div>
             {loading ? (
-              <div className="flex justify-center py-10"><Loader2 className="animate-spin w-8 h-8 text-muted-foreground" /></div>
+              <div className="flex justify-center py-10"><EcSpinner className="w-8 h-8" mono /></div>
             ) : error ? (
               <div className="text-red-500 font-semibold text-center py-8">{error}</div>
             ) : (
@@ -304,13 +305,13 @@ const UsersPage = () => {
                     <Card key={u.id} className="p-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <p className="font-semibold text-sm truncate flex-1 min-w-0">{u.username}</p>
+                          <p className="min-w-0 flex-1 basis-0 truncate text-start text-sm font-semibold" dir="auto">{u.username}</p>
                           <Select
                             value={u.role}
                             onValueChange={(val) => handleRoleChange(u.id, val)}
                             disabled={actionLoading}
                           >
-                            <SelectTrigger className="h-7 w-20 text-xs px-2 shrink-0">
+                            <SelectTrigger className="h-7 !w-auto min-w-[6rem] max-w-[9rem] flex-none text-xs px-2">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -377,7 +378,7 @@ const UsersPage = () => {
                             )}
                           </TableCell>
                           <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</TableCell>
-                          <TableCell className="space-x-2">
+                          <TableCell className="whitespace-nowrap [&>*+*]:ms-2">
                             <Button size="icon" variant="ghost" onClick={() => openEditDialog(u)}><Pencil className="w-4 h-4" /></Button>
                             <Button size="icon" variant="ghost" onClick={() => handleDelete(u.id)} disabled={actionLoading}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                           </TableCell>
@@ -434,7 +435,7 @@ const UsersPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex space-x-2 pt-4">
+              <div className="flex gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1">{t('admin.cancel')}</Button>
                 <Button type="submit" className="flex-1 gradient-orange text-background" disabled={actionLoading}>
                   {actionLoading ? t('admin.saving') : t('admin.saveChanges')}
@@ -526,7 +527,7 @@ const UsersPage = () => {
                 </div>
               </div>
               {passwordError && <div className="text-red-500 text-sm">{passwordError}</div>}
-              <div className="flex space-x-2 pt-4">
+              <div className="flex gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setRegisterDialogOpen(false)} className="flex-1">
                   {t('admin.cancel')}
                 </Button>

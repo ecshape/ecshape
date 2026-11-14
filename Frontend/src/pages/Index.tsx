@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { parseDate } from '@/features/trainee/format';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Dumbbell, Target, Utensils, TrendingUp, Plus, Calendar, Clock, CheckCircle, Users, Trophy, Flame, UserPlus, Activity } from 'lucide-react';
+import { Dumbbell, Target, Utensils, ArrowLeft, ArrowRight, TrendingUp, Plus, Calendar, Clock, CheckCircle, Users, Trophy, Flame, UserPlus, Activity } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { API_BASE_URL } from '../config/api';
 import { DailyCheckInCardV2 } from '../components/DailyCheckInCardV2';
-import { DashboardHeader } from '../components/DashboardHeader';
+import { PageHeader } from '../components/PageHeader';
 import { DashboardWeightCard } from '../components/DashboardWeightCard';
 import { DashboardCaloriesCard } from '../components/DashboardCaloriesCard';
+import TodayScreen from '@/features/trainee/TodayScreen';
 
 interface DashboardStats {
   totalClients: number;
@@ -37,7 +40,7 @@ interface RecentActivity {
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isTrainer = user?.role === 'TRAINER';
   const isAdmin = user?.role === 'ADMIN';
   
@@ -297,7 +300,7 @@ const Index = () => {
           id: `completion-${completion.id}`,
           title: `${completion.client_name || 'Client'} completed workout`,
           description: `${completion.exercise_name || 'Exercise'} - ${completion.actual_sets} sets`,
-          time: formatTimeAgo(new Date(completion.completed_at)),
+          time: formatTimeAgo(parseDate(completion.completed_at) ?? new Date()),
           type: 'workout',
           clientName: completion.client_name,
           icon: CheckCircle,
@@ -315,11 +318,11 @@ const Index = () => {
           id: `client-${client.id}`,
           title: `New client joined: ${client.full_name}`,
           description: `Started their fitness journey`,
-          time: formatTimeAgo(new Date(client.created_at)),
+          time: formatTimeAgo(parseDate(client.created_at) ?? new Date()),
           type: 'client',
           clientName: client.full_name,
           icon: UserPlus,
-          color: 'bg-gradient-to-tr from-blue-500 to-blue-700'
+          color: 'bg-gradient-to-tr from-primary to-[hsl(18_85%_40%)]'
         });
       });
 
@@ -333,7 +336,7 @@ const Index = () => {
           id: `meal-${plan.id}`,
           title: `Created meal plan: ${plan.title}`,
           description: `${plan.total_calories} calories for ${plan.client_name || 'client'}`,
-          time: formatTimeAgo(new Date(plan.created_at)),
+          time: formatTimeAgo(parseDate(plan.created_at) ?? new Date()),
           type: 'meal',
           clientName: plan.client_name,
           icon: Utensils,
@@ -371,7 +374,7 @@ const Index = () => {
       label: t('dashboard.totalClients'),
       value: stats.totalClients.toString(),
       icon: Users,
-      gradient: 'bg-gradient-to-r from-blue-500 to-blue-600',
+      gradient: 'bg-gradient-to-r from-primary to-[hsl(18_85%_44%)]',
     },
     {
       label: t('training.workoutPlans'),
@@ -389,7 +392,7 @@ const Index = () => {
       label: t('training.completionRate'),
       value: `${Math.round(stats.completionRate)}%`,
       icon: Trophy,
-      gradient: 'bg-gradient-to-r from-purple-500 to-purple-600',
+      gradient: 'bg-gradient-to-r from-[hsl(var(--gold))] to-primary',
     },
   ] : [
     {
@@ -414,7 +417,7 @@ const Index = () => {
       label: t('training.completionRate'),
       value: `${Math.round(stats.completionRate)}%`,
       icon: Trophy,
-      gradient: 'bg-gradient-to-r from-purple-500 to-purple-600',
+      gradient: 'bg-gradient-to-r from-[hsl(var(--gold))] to-primary',
     },
   ];
 
@@ -423,7 +426,7 @@ const Index = () => {
       <Layout currentPage="dashboard">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            <EcSpinner className="w-6 h-6" />
             <span className="text-muted-foreground">{t('dashboard.loading')}</span>
           </div>
         </div>
@@ -431,33 +434,110 @@ const Index = () => {
     );
   }
 
+  const firstName = (user?.full_name || '').split(' ')[0];
+  const trainingPct = isTrainer
+    ? stats.completionRate
+    : clientStats && clientStats.totalDays > 0
+    ? (clientStats.completedDays / clientStats.totalDays) * 100
+    : 0;
+  const mealsPct = isTrainer
+    ? (stats.totalMealPlans > 0 ? 67 : 0)
+    : clientStats && clientStats.totalMeals > 0
+    ? (clientStats.completedMeals / clientStats.totalMeals) * 100
+    : 0;
+  const ArrowIcon = i18n.language === 'he' ? ArrowLeft : ArrowRight;
+
   return (
     <Layout currentPage="dashboard">
-      <div className="pb-20 lg:pb-8 min-h-screen bg-background">
-        {/* Dashboard Header (Client only) */}
-        {!isTrainer && !isAdmin && user && (
-          <DashboardHeader 
-            user={user}
-            unreadMessages={0}
-            unreadNotifications={0}
-          />
-        )}
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+        <PageHeader
+          eyebrow={new Date().toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+          title={<>{t('dashboard.hiThere', 'Hi there')}{firstName ? `, ${firstName}` : ''}</>}
+          accent={t('dashboard.letsMove')}
+        />
 
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <div className="ec-stagger space-y-4 sm:space-y-6">
           {/* Daily Check-In Card (Client only) */}
-          {!isTrainer && !isAdmin && (
-            <DailyCheckInCardV2 />
-          )}
+          {!isTrainer && !isAdmin && <DailyCheckInCardV2 />}
 
-          {/* Progress Cards Grid (Client only) */}
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* Training */}
+            <button
+              onClick={() => navigate('/training')}
+              className="group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[1.5rem] bg-primary p-6 text-start text-primary-foreground shadow-[0_24px_50px_-24px_hsl(var(--primary)/.9)] transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Dumbbell className="pointer-events-none absolute -bottom-6 -end-6 h-40 w-40 rotate-[-18deg] text-white/10 transition-transform duration-700 group-hover:rotate-0" />
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">
+                  <Target className="h-4 w-4" />
+                  {t('training.training')}
+                </span>
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-white/15 transition-transform duration-500 group-hover:scale-110">
+                  <ArrowIcon className="h-5 w-5" />
+                </span>
+              </div>
+              <div>
+                <div className="font-num text-5xl leading-none" dir="ltr" style={{ textAlign: i18n.language === 'he' ? 'right' : 'left' }}>
+                  {isTrainer
+                    ? stats.totalWorkoutPlans
+                    : clientStats && clientStats.totalDays > 0
+                    ? `${clientStats.completedDays}/${clientStats.totalDays}`
+                    : '0/0'}
+                </div>
+                <p className="mt-1 text-white/85">
+                  {isTrainer ? t('training.workoutPlans') : `${t('training.workouts')} · ${t('training.completed')}`}
+                </p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/20">
+                  <div className="h-full rounded-full bg-white transition-[width] duration-1000 ease-[cubic-bezier(.22,1,.36,1)]" style={{ width: `${Math.min(100, trainingPct)}%` }} />
+                </div>
+              </div>
+            </button>
+
+            {/* Nutrition */}
+            <button
+              onClick={() => navigate('/meals')}
+              className="ec-card group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-border/60 bg-card p-6 text-start transition-[transform,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Utensils className="pointer-events-none absolute -bottom-6 -end-6 h-40 w-40 rotate-[-18deg] text-foreground/[.04] transition-transform duration-700 group-hover:rotate-0" />
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary/12 px-3 py-1 text-sm font-semibold text-primary">
+                  <Utensils className="h-4 w-4" />
+                  {t('meals.meals')}
+                </span>
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-muted transition-colors duration-500 group-hover:bg-primary group-hover:text-primary-foreground">
+                  <ArrowIcon className="h-5 w-5" />
+                </span>
+              </div>
+              <div>
+                <div className="flex items-end justify-between gap-3">
+                  <div className="font-num text-5xl leading-none" dir="ltr">
+                    {isTrainer
+                      ? stats.totalMealPlans
+                      : clientStats
+                      ? `${clientStats.completedMeals}/${clientStats.totalMeals}`
+                      : '0/0'}
+                  </div>
+                  <Badge variant="outline" className="mb-1">
+                    {isTrainer
+                      ? `${stats.activeClients} ${t('client.clients')}`
+                      : `${clientStats ? Math.round(clientStats.averageCalories7Days) : 0} ${t('meals.kcal')}`}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-muted-foreground">{isTrainer ? t('meals.mealPlans') : t('meals.meals')}</p>
+                <Progress value={mealsPct} className="mt-4 h-2" />
+              </div>
+            </button>
+          </div>
+
+          {/* Progress Cards (Client only) */}
           {!isTrainer && !isAdmin && (
-            <div className="grid grid-cols-1 gap-4">
-              <DashboardWeightCard 
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <DashboardWeightCard
                 weightEntries={weightData}
                 onViewDetailsClick={() => navigate('/progress')}
               />
-              <DashboardCaloriesCard 
+              <DashboardCaloriesCard
                 consumed={caloriesData.consumed}
                 target={caloriesData.target}
                 macros={caloriesData.macros}
@@ -465,95 +545,23 @@ const Index = () => {
               />
             </div>
           )}
-
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Training Section */}
-            <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
-                  <Dumbbell className="w-5 h-5 text-primary" />
-                  <span>{isTrainer ? t('training.training') : t('training.training')}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-foreground">
-                    {isTrainer ? `${stats.totalWorkoutPlans} ${t('training.workoutPlans')}` : 
-                      clientStats 
-                        ? `${clientStats.totalDays} ${t('training.workouts')}`
-                        : `0 ${t('training.workouts')}`}
-                  </span>
-                  <Badge className="gradient-orange text-background">
-                    {isTrainer ? `${stats.totalCompletions} ${t('training.completed')}` : 
-                      clientStats && clientStats.totalDays > 0
-                        ? `${clientStats.completedDays}/${clientStats.totalDays} ${t('training.completed')}`
-                        : `0/0 ${t('training.completed')}`}
-                  </Badge>
-                </div>
-                <Progress 
-                  value={isTrainer ? stats.completionRate : 
-                    (clientStats && clientStats.totalDays > 0
-                      ? (clientStats.completedDays / clientStats.totalDays) * 100
-                      : 0)} 
-                  className="h-3 bg-secondary" 
-                />
-                <Button 
-                  onClick={() => navigate('/training')}
-                  className="w-full gradient-orange text-background font-semibold transform hover:scale-105 transition-all duration-200"
-                >
-                  <Target className="w-4 h-4 mr-2" />
-                  {isTrainer ? t('training.workoutPlans') : t('training.workouts')}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Nutrition Section */}
-            <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
-                  <Utensils className="w-5 h-5 text-green-500" />
-                  <span>{isTrainer ? t('meals.meals') : t('meals.meals')}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-foreground">
-                    {isTrainer ? `${stats.totalMealPlans} ${t('meals.mealPlans')}` : 
-                      clientStats 
-                        ? `${clientStats.completedMeals}/${clientStats.totalMeals} ${t('meals.meals')}`
-                        : `0/0 ${t('meals.meals')}`}
-                  </span>
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                    {isTrainer ? `${stats.activeClients} ${t('client.clients')}` : 
-                      clientStats
-                        ? `${Math.round(clientStats.averageCalories7Days)} ${t('meals.kcal')}`
-                        : `0 ${t('meals.kcal')}`}
-                  </Badge>
-                </div>
-                <Progress 
-                  value={isTrainer ? (stats.totalMealPlans > 0 ? 67 : 0) : 
-                    (clientStats && clientStats.totalMeals > 0
-                      ? (clientStats.completedMeals / clientStats.totalMeals) * 100
-                      : 0)} 
-                  className="h-3 bg-secondary" 
-                />
-                <Button 
-                  onClick={() => navigate('/meals')}
-                  className="w-full bg-green-500 hover:bg-green-600 text-background font-semibold transform hover:scale-105 transition-all duration-200"
-                >
-                  <Utensils className="w-4 h-4 mr-2" />
-                  {isTrainer ? t('meals.mealPlans') : t('meals.meals')}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
         </div>
       </div>
     </Layout>
   );
 };
 
-export default Index;
+/** Trainees get the "Today" home; trainers/admins keep their dashboards (they are redirected from here). */
+const IndexRoute = () => {
+  const { user } = useAuth();
+  if (user?.role === 'CLIENT') {
+    return (
+      <Layout currentPage="dashboard">
+        <TodayScreen />
+      </Layout>
+    );
+  }
+  return <Index />;
+};
+
+export default IndexRoute;

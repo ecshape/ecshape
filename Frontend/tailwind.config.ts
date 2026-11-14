@@ -20,12 +20,17 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'inter': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+				'sans': ['Heebo', 'system-ui', '-apple-system', 'sans-serif'],
+				'inter': ['Heebo', 'system-ui', '-apple-system', 'sans-serif'],
+				'display': ['Karantina', 'Heebo', 'sans-serif'],
+				'num': ['Anton', 'Heebo', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
+				gold: 'hsl(var(--gold))',
+				success: 'hsl(var(--success))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {

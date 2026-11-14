@@ -123,6 +123,10 @@ async def add_weight_entry(
     )
     if created:
         await websocket_service.send_new_notification_hint(created.recipient_id)
+    # silent refresh of the trainer's screens whatever their notification preferences (r2 R5)
+    _trainer_id = db.query(User.trainer_id).filter(User.id == target_client_id).scalar()
+    if _trainer_id:
+        await websocket_service.send_live_refresh(_trainer_id, "weigh_in")
 
     # Check for goal achievements
     check_client_goals(db, target_client_id)
@@ -158,7 +162,7 @@ async def get_weight_history(
     
     entries = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == current_user.id
-    ).order_by(ProgressEntry.date.desc()).all()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).all()
     
     # Normalize photo_path to just filename for all entries
     normalized_entries = []
@@ -210,7 +214,7 @@ async def get_progress_entries(
     
     entries = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == query_client_id
-    ).order_by(ProgressEntry.date.desc()).all()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).all()
     
     # Normalize photo_path to just filename for all entries
     # This handles both old entries (with full paths) and new entries (just filename)
@@ -306,7 +310,7 @@ async def get_current_weight(
     
     latest_entry = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == current_user.id
-    ).order_by(ProgressEntry.date.desc()).first()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).first()
     
     if not latest_entry:
         raise HTTPException(

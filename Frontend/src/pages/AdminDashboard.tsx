@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { parseDate } from '@/features/trainee/format';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,7 +104,7 @@ const AdminDashboard = () => {
       label: t('admin.totalUsers'),
       value: statsLoading ? '...' : stats.totalUsers.toString(),
       icon: Users,
-      gradient: 'bg-gradient-to-r from-blue-500 to-blue-600',
+      gradient: 'bg-gradient-to-r from-primary to-[hsl(18_85%_44%)]',
     },
     {
       label: t('admin.activeTrainers'),
@@ -114,7 +116,7 @@ const AdminDashboard = () => {
       label: t('admin.totalClients'),
       value: statsLoading ? '...' : stats.totalClients.toString(),
       icon: Users,
-      gradient: 'bg-gradient-to-r from-purple-500 to-purple-600',
+      gradient: 'bg-gradient-to-r from-[hsl(var(--gold))] to-primary',
     },
     {
       label: t('admin.systemHealth'),
@@ -146,11 +148,11 @@ const AdminDashboard = () => {
             return {
               title: `${t(`time.${roleKey}Registered`)}: ${u.full_name}`,
               description: `${u.email} ${t('admin.entered')}`,
-              time: formatTimeAgo(new Date(u.created_at)),
+              time: formatTimeAgo(parseDate(u.created_at) ?? new Date()),
               icon: UserPlus,
               color: (u.role === 'ADMIN' || u.role === 'admin') ? 'bg-gradient-to-tr from-red-500 to-red-700' : 
                      (u.role === 'TRAINER' || u.role === 'trainer') ? 'bg-gradient-to-tr from-green-500 to-green-700' : 
-                     'bg-gradient-to-tr from-purple-500 to-purple-700',
+                     'bg-gradient-to-tr from-[hsl(var(--gold))] to-primary',
             };
           });
           setRecentActivity(activities);
@@ -159,7 +161,7 @@ const AdminDashboard = () => {
         console.error('Error fetching activity:', error);
       }
     };
-    if (user && user.role === 'admin') {
+    if (user && String(user.role).toUpperCase() === 'ADMIN') { // role is "ADMIN": the activity list never loaded (r3 site #2)
       fetchActivity();
     }
   }, [user]);
@@ -242,8 +244,8 @@ const AdminDashboard = () => {
     return (
       <Layout currentPage="dashboard">
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <div className="flex items-center gap-2">
+            <EcSpinner className="w-6 h-6" />
             <span className="text-muted-foreground">{t('admin.loadingAdminDashboard')}</span>
           </div>
         </div>
@@ -259,7 +261,7 @@ const AdminDashboard = () => {
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gradient">
+                <h1 className="ec-page-title text-gradient">
                   {t('admin.adminDashboard')}
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -270,7 +272,7 @@ const AdminDashboard = () => {
                 <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
-                      className="gradient-orange hover:gradient-orange-dark text-background font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg text-xs sm:text-sm w-full sm:w-auto min-w-0"
+                      className="gradient-orange hover:gradient-orange-dark text-background font-semibold transition-all duration-200 shadow-lg text-xs sm:text-sm w-full sm:w-auto min-w-0"
                     >
                       <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                       <span className="hidden sm:inline truncate">{t('admin.registerTrainer')}</span>
@@ -359,7 +361,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       {passwordError && <div className="text-red-500 text-sm">{passwordError}</div>}
-                      <div className="flex space-x-2 pt-4">
+                      <div className="flex gap-2 pt-4">
                         <Button
                           type="button"
                           variant="outline"
@@ -382,7 +384,7 @@ const AdminDashboard = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/system')}
-                  className="font-semibold transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto min-w-0"
+                  className="font-semibold transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto min-w-0"
                 >
                   <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="hidden sm:inline truncate">{t('admin.systemSettings')}</span>
@@ -391,7 +393,7 @@ const AdminDashboard = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/secret-users')}
-                  className="font-semibold transform hover:scale-105 transition-all duration-200 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 text-xs sm:text-sm w-full sm:w-auto min-w-0"
+                  className="font-semibold transition-all duration-200 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 text-xs sm:text-sm w-full sm:w-auto min-w-0"
                 >
                   <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="hidden sm:inline truncate">{t('admin.secretUsers')}</span>
@@ -406,7 +408,7 @@ const AdminDashboard = () => {
           {/* Stats Overview */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Users */}
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-primary to-[hsl(18_85%_44%)] border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -420,7 +422,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
             {/* Active Trainers */}
-            <Card className="bg-gradient-to-r from-green-500 to-green-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-green-500 to-green-600 border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -434,7 +436,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
             {/* Total Clients */}
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-[hsl(var(--gold))] to-primary border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -448,7 +450,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
             {/* System Health */}
-            <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-xl transition-all duration-300">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -468,7 +470,7 @@ const AdminDashboard = () => {
             {/* User Management Section */}
             <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Users className="w-5 h-5 text-primary" />
                   <span>{t('admin.userManagement')}</span>
                 </CardTitle>
@@ -478,14 +480,14 @@ const AdminDashboard = () => {
                   <span className="text-2xl font-bold text-foreground">
                     {statsLoading ? '...' : `${stats.totalUsers} ${t('admin.totalUsers')}`}
                   </span>
-                  <Badge className="gradient-orange text-background">
+                  <Badge className="gradient-orange border-0 text-white">
                     {statsLoading ? '...' : `${stats.totalTrainers} ${t('admin.trainers')}`}
                   </Badge>
                 </div>
                 <Progress value={stats.totalUsers ? Math.round((stats.totalTrainers / stats.totalUsers) * 100) : 0} className="h-3 bg-secondary" />
                 <Button 
                   onClick={() => navigate('/users')}
-                  className="w-full gradient-orange text-background font-semibold transform hover:scale-105 transition-all duration-200"
+                  className="w-full gradient-orange text-background font-semibold transition-all duration-200"
                 >
                   <Users className="w-4 h-4 mr-2" />
                   {t('admin.manageUsers')}
@@ -496,7 +498,7 @@ const AdminDashboard = () => {
             {/* System Health Section */}
             <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Shield className="w-5 h-5 text-green-500" />
                   <span>{t('admin.systemHealth')}</span>
                 </CardTitle>
@@ -513,7 +515,7 @@ const AdminDashboard = () => {
                 <Progress value={100} className="h-3 bg-secondary" />
                 <Button 
                   onClick={() => navigate('/system')}
-                  className="w-full bg-green-500 hover:bg-green-600 text-background font-semibold transform hover:scale-105 transition-all duration-200"
+                  className="w-full bg-green-500 hover:bg-green-600 text-background font-semibold transition-all duration-200"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   {t('admin.viewSystemStatus')}
@@ -525,15 +527,15 @@ const AdminDashboard = () => {
           {/* Recent Activity */}
           <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-foreground">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <TrendingUp className="w-5 h-5 text-primary" />
                 <span>{t('admin.recentSystemActivity')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-4 bg-secondary/30 rounded-xl border border-border/30 hover:bg-secondary/50 transition-colors">
+                  <div key={index} className="flex items-center gap-4 p-4 bg-secondary/30 rounded-xl border border-border/30 hover:bg-secondary/50 transition-colors">
                     <div className={`w-10 h-10 rounded-full ${activity.color} flex items-center justify-center shadow-lg`}>
                       <activity.icon className="w-5 h-5 text-background" />
                     </div>

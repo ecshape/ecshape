@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Plus, X, Trash2, Calculator } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X, Trash2, Calculator, Sunrise, Sun, Moon, Apple, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 
@@ -41,11 +42,11 @@ interface MealEntry {
 }
 
 const MEAL_CATEGORIES = [
-  { id: 1, name: 'Breakfast', icon: '🌅', description: 'Start your day right' },
-  { id: 2, name: 'Lunch', icon: '🌞', description: 'Midday fuel' },
-  { id: 3, name: 'Dinner', icon: '🌙', description: 'Evening meal' },
-  { id: 4, name: 'Snack', icon: '🍎', description: 'Between meals' },
-  { id: 5, name: 'Pre-Workout', icon: '⚡', description: 'Energy boost' }
+  { id: 1, name: 'Breakfast', icon: Sunrise, description: 'Start your day right' },
+  { id: 2, name: 'Lunch', icon: Sun, description: 'Midday fuel' },
+  { id: 3, name: 'Dinner', icon: Moon, description: 'Evening meal' },
+  { id: 4, name: 'Snack', icon: Apple, description: 'Between meals' },
+  { id: 5, name: 'Pre-Workout', icon: Zap, description: 'Energy boost' }
 ];
 
 const CreateMealPlan = () => {
@@ -236,7 +237,7 @@ const CreateMealPlan = () => {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Create Meal Plan</h1>
+              <h1 className="ec-page-title text-foreground">Create Meal Plan</h1>
               <p className="text-muted-foreground">
                 {client ? `Creating meal plan for ${client.full_name}` : 'Create a new meal plan'}
               </p>
@@ -328,7 +329,7 @@ const CreateMealPlan = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{category.icon}</span>
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/12 text-primary"><category.icon className="h-5 w-5" /></span>
                       <div>
                         <CardTitle>{category.name}</CardTitle>
                         <p className="text-sm text-muted-foreground">{category.description}</p>
@@ -530,7 +531,7 @@ const CreateMealPlan = () => {
             >
               {loading ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <EcSpinner className="w-4 h-4" mono />
                   <span>Creating...</span>
                 </div>
               ) : (

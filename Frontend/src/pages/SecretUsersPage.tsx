@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -142,7 +143,7 @@ const SecretUsersPage = () => {
       <Layout currentPage="dashboard">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            <EcSpinner className="w-6 h-6" />
             <span className="text-muted-foreground">Loading users...</span>
           </div>
         </div>
@@ -160,7 +161,7 @@ const SecretUsersPage = () => {
               <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Secret Users Management</h1>
+              <h1 className="ec-page-title text-foreground">Secret Users Management</h1>
               <p className="text-sm sm:text-base text-muted-foreground">Development & Testing Access</p>
             </div>
           </div>
@@ -358,7 +359,7 @@ const SecretUsersPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <User className="w-5 h-5 text-blue-600" />
+                  <User className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Trainer Access</p>

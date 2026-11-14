@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
+from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import List, Optional
@@ -25,6 +26,7 @@ def normalize_date(value: datetime) -> datetime:
 @router.post("", response_model=DailyCheckInResponse, status_code=status.HTTP_201_CREATED)
 def create_check_in(
     check_in_data: DailyCheckInCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -67,6 +69,7 @@ def create_check_in(
     db.add(check_in)
     db.commit()
     db.refresh(check_in)
+    queue_trainer_refresh(background_tasks, db, check_in.client_id, "check_in")
     
     return check_in
 
@@ -153,40 +156,6 @@ def get_today_check_in(
             DailyCheckIn.date == today
         )
     ).first()
-    
-    return check_in
-
-@router.get("/{check_in_id}", response_model=DailyCheckInResponse)
-def get_check_in(
-    check_in_id: int,
-    current_user: UserResponse = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """בדיקה ספציפית"""
-    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
-    
-    if not check_in:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Check-in not found"
-        )
-    
-    # בדיקת הרשאות
-    if current_user.role == UserRole.CLIENT:
-        if check_in.client_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view your own check-ins"
-            )
-    elif current_user.role == UserRole.TRAINER:
-        # בדיקה שהלקוח שייך למאמן
-        client = db.query(User).filter(User.id == check_in.client_id).first()
-        if not client or client.trainer_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view check-ins for your clients"
-            )
-    # ADMIN יכול לראות הכל
     
     return check_in
 
@@ -347,6 +316,64 @@ def get_check_in_summary(
             first_check_in=None,
             last_check_in=None
         )
+
+
+@router.get("/{check_in_id}", response_model=DailyCheckInResponse)
+def get_check_in(
+    check_in_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """בדיקה ספציפית"""
+    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
+    
+    if not check_in:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Check-in not found"
+        )
+    
+    # בדיקת הרשאות
+    if current_user.role == UserRole.CLIENT:
+        if check_in.client_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view your own check-ins"
+            )
+    elif current_user.role == UserRole.TRAINER:
+        # בדיקה שהלקוח שייך למאמן
+        client = db.query(User).filter(User.id == check_in.client_id).first()
+        if not client or client.trainer_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view check-ins for your clients"
+            )
+    # ADMIN יכול לראות הכל
+    
+    return check_in
+
+@router.put("/{check_in_id}", response_model=DailyCheckInResponse)
+def update_check_in(
+    check_in_id: int,
+    payload: DailyCheckInUpdate,
+    background_tasks: BackgroundTasks,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """The client corrects their own check-in (A2A trainee F2). Fields sent as null are cleared."""
+    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
+    if not check_in:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Check-in not found")
+    if current_user.role != UserRole.ADMIN and check_in.client_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only edit your own check-ins")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(check_in, field, value)
+    if hasattr(check_in, "updated_at"):
+        check_in.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(check_in)
+    queue_trainer_refresh(background_tasks, db, check_in.client_id, "check_in")
+    return check_in
 
 @router.get("/trainer/dashboard", response_model=List[dict])
 def get_trainer_dashboard(

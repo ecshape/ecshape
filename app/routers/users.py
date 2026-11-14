@@ -487,18 +487,13 @@ async def update_client_profile(
             client_profile.height = profile_update.height
         if profile_update.weight is not None:
             client_profile.target_weight = int(profile_update.weight * 1000)  # Convert kg to grams
-        if profile_update.goals is not None:
-            client_profile.fitness_goals = profile_update.goals
-        if profile_update.injuries is not None:
-            client_profile.medical_conditions = profile_update.injuries
-        if profile_update.preferences is not None:
-            client_profile.dietary_restrictions = profile_update.preferences
-        if profile_update.phone is not None:
-            client_profile.phone = profile_update.phone
-        if profile_update.address is not None:
-            client_profile.address = profile_update.address
-        if profile_update.emergency_contact is not None:
-            client_profile.emergency_contact = profile_update.emergency_contact
+        # Text fields sent explicitly (even as null / empty) are written, so the trainer can clear them (A2A trainer F4)
+        sent = getattr(profile_update, "model_fields_set", set())
+        for src, dst in (("goals", "fitness_goals"), ("injuries", "medical_conditions"), ("preferences", "dietary_restrictions"),
+                         ("phone", "phone"), ("address", "address"), ("emergency_contact", "emergency_contact")):
+            if src in sent:
+                value = getattr(profile_update, src)
+                setattr(client_profile, dst, value if (value or "").strip() else None)
     
     db.commit()
     db.refresh(client_profile)

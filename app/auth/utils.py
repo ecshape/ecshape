@@ -121,7 +121,8 @@ async def get_current_user(
             is_active=user.is_active,
             trainer_id=user.trainer_id,
             created_at=user.created_at,
-            updated_at=user.updated_at
+            updated_at=user.updated_at,
+            avatar_url=getattr(user, "avatar_url", None),
         )
     except JWTError as e:
         import logging

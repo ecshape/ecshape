@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,20 +12,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { 
-  Dumbbell, Plus, Search, Filter, Edit, Trash2, 
+import {
+  Dumbbell, Plus, Search, Filter, Edit, Trash2,
   Video, FileText, Tag, Clock, Weight, Settings, Save, X, Image as ImageIcon,
-  Download, Upload
+  Download, Upload, Library, Sparkles, LayoutTemplate, Split, Tags, Gauge, FilterX
 } from 'lucide-react';
+import { ActionBtn, EmptyState, PageTitle } from '@/features/trainer/ui';
+import { InfoTip } from '@/components/ui/info-tip';
+import { BankExerciseSheet } from '@/features/trainer/BankExerciseSheet';
+import { MuscleGroupsSheet, groupSlug, type MuscleGroup } from '@/features/trainer/MuscleGroupsSheet';
+import { TemplatesSheet } from '@/features/trainer/TemplatesSheet';
+import { ExerciseLibrary, LevelBars } from '@/components/exercises/ExerciseLibrary';
+import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
+import { exerciseFrames } from '@/lib/exerciseLibrary';
+import '@/styles/exercises.css';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { useToast } from '../hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 import {
   ExerciseImportReviewDialog,
   type ExerciseImportPreviewRow,
   type ExerciseImportDecision,
 } from '../components/ExerciseImportReviewDialog';
+import { PortalSelect } from '@/components/ui/portal-select';
 interface Exercise {
   id: number;
   name: string;
@@ -35,12 +47,15 @@ interface Exercise {
   video_url?: string;
   image_path?: string;
   category?: string;
+  library_id?: string | null;
   created_by: number;
   created_at: string;
 }
 
+const levelOf = (e: Exercise) => (/\bexpert\b/.test(e.description || '') ? 'expert' : /\bintermediate\b/.test(e.description || '') ? 'intermediate' : /\bbeginner\b/.test(e.description || '') ? 'beginner' : '');
+
 const staticMuscleGroups = [
-  'chest', 'back', 'shoulders', 'biceps', 'triceps', 
+  'chest', 'back', 'shoulders', 'biceps', 'triceps',
   'legs', 'glutes', 'core', 'cardio', 'full body'
 ];
 
@@ -76,10 +91,11 @@ const ExerciseBank = () => {
   const [muscleGroups, setMuscleGroups] = useState<string[]>(staticMuscleGroups);
   const [dynamicMuscleGroups, setDynamicMuscleGroups] = useState<Array<{id: number, name: string, name_he?: string | null}>>([]);
   const [muscleGroupDialogOpen, setMuscleGroupDialogOpen] = useState(false);
-  const [editingMuscleGroup, setEditingMuscleGroup] = useState<{id: number, name: string, name_he?: string | null} | null>(null);
-  const [newMuscleGroupName, setNewMuscleGroupName] = useState('');
-  const [newMuscleGroupNameHe, setNewMuscleGroupNameHe] = useState('');
-  const [muscleGroupError, setMuscleGroupError] = useState('');
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [detail, setDetail] = useState<Exercise | null>(null);
+  const [equipmentFilter, setEquipmentFilter] = useState('all');
+  const [levelFilter, setLevelFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'library' | 'custom'>('all');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importReviewOpen, setImportReviewOpen] = useState(false);
@@ -96,6 +112,8 @@ const ExerciseBank = () => {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
+  const [libraryOpen, setLibraryOpen] = useState(false);
+
   const fetchExercises = async () => {
     try {
       setLoading(true);
@@ -107,7 +125,7 @@ const ExerciseBank = () => {
       const response = await fetch(`${API_BASE_URL}/exercises/`, {
         headers
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched exercises:', data);
@@ -163,10 +181,36 @@ const ExerciseBank = () => {
     fetchMuscleGroups();
   }, []);
 
-  const filteredExercises = exercises.filter(exercise =>
-    exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedMuscleGroup === 'all' || exercise.muscle_group === selectedMuscleGroup)
-  );
+  const q = searchTerm.trim().toLowerCase();
+  const matches = (exercise: Exercise, skip?: 'muscle') =>
+    (!q || exercise.name.toLowerCase().includes(q) || (exercise.instructions || '').toLowerCase().includes(q)) &&
+    (skip === 'muscle' || selectedMuscleGroup === 'all' || exercise.muscle_group === selectedMuscleGroup) &&
+    (equipmentFilter === 'all' || (exercise.equipment_needed || '') === equipmentFilter) &&
+    (levelFilter === 'all' || levelOf(exercise) === levelFilter) &&
+    (sourceFilter === 'all' || (sourceFilter === 'library' ? !!exercise.library_id : !exercise.library_id));
+
+  const filteredExercises = exercises.filter((exercise) => matches(exercise));
+  const countBy = (list: Exercise[]) =>
+    list.reduce<Record<string, number>>((acc, e) => {
+      acc[e.muscle_group] = (acc[e.muscle_group] ?? 0) + 1;
+      return acc;
+    }, {});
+  const muscleCounts = countBy(exercises.filter((e) => matches(e, 'muscle')));
+  const totalCounts = countBy(exercises);
+  const chipGroups = muscleGroups.filter((g) => (muscleCounts[g] ?? 0) > 0 || g === selectedMuscleGroup);
+  const equipmentOptions = [...new Set(exercises.map((e) => e.equipment_needed || '').filter(Boolean))].sort();
+  const filtersActive = !!q || selectedMuscleGroup !== 'all' || equipmentFilter !== 'all' || levelFilter !== 'all' || sourceFilter !== 'all';
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedMuscleGroup('all');
+    setEquipmentFilter('all');
+    setLevelFilter('all');
+    setSourceFilter('all');
+  };
+  const onGroupsChange = (groups: MuscleGroup[]) => {
+    setDynamicMuscleGroups(groups);
+    setMuscleGroups([...staticMuscleGroups, ...groups.map((g) => groupSlug(g.name))].filter((v, i, a) => a.indexOf(v) === i));
+  };
 
   const groupedExercises = filteredExercises.reduce((acc, exercise) => {
     const group = exercise.muscle_group;
@@ -186,7 +230,7 @@ const ExerciseBank = () => {
         });
         return;
       }
-      
+
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: t('common.error'),
@@ -195,10 +239,10 @@ const ExerciseBank = () => {
         });
         return;
       }
-      
+
       setImageFile(file);
       setImageRemoved(false); // Reset removal flag when new image is selected
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -209,21 +253,21 @@ const ExerciseBank = () => {
 
   const handleCreateExercise = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields and set errors
     const errors: Record<string, boolean> = {};
     let firstErrorField: string | null = null;
-    
+
     if (!exerciseForm.name || !exerciseForm.name.trim()) {
       errors.name = true;
       if (!firstErrorField) firstErrorField = 'name';
     }
-    
+
     if (!exerciseForm.muscle_group || !exerciseForm.muscle_group.trim()) {
       errors.muscle_group = true;
       if (!firstErrorField) firstErrorField = 'muscle_group';
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       // Scroll to first error field
@@ -238,13 +282,13 @@ const ExerciseBank = () => {
       }
       return;
     }
-    
+
     // Clear errors if validation passes
     setFieldErrors({});
-    
+
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // Prepare exercise data (without created_by - backend adds it)
       const exerciseData = {
         name: exerciseForm.name.trim(),
@@ -255,13 +299,13 @@ const ExerciseBank = () => {
         video_url: exerciseForm.video_url?.trim() || null,
         category: exerciseForm.category?.trim() || null,
       };
-      
+
       // If image is uploaded, use multipart/form-data
       if (imageFile) {
         const formDataToSend = new FormData();
         formDataToSend.append('exercise_json', JSON.stringify(exerciseData));
         formDataToSend.append('image', imageFile);
-        
+
         const response = await fetch(`${API_BASE_URL}/exercises/`, {
           method: 'POST',
           headers: {
@@ -343,21 +387,21 @@ const ExerciseBank = () => {
   const handleUpdateExercise = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingExercise) return;
-    
+
     // Validate required fields and set errors
     const errors: Record<string, boolean> = {};
     let firstErrorField: string | null = null;
-    
+
     if (!exerciseForm.name || !exerciseForm.name.trim()) {
       errors.name = true;
       if (!firstErrorField) firstErrorField = 'name';
     }
-    
+
     if (!exerciseForm.muscle_group || !exerciseForm.muscle_group.trim()) {
       errors.muscle_group = true;
       if (!firstErrorField) firstErrorField = 'muscle_group';
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       // Scroll to first error field
@@ -372,24 +416,24 @@ const ExerciseBank = () => {
       }
       return;
     }
-    
+
     // Clear errors if validation passes
     setFieldErrors({});
-    
+
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // If new image is uploaded, use multipart/form-data
       if (imageFile) {
         const exerciseData = {
           ...exerciseForm,
           video_url: exerciseForm.video_url || null,
         };
-        
+
         const formDataToSend = new FormData();
         formDataToSend.append('exercise_json', JSON.stringify(exerciseData));
         formDataToSend.append('image', imageFile);
-        
+
         const response = await fetch(`${API_BASE_URL}/exercises/${editingExercise.id}`, {
           method: 'PUT',
           headers: {
@@ -400,7 +444,7 @@ const ExerciseBank = () => {
 
         if (response.ok) {
           const updatedExercise = await response.json();
-          setExercises(exercises.map(ex => 
+          setExercises(exercises.map(ex =>
             ex.id === updatedExercise.id ? updatedExercise : ex
           ));
           setEditingExercise(null);
@@ -425,7 +469,7 @@ const ExerciseBank = () => {
           video_url: exerciseForm.video_url || null,
           ...(imageRemoved && editingExercise?.image_path ? { image_path: null } : {})
         };
-        
+
         const response = await fetch(`${API_BASE_URL}/exercises/${editingExercise.id}`, {
           method: 'PUT',
           headers: {
@@ -437,7 +481,7 @@ const ExerciseBank = () => {
 
         if (response.ok) {
           const updatedExercise = await response.json();
-          setExercises(exercises.map(ex => 
+          setExercises(exercises.map(ex =>
             ex.id === updatedExercise.id ? updatedExercise : ex
           ));
           setEditingExercise(null);
@@ -467,7 +511,7 @@ const ExerciseBank = () => {
 
   const handleDeleteExercise = async (exerciseId: number) => {
     if (!confirm(t('exerciseBank.deleteConfirm'))) return;
-    
+
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_BASE_URL}/exercises/${exerciseId}`, {
@@ -500,7 +544,7 @@ const ExerciseBank = () => {
         } catch (parseError) {
           console.error('Error parsing error response:', parseError);
         }
-        
+
         toast({
           title: t('common.error'),
           description: errorMessage,
@@ -534,146 +578,6 @@ const ExerciseBank = () => {
     setMediaType('video');
   };
 
-  const handleCreateMuscleGroup = async () => {
-    if (!newMuscleGroupName.trim()) {
-      setMuscleGroupError(t('exerciseBank.muscleGroupNameRequired'));
-      return;
-    }
-    setMuscleGroupError('');
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_BASE_URL}/muscle-groups/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newMuscleGroupName.trim(),
-          name_he: newMuscleGroupNameHe.trim() || null,
-        }),
-      });
-      if (response.ok) {
-        const newGroup = await response.json();
-        setDynamicMuscleGroups([...dynamicMuscleGroups, newGroup]);
-        const dynamicGroupNames = [...dynamicMuscleGroups, newGroup].map((mg) =>
-          mg.name.toLowerCase().replace(/\s+/g, '_')
-        );
-        const combined = [...staticMuscleGroups, ...dynamicGroupNames].filter((v, i, a) => a.indexOf(v) === i);
-        setMuscleGroups(combined);
-        setNewMuscleGroupName('');
-        setNewMuscleGroupNameHe('');
-        setEditingMuscleGroup(null);
-        toast({
-          title: t('common.success'),
-          description: t('exerciseBank.muscleGroupCreated'),
-        });
-      } else {
-        const errorData = await response.json();
-        setMuscleGroupError(errorData.detail || t('exerciseBank.errorCreate'));
-      }
-    } catch {
-      setMuscleGroupError(t('common.error'));
-    }
-  };
-
-  const handleUpdateMuscleGroup = async () => {
-    if (!editingMuscleGroup || !newMuscleGroupName.trim()) {
-      setMuscleGroupError(t('exerciseBank.muscleGroupNameRequired'));
-      return;
-    }
-    setMuscleGroupError('');
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_BASE_URL}/muscle-groups/${editingMuscleGroup.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newMuscleGroupName.trim(),
-          name_he: newMuscleGroupNameHe.trim() || null,
-        }),
-      });
-      if (response.ok) {
-        const updatedGroup = await response.json();
-        setDynamicMuscleGroups(dynamicMuscleGroups.map((mg) => (mg.id === updatedGroup.id ? updatedGroup : mg)));
-        const dynamicGroupNames = dynamicMuscleGroups.map((mg) =>
-          mg.id === updatedGroup.id
-            ? updatedGroup.name.toLowerCase().replace(/\s+/g, '_')
-            : mg.name.toLowerCase().replace(/\s+/g, '_')
-        );
-        const combined = [...staticMuscleGroups, ...dynamicGroupNames].filter((v, i, a) => a.indexOf(v) === i);
-        setMuscleGroups(combined);
-        setNewMuscleGroupName('');
-        setNewMuscleGroupNameHe('');
-        setEditingMuscleGroup(null);
-        toast({
-          title: t('common.success'),
-          description: t('exerciseBank.muscleGroupUpdated'),
-        });
-      } else {
-        const errorData = await response.json();
-        setMuscleGroupError(errorData.detail || t('exerciseBank.errorUpdate'));
-      }
-    } catch {
-      setMuscleGroupError(t('common.error'));
-    }
-  };
-
-  const handleDeleteMuscleGroup = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this muscle group? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_BASE_URL}/muscle-groups/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok || response.status === 204) {
-        setDynamicMuscleGroups(dynamicMuscleGroups.filter(mg => mg.id !== id));
-        const dynamicGroupNames = dynamicMuscleGroups.filter(mg => mg.id !== id).map(mg => mg.name.toLowerCase().replace(/\s+/g, '_'));
-        const combined = [...staticMuscleGroups, ...dynamicGroupNames].filter((v, i, a) => a.indexOf(v) === i);
-        setMuscleGroups(combined);
-        if (editingMuscleGroup?.id === id) {
-          setEditingMuscleGroup(null);
-          setNewMuscleGroupName('');
-          setNewMuscleGroupNameHe('');
-        }
-        toast({
-          title: t('common.success'),
-          description: t('exerciseBank.muscleGroupDeleted'),
-        });
-      } else {
-        const errorData = await response.json();
-        toast({
-          title: t('common.error'),
-          description: errorData.detail || 'Failed to delete muscle group',
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: t('common.error'),
-        description: 'Network error occurred',
-        variant: "destructive"
-      });
-    }
-  };
-
-  const openEditDialog = (group: {id: number, name: string, name_he?: string | null}) => {
-    setEditingMuscleGroup(group);
-    setNewMuscleGroupName(group.name);
-    setNewMuscleGroupNameHe(group.name_he ?? '');
-    setMuscleGroupError('');
-  };
-
   const startEdit = (exercise: Exercise) => {
     setEditingExercise(exercise);
     setFieldErrors({}); // Clear any previous errors
@@ -686,7 +590,7 @@ const ExerciseBank = () => {
       video_url: exercise.video_url || '',
       category: exercise.category || ''
     });
-    
+
     // Set media type based on what exists
     setImageRemoved(false); // Reset removal flag when starting to edit
     if (exercise.video_url) {
@@ -851,7 +755,7 @@ const ExerciseBank = () => {
       <Layout currentPage="exercises">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            <EcSpinner className="w-6 h-6" />
             <span className="text-muted-foreground">{t('exerciseBank.loading')}</span>
           </div>
         </div>
@@ -861,331 +765,206 @@ const ExerciseBank = () => {
 
   return (
     <Layout currentPage="exercises">
-      <div className="container mx-auto p-4 md:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('exerciseBank.title')}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>
-          </div>
-          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto min-w-0 flex-shrink-0">
-            <Button 
-              onClick={() => setCreateDialogOpen(true)} 
-              className="gradient-green w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4 me-2 flex-shrink-0" />
-              <span className="truncate">{t('exerciseBank.addExercise')}</span>
-            </Button>
-            <Button 
-              onClick={() => navigate('/create-workout-plan-v2?createSplit=true')} 
-              variant="outline"
-              className="w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4 me-2 flex-shrink-0" />
-              <span className="truncate">{t('exerciseBank.createWorkoutSplit', 'צור פיצול אימון')}</span>
-            </Button>
-            <Dialog open={muscleGroupDialogOpen} onOpenChange={setMuscleGroupDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  className="w-full md:w-auto px-4 py-2 text-sm md:text-base whitespace-nowrap"
-                >
-                  <Settings className="w-4 h-4 me-2 flex-shrink-0" />
-                  <span className="truncate">{t('exerciseBank.manageMuscleGroups')}</span>
-                </Button>
-              </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>{t('exerciseBank.manageMuscleGroups')}</DialogTitle>
-                    <DialogDescription>
-                      {t('exerciseBank.createNewMuscleGroup')}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="new_muscle_group_name">
-                        {editingMuscleGroup ? t('exerciseBank.editMuscleGroup') : t('exerciseBank.createNewMuscleGroup')}
-                      </Label>
-                      <div className="grid grid-cols-1 gap-2">
-                        <div>
-                          <Label htmlFor="new_muscle_group_name" className="text-xs text-muted-foreground">
-                            {t('exerciseBank.newMuscleGroupNameEn')}
-                          </Label>
-                          <Input
-                            id="new_muscle_group_name"
-                            value={newMuscleGroupName}
-                            onChange={(e) => {
-                              setNewMuscleGroupName(e.target.value);
-                              setMuscleGroupError('');
-                            }}
-                            placeholder={t('exerciseBank.newMuscleGroupNameEnPlaceholder')}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                if (editingMuscleGroup) handleUpdateMuscleGroup();
-                                else handleCreateMuscleGroup();
-                              }
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="new_muscle_group_name_he" className="text-xs text-muted-foreground">
-                            {t('exerciseBank.newMuscleGroupNameHe')}
-                          </Label>
-                          <Input
-                            id="new_muscle_group_name_he"
-                            value={newMuscleGroupNameHe}
-                            onChange={(e) => {
-                              setNewMuscleGroupNameHe(e.target.value);
-                              setMuscleGroupError('');
-                            }}
-                            placeholder={t('exerciseBank.newMuscleGroupNameHePlaceholder')}
-                            dir="rtl"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          {editingMuscleGroup ? (
-                            <>
-                              <Button
-                                type="button"
-                                onClick={handleUpdateMuscleGroup}
-                                disabled={!newMuscleGroupName.trim()}
-                              >
-                                <Save className="w-4 h-4 mr-1" />
-                                {t('common.save')}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingMuscleGroup(null);
-                                  setNewMuscleGroupName('');
-                                  setNewMuscleGroupNameHe('');
-                                  setMuscleGroupError('');
-                                }}
-                              >
-                                {t('workoutCreation.cancel')}
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              type="button"
-                              onClick={handleCreateMuscleGroup}
-                              disabled={!newMuscleGroupName.trim()}
-                            >
-                              <Plus className="w-4 h-4 mr-1" />
-                              {t('workoutCreation.create')}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      {muscleGroupError && (
-                        <p className="text-sm text-red-500">{muscleGroupError}</p>
-                      )}
-                    </div>
+      <div className="container mx-auto p-4 md:p-6 space-y-5">
+        <PageTitle
+          eyebrow={<span className="inline-flex items-center gap-1.5">{t('tt.bank.eyebrow', { count: exercises.length })}<InfoTip>{t('banks.exercise.ctaScale')}</InfoTip></span>}
+          title={t('exerciseBank.title')}
+          lead={t('exerciseBank.subtitle')}
+          actions={
+            <>
+              <button type="button" onClick={() => setLibraryOpen(true)} className="tp-btn tp-btn--primary tp-btn--sm tp-press max-sm:flex-1">
+                <Library className="h-4 w-4" />
+                {t('exerciseLibrary.open')}
+              </button>
+              <ActionBtn icon={Plus} label={t('exerciseBank.addExercise')} onClick={() => setCreateDialogOpen(true)} />
+              <ActionBtn icon={LayoutTemplate} label={t('tt.tpl.button')} onClick={() => setTemplatesOpen(true)} />
+              <ActionBtn icon={Split} label={t('exerciseBank.createWorkoutSplit', 'צור פיצול אימון')} onClick={() => navigate('/create-workout-plan-v2?createSplit=true')} />
+              <ActionBtn icon={Tags} label={t('tt.mg.button')} onClick={() => setMuscleGroupDialogOpen(true)} />
+              <ActionBtn icon={Download} label={t('common.exportExcel')} onClick={handleExportExcel} compact />
+              <input
+                type="file"
+                id="exercise-import-file"
+                accept=".xlsx,.xls"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImportFile(file);
+                    setTimeout(() => handleImportExcel(), 100);
+                  }
+                }}
+                className="hidden"
+                disabled={isImporting}
+              />
+              <ActionBtn
+                icon={Upload}
+                label={isImporting ? t('common.importing') : t('common.importExcel')}
+                onClick={() => document.getElementById('exercise-import-file')?.click()}
+                disabled={isImporting}
+                compact
+              />
+            </>
+          }
+        />
 
-                    {dynamicMuscleGroups.length > 0 && (
-                      <div className="space-y-2">
-                        <Label>{t('exerciseBank.allMuscleGroups')}</Label>
-                        <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
-                          {dynamicMuscleGroups.map((group) => (
-                            <div
-                              key={group.id}
-                              className="flex items-center justify-between p-3 hover:bg-muted/50"
-                            >
-                              <span className="font-medium">
-                                {i18n.language === 'he' && group.name_he ? group.name_he : group.name}
-                              </span>
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditDialog(group)}
-                                  className="h-10 w-10 sm:h-9 sm:w-9 p-0 touch-manipulation"
-                                >
-                                  <Edit className="w-5 h-5 sm:w-4 sm:h-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteMuscleGroup(group.id)}
-                                  className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-destructive hover:text-destructive touch-manipulation"
-                                >
-                                  <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-          </div>
-        </div>
-
-        {/* Search and Filter */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-x-4 mb-6 mt-2">
-              <div className="flex items-center gap-2 flex-1 w-full min-w-0">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="h-10 w-10 flex-shrink-0"
-                  onClick={handleExportExcel}
-                  aria-label={t('common.exportExcel')}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-                <label className="cursor-pointer flex-shrink-0">
-                  <input
-                    type="file"
-                    id="exercise-import-file"
-                    accept=".xlsx,.xls"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setImportFile(file);
-                        setTimeout(() => handleImportExcel(), 100);
-                      }
-                    }}
-                    className="hidden"
-                    disabled={isImporting}
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="h-10 w-10"
-                    disabled={isImporting}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('exercise-import-file')?.click();
-                    }}
-                    aria-label={isImporting ? t('common.importing') : t('common.importExcel')}
-                  >
-                    <Upload className="w-4 h-4" />
-                  </Button>
-                </label>
-                <div className="flex-1 relative min-w-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                  <input
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10"
-                    placeholder={t('exerciseBank.searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="w-full md:w-[220px]">
-                <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
-                  <SelectTrigger className="h-10 w-full" />
-                  <SelectContent>
-                    <SelectItem value="all">{t('exerciseBank.allMuscleGroups')}</SelectItem>
-                    {muscleGroups.map((group) => (
-                      <SelectItem key={group} value={group}>{getMuscleGroupDisplayName(group)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Filters (#15) */}
+        <section className="tp-card space-y-3 p-3 sm:p-4" aria-label={t('tt.bank.filters')}>
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+            <label className="tr-sbox min-w-0 flex-1">
+              <Search className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />
+              <span className="sr-only">{t('tt.common.search')}</span>
+              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('exerciseBank.searchPlaceholder')} dir="auto" />
+              {searchTerm && (
+                <button type="button" className="tp-icon-btn !h-7 !w-7" onClick={() => setSearchTerm('')} aria-label={t('tt.common.clear')}><X className="h-3.5 w-3.5" /></button>
+              )}
+            </label>
+            <div className="grid grid-cols-3 gap-2 lg:flex">
+              <PortalSelect
+                className="tr-filter"
+                icon={Weight}
+                label={t('tt.bank.equipment')}
+                value={equipmentFilter}
+                onChange={setEquipmentFilter}
+                options={[{ value: 'all', label: t('tt.bank.anyEquipment') }, ...equipmentOptions.map((eq) => ({ value: eq, label: t(`exerciseLibrary.equipment.${eq}`, { defaultValue: eq }) }))]}
+              />
+              <PortalSelect
+                className="tr-filter"
+                icon={Gauge}
+                label={t('tt.bank.level')}
+                value={levelFilter}
+                onChange={setLevelFilter}
+                options={[{ value: 'all', label: t('tt.bank.anyLevel') }, ...['beginner', 'intermediate', 'expert'].map((l) => ({ value: l, label: t(`exerciseLibrary.level.${l}`, { defaultValue: l }) }))]}
+              />
+              <PortalSelect
+                className="tr-filter"
+                icon={Library}
+                label={t('tt.bank.source')}
+                value={sourceFilter}
+                onChange={(v) => setSourceFilter(v as 'all' | 'library' | 'custom')}
+                options={[{ value: 'all', label: t('tt.bank.anySource') }, { value: 'library', label: t('tt.bank.fromLibrary') }, { value: 'custom', label: t('tt.bank.custom') }]}
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="tr-chips" role="group" aria-label={t('tt.bank.muscle')}>
+              <button type="button" className="tr-chip" aria-pressed={selectedMuscleGroup === 'all'} onClick={() => setSelectedMuscleGroup('all')}>
+                {t('tt.common.all')}<span>{exercises.filter((e) => matches(e, 'muscle')).length}</span>
+              </button>
+              {chipGroups.map((g) => (
+                <button key={g} type="button" className="tr-chip" aria-pressed={selectedMuscleGroup === g} onClick={() => setSelectedMuscleGroup(selectedMuscleGroup === g ? 'all' : g)}>
+                  {getMuscleGroupDisplayName(g)}<span>{muscleCounts[g] ?? 0}</span>
+                </button>
+              ))}
+            </div>
+            {filtersActive && (
+              <button type="button" onClick={clearFilters} className="tp-icon-btn tp-press !h-9 !w-9 flex-none" aria-label={t('tt.common.clear')} title={t('tt.common.clear')}>
+                <FilterX className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </section>
 
         {/* Exercise List by Muscle Group */}
         <div className="space-y-6">
           {Object.keys(groupedExercises).length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Dumbbell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg font-semibold mb-2">{t('exerciseBank.noExercises', 'אין תרגילים')}</p>
-                <p className="text-muted-foreground mb-4">
-                  {searchTerm || selectedMuscleGroup !== 'all' 
-                    ? t('exerciseBank.noExercisesFiltered', 'לא נמצאו תרגילים התואמים לחיפוש שלך')
-                    : t('exerciseBank.noExercisesDescription', 'עדיין לא נוצרו תרגילים. צור תרגיל חדש כדי להתחיל.')}
-                </p>
-                {!searchTerm && selectedMuscleGroup === 'all' && (
-                  <Button onClick={() => setCreateDialogOpen(true)} className="gradient-green">
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t('exerciseBank.addExercise')}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Dumbbell}
+              title={t('exerciseBank.noExercises', 'אין תרגילים')}
+              body={filtersActive
+                ? t('exerciseBank.noExercisesFiltered', 'לא נמצאו תרגילים התואמים לחיפוש שלך')
+                : t('exerciseBank.noExercisesDescription', 'עדיין לא נוצרו תרגילים. צור תרגיל חדש כדי להתחיל.')}
+              action={filtersActive ? (
+                <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={clearFilters}><FilterX className="h-4 w-4" />{t('tt.common.clear')}</button>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press" onClick={() => setLibraryOpen(true)}><Sparkles className="h-4 w-4" />{t('exerciseLibrary.open')}</button>
+                  <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={() => setCreateDialogOpen(true)}><Plus className="h-4 w-4" />{t('exerciseBank.addExercise')}</button>
+                </div>
+              )}
+            />
           ) : (
             Object.entries(groupedExercises).map(([muscleGroup, groupExercises]) => (
-              <div key={muscleGroup}>
-                <h2 className="text-xl font-semibold mb-3 flex items-center">
-                  <Tag className="w-5 h-5 me-2" />
+              <section key={muscleGroup}>
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
                   {getMuscleGroupDisplayName(muscleGroup)}
-                  <Badge variant="secondary" className="ms-2">{groupExercises.length}</Badge>
+                  <span className="tp-chip tabular-nums">{groupExercises.length}</span>
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupExercises.map((exercise) => (
-                    <Card key={exercise.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span className="text-lg">{exercise.name}</span>
-                          <div className="flex gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => startEdit(exercise)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDeleteExercise(exercise.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <p className="text-sm text-muted-foreground">{exercise.description}</p>
-                        
-                        {exercise.equipment_needed && (
-                          <div className="flex items-center text-sm">
-                            <Weight className="w-4 h-4 me-2 text-muted-foreground" />
-                            <span>{exercise.equipment_needed}</span>
-                          </div>
-                        )}
-                        
-                        {exercise.video_url && (
-                          <div className="flex items-center text-sm">
-                            <Video className="w-4 h-4 me-2 text-muted-foreground" />
-                            <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" 
-                               className="text-primary hover:underline">
-                              {t('exerciseBank.videoTutorial')}
-                            </a>
-                          </div>
-                        )}
-                        
-                        {exercise.instructions && (
-                          <div className="flex items-start text-sm">
-                            <FileText className="w-4 h-4 me-2 text-muted-foreground mt-0.5" />
-                            <p className="text-muted-foreground line-clamp-2">{exercise.instructions}</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="tr-ex-grid">
+                  {groupExercises.map((exercise, idx) => {
+                    const frames = exerciseFrames(exercise);
+                    const level = levelOf(exercise);
+                    return (
+                      <article
+                        key={exercise.id}
+                        style={{ animationDelay: `${Math.min(idx, 10) * 30}ms` }}
+                        className="ec-excard group relative overflow-hidden rounded-[1.25rem] border border-border/60 bg-card"
+                      >
+                        <button type="button" className="block w-full text-start focus-visible:outline-none" onClick={() => setDetail(exercise)} aria-label={t('tt.bank.openDetails', { name: exercise.name })}>
+                          {frames.length > 0 ? (
+                            <ExerciseDemo frames={frames} alt={exercise.name} className="aspect-[16/10] w-full" />
+                          ) : (
+                            <span className="grid aspect-[16/10] w-full place-items-center bg-primary/[.07] text-primary"><Dumbbell className="h-8 w-8" /></span>
+                          )}
+                          <span className="block space-y-2 p-3 sm:p-4">
+                            <span className="flex items-start gap-2">
+                              <span className="line-clamp-2 min-w-0 flex-1 text-[.95rem] font-bold leading-snug sm:text-lg">{exercise.name}</span>
+                              {level && <span className="mt-1.5 max-sm:hidden"><LevelBars level={level} /></span>}
+                            </span>
+                            <span className="flex flex-wrap gap-1.5 text-xs">
+                              {exercise.equipment_needed && (
+                                <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                                  <Weight className="h-3 w-3" />
+                                  {t(`exerciseLibrary.equipment.${exercise.equipment_needed}`, { defaultValue: exercise.equipment_needed })}
+                                </span>
+                              )}
+                              {exercise.video_url && <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-primary"><Video className="h-3 w-3" /></span>}
+                            </span>
+                          </span>
+                        </button>
+                        <div className="absolute end-2 top-2 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 max-md:opacity-100">
+                          <button type="button" className="tr-card-ibtn" onClick={() => startEdit(exercise)} aria-label={t('common.edit', 'Edit')} title={t('common.edit', 'Edit')}>
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button type="button" className="tr-card-ibtn text-destructive" onClick={() => handleDeleteExercise(exercise.id)} aria-label={t('common.delete', 'Delete')} title={t('common.delete', 'Delete')}>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
-              </div>
+              </section>
             ))
           )}
         </div>
 
+        <BankExerciseSheet
+          exercise={detail}
+          onClose={() => setDetail(null)}
+          muscleLabel={getMuscleGroupDisplayName}
+          onEdit={(e) => { setDetail(null); startEdit(e as Exercise); }}
+          onDelete={(e) => { setDetail(null); handleDeleteExercise(e.id); }}
+        />
+        <MuscleGroupsSheet
+          open={muscleGroupDialogOpen}
+          onOpenChange={setMuscleGroupDialogOpen}
+          builtIn={staticMuscleGroups}
+          groups={dynamicMuscleGroups}
+          counts={totalCounts}
+          labelOf={getMuscleGroupDisplayName}
+          onChange={onGroupsChange}
+        />
+        <TemplatesSheet open={templatesOpen} onOpenChange={setTemplatesOpen} initialKind="workout" />
+        <ExerciseLibrary
+          open={libraryOpen}
+          onOpenChange={setLibraryOpen}
+          onImported={(n) => {
+            toast({ title: t('exerciseLibrary.imported', { count: n }) });
+            fetchExercises();
+          }}
+        />
+
         {/* Create/Edit Exercise Dialog */}
-        <Dialog open={createDialogOpen || !!editingExercise} 
+        <Dialog open={createDialogOpen || !!editingExercise}
                 onOpenChange={(open) => {
                   if (!open) {
                     setCreateDialogOpen(false);
@@ -1200,12 +979,12 @@ const ExerciseBank = () => {
                 {editingExercise ? t('exerciseBank.editExercise') : t('exerciseBank.addNewExercise')}
               </DialogTitle>
               <DialogDescription className="text-sm">
-                {editingExercise 
+                {editingExercise
                   ? t('exerciseBank.editDescription')
                   : t('exerciseBank.createDescription')}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={editingExercise ? handleUpdateExercise : handleCreateExercise} 
+            <form onSubmit={editingExercise ? handleUpdateExercise : handleCreateExercise}
                   className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -1225,13 +1004,13 @@ const ExerciseBank = () => {
                     required
                   />
                   {fieldErrors.name && (
-                    <p className="text-xs text-destructive mt-1">Exercise name is required</p>
+                    <p className="text-xs text-destructive mt-1">{t('exerciseBank.nameRequired', 'Exercise name is required')}</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="muscle_group" className="text-sm">{t('exerciseBank.muscleGroup')}</Label>
-                  <Select 
-                    value={exerciseForm.muscle_group} 
+                  <Select
+                    value={exerciseForm.muscle_group}
                     onValueChange={(value) => {
                       setExerciseForm({...exerciseForm, muscle_group: value});
                       // Clear error when user selects a value
@@ -1240,7 +1019,7 @@ const ExerciseBank = () => {
                       }
                     }}
                   >
-                    <SelectTrigger 
+                    <SelectTrigger
                       id="muscle_group"
                       className={`h-9 text-sm ${fieldErrors.muscle_group ? 'border-destructive focus:ring-destructive' : ''}`}
                     >
@@ -1255,11 +1034,11 @@ const ExerciseBank = () => {
                     </SelectContent>
                   </Select>
                   {fieldErrors.muscle_group && (
-                    <p className="text-xs text-destructive mt-1">Muscle group is required</p>
+                    <p className="text-xs text-destructive mt-1">{t('exerciseBank.muscleRequired', 'Muscle group is required')}</p>
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="description" className="text-sm">{t('exerciseBank.description')}</Label>
                 <Textarea
@@ -1272,7 +1051,7 @@ const ExerciseBank = () => {
                   required
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="equipment_needed" className="text-sm">{t('exerciseBank.equipmentNeeded')}</Label>
@@ -1289,9 +1068,9 @@ const ExerciseBank = () => {
                     {mediaType === 'video' ? t('exerciseBank.videoUrl') : t('exerciseBank.exerciseImageOptional')}
                   </Label>
                   <div className="flex gap-2 items-center">
-                    <ToggleGroup 
-                      type="single" 
-                      value={mediaType} 
+                    <ToggleGroup
+                      type="single"
+                      value={mediaType}
                       onValueChange={(value) => {
                         if (value === 'video' || value === 'image') {
                           setMediaType(value);
@@ -1359,7 +1138,7 @@ const ExerciseBank = () => {
                                   setImageRemoved(true);
                                 }
                               }}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 text-xs z-10"
+                              className="absolute -top-1 -end-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 text-xs z-10"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -1370,7 +1149,7 @@ const ExerciseBank = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="category" className="text-sm">{t('exerciseBank.category')}</Label>
                 <Input
@@ -1381,7 +1160,7 @@ const ExerciseBank = () => {
                   className="h-9 text-sm"
                 />
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="instructions" className="text-sm">{t('exerciseBank.instructions')}</Label>
                 <Textarea
@@ -1393,7 +1172,7 @@ const ExerciseBank = () => {
                   className="text-sm resize-none"
                 />
               </div>
-              
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button
                   type="button"
@@ -1433,4 +1212,4 @@ const ExerciseBank = () => {
   );
 };
 
-export default ExerciseBank; 
+export default ExerciseBank;

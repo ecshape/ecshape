@@ -51,6 +51,49 @@ async def serve_exercise_image(
     
     return FileResponse(file_path)
 
+FOOD_PHOTO_EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif"}
+
+
+def _food_photo_dir(file_service: FileService) -> str:
+    return os.path.join(file_service.base_upload_path, "food_photos")
+
+
+@router.post("/food-photo", status_code=status.HTTP_201_CREATED)
+async def upload_food_photo(
+    file: UploadFile = File(...),
+    current_user: UserResponse = Depends(get_current_user),
+    file_service: FileService = Depends(get_file_service),
+):
+    """Upload a photo for a food-bank item (trainers and admins). Returns a public URL path to store in image_url."""
+    if current_user.role not in (UserRole.TRAINER, UserRole.ADMIN):
+        raise HTTPException(status_code=403, detail="Only trainers can upload food photos")
+    is_valid, error_message = await file_service.validate_file(file, "image")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_message)
+    content = await file.read()
+    import magic  # same detector FileService uses
+    import uuid
+    ext = FOOD_PHOTO_EXT.get(magic.from_buffer(content, mime=True))
+    if not ext:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+    directory = _food_photo_dir(file_service)
+    os.makedirs(directory, exist_ok=True)
+    filename = f"food_{current_user.id}_{uuid.uuid4().hex}{ext}"
+    with open(os.path.join(directory, filename), "wb") as fh:
+        fh.write(content)
+    return {"filename": filename, "url": f"/files/media/food_photos/{filename}"}
+
+
+@router.get("/media/food_photos/{filename}")
+async def serve_food_photo(filename: str, file_service: FileService = Depends(get_file_service)):
+    """Serve food-bank photos publicly (like exercise images) so <img> tags work without auth headers."""
+    safe = os.path.basename(filename)
+    path = os.path.join(_food_photo_dir(file_service), safe)
+    if safe != filename or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
+
+
 @router.get("/media/{file_type}/{filename}")
 async def serve_media_file(
     file_type: str,
@@ -510,4 +553,92 @@ async def get_media_stats(
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting media stats: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Error getting media stats: {str(e)}")
+
+
+# ---------------------------------------------------------------- profile photos (avatars)
+# Every user can set their own photo. Files get an unguessable name and are served without auth so that
+# <img> tags (portal, chat, public-site bubble) can show them; nothing else about the user is exposed.
+AVATAR_MAX_BYTES = 8 * 1024 * 1024
+AVATAR_SIZE = 512
+AVATAR_NAME_RE = r"^[0-9]+_[0-9a-f]{32}\.webp$"
+
+
+def _avatar_dir() -> str:
+    path = os.path.join(FileService().base_upload_path, "avatars")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _remove_avatar_file(path: Optional[str]) -> None:
+    """Delete a previous avatar file, only if it really lives in the avatars folder."""
+    if not path:
+        return
+    folder = os.path.abspath(_avatar_dir())
+    target = os.path.abspath(path)
+    if os.path.dirname(target) == folder and os.path.exists(target):
+        try:
+            os.remove(target)
+        except OSError:
+            pass
+
+
+@router.post("/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set the signed-in user's profile photo. The image is squared, resized to 512 px and stored as WebP."""
+    import io
+    import uuid
+    from PIL import Image, ImageOps
+    from app.models.user import User
+
+    raw = await file.read(AVATAR_MAX_BYTES + 1)
+    if len(raw) > AVATAR_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Image too large (8 MB max)")
+    try:
+        img = Image.open(io.BytesIO(raw))
+        img = ImageOps.exif_transpose(img).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Not a valid image")
+    img = ImageOps.fit(img, (AVATAR_SIZE, AVATAR_SIZE), Image.LANCZOS)
+
+    name = f"{current_user.id}_{uuid.uuid4().hex}.webp"
+    path = os.path.join(_avatar_dir(), name)
+    img.save(path, "WEBP", quality=82, method=4)
+
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    old = user.avatar_path
+    user.avatar_path = path
+    user.avatar_url = f"/api/files/avatars/{name}"
+    db.commit()
+    _remove_avatar_file(old)
+    return {"avatar_url": user.avatar_url}
+
+
+@router.delete("/avatar")
+async def delete_avatar(current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.models.user import User
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if user:
+        _remove_avatar_file(user.avatar_path)
+        user.avatar_path = None
+        user.avatar_url = None
+        db.commit()
+    return {"avatar_url": None}
+
+
+@router.get("/avatars/{filename}")
+async def serve_avatar(filename: str):
+    import re
+    if not re.match(AVATAR_NAME_RE, filename):
+        raise HTTPException(status_code=404, detail="Not found")
+    path = os.path.join(_avatar_dir(), filename)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Not found")
+    # The name changes on every upload, so a given file never changes
+    return FileResponse(path, media_type="image/webp", headers={"Cache-Control": "public, max-age=31536000, immutable"}) 

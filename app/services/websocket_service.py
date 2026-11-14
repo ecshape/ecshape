@@ -62,6 +62,11 @@ class WebSocketService:
         """Notify a user (e.g. trainer) that a new notification exists so the client can refetch."""
         await self.send_personal_message(user_id, {"type": "new_notification"})
 
+    async def send_live_refresh(self, user_id: int, event: str) -> None:
+        """Silent "something changed" frame: the app refetches what is on screen (no toast, no notification row).
+        Sent whatever the trainer's notification preferences are (r2 R5)."""
+        await self.send_personal_message(user_id, {"type": "live_refresh", "event": event})
+
     async def send_personal_message(self, user_id: int, message: dict):
         """Send message to a specific user."""
         if user_id in self.active_connections:

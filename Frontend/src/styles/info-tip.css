@@ -1,0 +1,29 @@
+/* Contextual help "i" (components/ui/info-tip.tsx) */
+.ec-info-tip {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 20px; height: 20px; margin-inline-start: 6px; border-radius: 999px;
+  color: hsl(var(--muted-foreground)); vertical-align: middle; position: relative; top: -0.08em;
+  cursor: help; line-height: 0; -webkit-tap-highlight-color: transparent;
+  transition: color .2s, background-color .2s;
+}
+.ec-info-tip svg { width: 15px; height: 15px; display: block; }
+label .ec-info-tip, h3 .ec-info-tip, .tp-label .ec-info-tip { width: 16px; height: 16px; margin-inline-start: 4px; }
+label .ec-info-tip svg, h3 .ec-info-tip svg, .tp-label .ec-info-tip svg { width: 13px; height: 13px; }
+.ec-info-tip:hover, .ec-info-tip.is-open { color: hsl(var(--primary)); background: hsl(var(--primary) / .12); }
+.ec-info-tip:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 1px; }
+.ec-info-bubble {
+  position: fixed; z-index: 2147483600; width: max-content; padding: 10px 12px; border-radius: 14px;
+  font-size: 13px; font-weight: 500; line-height: 1.45; text-align: start; letter-spacing: 0; text-transform: none;
+  color: hsl(var(--popover-foreground)); background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border) / .8); box-shadow: 0 18px 40px -18px rgba(0,0,0,.55);
+  animation: ec-info-in .16s ease-out both;
+}
+.ec-info-bubble.is-top { animation-name: ec-info-in-top; }
+@keyframes ec-info-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+@keyframes ec-info-in-top { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ec-info-bubble { animation: none; } }
+
+/* Login photo: light WebP, fades in once decoded */
+.ec-login-photo { opacity: 0; transform: translate(-50%, 12px); transition: opacity .3s ease, transform .6s cubic-bezier(.22,1,.36,1); }
+.ec-login-photo.is-loaded { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .ec-login-photo { transition: none; transform: translate(-50%, 0); } }

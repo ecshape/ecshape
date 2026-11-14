@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 
 import { API_BASE_URL } from '../config/api';
 
@@ -125,7 +127,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="flex justify-center py-8"><EcSpinner className="h-8 w-8" label="Loading" /></div>;
   }
 
   return (
@@ -136,16 +138,16 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Average Calories (7 Days)
+              {t('mealHistory.avgTitle', 'Average calories (7 days)')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-4">
               <div className="text-4xl font-bold text-orange-500 mb-2">
-                {averageData.average_calories} kcal
+                {t('mealHistory.kcal', { value: Math.round(averageData.average_calories).toLocaleString(i18n.language), defaultValue: '{{value}} kcal' })}
               </div>
               <p className="text-muted-foreground">
-                {averageData.total_days} days tracked
+                {t('mealHistory.daysTracked', { count: averageData.total_days, defaultValue: '{{count}} days tracked' })}
               </p>
             </div>
           </CardContent>
@@ -157,7 +159,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Daily Meal History
+            {t('mealHistory.title', 'Daily Meal History')}
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -29,6 +29,7 @@ class Exercise(Base):
     muscle_group_id = Column(Integer, ForeignKey("muscle_groups.id"), nullable=True)  # FK to dynamic muscle groups
     equipment_needed = Column(String)
     instructions = Column(String)  # How to perform the exercise
+    library_id = Column(String(120), nullable=True)  # free-exercise-db id when imported from the library
     category = Column(String)  # Custom category for organizing exercises (e.g., "Strength", "Hypertrophy", "Endurance", "Mobility")
     created_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)  # Trainer who created it
     created_at = Column(DateTime, default=func.now())  # SQLite compatible

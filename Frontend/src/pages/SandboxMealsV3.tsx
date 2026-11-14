@@ -1049,7 +1049,7 @@ export const MealMenuV3: React.FC<MealMenuV3Props> = ({ mode = "real", embedded 
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gradient">{t("meals.myMealPlan", "My Meal Plan")}</h1>
+                <h1 className="ec-page-title text-gradient">{t("meals.myMealPlan", "My Meal Plan")}</h1>
                 <p className="text-muted-foreground mt-1">{t("meals.trackNutrition", "Track your nutrition and meals")}</p>
               </div>
               {/* dir=ltr: chevrons stay “earlier left / later right” under page RTL; date uses dir=auto for Hebrew label */}

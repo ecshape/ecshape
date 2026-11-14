@@ -19,6 +19,9 @@ const ICONS = {
   trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
   chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/></svg>',
 };
+/** WhatsApp glyph (vector, so it stays sharp at any density). Bubble = currentColor, handset = --wa-handset. */
+export const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.2a9.8 9.8 0 0 0-8.4 14.8L2.2 21.8l4.9-1.3A9.8 9.8 0 1 0 12 2.2z"/><path fill="var(--wa-handset, #22c55e)" d="M8.9 6.9c-.2-.4-.4-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.1 1.3 3.3c.2.2 2.2 3.5 5.5 4.8 2.7 1.1 3.3.9 3.9.8.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4l-2-1c-.3-.1-.5-.2-.7.1l-.9 1.1c-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5.3-.5c.1-.2 0-.4 0-.5l-.9-2.2z"/></svg>';
+const CLOSE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const APP_ICONS = [ICONS.dumbbell, ICONS.bowl, ICONS.trend, ICONS.chat];
 const STEP_ICONS = [
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 3.5h6M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>',
@@ -62,7 +65,7 @@ export function waLink(c: SiteContent) {
 
 /** Real screenshots of the client app, captured from the portal (see scripts in Frontend/scripts). */
 export function appShot(lang: SiteLang, i: number) {
-  return `${P}app/${lang}/${i + 1}.jpg`;
+  return `${P}app/${lang}/${i + 1}.jpg?v=3`;
 }
 
 export interface RenderOptions {
@@ -129,12 +132,19 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
 
     manifesto: () => `
 <section class="section manifesto">
-  <div class="wrap">
-    <span class="eyebrow" data-reveal${P_('manifesto.eyebrow')}>${esc(c.manifesto.eyebrow)}</span>
-    <p class="manifesto__text" data-words style="margin-top:28px">${T('manifesto.text', c.manifesto.text)} <span class="hl"${P_('manifesto.highlight')}>${esc(c.manifesto.highlight)}</span></p>
-    <div class="manifesto__sig" data-reveal>
-      <img src="${esc(storyImg)}" alt="" width="64" height="64" loading="lazy">
-      <div><b>${esc(name)}</b><small${P_('manifesto.role')}>${esc(c.manifesto.role)}</small></div>
+  <div class="wrap manifesto__grid">
+    <div class="manifesto__copy">
+      <span class="eyebrow" data-reveal${P_('manifesto.eyebrow')}>${esc(c.manifesto.eyebrow)}</span>
+      <p class="manifesto__text" data-words>${T('manifesto.text', c.manifesto.text)} <span class="hl"${P_('manifesto.highlight')}>${esc(c.manifesto.highlight)}</span></p>
+      <div class="manifesto__sig" data-reveal>
+        <img src="${esc(storyImg)}" alt="" width="64" height="64" loading="lazy">
+        <div><b>${esc(name)}</b><small${P_('manifesto.role')}>${esc(c.manifesto.role)}</small></div>
+      </div>
+    </div>
+    <div class="manifesto__art" aria-hidden="true">
+      <svg class="mart__ring" viewBox="0 0 200 200">${Array.from({ length: 60 }, (_, k) => `<line x1="100" y1="4" x2="100" y2="${k % 5 ? 9 : 14}" transform="rotate(${k * 6} 100 100)"/>`).join('')}<circle class="mart__arc" cx="100" cy="100" r="88" pathLength="100"/></svg>
+      <figure class="mart__photo"><img src="${esc(storyImg)}" alt="" loading="lazy" data-parallax></figure>
+      ${c.hero.stats.slice(0, 3).map((s, i) => `<div class="mart__chip mart__chip--${i}"><span class="num" dir="ltr">${esc(s.value)}${esc(s.suffix)}</span><small>${esc(s.label)}</small></div>`).join('')}
     </div>
   </div>
 </section>`,
@@ -170,10 +180,29 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
   </div>
   <div class="results__pin">
     <div class="results__track">
-      ${c.results.cards.map((r, i) => `<article class="rcard${r.tall ? ' rcard--tall' : ''}" data-cursor=""${ITEM(`results.cards.${i}`)}>
-        <div class="rcard__img"${IMG(`results.cards.${i}.image`)}><img src="${esc(r.image)}" alt="${esc(r.title)} — ${esc(r.tag)}" loading="lazy"></div>
-        <div class="rcard__meta"><div><span class="tag"${P_(`results.cards.${i}.tag`)}>${esc(r.tag)}</span><h3${P_(`results.cards.${i}.title`)}>${esc(r.title)}</h3><p${P_(`results.cards.${i}.sub`)}>${esc(r.sub)}</p></div>${r.big ? `<div class="rcard__big"${P_(`results.cards.${i}.big`)}>${esc(r.big)}</div>` : ''}</div>
-      </article>`).join('')}
+      ${c.results.cards.map((r, i) => {
+        // Built-in crops only belong to the built-in combined photos: if the trainer replaced `image` (older studio
+        // flow) and kept the default crops, show the halves of the new photo instead.
+        const builtinCrop = (u?: string) => !!u && u.startsWith('/site/photos/opt/results/');
+        const cropsOk = !!(r.before && r.after) && (!r.image || r.image.startsWith('/site/photos/before_after_') || !builtinCrop(r.before));
+        const half = (k: 'before' | 'after') => {
+          const src = cropsOk ? r[k] : '';
+          const label = `<figcaption class="rcard__lbl"${P_(`results.${k}`)}>${esc(c.results[k])}</figcaption>`;
+          const alt = `${esc(r.title)} — ${esc(c.results[k])}`;
+          // No separate crop: show the matching half of the combined photo (before = left half, as in the originals).
+          return src
+            ? `<figure class="rcard__half rcard__half--${k}"${IMG(`results.cards.${i}.${k}`)}><img src="${esc(src)}" alt="${alt}" loading="lazy">${label}</figure>`
+            : `<figure class="rcard__half rcard__half--${k} rcard__half--split"${IMG(`results.cards.${i}.image`)}><img src="${esc(r.image)}" alt="${alt}" loading="lazy">${label}</figure>`;
+        };
+        const kg = r.kg
+          ? `<div class="rcard__kg"><b class="num" dir="ltr">−<span${P_(`results.cards.${i}.kg`)}>${esc(String(r.kg).replace(/^[-−\s]+/, ''))}</span></b><small${P_('results.unit')}>${esc(c.results.unit)}</small></div>`
+          : r.big ? `<div class="rcard__kg rcard__kg--text"><b class="num" dir="ltr"${P_(`results.cards.${i}.big`)}>${esc(r.big)}</b></div>` : '';
+        const arrow = lang === 'he' ? 'M19 12H5M11 18l-6-6 6-6' : 'M5 12h14M13 6l6 6-6 6';
+        return `<article class="rcard"${ITEM(`results.cards.${i}`)}>
+        <div class="rcard__ba">${half('before')}${half('after')}<span class="rcard__seam" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${arrow}"/></svg></span></div>
+        <div class="rcard__meta"><div class="rcard__txt"><span class="tag"${P_(`results.cards.${i}.tag`)}>${esc(r.tag)}</span><h3${P_(`results.cards.${i}.title`)}>${esc(r.title)}</h3><p${P_(`results.cards.${i}.sub`)}>${esc(r.sub)}</p></div>${kg}</div>
+      </article>`;
+      }).join('')}
       <article class="rcard rcard--cta">
         <div class="display"${P_('results.ctaCard')}>${esc(c.results.ctaCard)}</div>
         <button type="button" class="btn" data-open-form data-source="results" data-icon="arrow"${P_('results.ctaButton')}>${esc(c.results.ctaButton)}</button>
@@ -293,7 +322,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     </div>
     <div class="acc">
       ${c.faq.items.map((f, i) => `<div class="acc__item${edit ? ' is-open' : ''}"${ITEM(`faq.items.${i}`)}>
-        <button class="acc__q" aria-expanded="${edit}"><span${P_(`faq.items.${i}.q`)}>${esc(f.q)}</span><i class="acc__ic" aria-hidden="true"></i></button>
+        <button type="button" class="acc__q" aria-expanded="${edit}"><span${P_(`faq.items.${i}.q`)}>${esc(f.q)}</span><i class="acc__ic" aria-hidden="true"></i></button>
         <div class="acc__a"><div><p${P_(`faq.items.${i}.a`)}>${esc(f.a)}</p></div></div>
       </div>`).join('')}
     </div>
@@ -352,10 +381,10 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     <a class="btn btn--ghost btn--sm nav__login" href="/login" data-route data-icon="arrow"${P_('nav.login')}>${esc(c.nav.login)}</a>
     <button type="button" class="btn btn--primary btn--sm nav__cta" data-open-form data-source="nav" data-icon="arrow"${P_('nav.cta')}>${esc(c.nav.cta)}</button>
   </div>
-  <button class="nav__menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
+  <button type="button" class="nav__menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
 </header>
 
-<div class="menu" id="menu" aria-hidden="true">
+<div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true" data-lenis-prevent>
   <nav aria-label="Mobile">
     ${navItems.map(([, h, k]) => `<a href="${h}"><span>${esc(c.nav[k])}</span></a>`).join('')}
   </nav>
@@ -385,12 +414,13 @@ ${page}
   <div class="footer__bottom"><span${P_('footer.rights')}>${esc(c.footer.rights)}</span><a href="#site-top" class="link-draw"${P_('footer.back')}>${esc(c.footer.back)}</a></div>
 </footer>
 
-<a class="wa-float" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><img src="${P}icon-whatsapp.png" alt=""></a>
+<a class="wa-float" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${WA_SVG}</a>
 
 <div class="form-modal" id="leadModal" role="dialog" aria-modal="true" aria-labelledby="leadTitle" aria-hidden="true">
   <div class="form-modal__backdrop" data-close-form></div>
   <div class="form-modal__panel">
-    <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}">${CLOSE_SVG}</button>
+    <div class="form-modal__scroll" data-lenis-prevent>
     <div class="form-modal__body">
       <span class="eyebrow">ECshape</span>
       <h2 id="leadTitle" class="display">${esc(c.form.title)}</h2>
@@ -411,9 +441,11 @@ ${page}
       </form>
       <div class="form-done" hidden>
         <div class="form-done__icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-        <h3 class="display">${esc(c.form.success)}</h3>
+        <h3 class="display" tabindex="-1">${esc(c.form.success)}</h3>
         <p class="lead">${esc(c.form.successSub)}</p>
+        <button type="button" class="btn btn--ghost" data-close-form data-icon="arrow">${esc(c.form.close)}</button>
       </div>
+    </div>
     </div>
   </div>
 </div>
@@ -421,8 +453,8 @@ ${page}
 <div class="cookie" id="cookieBanner" role="dialog" aria-label="Cookies">
   <p>${esc(c.cookie.text)}</p>
   <div class="cookie__btns">
-    <button class="cb-accept" id="cbAccept">${esc(c.cookie.accept)}</button>
-    <button class="cb-decline" id="cbDecline">${esc(c.cookie.decline)}</button>
+    <button type="button" class="cb-accept" id="cbAccept">${esc(c.cookie.accept)}</button>
+    <button type="button" class="cb-decline" id="cbDecline">${esc(c.cookie.decline)}</button>
   </div>
 </div>`;
 }

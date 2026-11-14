@@ -1,6 +1,7 @@
 import type { SiteContent } from './types';
 
 const P = '/site/photos/';
+const R = '/site/photos/opt/results/';
 
 export const he: SiteContent = {
   meta: {
@@ -57,11 +58,14 @@ export const he: SiteContent = {
     lead: 'אלה לא רק תמונות לפני ואחרי — אלה אנשים שהחליטו להשתנות ופעלו. כל שינוי התחיל מהחלטה אחת.',
     ctaCard: 'הכרטיס הבא — שלך?',
     ctaButton: 'רוצה תוצאות כאלה',
+    before: 'לפני',
+    after: 'אחרי',
+    unit: 'KG',
     cards: [
-      { image: P + 'before_after_52days.jpeg', tag: '52 ימים', title: 'ירידה במשקל', sub: '98.3 ← 90.7 ק״ג', big: '−8 KG' },
-      { image: P + 'before_after_recomp.jpeg', tag: 'Body Recomp', title: 'בניית שריר תוך ירידה בשומן', sub: 'הרכב גוף חדש לגמרי' },
-      { image: P + 'before_after_boom.jpeg', tag: '6 שבועות', title: 'גבי', sub: 'התמדה + איזון תזונתי', big: '93→88', tall: true },
-      { image: P + 'before_after_60days.jpeg', tag: '60 ימים', title: 'ירידה במשקל', sub: 'חיטוב וכוח', big: '−10 KG' },
+      { image: P + 'before_after_52days.jpeg', before: R + '52days_before.jpg', after: R + '52days_after.jpg', kg: '8', tag: '52 ימים', title: 'ירידה במשקל', sub: '98.3 ← 90.7 ק״ג' },
+      { image: P + 'before_after_recomp.jpeg', before: R + 'recomp_before.jpg', after: R + 'recomp_after.jpg', big: 'RECOMP', tag: 'Body Recomp', title: 'בניית שריר תוך ירידה בשומן', sub: 'הרכב גוף חדש לגמרי' },
+      { image: P + 'before_after_boom.jpeg', before: R + 'boom_before.jpg', after: R + 'boom_after.jpg', kg: '5', tag: '6 שבועות', title: 'גבי', sub: '93 ← 88 ק״ג · התמדה + איזון תזונתי' },
+      { image: P + 'before_after_60days.jpeg', before: R + '60days_before.jpg', after: R + '60days_after.jpg', kg: '10', tag: '60 ימים', title: 'ירידה במשקל', sub: 'חיטוב וכוח' },
     ],
   },
   shift: {

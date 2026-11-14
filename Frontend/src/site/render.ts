@@ -419,10 +419,13 @@ ${page}
 <div class="form-modal" id="leadModal" role="dialog" aria-modal="true" aria-labelledby="leadTitle" aria-hidden="true">
   <div class="form-modal__backdrop" data-close-form></div>
   <div class="form-modal__panel">
-    <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}">${CLOSE_SVG}</button>
+    <div class="form-modal__head">
+      <span class="form-modal__grab" aria-hidden="true"></span>
+      <span class="eyebrow">ECshape</span>
+      <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}">${CLOSE_SVG}</button>
+    </div>
     <div class="form-modal__scroll" data-lenis-prevent>
     <div class="form-modal__body">
-      <span class="eyebrow">ECshape</span>
       <h2 id="leadTitle" class="display">${esc(c.form.title)}</h2>
       <p class="lead">${esc(c.form.sub)}</p>
       <form id="leadForm" novalidate>

@@ -250,6 +250,7 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     modalOpen = true;
     modalScroll.scrollTop = 0;
     modal.classList.add('is-open');
+    syncSheet();
     modal.setAttribute('aria-hidden', 'false');
     lockScroll(true);
     setInert([modal], true);
@@ -267,6 +268,14 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     lockScroll(false);
     refocus(lastFocus);
   };
+  // Hairline under the sheet header once the body scrolls; the backdrop never scrolls the page behind (iOS).
+  const syncSheet = () => {
+    panel.classList.toggle('is-scrolled', modalScroll.scrollTop > 4);
+    panel.classList.toggle('is-end', modalScroll.scrollTop + modalScroll.clientHeight >= modalScroll.scrollHeight - 4);
+  };
+  on(modalScroll, 'scroll', syncSheet, { passive: true });
+  on(window, 'resize', () => { if (modalOpen) syncSheet(); });
+  on($('.form-modal__backdrop', modal), 'touchmove', (e) => e.preventDefault(), { passive: false });
   $$('[data-open-form]').forEach((b) => on(b, 'click', (e) => { e.preventDefault(); openForm(b); }));
   $$('[data-close-form]', modal).forEach((b) => on(b, 'click', closeForm));
   on(window, 'keydown', (e) => {
@@ -296,6 +305,7 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
       if (!res.ok) throw new Error(String(res.status));
       form.hidden = true; done.hidden = false; form.reset();
       modalScroll.scrollTop = 0;
+      syncSheet();
       const h = $('h3', done); if (h) h.focus({ preventScroll: true });
       if (window.gtag) window.gtag('event', 'generate_lead', { source: data.source, program: data.program });
     } catch (err) {

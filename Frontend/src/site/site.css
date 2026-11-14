@@ -987,26 +987,48 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 }
 .ec-site .form-modal__scroll::-webkit-scrollbar { width: 6px; }
 .ec-site .form-modal__scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 6px; }
-.ec-site .form-modal__body { padding: var(--mpad); }
-.ec-site .form-modal__body > .eyebrow { display: flex; min-height: 44px; padding-inline-end: 56px; margin-top: -6px; }
-.ec-site .form-modal__body h2 { font-size: clamp(2.5rem, 6vw, 3.6rem); margin: 8px 0 8px; padding-inline-end: 8px; }
+/* Fixed header (brand + close) above the scrolling body: the close button never covers a field, and a hairline
+   appears under it once the body scrolls. */
+.ec-site .form-modal__head {
+  position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: calc(var(--mpad) - 10px) calc(var(--mpad) - 6px) 8px var(--mpad);
+  border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s;
+}
+.ec-site[dir="rtl"] .form-modal__head { padding-inline: var(--mpad) calc(var(--mpad) - 6px); }
+.ec-site .form-modal__panel.is-scrolled .form-modal__head { border-bottom-color: var(--line); box-shadow: 0 10px 24px -18px rgba(0,0,0,.9); }
+.ec-site .form-modal__grab { display: none; }
+/* Soft fade at the bottom edge while there is more to scroll */
+.ec-site .form-modal__panel::after {
+  content: ''; position: absolute; z-index: 2; inset-inline: 0; bottom: 0; height: 36px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--surface)); transition: opacity .3s;
+}
+.ec-site .form-modal__panel.is-end::after { opacity: 0; }
+.ec-site .form-modal__body { padding: 6px var(--mpad) var(--mpad); }
+.ec-site .form-modal__body h2 { font-size: clamp(2.5rem, 6vw, 3.6rem); margin: 0 0 8px; }
 .ec-site .form-modal__body .lead { margin-bottom: 22px; }
 .ec-site .form-modal__close {
-  position: absolute; z-index: 3; top: calc(var(--mpad) - 6px); inset-inline-end: calc(var(--mpad) - 6px);
-  width: 44px; height: 44px; padding: 0; border-radius: 50%; line-height: 0;
+  position: relative; flex: none;
+  width: 44px; height: 44px; padding: 0; border-radius: 50%; line-height: 0; color: var(--ink);
   display: grid; place-items: center;
   background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-2);
   transition: transform .5s var(--ease-spring), background .3s, color .3s;
 }
 .ec-site .form-modal__close svg { display: block; width: 18px; height: 18px; }
 .ec-site .form-modal__close:hover { transform: rotate(90deg); background: var(--accent); color: #fff; box-shadow: none; }
+.ec-site .form-modal__close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 560px) {
-  /* Phones: full-screen sheet that slides up */
-  .ec-site .form-modal { padding: 0; place-items: stretch; --mpad: 20px; }
-  .ec-site .form-modal__panel { width: 100%; height: 100%; max-height: none; border-radius: 0; transform: translateY(6%); box-shadow: none; }
-  .ec-site .form-modal__body { padding: calc(var(--mpad) + env(safe-area-inset-top)) max(var(--mpad), env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(var(--mpad), env(safe-area-inset-left)); }
-  .ec-site .form-modal__close { top: calc(var(--mpad) - 6px + env(safe-area-inset-top)); }
+  /* Phones: bottom sheet (rounded top, grab bar) that slides up and scrolls inside */
+  .ec-site .form-modal { padding: calc(14px + env(safe-area-inset-top)) 0 0; place-items: end stretch; --mpad: 20px; }
+  .ec-site .form-modal__panel { width: 100%; max-height: 100%; border-radius: 26px 26px 0 0; transform: translateY(100%); opacity: 1; box-shadow: 0 0 0 1px var(--line), 0 -20px 60px -20px rgba(0,0,0,.8); }
+  .ec-site .form-modal__head { padding: 22px max(14px, env(safe-area-inset-right)) 6px max(var(--mpad), env(safe-area-inset-left)); }
+  .ec-site[dir="rtl"] .form-modal__head { padding-inline: max(var(--mpad), env(safe-area-inset-right)) max(14px, env(safe-area-inset-left)); }
+  .ec-site .form-modal__grab { display: block; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 4px; background: var(--line-2); }
+  .ec-site .form-modal__body { padding: 4px max(var(--mpad), env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(var(--mpad), env(safe-area-inset-left)); }
   .ec-site .form-modal__body h2 { font-size: 2.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ec-site .form-modal__panel { transition: opacity .2s linear; transform: none; }
+  .ec-site .form-modal:not(.is-open) .form-modal__panel { opacity: 0; }
 }
 .ec-site #leadForm { display: grid; gap: 14px; }
 .ec-site #leadForm[hidden] { display: none; }

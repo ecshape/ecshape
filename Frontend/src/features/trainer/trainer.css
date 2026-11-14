@@ -414,6 +414,32 @@
 [lang="he"] .tr-side[data-collapsed="true"] .tr-nav-title.tr-hide-rail { font-size: .66rem; letter-spacing: 0; }
 .tr-side[data-collapsed="true"] .tr-nav-group + .tr-nav-group { margin-top: .85rem; padding-top: .7rem; border-top: 1px solid hsl(var(--foreground) / .06); }
 
+/* ------------------------------------------------------------------ check-ins tab (#14) */
+.tr-ci-grid { display: grid; gap: .65rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container trmain (min-width: 900px) { .tr-ci-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem; } }
+.tr-ci-tile { display: flex; min-height: 7.5rem; flex-direction: column; justify-content: space-between; gap: .6rem; padding: .9rem; }
+@container trmain (min-width: 900px) { .tr-ci-tile { padding: 1.1rem; } }
+.tr-ci-value { font-family: 'Anton', 'Heebo', sans-serif; font-size: 1.85rem; line-height: 1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tr-ci-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .35rem; }
+.tr-ci-day {
+  display: grid; place-items: center; height: 2.1rem; border-radius: .6rem; font-size: .72rem; font-weight: 700;
+  color: hsl(var(--muted-foreground) / .7); background: hsl(var(--foreground) / .04);
+  transition: background-color var(--tr-fast), transform var(--tr-fast) var(--tr-ease);
+}
+.tr-ci-day[data-on] { background: hsl(var(--primary) / .85); color: #fff; cursor: pointer; }
+.tr-ci-day[data-on]:hover { background: hsl(var(--primary)); }
+.tr-ci-day[data-on]:active { transform: scale(.95); }
+.tr-ci-day[data-today] { box-shadow: inset 0 0 0 2px hsl(var(--foreground) / .5); }
+.tr-ci-day:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
+.tr-ci-list { display: grid; gap: .6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container trmain (min-width: 700px) { .tr-ci-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container trmain (min-width: 1100px) { .tr-ci-list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tr-ci-card { padding: .8rem .85rem; font-size: .85rem; }
+.tr-ci-mini { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .35rem .2rem; border-radius: .6rem; background: hsl(var(--foreground) / .045); color: hsl(var(--muted-foreground)); font-size: .7rem; min-width: 0; }
+.tr-ci-mini b { color: hsl(var(--foreground)); font-size: .8rem; font-variant-numeric: tabular-nums; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tr-ci-yesno { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .9rem; border-radius: 1rem; background: hsl(var(--foreground) / .04); }
+body:has(.tr-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
+
 /* ------------------------------------------------------------------ calm motion for the shared kit (#9) */
 /* The trainee kit (tp-*) and portal buttons are springy by default; inside the trainer shell they stay subtle. */
 .tr-root .tp-press { transition: transform var(--tr-fast) var(--tr-ease), background-color var(--tr-fast), color var(--tr-fast), box-shadow var(--tr-fast), opacity var(--tr-fast); }

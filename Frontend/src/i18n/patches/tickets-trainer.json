@@ -1,0 +1,149 @@
+{
+  "he": {
+    "tt": {
+      "common": {
+        "showMore": "הצגת {{count}} נוספים",
+        "close": "סגירה",
+        "edit": "עריכה",
+        "delete": "מחיקה",
+        "save": "שמירה",
+        "cancel": "ביטול",
+        "add": "הוספה",
+        "search": "חיפוש",
+        "clear": "ניקוי",
+        "all": "הכול",
+        "more": "פעולות נוספות",
+        "saving": "שומר…"
+      },
+      "ci": {
+        "total": "סה״כ צ׳ק-אינים",
+        "since": "מאז {{date}}",
+        "h": "ש׳",
+        "last7": "7 הימים האחרונים",
+        "avgHunger": "רעב ממוצע",
+        "weightTrend": "מגמת משקל",
+        "noWeights": "אין עדיין מספיק שקילות כדי להציג מגמה",
+        "calendar": "5 השבועות האחרונים",
+        "last35_one": "צ׳ק-אין אחד",
+        "last35_two": "{{count}} צ׳ק-אינים",
+        "last35_other": "{{count}} צ׳ק-אינים",
+        "emptyBody": "כשהמתאמן ימלא צ׳ק-אין יומי הוא יופיע כאן.",
+        "sleep": "שינה",
+        "hunger": "רעב",
+        "walked": "הלך 10,000 צעדים",
+        "sun": "10 דקות בשמש",
+        "info": {
+          "today": "האם המתאמן כבר מילא את הצ׳ק-אין של היום.",
+          "streak": "ימים רצופים עם צ׳ק-אין. הנקודות מראות את 7 הימים האחרונים.",
+          "rate": "אחוז הימים עם צ׳ק-אין מאז הצ׳ק-אין הראשון.",
+          "total": "כמה צ׳ק-אינים המתאמן מילא בסך הכול.",
+          "weight": "ממוצע המשקל שדווח בצ׳ק-אינים. התג מראה את השינוי מהשקילה הראשונה לאחרונה.",
+          "steps": "ממוצע הצעדים היומי. העמודות מראות את 7 הימים האחרונים.",
+          "sleep": "ממוצע שעות השינה בלילה. העמודות מראות את 7 הימים האחרונים.",
+          "hunger": "רמת הרעב הממוצעת שהמתאמן דיווח, בסולם 1 עד 10.",
+          "trend": "המשקל מכל צ׳ק-אין לאורך זמן. רחפו או געו בגרף כדי לראות ערך.",
+          "calendar": "כל משבצת היא יום. משבצת כתומה = יש צ׳ק-אין, לחיצה פותחת אותו.",
+          "history": "כל הצ׳ק-אינים, מהחדש לישן. לחיצה על כרטיס מציגה את כל הפרטים."
+        }
+      }
+    }
+  },
+  "en": {
+    "tt": {
+      "common": {
+        "showMore": "Show {{count}} more",
+        "close": "Close",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save",
+        "cancel": "Cancel",
+        "add": "Add",
+        "search": "Search",
+        "clear": "Clear",
+        "all": "All",
+        "more": "More actions",
+        "saving": "Saving…"
+      },
+      "ci": {
+        "total": "Total check-ins",
+        "since": "since {{date}}",
+        "h": "h",
+        "last7": "Last 7 days",
+        "avgHunger": "Average hunger",
+        "weightTrend": "Weight trend",
+        "noWeights": "Not enough weigh-ins yet to show a trend",
+        "calendar": "Last 5 weeks",
+        "last35_one": "1 check-in",
+        "last35_two": "{{count}} check-ins",
+        "last35_other": "{{count}} check-ins",
+        "emptyBody": "When the client fills in a daily check-in it shows up here.",
+        "sleep": "Sleep",
+        "hunger": "Hunger",
+        "walked": "Walked 10,000 steps",
+        "sun": "10 minutes in the sun",
+        "info": {
+          "today": "Whether the client has already filled in today's check-in.",
+          "streak": "Consecutive days with a check-in. The dots show the last 7 days.",
+          "rate": "Share of days with a check-in since the first one.",
+          "total": "How many check-ins the client has filled in overall.",
+          "weight": "Average weight reported in check-ins. The badge shows the change from the first to the latest weigh-in.",
+          "steps": "Average daily steps. The bars show the last 7 days.",
+          "sleep": "Average hours of sleep per night. The bars show the last 7 days.",
+          "hunger": "Average hunger the client reported, on a 1 to 10 scale.",
+          "trend": "Weight from every check-in over time. Hover or touch the chart to read a value.",
+          "calendar": "Each square is a day. Orange means a check-in was filled in; tap it to open.",
+          "history": "All check-ins, newest first. Tap a card for every detail."
+        }
+      }
+    }
+  },
+  "fr": {
+    "tt": {
+      "common": {
+        "showMore": "Afficher {{count}} de plus",
+        "close": "Fermer",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "add": "Ajouter",
+        "search": "Rechercher",
+        "clear": "Effacer",
+        "all": "Tout",
+        "more": "Plus d'actions",
+        "saving": "Enregistrement…"
+      },
+      "ci": {
+        "total": "Check-ins au total",
+        "since": "depuis le {{date}}",
+        "h": "h",
+        "last7": "7 derniers jours",
+        "avgHunger": "Faim moyenne",
+        "weightTrend": "Évolution du poids",
+        "noWeights": "Pas encore assez de pesées pour afficher une tendance",
+        "calendar": "5 dernières semaines",
+        "last35_one": "1 check-in",
+        "last35_two": "{{count}} check-ins",
+        "last35_other": "{{count}} check-ins",
+        "emptyBody": "Les check-ins quotidiens du client apparaîtront ici.",
+        "sleep": "Sommeil",
+        "hunger": "Faim",
+        "walked": "A marché 10 000 pas",
+        "sun": "10 minutes au soleil",
+        "info": {
+          "today": "Indique si le client a déjà rempli le check-in du jour.",
+          "streak": "Jours consécutifs avec un check-in. Les points montrent les 7 derniers jours.",
+          "rate": "Part des jours avec un check-in depuis le premier.",
+          "total": "Nombre total de check-ins remplis par le client.",
+          "weight": "Poids moyen déclaré. Le badge montre la variation entre la première et la dernière pesée.",
+          "steps": "Pas quotidiens moyens. Les barres montrent les 7 derniers jours.",
+          "sleep": "Heures de sommeil moyennes par nuit. Les barres montrent les 7 derniers jours.",
+          "hunger": "Faim moyenne déclarée, sur une échelle de 1 à 10.",
+          "trend": "Le poids de chaque check-in dans le temps. Survolez ou touchez le graphique pour lire une valeur.",
+          "calendar": "Chaque case est un jour. Orange = check-in rempli ; touchez pour l'ouvrir.",
+          "history": "Tous les check-ins, du plus récent au plus ancien. Touchez une carte pour le détail."
+        }
+      }
+    }
+  }
+}

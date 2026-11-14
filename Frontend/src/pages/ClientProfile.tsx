@@ -16,9 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import ClientWeightProgress from '../components/ClientWeightProgress';
 import MealHistory from '../components/MealHistory';
-import { ClientCheckInSummary } from '../components/ClientCheckInSummary';
-import { ClientCheckInHistory } from '../components/ClientCheckInHistory';
-import { ClientCheckInDetail } from '../components/ClientCheckInDetail';
+import { CheckInsPanel, type CheckInSummaryData } from '@/features/trainer/CheckInsPanel';
 import ClientExerciseHistoryMatrix from '../components/ClientExerciseHistoryMatrix';
 import NutritionProfileCard from '../components/meals/NutritionProfileCard';
 import { cn } from '@/lib/utils';
@@ -141,8 +139,6 @@ const ClientProfile = () => {
   const [mealPlanToDelete, setMealPlanToDelete] = useState<MealPlan | null>(null);
   const [workoutPlanToDelete, setWorkoutPlanToDelete] = useState<WorkoutPlan | null>(null);
   const [actionError, setActionError] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
   const [checkInSummary, setCheckInSummary] = useState<CheckInSummary | null>(null);
   const [notificationMode, setNotificationMode] = useState<'EVERYTHING' | 'WEEKLY_DIGEST'>('WEEKLY_DIGEST');
   const [notificationSettingLoading, setNotificationSettingLoading] = useState(false);
@@ -688,16 +684,7 @@ const ClientProfile = () => {
             </div>
           )}
 
-          {tab === 'checkins' && (
-            <div className="tr-legacy space-y-5">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <ClientCheckInSummary summary={checkInSummary as any} loading={false} />
-              <div className="tr-grid-2">
-                <ClientCheckInHistory clientId={client.id} onSelectCheckIn={setSelectedCheckIn} />
-                <ClientCheckInDetail checkIn={selectedCheckIn} />
-              </div>
-            </div>
-          )}
+          {tab === 'checkins' && <CheckInsPanel clientId={client.id} summary={checkInSummary as CheckInSummaryData | null} />}
 
           {tab === 'notifications' && isStaff && (
             <SectionCard icon={BellRing} title={t('notifications.notifyMeAboutClient', 'Notify me about this client')}>

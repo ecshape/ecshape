@@ -6,6 +6,7 @@ import {
   AlertTriangle, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { mediaUrl } from '@/lib/mediaUrl';
 import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest, V3MealSlotView } from '@/types/meals-v3';
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
@@ -530,7 +531,7 @@ const AddFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; day: V
         <div className="space-y-4 pb-2">
           <button type="button" onClick={() => setChosen(null)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">{t('trainee.meals.backToList')}</button>
           <div className="flex items-center gap-3">
-            {chosen.image_url ? <img src={chosen.image_url} alt="" className="h-16 w-16 flex-none rounded-2xl object-cover" /> : <span className="grid h-16 w-16 flex-none place-items-center rounded-2xl bg-foreground/[.06]"><UtensilsCrossed className="h-6 w-6 text-muted-foreground" /></span>}
+            {chosen.image_url ? <img src={mediaUrl(chosen.image_url)} alt="" className="h-16 w-16 flex-none rounded-2xl object-cover" /> : <span className="grid h-16 w-16 flex-none place-items-center rounded-2xl bg-foreground/[.06]"><UtensilsCrossed className="h-6 w-6 text-muted-foreground" /></span>}
             <div className="min-w-0">
               <p className="truncate text-lg font-bold" dir="auto">{foodName(chosen)}</p>
               {chosen.macro_type && <p className="text-xs text-muted-foreground">{t(`trainee.macros.${macroKey(chosen.macro_type as MacroType)}`)}</p>}
@@ -566,7 +567,7 @@ const AddFoodSheet: React.FC<{ slot: V3MealSlotView | null; date: string; day: V
                 return (
                   <li key={`${f.id ?? ''}-${f.name}`}>
                     <button type="button" onClick={() => choose(f)} className="tp-press flex min-h-[3.5rem] w-full items-center gap-3 rounded-2xl bg-foreground/[.04] px-2 py-2 text-start hover:bg-foreground/[.08]">
-                      {f.image_url ? <img src={f.image_url} alt="" loading="lazy" className="h-11 w-11 flex-none rounded-xl object-cover" /> : <span className="h-11 w-1.5 flex-none rounded-full" style={{ background: MACRO_COLOR[f.macro_type || 'protein'] }} aria-hidden />}
+                      {f.image_url ? <img src={mediaUrl(f.image_url)} alt="" loading="lazy" className="h-11 w-11 flex-none rounded-xl object-cover" /> : <span className="h-11 w-1.5 flex-none rounded-full" style={{ background: MACRO_COLOR[f.macro_type || 'protein'] }} aria-hidden />}
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium" dir="auto">{foodName(f)}</span>
                         <span className="block text-xs text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{f.measurement_type === 'per_portion' ? '×1' : '100g'} · {fmtNum(m.calories)} kcal · P{fmtNum(m.protein)} C{fmtNum(m.carbs)} F{fmtNum(m.fat)}</span>

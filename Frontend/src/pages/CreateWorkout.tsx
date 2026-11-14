@@ -256,7 +256,7 @@ const CreateWorkout = () => {
             {client && (
               <SectionCard icon={User} title={t('workoutCreation.clientInformation')} className="tp-rise" style={{ ['--i' as string]: 1 }}>
                 <div className="mb-4 flex items-center gap-3">
-                  <Avatar name={client.full_name} seed={client.id} size={52} />
+                  <Avatar name={client.full_name} seed={client.id} size={52} src={(client as { avatar_url?: string | null }).avatar_url} />
                   <div className="min-w-0">
                     <p className="truncate text-lg font-bold">{client.full_name}</p>
                     <p className="truncate text-sm text-muted-foreground" dir="ltr">{client.email}</p>

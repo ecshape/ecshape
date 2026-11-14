@@ -243,7 +243,7 @@ const EditClient: React.FC = () => {
           eyebrow={t('clientProfile.editProfile', 'Edit Profile')}
           title={
             <span className="flex items-center gap-4">
-              <Avatar name={formData.full_name || client.full_name} seed={client.id} size={64} />
+              <Avatar name={formData.full_name || client.full_name} seed={client.id} size={64} src={(client as { avatar_url?: string | null }).avatar_url} />
               <span className="min-w-0">{formData.full_name || client.full_name}</span>
             </span>
           }

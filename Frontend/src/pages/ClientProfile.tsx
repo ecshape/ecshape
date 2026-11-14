@@ -400,7 +400,7 @@ const ClientProfile = () => {
         <section className="tp-card tp-card--hero tr-hero tp-rise mb-5">
           <div className="tr-hero-grid">
             <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-              <Avatar name={client.full_name} seed={client.id} size={84} />
+              <Avatar name={client.full_name} seed={client.id} size={84} src={(client as { avatar_url?: string | null }).avatar_url} />
               <div className="min-w-0">
                 <p className="tp-label">{t('clientProfile.title')}</p>
                 <h1 className="tp-title mt-1 break-words text-5xl sm:text-6xl">{client.full_name}</h1>

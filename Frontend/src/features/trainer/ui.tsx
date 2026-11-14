@@ -1,3 +1,4 @@
+import { avatarSrc } from '@/lib/avatar';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -81,16 +82,24 @@ const hueOf = (seed: string | number) => {
 export const initials = (name?: string | null) =>
   (name || '?').split(' ').filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
-export const Avatar: React.FC<{ name?: string | null; seed?: string | number; size?: number; live?: boolean; className?: string }> = ({ name, seed, size = 48, live, className }) => (
-  <span
-    className={cn('tr-avatar', className)}
-    data-live={live || undefined}
-    style={{ width: size, height: size, fontSize: size * 0.4, borderRadius: size * 0.34, ['--h' as string]: hueOf(seed ?? name ?? '') }}
-    aria-hidden
-  >
-    {initials(name)}
-  </span>
-);
+export const Avatar: React.FC<{ name?: string | null; seed?: string | number; size?: number; live?: boolean; className?: string; src?: string | null }> = ({ name, seed, size = 48, live, className, src }) => {
+  const url = avatarSrc(src);
+  const [failed, setFailed] = useState<string | null>(null);
+  return (
+    <span
+      className={cn('tr-avatar', className)}
+      data-live={live || undefined}
+      style={{ width: size, height: size, fontSize: size * 0.4, borderRadius: size * 0.34, ['--h' as string]: hueOf(seed ?? name ?? ''), overflow: 'hidden', position: 'relative' }}
+      aria-hidden
+    >
+      {url && failed !== url ? (
+        <img src={url} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(url)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        initials(name)
+      )}
+    </span>
+  );
+};
 
 /** Segmented filter with a sliding pill. */
 export function Seg<T extends string>({

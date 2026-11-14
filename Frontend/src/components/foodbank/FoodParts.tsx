@@ -1,3 +1,4 @@
+import { mediaUrl } from '@/lib/mediaUrl';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Lock, Pencil, Trash2 } from 'lucide-react';
@@ -42,7 +43,7 @@ export function FoodPhoto({
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   // Photos uploaded to this API are stored as a path (/files/media/food_photos/...).
-  const url = src && src.startsWith('/files/') ? `${API_BASE_URL}${src}` : src;
+  const url = mediaUrl(src);
   useEffect(() => {
     setFailed(false);
     setLoaded(false);

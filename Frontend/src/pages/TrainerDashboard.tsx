@@ -340,7 +340,7 @@ const ClientCard: React.FC<{ pulse: ClientPulse; index: number; loadingActivity:
       onPointerMove={spotlight}
     >
       <div className="flex items-start gap-3.5">
-        <Avatar name={c.full_name} seed={c.id} size={54} live={pulse.trainingNow} />
+        <Avatar name={c.full_name} seed={c.id} size={54} live={pulse.trainingNow} src={(c as { avatar_url?: string | null }).avatar_url} />
         <div className="min-w-0 flex-1">
           <button type="button" onClick={() => open()} className="block max-w-full truncate rounded-md text-start text-lg font-bold leading-tight hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {c.full_name}

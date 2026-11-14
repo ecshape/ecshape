@@ -418,7 +418,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-2">
             {client ? (
               <div className="flex items-center gap-3 rounded-[1.1rem] bg-foreground/[.04] p-3 md:col-span-2">
-                <Avatar name={client.full_name} seed={client.id} size={44} />
+                <Avatar name={client.full_name} seed={client.id} size={44} src={(client as { avatar_url?: string | null }).avatar_url} />
                 <div className="min-w-0">
                   <p className="tp-label">{t('workoutCreation.clientName')}</p>
                   <p className="truncate font-bold">{client.full_name}</p>

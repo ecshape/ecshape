@@ -1,3 +1,4 @@
+import { UserAvatar } from '@/components/ui/user-avatar';
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +12,6 @@ import './trainee.css';
 
 export type TraineeTab = 'dashboard' | 'training' | 'meals' | 'progress' | 'chat' | 'profile';
 
-const initials = (name?: string) => (name || '?').split(' ').filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
 const Brand: React.FC<{ size?: 'sm' | 'md' }> = ({ size = 'md' }) => (
   <span className="flex select-none items-center gap-2" dir="ltr">
@@ -79,7 +79,7 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
           aria-current={current === 'profile' ? 'page' : undefined}
           className={cn('tp-press flex items-center gap-3 rounded-2xl p-2.5 text-start transition-colors hover:bg-foreground/5', current === 'profile' && 'bg-primary/10')}
         >
-          <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{initials(user?.full_name)}</span>
+          <UserAvatar name={user?.full_name} src={user?.avatar_url} className="h-11 w-11 bg-primary text-sm text-primary-foreground" />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">{user?.full_name}</span>
             <span className="block truncate text-xs text-muted-foreground">{t('trainee.nav.profile')}</span>
@@ -98,9 +98,7 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
           className="tp-press grid h-11 w-11 place-items-center rounded-full"
           aria-label={t('trainee.nav.profile')}
         >
-          <span className={cn('grid h-9 w-9 place-items-center rounded-full text-xs font-bold', current === 'profile' ? 'bg-primary text-primary-foreground' : 'bg-foreground/10')}>
-            {initials(user?.full_name)}
-          </span>
+          <UserAvatar name={user?.full_name} src={user?.avatar_url} className={cn('h-9 w-9 text-xs', current === 'profile' ? 'bg-primary text-primary-foreground ring-2 ring-primary' : 'bg-foreground/10')} />
         </button>
       </header>
 

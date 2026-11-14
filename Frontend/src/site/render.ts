@@ -66,7 +66,7 @@ export function waLink(c: SiteContent) {
 
 /** Real screenshots of the client app, captured from the portal (see scripts in Frontend/scripts). */
 export function appShot(lang: SiteLang, i: number) {
-  return `${P}app/${lang}/${i + 1}.jpg?v=3`;
+  return `${P}app/${lang}/${i + 1}.jpg?v=4`;
 }
 
 export interface RenderOptions {
@@ -138,7 +138,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
       <span class="eyebrow" data-reveal${P_('manifesto.eyebrow')}>${esc(c.manifesto.eyebrow)}</span>
       <p class="manifesto__text" data-words>${T('manifesto.text', c.manifesto.text)} <span class="hl"${P_('manifesto.highlight')}>${esc(c.manifesto.highlight)}</span></p>
       <div class="manifesto__sig" data-reveal>
-        <img src="${esc(storyImg)}" alt="" width="64" height="64" loading="lazy">
+        <img src="${esc(storyImg.endsWith('opt/trainer_story.jpg') ? `${P}opt/trainer_face.webp` : storyImg)}" alt="" width="64" height="64" loading="lazy">
         <div><b>${esc(name)}</b><small${P_('manifesto.role')}>${esc(c.manifesto.role)}</small></div>
       </div>
     </div>
@@ -190,6 +190,11 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
           const src = cropsOk ? r[k] : '';
           const label = `<figcaption class="rcard__lbl"${P_(`results.${k}`)}>${esc(c.results[k])}</figcaption>`;
           const alt = `${esc(r.title)} — ${esc(c.results[k])}`;
+          // No photos but start / end weights: a drawn scale readout instead of a screenshot.
+          const w = k === 'before' ? r.fromKg : r.toKg;
+          if (!r[k] && !r.image && w) {
+            return `<figure class="rcard__half rcard__half--${k} rcard__half--scale"${IMG(`results.cards.${i}.${k}`)}><div class="rscale" role="img" aria-label="${alt}: ${esc(w)} kg"><span class="rscale__lcd" dir="ltr"><b class="num"${P_(`results.cards.${i}.${k === 'before' ? 'fromKg' : 'toKg'}`)}>${esc(w)}</b><small>KG</small></span><i class="rscale__pad"></i></div>${label}</figure>`;
+          }
           // No separate crop: show the matching half of the combined photo (before = left half, as in the originals).
           return src
             ? `<figure class="rcard__half rcard__half--${k}"${IMG(`results.cards.${i}.${k}`)}><img src="${esc(src)}" alt="${alt}" loading="lazy">${label}</figure>`
@@ -420,10 +425,13 @@ ${page}
 <div class="form-modal" id="leadModal" role="dialog" aria-modal="true" aria-labelledby="leadTitle" aria-hidden="true">
   <div class="form-modal__backdrop" data-close-form></div>
   <div class="form-modal__panel">
-    <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}">${CLOSE_SVG}</button>
+    <div class="form-modal__head">
+      <span class="form-modal__grab" aria-hidden="true"></span>
+      <span class="eyebrow">ECshape</span>
+      <button type="button" class="form-modal__close" data-close-form aria-label="${esc(c.form.close)}">${CLOSE_SVG}</button>
+    </div>
     <div class="form-modal__scroll" data-lenis-prevent>
     <div class="form-modal__body">
-      <span class="eyebrow">ECshape</span>
       <h2 id="leadTitle" class="display">${esc(c.form.title)}</h2>
       <p class="lead">${esc(c.form.sub)}</p>
       <form id="leadForm" novalidate>

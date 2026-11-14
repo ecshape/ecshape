@@ -359,20 +359,20 @@ html.lenis, html.lenis body { height: auto; }
    MANIFESTO — words light up on scroll
    ========================================================================= */
 .ec-site .manifesto { padding-block: clamp(96px, 13vw, 180px); }
-.ec-site .manifesto__grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr); gap: clamp(40px, 6vw, 110px); align-items: center; }
+.ec-site .manifesto__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(40px, 5vw, 80px); align-items: center; }
 .ec-site .manifesto__text {
   margin-top: 24px;
   font-family: var(--f-display); font-weight: 700;
-  font-size: clamp(1.9rem, 3.3vw, 3.5rem); line-height: 1.06; max-width: 26ch;
+  font-size: clamp(1.7rem, 2.75vw, 2.9rem); line-height: 1.1; max-width: 30ch;
 }
 .ec-site .manifesto__text .w { opacity: .14; transition: opacity .2s linear; }
 .ec-site .manifesto__text .w.hl { color: var(--accent); }
 .ec-site .manifesto__sig { display: flex; align-items: center; gap: 16px; margin-top: 40px; }
-.ec-site .manifesto__sig img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); }
+.ec-site .manifesto__sig img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: 50% 30%; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); }
 .ec-site .manifesto__sig b { display: block; font-size: 1.05rem; }
 .ec-site .manifesto__sig small { color: var(--ink-3); }
 /* Visual: arched portrait inside a slowly turning dial, with the key numbers floating around it */
-.ec-site .manifesto__art { position: relative; width: min(100%, 460px); aspect-ratio: 1; justify-self: center; }
+.ec-site .manifesto__art { position: relative; width: min(100%, 520px); aspect-ratio: 1; justify-self: center; }
 .ec-site .mart__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
 .ec-site .mart__spin { transform-origin: 100px 100px; animation: artSpin 60s linear infinite; }
 .ec-site .mart__ring line { stroke: var(--line-2); stroke-width: 1.2; stroke-linecap: round; }
@@ -456,6 +456,20 @@ html.lenis, html.lenis body { height: auto; }
 .ec-site .rcard__half--split img { position: absolute; top: 0; width: 200%; max-width: none; object-fit: cover; object-position: 50% 40%; }
 .ec-site .rcard__half--split.rcard__half--before img { left: 0; }
 .ec-site .rcard__half--split.rcard__half--after img { left: -100%; }
+/* Scale readout (result without photos): a drawn bathroom scale with the weight on its display */
+.ec-site .rcard__half--scale { display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 100%, rgba(240,102,31,.16), transparent 60%), #0d0c0a; }
+.ec-site .rscale {
+  position: relative; width: min(78%, 170px); aspect-ratio: 1; border-radius: 26%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 18%;
+  background: linear-gradient(160deg, #2a261f, #15130f); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px var(--line), 0 24px 40px -18px rgba(0,0,0,.9);
+}
+.ec-site .rscale__lcd {
+  display: inline-flex; align-items: baseline; gap: 4px; padding: 8px 12px 6px; border-radius: 10px;
+  background: #0a0a08; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), inset 0 6px 14px rgba(0,0,0,.8);
+}
+.ec-site .rscale__lcd .num { font-size: clamp(1.9rem, 2.6vw, 2.5rem); line-height: .9; color: #ff8a4a; text-shadow: 0 0 14px rgba(240,102,31,.55); }
+.ec-site .rscale__lcd small { font-family: var(--f-num); font-size: .8rem; letter-spacing: .06em; color: var(--ink-3); }
+.ec-site .rcard__half--before .rscale__lcd .num { color: var(--ink-2); text-shadow: none; }
+.ec-site .rscale__pad { position: absolute; inset: auto 18% 16%; height: 22%; border-radius: 12px; background: repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 7px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
 .ec-site .rcard__lbl {
   position: absolute; top: 12px; inset-inline-start: 12px; z-index: 1;
   display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 999px;
@@ -877,7 +891,8 @@ html.lenis, html.lenis body { height: auto; }
 
   .ec-site .hero { height: auto; min-height: 0; display: flex; flex-direction: column; }
   .ec-site .hero__media { position: relative; order: 2; clip-path: none !important; height: min(62svh, 128vw); margin: 0 var(--gutter); border-radius: var(--radius-lg); overflow: hidden; }
-  .ec-site .hero__media img { transform: scale(1.55); transform-origin: 58% 44%; object-position: 58% 40%; }
+  /* Trainer stands at ~58% of the photo width: zoom on his body and shift him to the middle of the frame */
+  .ec-site .hero__media img { transform: scale(1.6) translateX(-5%); transform-origin: 58% 47%; object-position: 58% 40%; }
   .ec-site .hero__content { max-width: none; padding-bottom: 32px; padding-top: calc(var(--nav-h) + 48px); }
   .ec-site .hero__ctas .btn { flex: 1 1 auto; justify-content: space-between; }
   .ec-site .hero__stats { position: relative; order: 3; inset: auto; margin: 16px var(--gutter) 0; flex-wrap: wrap; }
@@ -987,26 +1002,48 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 }
 .ec-site .form-modal__scroll::-webkit-scrollbar { width: 6px; }
 .ec-site .form-modal__scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 6px; }
-.ec-site .form-modal__body { padding: var(--mpad); }
-.ec-site .form-modal__body > .eyebrow { display: flex; min-height: 44px; padding-inline-end: 56px; margin-top: -6px; }
-.ec-site .form-modal__body h2 { font-size: clamp(2.5rem, 6vw, 3.6rem); margin: 8px 0 8px; padding-inline-end: 8px; }
+/* Fixed header (brand + close) above the scrolling body: the close button never covers a field, and a hairline
+   appears under it once the body scrolls. */
+.ec-site .form-modal__head {
+  position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: calc(var(--mpad) - 10px) calc(var(--mpad) - 6px) 8px var(--mpad);
+  border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s;
+}
+.ec-site[dir="rtl"] .form-modal__head { padding-inline: var(--mpad) calc(var(--mpad) - 6px); }
+.ec-site .form-modal__panel.is-scrolled .form-modal__head { border-bottom-color: var(--line); box-shadow: 0 10px 24px -18px rgba(0,0,0,.9); }
+.ec-site .form-modal__grab { display: none; }
+/* Soft fade at the bottom edge while there is more to scroll */
+.ec-site .form-modal__panel::after {
+  content: ''; position: absolute; z-index: 2; inset-inline: 0; bottom: 0; height: 36px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--surface)); transition: opacity .3s;
+}
+.ec-site .form-modal__panel.is-end::after { opacity: 0; }
+.ec-site .form-modal__body { padding: 6px var(--mpad) var(--mpad); }
+.ec-site .form-modal__body h2 { font-size: clamp(2.5rem, 6vw, 3.6rem); margin: 0 0 8px; }
 .ec-site .form-modal__body .lead { margin-bottom: 22px; }
 .ec-site .form-modal__close {
-  position: absolute; z-index: 3; top: calc(var(--mpad) - 6px); inset-inline-end: calc(var(--mpad) - 6px);
-  width: 44px; height: 44px; padding: 0; border-radius: 50%; line-height: 0;
+  position: relative; flex: none;
+  width: 44px; height: 44px; padding: 0; border-radius: 50%; line-height: 0; color: var(--ink);
   display: grid; place-items: center;
   background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-2);
   transition: transform .5s var(--ease-spring), background .3s, color .3s;
 }
 .ec-site .form-modal__close svg { display: block; width: 18px; height: 18px; }
 .ec-site .form-modal__close:hover { transform: rotate(90deg); background: var(--accent); color: #fff; box-shadow: none; }
+.ec-site .form-modal__close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 560px) {
-  /* Phones: full-screen sheet that slides up */
-  .ec-site .form-modal { padding: 0; place-items: stretch; --mpad: 20px; }
-  .ec-site .form-modal__panel { width: 100%; height: 100%; max-height: none; border-radius: 0; transform: translateY(6%); box-shadow: none; }
-  .ec-site .form-modal__body { padding: calc(var(--mpad) + env(safe-area-inset-top)) max(var(--mpad), env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(var(--mpad), env(safe-area-inset-left)); }
-  .ec-site .form-modal__close { top: calc(var(--mpad) - 6px + env(safe-area-inset-top)); }
+  /* Phones: bottom sheet (rounded top, grab bar) that slides up and scrolls inside */
+  .ec-site .form-modal { padding: calc(14px + env(safe-area-inset-top)) 0 0; place-items: end stretch; --mpad: 20px; }
+  .ec-site .form-modal__panel { width: 100%; max-height: 100%; border-radius: 26px 26px 0 0; transform: translateY(100%); opacity: 1; box-shadow: 0 0 0 1px var(--line), 0 -20px 60px -20px rgba(0,0,0,.8); }
+  .ec-site .form-modal__head { padding: 22px max(14px, env(safe-area-inset-right)) 6px max(var(--mpad), env(safe-area-inset-left)); }
+  .ec-site[dir="rtl"] .form-modal__head { padding-inline: max(var(--mpad), env(safe-area-inset-right)) max(14px, env(safe-area-inset-left)); }
+  .ec-site .form-modal__grab { display: block; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 4px; background: var(--line-2); }
+  .ec-site .form-modal__body { padding: 4px max(var(--mpad), env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(var(--mpad), env(safe-area-inset-left)); }
   .ec-site .form-modal__body h2 { font-size: 2.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ec-site .form-modal__panel { transition: opacity .2s linear; transform: none; }
+  .ec-site .form-modal:not(.is-open) .form-modal__panel { opacity: 0; }
 }
 .ec-site #leadForm { display: grid; gap: 14px; }
 .ec-site #leadForm[hidden] { display: none; }
@@ -1062,9 +1099,12 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 
 /* ---- Manifesto + result cards: smaller screens ---- */
 @media (max-width: 900px) {
+  .ec-site .manifesto__grid { gap: 28px; }
+  .ec-site .rcard { width: min(84vw, 440px); }
+}
+@media (max-width: 640px) {
   .ec-site .manifesto__grid { grid-template-columns: 1fr; gap: 56px; }
   .ec-site .manifesto__art { width: min(100%, 400px); }
-  .ec-site .rcard { width: min(84vw, 440px); }
 }
 @media (max-width: 420px) {
   .ec-site .mart__chip { max-width: 66%; gap: 8px; padding: 7px 11px 7px 9px; }

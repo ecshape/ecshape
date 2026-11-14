@@ -11,7 +11,7 @@ export const fr: SiteContent = {
     eyebrow: 'Coach sportif diplômé · Fondateur d’ECshape',
     title1: 'Pas juste un coach,',
     title2: 'un partenaire.',
-    sub: 'Un programme d’entraînement et de nutrition construit autour de ta vie, de ton objectif et de ton corps — avec un suivi quotidien, l’application, et des habitudes qui restent bien après le coaching.',
+    sub: 'Un programme d’entraînement et de nutrition construit autour de ta vie, de ton objectif et de ton corps — avec un suivi quotidien dans l’application et des habitudes qui restent bien après le coaching.',
     ctaPrimary: 'Réserver un appel',
     ctaSecondary: 'WhatsApp',
     scroll: 'Défiler',
@@ -87,7 +87,7 @@ export const fr: SiteContent = {
     items: [
       { id: 'personal', name: 'Coaching individuel 1:1', text: 'En salle, au parc ou en extérieur. Pour progresser en technique et en connaissances — la voie la plus rapide, avec un accompagnement à chaque instant.', features: ['Bilan du mouvement et de la morphologie', 'Programme personnalisé', 'Corrections techniques et conseils'] },
       { id: 'online', name: 'Coaching en ligne — sport & nutrition', text: 'Un programme personnel, un appel vidéo mensuel, un suivi quotidien et ta progression dans l’application.', features: ['Programme d’entraînement + plan nutrition', 'Appel vidéo mensuel', 'Suivi du poids et des mensurations', 'Accès à l’application ECshape', 'Réponses à tes questions chaque jour'], featured: true },
-      { id: 'group', name: 'Cours en petit groupe', text: 'Des petits groupes de 6 personnes maximum. De l’énergie, de l’ambiance et des résultats — ensemble.', features: ['Renforcement et fonctionnel', '2–3 séances par semaine', 'Une communauté qui motive'] },
+      { id: 'group', name: 'Cours en petit groupe', text: 'Des groupes de 6 personnes maximum. De l’énergie, de l’ambiance et des résultats — ensemble.', features: ['Renforcement et fonctionnel', '2–3 séances par semaine', 'Une communauté qui motive'] },
     ],
   },
   app: {
@@ -131,7 +131,7 @@ export const fr: SiteContent = {
     other: 'Une autre question ? Écris-moi',
     items: [
       { q: 'Quelle différence entre le coaching en ligne et le coaching individuel ?', a: 'Le coaching en ligne convient à ceux qui veulent de la flexibilité — un programme personnel, un suivi quotidien et un appel vidéo mensuel, où que tu sois. Le coaching individuel, ce sont des séances en face à face avec un accompagnement sur chaque mouvement.' },
-      { q: 'En combien de temps je vois des résultats ?', a: 'La plupart des clients sentent une différence en 2 à 3 semaines et voient des résultats visibles en 4 à 8 semaines. Cela dépend de la régularité, de la nutrition et de ton objectif.' },
+      { q: 'En combien de temps vais-je voir des résultats ?', a: 'La plupart des clients sentent une différence en 2 à 3 semaines et constatent des résultats visibles en 4 à 8 semaines. Cela dépend de la régularité, de la nutrition et de ton objectif.' },
       { q: 'Faut-il avoir de l’expérience ?', a: 'Pas du tout. Je travaille avec tous les niveaux — des grands débutants aux sportifs confirmés qui veulent passer un cap. Le programme est adapté exactement à ton niveau.' },
       { q: 'Que comprend le coaching en ligne ?', a: 'Un programme d’entraînement complet + un plan nutrition, un appel vidéo mensuel, un suivi quotidien, le suivi du poids et des mensurations, et l’accès à l’application ECshape.' },
       { q: 'Où ont lieu les séances individuelles ?', a: 'Dans ta salle ou en plein air — là où ça t’arrange.' },
@@ -146,7 +146,7 @@ export const fr: SiteContent = {
     form: 'Réserver un appel gratuit',
     whatsapp: 'WhatsApp',
     trust: [
-      { value: 'FREE', label: 'appel découverte' },
+      { value: 'OFFERT', label: 'appel découverte' },
       { value: '24H', label: 'délai de réponse' },
       { value: '100%', label: 'programme personnel' },
     ],

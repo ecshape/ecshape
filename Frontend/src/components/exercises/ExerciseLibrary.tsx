@@ -106,7 +106,8 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="ec-exlib !flex h-[100dvh] !max-h-[100dvh] !w-screen !max-w-[1400px] flex-col !gap-0 !overflow-hidden !rounded-none !p-0 sm:h-[92vh] sm:!max-h-[92vh] sm:!w-[96vw] sm:!rounded-2xl sm:!p-0 !mx-0">
         {/* Header */}
-        <div className="ec-exlib-head relative border-b border-border/60 px-5 pb-4 pt-5 sm:px-7">
+        {/* pr-16: the shared dialog close button sits physically on the right in both directions */}
+        <div className="ec-exlib-head relative border-b border-border/60 pb-4 pl-5 pr-16 pt-5 sm:pl-7">
           <div className="flex flex-wrap items-center gap-4">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/12 text-primary">
               <Library className="h-5 w-5" />
@@ -117,7 +118,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
                 {t('banks.exercise.scale', { library: facets?.total ?? sources?.library ?? 873, wger: sources?.wger ?? '800+' })}
               </p>
             </div>
-            <div className="relative w-full sm:me-10 sm:w-80">
+            <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('exerciseLibrary.search')} className="h-11 ps-10 text-base sm:text-sm" dir="auto" />
             </div>
@@ -154,7 +155,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
           <div className="ec-exlib-chips mt-4 flex gap-2 overflow-x-auto pb-1">
             <Chip active={!muscle} onClick={() => setMuscle('')}>{t('exerciseLibrary.allMuscles')}</Chip>
             {LIBRARY_MUSCLES.map((m) => (
-              <Chip key={m} active={muscle === m} onClick={() => setMuscle(muscle === m ? '' : m)} count={facets?.muscles[m]}>
+              <Chip key={m} active={muscle === m} onClick={() => setMuscle(muscle === m ? '' : m)} count={source === 'library' ? facets?.muscles[m] : undefined}>
                 {label('muscle', m)}
               </Chip>
             ))}

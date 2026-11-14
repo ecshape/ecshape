@@ -64,7 +64,7 @@ export const he: SiteContent = {
     cards: [
       { image: P + 'before_after_52days.jpeg', before: R + '52days_before.jpg', after: R + '52days_after.jpg', kg: '8', tag: '52 ימים', title: 'ירידה במשקל', sub: '98.3 ← 90.7 ק״ג' },
       { image: P + 'before_after_recomp.jpeg', before: R + 'recomp_before.jpg', after: R + 'recomp_after.jpg', big: 'RECOMP', tag: 'Body Recomp', title: 'בניית שריר תוך ירידה בשומן', sub: 'הרכב גוף חדש לגמרי' },
-      { image: P + 'before_after_boom.jpeg', before: R + 'boom_before.jpg', after: R + 'boom_after.jpg', kg: '5', tag: '6 שבועות', title: 'גבי', sub: '93 ← 88 ק״ג · התמדה + איזון תזונתי' },
+      { image: '', fromKg: '93', toKg: '88', kg: '5', tag: '6 שבועות', title: 'גבי', sub: '93 ← 88 ק״ג · התמדה + איזון תזונתי' },
       { image: P + 'before_after_60days.jpeg', before: R + '60days_before.jpg', after: R + '60days_after.jpg', kg: '10', tag: '60 ימים', title: 'ירידה במשקל', sub: 'חיטוב וכוח' },
     ],
   },

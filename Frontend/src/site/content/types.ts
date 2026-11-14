@@ -9,10 +9,10 @@ export interface SiteContent {
   story: { image?: string; eyebrow: string; title1: string; title2: string; p1: string; p1Strong: string; p2: string; p2Strong: string; photoRole: string;
     values: { title: string; text: string }[]; statValue: number; statSuffix: string; statTitle: string; statText: string };
   /** Result cards are uniform before/after objects: `before` / `after` are same-ratio (2:3) crops; without them the
-   *  combined `image` is split in two halves. `kg` = kilos lost (shown as "−X KG"); `big` = text badge when there is no kg. */
+   *  combined `image` is split in two halves; with no photo at all, `fromKg` / `toKg` are drawn as scale readouts. `kg` = kilos lost (shown as "−X KG"); `big` = text badge when there is no kg. */
   results: { eyebrow: string; title1: string; title2: string; lead: string; ctaCard: string; ctaButton: string;
     before: string; after: string; unit: string;
-    cards: { image: string; before?: string; after?: string; kg?: string; tag: string; title: string; sub: string; big?: string; tall?: boolean }[] };
+    cards: { image: string; before?: string; after?: string; fromKg?: string; toKg?: string; kg?: string; tag: string; title: string; sub: string; big?: string; tall?: boolean }[] };
   shift: { eyebrow: string; title1: string; title2: string; cards: { from: string; title: string; text?: string; pills?: string[] }[] };
   programs: { eyebrow: string; title1: string; title2: string; lead: string; popular: string; more: string; start: string;
     items: { id: string; name: string; text: string; features: string[]; featured?: boolean }[] };

@@ -189,6 +189,11 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
           const src = cropsOk ? r[k] : '';
           const label = `<figcaption class="rcard__lbl"${P_(`results.${k}`)}>${esc(c.results[k])}</figcaption>`;
           const alt = `${esc(r.title)} — ${esc(c.results[k])}`;
+          // No photos but start / end weights: a drawn scale readout instead of a screenshot.
+          const w = k === 'before' ? r.fromKg : r.toKg;
+          if (!r[k] && !r.image && w) {
+            return `<figure class="rcard__half rcard__half--${k} rcard__half--scale"${IMG(`results.cards.${i}.${k}`)}><div class="rscale" role="img" aria-label="${alt}: ${esc(w)} kg"><span class="rscale__lcd" dir="ltr"><b class="num"${P_(`results.cards.${i}.${k === 'before' ? 'fromKg' : 'toKg'}`)}>${esc(w)}</b><small>KG</small></span><i class="rscale__pad"></i></div>${label}</figure>`;
+          }
           // No separate crop: show the matching half of the combined photo (before = left half, as in the originals).
           return src
             ? `<figure class="rcard__half rcard__half--${k}"${IMG(`results.cards.${i}.${k}`)}><img src="${esc(src)}" alt="${alt}" loading="lazy">${label}</figure>`

@@ -18,6 +18,7 @@ import re
 import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote, urlencode
 
 import httpx
 
@@ -121,7 +122,9 @@ def _get(url: str, params: Dict[str, Any]) -> Dict[str, Any]:
     params = {**params, "api_key": api_key()}
     try:
         with httpx.Client(timeout=TIMEOUT, headers={"User-Agent": USER_AGENT}) as client:
-            resp = client.get(url, params=params)
+            # FDC rejects "+" for spaces in dataType ("SR+Legacy" -> 400), so encode with %20.
+            qs = urlencode(params, quote_via=quote)
+            resp = client.get(f"{url}?{qs}")
     except httpx.HTTPError as exc:
         raise UsdaUnavailable(str(exc)) from exc
     if resp.status_code == 429:
@@ -253,7 +256,6 @@ def search(query_en: str, lang: str = "he", page: int = 1, page_size: int = 24) 
             "dataType": GENERIC_TYPES,
             "pageSize": page_size,
             "pageNumber": page,
-            "sortBy": "score",
         })
         cached = {"foods": data.get("foods") or [], "count": int(data.get("totalHits") or 0)}
         _search_cache.set(key, cached)

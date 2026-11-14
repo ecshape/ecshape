@@ -22,3 +22,8 @@ label .ec-info-tip svg, h3 .ec-info-tip svg, .tp-label .ec-info-tip svg { width:
 @keyframes ec-info-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 @keyframes ec-info-in-top { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ec-info-bubble { animation: none; } }
+
+/* Login photo: light WebP, fades in once decoded */
+.ec-login-photo { opacity: 0; transform: translate(-50%, 12px); transition: opacity .5s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+.ec-login-photo.is-loaded { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .ec-login-photo { transition: none; transform: translate(-50%, 0); } }

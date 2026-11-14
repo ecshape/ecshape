@@ -226,9 +226,12 @@ const Login = () => {
             ECSHAPE
           </div>
           <img
-            src={`/elior.png?v=${__STATIC_BUST__}`}
+            src={`/elior-login.webp?v=${__STATIC_BUST__}`}
             alt=""
-            className="absolute bottom-0 left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-bottom drop-shadow-[0_30px_40px_rgba(0,0,0,.35)]"
+            fetchPriority="high"
+            decoding="async"
+            onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
+            className="ec-login-photo absolute bottom-0 left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-bottom drop-shadow-[0_30px_40px_rgba(0,0,0,.35)]"
           />
           <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4 rounded-3xl bg-black/25 p-5 text-white backdrop-blur-md">
             <p className="font-display text-4xl leading-[.95]">

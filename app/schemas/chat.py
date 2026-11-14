@@ -63,6 +63,8 @@ class ChatMessageResponse(ChatMessageBase):
 class ConversationResponse(BaseModel):
     client_id: int
     client_name: str
+    # Profile photo of the other side of the conversation (None = initials)
+    client_avatar: Optional[str] = None
     last_message: Optional[ChatMessageResponse] = None
     unread_count: int = 0
 

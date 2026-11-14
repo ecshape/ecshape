@@ -159,6 +159,7 @@ async def get_conversations(
             conversations.append(ConversationResponse(
                 client_id=client.id,
                 client_name=client.full_name or client.username,
+                client_avatar=getattr(client, "avatar_url", None),
                 last_message=ChatMessageResponse.model_validate(last) if last else None,
                 unread_count=unread.get(client.id, 0),
             ))
@@ -188,6 +189,7 @@ async def get_conversations(
         return [ConversationResponse(
             client_id=trainer.id,
             client_name=trainer.full_name or trainer.username,
+            client_avatar=getattr(trainer, "avatar_url", None),
             last_message=ChatMessageResponse.model_validate(last_message) if last_message else None,
             unread_count=unread_count
         )]

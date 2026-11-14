@@ -384,6 +384,30 @@ def agent_chat(payload: AgentChatIn, user: UserResponse = Depends(require_studio
         return {"ok": False, "error": str(e), "fix": e.fix}
 
 
+class AgentDraftIn(BaseModel):
+    kind: Literal["lead", "qa", "seo", "site", "other"]
+    field: str = Field(..., min_length=1, max_length=40)
+    context_id: Optional[str] = Field(None, max_length=60)
+    lang: Optional[str] = "he"
+    current: Optional[str] = Field(None, max_length=8000)
+    extra: Dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/agent/draft")
+def agent_draft(payload: AgentDraftIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """Inline Agent EC draft for one text box (prospect reply / notes, QA ticket, SEO fields, site texts)."""
+    from app.services.agent_draft import draft_text
+    from app.services.agent_ec import AgentUnavailable
+    # Small flat context only (field values shown next to the box)
+    extra = {str(k)[:40]: (v[:3000] if isinstance(v, str) else v)
+             for k, v in list(payload.extra.items())[:20] if isinstance(v, (str, int, float, bool))}
+    try:
+        return {"ok": True, **draft_text(db, user, payload.kind, payload.field, lang=payload.lang or "he",
+                                         context_id=payload.context_id, current=payload.current, extra=extra)}
+    except AgentUnavailable as e:
+        return {"ok": False, "error": str(e), "fix": e.fix}
+
+
 @router.get("/agent/status")
 def agent_status(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
     from app.services.ai_keys import resolve_engine

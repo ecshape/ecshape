@@ -228,6 +228,9 @@ async def lifespan(app: FastAPI):
         logger.info("Running user last_login migration...")
         run_user_last_login_migration()
         logger.info("✅ User last_login migration completed")
+
+        from app.migrations.user_avatar_migration import run_user_avatar_migration
+        run_user_avatar_migration()
         
         logger.info("Running progress measurements migration...")
         run_progress_measurements_migration()

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { hasNotificationPermission, requestNotificationPermission, showNotification } from '@/lib/notifications';
 import './chat/chat.css';
 import { chatApi, toLinkedEntry, type ChatMessage, type Conversation, type LinkedEntry, type ProgressEntry } from './chat/api';
+import { MenuSendButton } from './chat/MenuCard';
 import { useChatSocket, useFillHeight, useMediaQuery, usePageVisible, useVisualViewport, type SocketEvent } from './chat/hooks';
 import ConversationList from './chat/ConversationList';
 import MessageList from './chat/MessageList';
@@ -489,6 +490,9 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
         attachment={attachment}
         onRemoveAttachment={() => setAttachment(null)}
         onAttachClick={() => setPickerOpen(true)}
+        extraAction={isTrainer && activeId ? (
+          <MenuSendButton clientId={activeId} clientName={otherName} onSent={(m) => setMessages((prev) => mergeMessages(prev, [m]))} />
+        ) : undefined}
         enterToSend={finePointer}
       />
     </div>

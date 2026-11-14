@@ -8,6 +8,7 @@ import { useCheckInSummary, useDeleteProgress, useProgress, useSessions } from '
 import type { ProgressEntry } from './types';
 import { CountUp, EmptyState, ErrorState, Screen, ScreenHeader, SectionTitle, Sheet, Skel } from './ui';
 import WeighInSheet, { MEASURES } from './WeighInSheet';
+import { MeasureInfo } from './MeasureGuide';
 import { apiBlobUrl } from './api';
 import { fmtDate, fmtNum, fmtSigned, parseDate } from './format';
 import { ProgressNav } from './training/shared';
@@ -80,13 +81,14 @@ const ProgressScreen: React.FC = () => {
     return [...done, ...next];
   }, [first, last, weighed.length, workoutsDone, summary.data, t]);
 
-  const measureCards = MEASURES.map((k) => {
+  // the old single "thighs" value (before right / left, QA #55) still shows when someone has it
+  const measureCards = ([...MEASURES, 'thighs'] as const).map((k) => {
     const rows = entries.filter((e) => typeof e[k] === 'number' && (e[k] as number) > 0);
     if (!rows.length) return null;
     const a = rows[0][k] as number;
     const b = rows[rows.length - 1][k] as number;
     return { k, value: b, delta: rows.length > 1 ? b - a : null };
-  }).filter(Boolean) as { k: (typeof MEASURES)[number]; value: number; delta: number | null }[];
+  }).filter(Boolean) as { k: (typeof MEASURES)[number] | 'thighs'; value: number; delta: number | null }[];
 
   const withPhotos = [...entries].reverse().filter((e) => photoList(e).length);
 
@@ -188,7 +190,7 @@ const ProgressScreen: React.FC = () => {
                   <div key={m.k} className="tp-card tp-rise p-4" style={{ ['--i' as string]: i }}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm text-muted-foreground">{t(`trainee.progress.m_${m.k}`)}</span>
-                      <Ruler className="h-4 w-4 flex-none text-muted-foreground" />
+                      <MeasureInfo k={m.k} className="-me-1.5 -mt-1" />
                     </div>
                     <div className="mt-2 flex items-baseline gap-1">
                       <span className="tp-num text-3xl">{fmtNum(m.value, 1)}</span>

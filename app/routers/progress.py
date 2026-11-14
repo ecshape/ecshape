@@ -29,7 +29,9 @@ async def add_weight_entry(
     chest: Optional[float] = Form(None, description="Chest measurement in cm"),
     waist: Optional[float] = Form(None, description="Waist measurement in cm"),
     hips: Optional[float] = Form(None, description="Hips measurement in cm"),
-    thighs: Optional[float] = Form(None, description="Thighs measurement in cm"),
+    thighs: Optional[float] = Form(None, description="Thighs measurement in cm (deprecated: right_thigh / left_thigh)"),
+    right_thigh: Optional[float] = Form(None, description="Right thigh circumference in cm"),
+    left_thigh: Optional[float] = Form(None, description="Left thigh circumference in cm"),
     arms: Optional[float] = Form(None, description="Arms measurement in cm (deprecated)"),
     right_arm: Optional[float] = Form(None, description="Right arm circumference in cm"),
     left_arm: Optional[float] = Form(None, description="Left arm circumference in cm"),
@@ -81,6 +83,8 @@ async def add_weight_entry(
         waist=waist,
         hips=hips,
         thighs=thighs,
+        right_thigh=right_thigh,
+        left_thigh=left_thigh,
         arms=arms,  # Keep for backward compatibility
         right_arm=right_arm,
         left_arm=left_arm
@@ -146,6 +150,8 @@ async def add_weight_entry(
         "waist": getattr(progress_entry, 'waist', None),
         "hips": getattr(progress_entry, 'hips', None),
         "thighs": getattr(progress_entry, 'thighs', None),
+        "right_thigh": getattr(progress_entry, 'right_thigh', None),
+        "left_thigh": getattr(progress_entry, 'left_thigh', None),
         "arms": getattr(progress_entry, 'arms', None),
         "right_arm": getattr(progress_entry, 'right_arm', None),
         "left_arm": getattr(progress_entry, 'left_arm', None),
@@ -183,6 +189,8 @@ async def get_weight_history(
             "waist": getattr(entry, 'waist', None),
             "hips": getattr(entry, 'hips', None),
             "thighs": getattr(entry, 'thighs', None),
+            "right_thigh": getattr(entry, 'right_thigh', None),
+            "left_thigh": getattr(entry, 'left_thigh', None),
             "arms": getattr(entry, 'arms', None),
             "right_arm": getattr(entry, 'right_arm', None),
             "left_arm": getattr(entry, 'left_arm', None),
@@ -248,6 +256,8 @@ async def get_progress_entries(
             "waist": getattr(entry, 'waist', None),
             "hips": getattr(entry, 'hips', None),
             "thighs": getattr(entry, 'thighs', None),
+            "right_thigh": getattr(entry, 'right_thigh', None),
+            "left_thigh": getattr(entry, 'left_thigh', None),
             "arms": getattr(entry, 'arms', None),
             "right_arm": getattr(entry, 'right_arm', None),
             "left_arm": getattr(entry, 'left_arm', None),
@@ -295,6 +305,8 @@ async def get_progress_entry(
         "waist": getattr(entry, 'waist', None),
         "hips": getattr(entry, 'hips', None),
         "thighs": getattr(entry, 'thighs', None),
+        "right_thigh": getattr(entry, 'right_thigh', None),
+        "left_thigh": getattr(entry, 'left_thigh', None),
         "arms": getattr(entry, 'arms', None),
         "right_arm": getattr(entry, 'right_arm', None),
         "left_arm": getattr(entry, 'left_arm', None),
@@ -448,7 +460,9 @@ async def update_progress_entry(
     chest: Optional[float] = Form(None, description="Chest measurement in cm"),
     waist: Optional[float] = Form(None, description="Waist measurement in cm"),
     hips: Optional[float] = Form(None, description="Hips measurement in cm"),
-    thighs: Optional[float] = Form(None, description="Thighs measurement in cm"),
+    thighs: Optional[float] = Form(None, description="Thighs measurement in cm (deprecated: right_thigh / left_thigh)"),
+    right_thigh: Optional[float] = Form(None, description="Right thigh circumference in cm"),
+    left_thigh: Optional[float] = Form(None, description="Left thigh circumference in cm"),
     arms: Optional[float] = Form(None, description="Arms measurement in cm (deprecated)"),
     right_arm: Optional[float] = Form(None, description="Right arm circumference in cm"),
     left_arm: Optional[float] = Form(None, description="Left arm circumference in cm"),
@@ -486,6 +500,10 @@ async def update_progress_entry(
         entry.hips = hips
     if thighs is not None:
         entry.thighs = thighs
+    if right_thigh is not None:
+        entry.right_thigh = right_thigh
+    if left_thigh is not None:
+        entry.left_thigh = left_thigh
     if arms is not None:
         entry.arms = arms
     if right_arm is not None:
@@ -513,6 +531,8 @@ async def update_progress_entry(
         "waist": getattr(entry, 'waist', None),
         "hips": getattr(entry, 'hips', None),
         "thighs": getattr(entry, 'thighs', None),
+        "right_thigh": getattr(entry, 'right_thigh', None),
+        "left_thigh": getattr(entry, 'left_thigh', None),
         "arms": getattr(entry, 'arms', None),
         "right_arm": getattr(entry, 'right_arm', None),
         "left_arm": getattr(entry, 'left_arm', None),

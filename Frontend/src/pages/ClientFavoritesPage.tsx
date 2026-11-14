@@ -312,9 +312,9 @@ const ClientFavoritesPage: React.FC = () => {
                                 <span className="line-clamp-2 text-sm font-bold leading-snug" dir="auto">{foodName(food)}</span>
                                 <span className="text-xs text-muted-foreground"><span dir="ltr">{Math.round(food.calories ?? 0)} kcal</span> · {unit}</span>
                                 <span className="mt-auto flex h-1.5 overflow-hidden rounded-full bg-foreground/[.06]" aria-label={`P ${food.protein ?? 0} · C ${food.carbs ?? 0} · F ${food.fat ?? 0}`}>
-                                  <span style={{ width: `${(p / sum) * 100}%`, background: "hsl(152 60% 45%)" }} />
-                                  <span style={{ width: `${(c / sum) * 100}%`, background: "hsl(28 92% 55%)" }} />
-                                  <span style={{ width: `${(f / sum) * 100}%`, background: "hsl(300 60% 58%)" }} />
+                                  <span style={{ width: `${(p / sum) * 100}%`, background: "hsl(var(--macro-protein))" }} />
+                                  <span style={{ width: `${(c / sum) * 100}%`, background: "hsl(var(--macro-carbs))" }} />
+                                  <span style={{ width: `${(f / sum) * 100}%`, background: "hsl(var(--macro-fat))" }} />
                                 </span>
                                 <span className="text-[10px] text-muted-foreground" dir="ltr">P {food.protein ?? 0} · C {food.carbs ?? 0} · F {food.fat ?? 0}</span>
                               </span>

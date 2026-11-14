@@ -32,19 +32,23 @@ interface ProgressEntry {
   waist?: number;
   hips?: number;
   thighs?: number;
+  right_thigh?: number;
+  left_thigh?: number;
   arms?: number;
   right_arm?: number;
   left_arm?: number;
   created_at: string;
 }
 
-type MeasurementField = 'chest' | 'waist' | 'hips' | 'thighs' | 'arms' | 'right_arm' | 'left_arm';
+type MeasurementField = 'chest' | 'waist' | 'hips' | 'thighs' | 'right_thigh' | 'left_thigh' | 'arms' | 'right_arm' | 'left_arm';
 
 const MEASUREMENT_FIELD_CONFIG: ReadonlyArray<{ field: MeasurementField; labelKey: string }> = [
   { field: 'chest', labelKey: 'progress.chest' },
   { field: 'waist', labelKey: 'progress.waist' },
   { field: 'hips', labelKey: 'progress.hips' },
   { field: 'thighs', labelKey: 'progress.thighs' },
+  { field: 'right_thigh', labelKey: 'trainee.progress.m_right_thigh' },
+  { field: 'left_thigh', labelKey: 'trainee.progress.m_left_thigh' },
   { field: 'arms', labelKey: 'progress.arms' },
   { field: 'right_arm', labelKey: 'progress.rightArm' },
   { field: 'left_arm', labelKey: 'progress.leftArm' },
@@ -92,7 +96,8 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
     chest: '',
     waist: '',
     hips: '',
-    thighs: '',
+    right_thigh: '',
+    left_thigh: '',
     right_arm: '',
     left_arm: ''
   });
@@ -301,8 +306,11 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
       if (addForm.hips) {
         formData.append('hips', addForm.hips);
       }
-      if (addForm.thighs) {
-        formData.append('thighs', addForm.thighs);
+      if (addForm.right_thigh) {
+        formData.append('right_thigh', addForm.right_thigh);
+      }
+      if (addForm.left_thigh) {
+        formData.append('left_thigh', addForm.left_thigh);
       }
       if (addForm.right_arm) {
         formData.append('right_arm', addForm.right_arm);
@@ -339,7 +347,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
           description: t('weightProgress.successAdd')
         });
         // Reset form
-        setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', thighs: '', right_arm: '', left_arm: '' });
+        setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', right_thigh: '', left_thigh: '', right_arm: '', left_arm: '' });
         setPhotoFiles({ front: null, side: null, back: null });
         setPhotoPreviews({ front: null, side: null, back: null });
         // Close dialog after reset
@@ -692,14 +700,25 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="thighs" className="text-xs text-muted-foreground">{t('progress.thighs', 'Thighs')}</Label>
+                  <Label htmlFor="right_thigh" className="text-xs text-muted-foreground">{t('trainee.progress.m_right_thigh', 'Right thigh')}</Label>
                   <Input
-                    id="thighs"
+                    id="right_thigh"
                     type="number"
                     step="0.1"
                     placeholder={t('progress.cm', 'cm')}
-                    value={addForm.thighs}
-                    onChange={(e) => setAddForm({...addForm, thighs: e.target.value})}
+                    value={addForm.right_thigh}
+                    onChange={(e) => setAddForm({...addForm, right_thigh: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="left_thigh" className="text-xs text-muted-foreground">{t('trainee.progress.m_left_thigh', 'Left thigh')}</Label>
+                  <Input
+                    id="left_thigh"
+                    type="number"
+                    step="0.1"
+                    placeholder={t('progress.cm', 'cm')}
+                    value={addForm.left_thigh}
+                    onChange={(e) => setAddForm({...addForm, left_thigh: e.target.value})}
                   />
                 </div>
                 <div>
@@ -848,7 +867,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                 variant="outline"
                 onClick={() => {
                   setShowAddDialog(false);
-                  setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', thighs: '', right_arm: '', left_arm: '' });
+                  setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', right_thigh: '', left_thigh: '', right_arm: '', left_arm: '' });
                   setPhotoFiles({ front: null, side: null, back: null });
                   setPhotoPreviews({ front: null, side: null, back: null });
                 }}

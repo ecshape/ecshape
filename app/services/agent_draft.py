@@ -163,9 +163,13 @@ def _complete(engine: Engine, system: str, prompt: str, max_tokens: int) -> str:
         except anthropic.RateLimitError:
             raise AgentUnavailable("The AI service is busy (rate limit). Try again in a minute.")
         except anthropic.APIStatusError as e:
+            from app.services.ai_keys import provider_error_text
+            if "credit balance" in provider_error_text(e).lower():  # QA #53: an empty account, not a model problem
+                raise AgentUnavailable(provider_error_text(e), {"label": "settings", "href": "/studio/settings#ai-keys"})
             if e.status_code in (400, 404):
                 raise LookupError("model")
-            raise AgentUnavailable(f"The AI service answered with an error ({e.status_code}).")
+            from app.services.ai_keys import provider_error_text
+            raise AgentUnavailable(f"The AI service answered with an error ({e.status_code}): {provider_error_text(e)}")
         except anthropic.APIConnectionError:
             raise AgentUnavailable("The AI service could not be reached.")
         return "".join(b.text for b in res.content if getattr(b, "type", "") == "text").strip()

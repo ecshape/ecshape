@@ -435,3 +435,10 @@ input:not([dir]):is(:not([type]), [type="text"], [type="search"], [type="email"]
 [contenteditable]:not([contenteditable="false"]):not([dir]) {
   unicode-bidi: plaintext;
 }
+
+/* QA #56: macro colours, the same in every portal. Protein light red, carbs blue, fat green. */
+:root {
+  --macro-protein: 0 86% 67%;
+  --macro-carbs: 214 88% 58%;
+  --macro-fat: 145 60% 44%;
+}

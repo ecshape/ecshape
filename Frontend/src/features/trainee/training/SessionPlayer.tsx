@@ -29,7 +29,8 @@ const youtubeId = (url?: string | null) => url?.match(/(?:v=|youtu\.be\/|embed\/
 const DEFAULT_REST = 90;
 
 type Swap = { name: string; libraryId: string };
-type Rest = { endsAt: number; total: number; next?: string } | null;
+/** autoLog: the set to log by itself when a manually started rest runs out (QA #50). */
+type Rest = { endsAt: number; total: number; next?: string; autoLog?: { exId: number; n: number } } | null;
 type Summary = { minutes: number; sets: number; volume: number; prs: string[]; sessionId?: number };
 
 /**
@@ -154,9 +155,9 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     setDrafts((d) => ({ ...d, [`${ex.id}-${n}`]: { ...d[`${ex.id}-${n}`], [k]: v } }));
 
   const restFor = (ex: WorkoutExercise) => ex.rest_seconds || DEFAULT_REST;
-  const startRest = (ex: WorkoutExercise, next?: string) => {
+  const startRest = (ex: WorkoutExercise, next?: string, autoLog?: { exId: number; n: number }) => {
     primeChime(); // this tap unlocks audio for the end-of-rest chime
-    setRest({ endsAt: Date.now() + restFor(ex) * 1000, total: restFor(ex), next });
+    setRest({ endsAt: Date.now() + restFor(ex) * 1000, total: restFor(ex), next, autoLog });
   };
 
   const startSession = () => {
@@ -164,7 +165,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     haptic([14, 40, 14]);
   };
 
-  const doLog = (ex: WorkoutExercise, n: number) => {
+  const doLog = (ex: WorkoutExercise, n: number, opts: { rest?: boolean } = {}) => {
     const w = parseFloat(value(ex, n, 'w').replace(',', '.'));
     const r = parseInt(value(ex, n, 'r'), 10);
     if (!Number.isFinite(r) || r <= 0) {
@@ -182,7 +183,17 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
     const nextName = doneAfter < countFor(ex)
       ? tt('player.nextSet', { n: doneAfter + 1 })
       : exercises[i + 1] ? exercises[i + 1].exercise?.name || exercises[i + 1].exercise_name || '' : undefined;
-    startRest(ex, nextName);
+    if (opts.rest !== false) startRest(ex, nextName);
+    // QA #50: every set of this exercise done -> move on to the next exercise
+    if (doneAfter >= countFor(ex) && exercises[i + 1]) window.setTimeout(() => go(i + 1), 650);
+  };
+
+  /** A manually started rest ran out: log the set it was for (QA #50). */
+  const onRestComplete = () => {
+    const a = rest?.autoLog;
+    if (!a) return;
+    const e = exercises.find((x) => x.id === a.exId);
+    if (e && !setsFor(e.id).some((c) => c.set_number === a.n)) doLog(e, a.n, { rest: false });
   };
 
   const undo = (ex: WorkoutExercise, c: SetCompletion) => {
@@ -394,20 +405,28 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
             <span className="ms-auto text-xs text-muted-foreground" dir="ltr">{ex.target_sets} × {ex.target_reps}</span>
           </div>
           <div className="tp-card p-3 sm:p-4">
-            <div className={cn('tr-sets mb-1 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground', !started && 'tr-sets--view')}>
-              <span />
+            <div className="tr-sets mb-1 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span>{t('trainee.player.set')}</span>
               <span>{t('trainee.player.reps')}</span>
               <span>{tt('player.weight')}</span>
-              <span />
             </div>
             {Array.from({ length: count }, (_, k) => k + 1).map((n) => {
               const c = done.find((d) => d.set_number === n);
               const p = prev?.sets.find((s) => s.set_number === n);
               return (
-                <div key={n} className={cn('tr-sets rounded-2xl py-1 transition-colors', !started && 'tr-sets--view', c && 'bg-[hsl(var(--tp-ok)/.08)]')}>
+                <div key={n} className={cn('tr-sets rounded-2xl py-1.5 transition-colors', c && 'bg-primary/[.07]')}>
+                  {/* QA #50: the set number is the button: tap to log it (starts the rest), tap again to undo */}
                   <span className="text-center">
-                    <span className="tr-setno" data-done={!!c} dir="ltr">{n}</span>
-                    {p && !c && <span className="mt-0.5 block text-[10px] text-muted-foreground" dir="ltr">{fmtNum(p.weight_used, 1)}×{p.reps_completed}</span>}
+                    <button
+                      type="button" className="tr-setno tp-press" data-done={!!c} data-ready={!c && n === nextSet} dir="ltr"
+                      onClick={() => (c ? undo(ex, c) : doLog(ex, n))}
+                      aria-pressed={!!c}
+                      aria-label={c ? t('trainee.player.unlog', { n }) : t('trainee.player.log', { n })}
+                      data-testid="set-number"
+                    >
+                      {c ? <Check className="h-5 w-5" strokeWidth={3} /> : n}
+                    </button>
+                    {p && !c && <span className="mt-1 block text-[10px] text-muted-foreground" dir="ltr">{fmtNum(p.weight_used, 1)}×{p.reps_completed}</span>}
                   </span>
                   {c ? (
                     <>
@@ -433,15 +452,6 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                       />
                     </>
                   )}
-                  {started || c ? (
-                    <button
-                      type="button" className="tp-check tp-press" data-done={!!c} data-ready={!c && n === nextSet}
-                      onClick={() => (c ? undo(ex, c) : doLog(ex, n))}
-                      aria-label={c ? t('trainee.player.unlog', { n }) : t('trainee.player.log', { n })}
-                    >
-                      <Check className="h-6 w-6" strokeWidth={3} />
-                    </button>
-                  ) : <span />}
                 </div>
               );
             })}
@@ -458,7 +468,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
               <Timer className="h-5 w-5 flex-none text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{tt('player.rest')}</span>
               <span className="tp-num flex-1 text-center text-2xl" dir="ltr">{fmtClock(restFor(ex))}</span>
-              <button type="button" onClick={() => startRest(ex)} className="tp-btn tp-btn--sm tp-press !min-h-[2.4rem] bg-primary/15 text-primary" aria-label={tt('player.startRest')}>
+              <button type="button" onClick={() => startRest(ex, nextSet ? tt('player.nextSet', { n: nextSet }) : undefined, nextSet ? { exId: ex.id, n: nextSet } : undefined)} className="tp-btn tp-btn--sm tp-press !min-h-[2.4rem] bg-primary/15 text-primary" aria-label={tt('player.startRest')}>
                 <Play className="h-4 w-4 fill-current" /><span className="max-[359px]:sr-only">{tt('player.restStart')}</span>
               </button>
             </div>
@@ -500,7 +510,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
       </div>
 
       {fab && <div className="tr-float">{fab}</div>}
-      {rest && <RestOverlay rest={rest} onChange={setRest} />}
+      {rest && <RestOverlay rest={rest} onChange={setRest} onComplete={onRestComplete} />}
 
       <Sheet open={swapOpen} onOpenChange={setSwapOpen} title={tt('swap.title')} description={tt('swap.planned', { name: plannedName })}>
         {swapOpen && (
@@ -598,11 +608,13 @@ const SwapPicker: React.FC<{ ex: WorkoutExercise; current: Swap | null; onPick: 
 
 /* ------------------------------------------------------------------ rest */
 
-const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => void }> = ({ rest, onChange }) => {
+const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => void; onComplete?: () => void }> = ({ rest, onChange, onComplete }) => {
   const { t, tt } = useTT();
   const [now, setNow] = useState(Date.now());
   const [mini, setMini] = useState(false);
   const buzzed = useRef(false);
+  const completeRef = useRef(onComplete);
+  completeRef.current = onComplete;
   useEffect(() => {
     buzzed.current = false;
     const id = window.setInterval(() => setNow(Date.now()), 250);
@@ -615,6 +627,7 @@ const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => vo
       buzzed.current = true;
       haptic([40, 80, 40]);
       playChime();
+      completeRef.current?.();
       const id = window.setTimeout(() => onChange(null), 1800);
       return () => window.clearTimeout(id);
     }

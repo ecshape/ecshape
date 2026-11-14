@@ -133,6 +133,8 @@ def run_progress_measurements_migration() -> None:
                     "waist": "REAL",
                     "hips": "REAL",
                     "thighs": "REAL",
+                    "right_thigh": "REAL",
+                    "left_thigh": "REAL",
                     "arms": "REAL",
                     "right_arm": "REAL",
                     "left_arm": "REAL",

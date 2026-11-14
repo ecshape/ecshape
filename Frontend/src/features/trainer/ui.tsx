@@ -83,12 +83,27 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       }
       const b = measure();
       if (!b) return;
+      const l = last.current;
+      if (l && l.x === b.x && l.y === b.y && l.w === b.w && l.h === b.h) return;
       remember(b);
       setBox({ ...b, phase: 'jump' });
     });
+    // QA #52: also watch the items themselves. A count loading in widens a tab without resizing the strip; in RTL that
+    // moves the selected tab, and the pill stayed behind (white text on a light background).
     ro.observe(wrap);
+    Array.from(wrap.children).forEach((c) => { if (!c.classList.contains('tr-hblob') && !c.classList.contains('tr-blob')) ro.observe(c); });
+    const mo = new MutationObserver(() => {
+      const b = measure();
+      const l = last.current;
+      if (b && !(l && l.x === b.x && l.y === b.y && l.w === b.w && l.h === b.h)) {
+        remember(b);
+        setBox({ ...b, phase: 'jump' });
+      }
+    });
+    mo.observe(wrap, { childList: true, subtree: true, characterData: true });
     return () => {
       ro.disconnect();
+      mo.disconnect();
       timers.forEach((id) => { window.cancelAnimationFrame(id); window.clearTimeout(id); });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

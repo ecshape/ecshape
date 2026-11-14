@@ -195,3 +195,51 @@ def resolve_anthropic_key(db: Session, user_id: int) -> Optional[str]:
         return eng.api_key
     env = os.getenv("ANTHROPIC_API_KEY")
     return env.strip() if env else None
+
+
+def all_engines(db: Session, user_ids, prefer: Optional[str] = None) -> List[Engine]:
+    """Every engine usable for these users (their saved keys, preferred first), then the server keys.
+
+    ``prefer`` moves one provider to the front (e.g. "google" for photos: Gemini has a free tier and strong vision).
+    Callers try them in order, so a key without credit or a refused model does not block the feature (QA #51 #53).
+    """
+    out: List[Engine] = []
+    seen = set()
+    for uid in [u for u in user_ids if u]:
+        rows = (db.query(TrainerAiKey).filter(TrainerAiKey.user_id == uid)
+                .order_by(TrainerAiKey.is_preferred.desc(), TrainerAiKey.created_at.desc()).all())
+        for r in rows:
+            try:
+                plain = decrypt_key(r.key_ciphertext)
+            except InvalidToken:
+                continue
+            if plain in seen:
+                continue
+            seen.add(plain)
+            info = provider_info(r.provider) or provider_info("custom")
+            out.append(Engine(info["id"], plain, r.model or info["default_model"], r.base_url or info.get("base_url"), "user"))
+    server = [
+        ("google", (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip()),
+        ("anthropic", (os.getenv("ANTHROPIC_API_KEY") or "").strip()),
+        ("openai", (os.getenv("OPENAI_API_KEY") or "").strip()),
+    ]
+    for pid, key in server:
+        if key and key not in seen:
+            seen.add(key)
+            info = provider_info(pid)
+            out.append(Engine(pid, key, info["default_model"], info.get("base_url"), "server"))
+    if prefer:
+        out.sort(key=lambda e: 0 if e.provider == prefer else 1)
+    return out
+
+
+def provider_error_text(exc: Exception) -> str:
+    """The provider's own explanation (e.g. "Your credit balance is too low…") instead of a bare status code."""
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        err = body.get("error") if isinstance(body.get("error"), dict) else body
+        msg = err.get("message") if isinstance(err, dict) else None
+        if msg:
+            return str(msg)[:300]
+    msg = getattr(exc, "message", None) or str(exc)
+    return str(msg)[:300]

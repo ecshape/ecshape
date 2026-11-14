@@ -17,11 +17,13 @@ interface Props {
   attachment: LinkedEntry | null;
   onRemoveAttachment: () => void;
   onAttachClick?: () => void;
+  /** Extra button before the text box (the coach's "send a weekly menu", QA #54). */
+  extraAction?: React.ReactNode;
   disabled?: boolean;
   enterToSend: boolean;
 }
 
-const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, attachment, onRemoveAttachment, onAttachClick, disabled, enterToSend }, ref) => {
+const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, attachment, onRemoveAttachment, onAttachClick, extraAction, disabled, enterToSend }, ref) => {
   const { t } = useTranslation();
   const area = useRef<HTMLTextAreaElement>(null);
 
@@ -79,6 +81,7 @@ const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, a
           </div>
         )}
         <div className="flex items-end gap-1.5">
+          {extraAction}
           {onAttachClick && (
             <IconButton label={t('chat.ui.attach')} onClick={onAttachClick} disabled={disabled}>
               <Paperclip className="h-5 w-5" />

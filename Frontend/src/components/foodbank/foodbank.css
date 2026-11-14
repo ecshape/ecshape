@@ -8,9 +8,9 @@
 .tp-sheet {
   --fb-ease-out: cubic-bezier(.22, 1, .36, 1);
   --fb-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
-  --fb-protein: 18 88% 56%;
-  --fb-carb: 40 86% 54%;
-  --fb-fat: 152 52% 46%;
+  --fb-protein: var(--macro-protein);
+  --fb-carb: var(--macro-carbs);
+  --fb-fat: var(--macro-fat);
   --fb-dir: 1;
 }
 [dir='rtl'] .fb-root,

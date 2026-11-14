@@ -6,8 +6,10 @@ import { cn } from '@/lib/utils';
 import { Sheet, Stepper } from './ui';
 import { useAddProgress, type NewEntry } from './hooks';
 import { haptic } from './format';
+import { MeasureInfo } from './MeasureGuide';
 
-export const MEASURES = ['waist', 'chest', 'hips', 'thighs', 'right_arm', 'left_arm'] as const;
+/** QA #55: thighs are measured per leg (the old single "thighs" value stays readable in the history). */
+export const MEASURES = ['waist', 'chest', 'hips', 'right_thigh', 'left_thigh', 'right_arm', 'left_arm'] as const;
 type Measure = (typeof MEASURES)[number];
 type PhotoKind = 'front' | 'side' | 'back';
 
@@ -114,7 +116,7 @@ const WeighInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
             <div className="grid grid-cols-2 gap-3 px-4 pb-4">
               {MEASURES.map((k) => (
                 <label key={k} className="block">
-                  <span className="mb-1 block text-xs text-muted-foreground">{t(`trainee.progress.m_${k}`)}</span>
+                  <span className="mb-1 flex items-center justify-between gap-1 text-xs text-muted-foreground">{t(`trainee.progress.m_${k}`)}<MeasureInfo k={k} className="-my-1" /></span>
                   <input className="tp-input text-center" inputMode="decimal" dir="ltr" placeholder="cm" value={measures[k] || ''} onChange={(e) => setMeasures((s) => ({ ...s, [k]: e.target.value.replace(/[^\d.,]/g, '') }))} />
                 </label>
               ))}

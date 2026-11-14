@@ -524,3 +524,85 @@ async def resolve_exercise_request(message_id: int, body: ExerciseRequestResolve
     if body.action != "decline":
         background_tasks.add_task(websocket_service.send_live_refresh, msg.client_id, "plan")
     return await _push_chat(db, reply, msg.client_id, current_user)
+
+
+# ------------------------------------------------------------------ weekly menu proposals (QA #54)
+# The coach sends a ready-made weekly menu as a card. The trainee goes through it meal by meal, keeps the coach's pick
+# or chooses an alternative in each food group, and confirms; the menu then becomes their meal plan (their choices
+# first in every group, which is the default the Meals screen shows).
+
+
+class MenuProposalIn(BaseModel):
+    client_id: int
+    message: str = Field(min_length=1, max_length=500)
+    menu: Dict[str, Any]   # display: {name, goal, kcal, p, c, f, meals: [{name, time, kcal, cats: [{macro, qty, foods: [...]}]}]}
+    plan: Dict[str, Any]   # V3CompleteMealPlanCreate without client_id (same order of slots / groups / foods)
+
+
+class MenuAcceptIn(BaseModel):
+    choices: Dict[str, int] = Field(default_factory=dict)  # "slot-group" -> index of the chosen food
+    message: str = Field(min_length=1, max_length=500)
+
+
+@router.post("/menu-proposal", response_model=ChatMessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_menu_proposal(body: MenuProposalIn, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Coach: send a weekly menu to a client as a chat card."""
+    from app.schemas.meal_tracking_v3 import V3CompleteMealPlanCreate
+
+    if current_user.role != UserRole.TRAINER:
+        raise HTTPException(status_code=403, detail="Only the coach can send a menu")
+    trainer_id, client_id = _resolve_pair(current_user, db, body.client_id)
+    try:
+        V3CompleteMealPlanCreate(**{**body.plan, "client_id": client_id})
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid menu: {e}")
+    card = {"kind": "menu_proposal", "status": "pending", "menu": body.menu, "plan": body.plan}
+    msg = ChatMessage(trainer_id=trainer_id, client_id=client_id, sender_id=current_user.id, message=body.message.strip(),
+                      payload=json.dumps(card, ensure_ascii=False), created_at=datetime.now(timezone.utc))
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return await _push_chat(db, msg, client_id, current_user)
+
+
+@router.post("/menu-proposal/{message_id}/accept", response_model=ChatMessageResponse)
+async def accept_menu_proposal(message_id: int, body: MenuAcceptIn, background_tasks: BackgroundTasks,
+                               current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainee: confirm the menu with their choices; it becomes their active meal plan."""
+    from app.routers.meal_tracking_v3 import create_or_update_complete_plan
+    from app.schemas.meal_tracking_v3 import V3CompleteMealPlanCreate
+
+    if current_user.role != UserRole.CLIENT:
+        raise HTTPException(status_code=403, detail="Only the client confirms a menu")
+    msg = db.query(ChatMessage).filter(ChatMessage.id == message_id, ChatMessage.client_id == current_user.id).first()
+    card = json.loads(msg.payload) if msg and msg.payload else None
+    if not card or card.get("kind") != "menu_proposal":
+        raise HTTPException(status_code=404, detail="Menu not found")
+    if card.get("status") != "pending":
+        raise HTTPException(status_code=409, detail="Already confirmed")
+    plan = json.loads(json.dumps(card["plan"]))
+    for si, slot in enumerate(plan.get("meal_slots") or []):
+        for ci, cat in enumerate(slot.get("macro_categories") or []):
+            foods = cat.get("food_options") or []
+            pick = body.choices.get(f"{si}-{ci}")
+            if isinstance(pick, int) and 0 < pick < len(foods):
+                foods.insert(0, foods.pop(pick))
+            for i, f in enumerate(foods):
+                f["order_index"] = i
+            cat["food_options"] = foods
+    trainer = db.query(User).filter(User.id == msg.trainer_id).first()
+    if not trainer:
+        raise HTTPException(status_code=409, detail="Coach not found")
+    trainer_user = UserResponse.model_validate(trainer)
+    create_or_update_complete_plan(V3CompleteMealPlanCreate(**{**plan, "client_id": current_user.id}), current_user=trainer_user, db=db)
+    card["status"] = "accepted"
+    card["choices"] = body.choices
+    msg.payload = json.dumps(card, ensure_ascii=False)
+    reply = ChatMessage(trainer_id=msg.trainer_id, client_id=msg.client_id, sender_id=current_user.id, message=body.message.strip(),
+                        payload=json.dumps({"kind": "menu_reply", "request_id": msg.id, "name": (card.get("menu") or {}).get("name")}, ensure_ascii=False),
+                        created_at=datetime.now(timezone.utc))
+    db.add(reply)
+    db.commit()
+    db.refresh(reply)
+    background_tasks.add_task(websocket_service.send_live_refresh, current_user.id, "plan")
+    return await _push_chat(db, reply, msg.trainer_id, current_user)

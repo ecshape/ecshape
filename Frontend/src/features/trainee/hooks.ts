@@ -397,7 +397,7 @@ export function useProgress() {
 export type NewEntry = {
   weight: number;
   notes?: string;
-  measures: Partial<Record<'chest' | 'waist' | 'hips' | 'thighs' | 'right_arm' | 'left_arm', number>>;
+  measures: Partial<Record<'chest' | 'waist' | 'hips' | 'thighs' | 'right_thigh' | 'left_thigh' | 'right_arm' | 'left_arm', number>>;
   photos: Partial<Record<'front' | 'side' | 'back', File>>;
 };
 

@@ -134,6 +134,8 @@ export interface ProgressEntry {
   waist?: number | null;
   hips?: number | null;
   thighs?: number | null;
+  right_thigh?: number | null;
+  left_thigh?: number | null;
   arms?: number | null;
   right_arm?: number | null;
   left_arm?: number | null;

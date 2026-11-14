@@ -234,9 +234,9 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
                               <div className="space-y-2">
                                 {meal.choices.map((choice) => {
                                   const macroBadgeStyles: Record<string, string> = {
-                                    protein: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-                                    carb: "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200",
-                                    fat: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200",
+                                    protein: "bg-[hsl(var(--macro-protein)/.16)] text-[hsl(var(--macro-protein))]",
+                                    carb: "bg-[hsl(var(--macro-carbs)/.16)] text-[hsl(var(--macro-carbs))]",
+                                    fat: "bg-[hsl(var(--macro-fat)/.16)] text-[hsl(var(--macro-fat))]",
                                   };
                                   const macroLabelMap: Record<string, string> = {
                                     protein: t('foodBank.protein'),

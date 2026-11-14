@@ -61,32 +61,33 @@ async function assignWorkout(tpl: WorkoutTemplate, clientId: number, lang: strin
   });
 }
 
-async function assignMeal(tpl: MealTemplate, clientId: number, lang: string) {
+/** The complete meal-plan body for a template (without client_id); also sent inside a chat menu card (QA #54). */
+export async function buildMealPlanBody(tpl: MealTemplate, lang: string) {
   const bank = await api<BankFood[]>('/v2/meals/meal-bank?include_public=true').catch(() => [] as BankFood[]);
-  return api('/v3/meals/plans', {
-    method: 'POST',
-    body: {
-      client_id: clientId,
-      name: pick(tpl.name, lang),
-      description: pick(tpl.goal, lang),
-      number_of_meals: tpl.slots.length,
-      total_calories: tpl.kcal,
-      protein_target: tpl.p,
-      carb_target: tpl.c,
-      fat_target: tpl.f,
-      start_date: new Date().toISOString(),
-      meal_slots: tpl.slots.map((s) => ({
-        name: pick(s.name, lang),
-        time_suggestion: s.time,
-        target_calories: s.kcal,
-        macro_categories: s.cats.map((cat) => ({
-          macro_type: cat.macro,
-          quantity_instruction: pick(cat.qty, lang),
-          food_options: cat.foods.map((k, i) => ({ ...foodOption(FOODS[k], bank), order_index: i })),
-        })),
+  return {
+    name: pick(tpl.name, lang),
+    description: pick(tpl.goal, lang),
+    number_of_meals: tpl.slots.length,
+    total_calories: tpl.kcal,
+    protein_target: tpl.p,
+    carb_target: tpl.c,
+    fat_target: tpl.f,
+    start_date: new Date().toISOString(),
+    meal_slots: tpl.slots.map((s) => ({
+      name: pick(s.name, lang),
+      time_suggestion: s.time,
+      target_calories: s.kcal,
+      macro_categories: s.cats.map((cat) => ({
+        macro_type: cat.macro,
+        quantity_instruction: pick(cat.qty, lang),
+        food_options: cat.foods.map((k, i) => ({ ...foodOption(FOODS[k], bank), order_index: i })),
       })),
-    },
-  });
+    })),
+  };
+}
+
+async function assignMeal(tpl: MealTemplate, clientId: number, lang: string) {
+  return api('/v3/meals/plans', { method: 'POST', body: { client_id: clientId, ...(await buildMealPlanBody(tpl, lang)) } });
 }
 
 /**

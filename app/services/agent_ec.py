@@ -246,7 +246,8 @@ def _run_claude(engine: Engine, db: Session, user: UserResponse, system: List[Di
             raise AgentUnavailable("The AI service is busy (rate limit). Try again in a minute.")
         except anthropic.APIStatusError as e:
             logger.error("Agent EC Claude error %s: %s", e.status_code, e.message)
-            raise AgentUnavailable(f"The AI service answered with an error ({e.status_code}).")
+            from app.services.ai_keys import provider_error_text
+            raise AgentUnavailable(f"The AI service answered with an error ({e.status_code}): {provider_error_text(e)}")
         except anthropic.APIConnectionError:
             raise AgentUnavailable("The AI service could not be reached.")
 
@@ -350,7 +351,9 @@ def test_engine(db: Session, user: UserResponse, key_id: int) -> str:
         except anthropic.AuthenticationError:
             raise AgentUnavailable("The Claude key was refused.")
         except anthropic.APIStatusError as e:
-            raise AgentUnavailable(f"Claude answered with an error ({e.status_code}).")
+            # QA #53: say why (no credit, model not allowed…) instead of a bare status code
+            from app.services.ai_keys import provider_error_text
+            raise AgentUnavailable(f"Claude answered with an error ({e.status_code}): {provider_error_text(e)}")
         except anthropic.APIConnectionError:
             raise AgentUnavailable("Claude could not be reached.")
     else:

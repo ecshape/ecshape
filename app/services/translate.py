@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models.translation_cache import TranslationCache
 from app.models.user import User
-from app.services.ai_keys import Engine, resolve_engine
+from app.services.ai_keys import Engine, all_engines, provider_error_text
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +32,10 @@ def _hash(text: str, src_lang: str = "en") -> str:
     return hashlib.sha1(key.encode("utf-8")).hexdigest()
 
 
-def engine_for(db: Session, user_id: int) -> Optional[Engine]:
+def engines_for(db: Session, user_id: int) -> List[Engine]:
+    """The user's keys, their coach's keys, then server keys; tried in order (a key without credit falls through)."""
     me = db.query(User).filter(User.id == user_id).first()
-    for uid in (user_id, getattr(me, "trainer_id", None)):
-        if uid:
-            eng = resolve_engine(db, uid)
-            if eng:
-                return eng
-    return None
+    return all_engines(db, [user_id, getattr(me, "trainer_id", None)])
 
 
 def _prompt(lang_name: str, texts: List[str], src_name: str = "English") -> str:
@@ -97,18 +93,22 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
     missing = list(dict.fromkeys(t for t, h in zip(clean, hashes) if t.strip() and h not in have))
     complete = True
     if missing:
-        engine = engine_for(db, user_id)
-        if not engine:
+        engines = engines_for(db, user_id)
+        if not engines:
             complete = False
         else:
             with _lock:  # one batch at a time per worker (avoids paying twice for the same texts)
                 for i in range(0, len(missing), 40):
                     chunk = missing[i:i + 40]
-                    try:
-                        out = _parse(_call(engine, _prompt(LANGS[lang], chunk, LANGS.get(src_lang, "English"))), len(chunk))
-                    except Exception as e:  # provider errors must never break the screen
-                        logger.warning("Translation (%s) failed: %s", engine.provider, e)
-                        out = None
+                    out = None
+                    for engine in engines:
+                        try:
+                            out = _parse(_call(engine, _prompt(LANGS[lang], chunk, LANGS.get(src_lang, "English"))), len(chunk))
+                        except Exception as e:  # provider errors must never break the screen
+                            logger.warning("Translation (%s) failed: %s", engine.provider, provider_error_text(e))
+                            out = None
+                        if out:
+                            break
                     if not out:
                         complete = False
                         continue

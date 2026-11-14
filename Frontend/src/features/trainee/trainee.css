@@ -5,9 +5,9 @@
   --tp-tabbar-h: 4.25rem;
   --tp-safe-b: env(safe-area-inset-bottom, 0px);
   --tp-ok: 142 64% 45%;
-  --tp-protein: 21 87% 56%;
-  --tp-carbs: 37 86% 62%;
-  --tp-fat: 350 70% 62%;
+  --tp-protein: var(--macro-protein);
+  --tp-carbs: var(--macro-carbs);
+  --tp-fat: var(--macro-fat);
 }
 
 html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }

@@ -30,7 +30,7 @@ from app.models.user import User
 from app.schemas.auth import UserResponse, UserRole
 from app.services import food_images
 from app.services import food_library_service as library
-from app.services.ai_keys import Engine, resolve_engine
+from app.services.ai_keys import Engine, all_engines, provider_error_text, resolve_engine
 from app.services.meal_tracking_v3_service import _parse_v3_date_to_choice_datetime
 
 logger = logging.getLogger(__name__)
@@ -38,10 +38,14 @@ router = APIRouter(tags=["Meal logging tools"])
 
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
 PHOTO_PROMPT = (
-    "You are a nutrition assistant. Look at the photo of a meal and list every distinct food you can identify. "
-    "For each give a short name in the language requested, an estimated portion in grams (or millilitres for drinks) "
-    "and the estimated TOTAL calories, protein, carbs and fat (grams) for that portion. "
-    "Be realistic and conservative. If the photo has no food, return an empty list. "
+    "You are an expert sports nutritionist analysing a photo of a meal for a calorie-tracking app. "
+    "List EVERY distinct food and drink you can see, including small items people forget: sauces, dressings, oil or butter "
+    "on the food, spreads, toppings, cheese, nuts, sugar, bread, sides and beverages. Recognise dishes from any cuisine "
+    "(Israeli, Middle Eastern, French, Asian, fast food, packaged products…) and name them the way a person would. "
+    "Estimate each portion in grams (millilitres for drinks) from visual cues: plate (about 26 cm) and bowl size, cutlery, "
+    "hands, packaging, thickness and how much of the plate it covers. Then give the TOTAL calories, protein, carbs and fat "
+    "(grams) for that portion using standard nutrition values for the most likely preparation (e.g. fried vs grilled). "
+    "Give your single best realistic estimate, not a range. If the photo has no food, return an empty list. "
     "Answer ONLY by calling the submit_foods tool."
 )
 FOODS_SCHEMA = {
@@ -73,21 +77,16 @@ def _require_client(user: UserResponse) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only clients can use this")
 
 
-def _engine_for(db: Session, user: UserResponse) -> Optional[Engine]:
-    """Trainer's own key first (the trainee has none), then the server-wide key."""
+def _engines_for(db: Session, user: UserResponse) -> List[Engine]:
+    """Every usable engine for photos, Gemini first (free tier, strong vision), then the coach's other keys / server keys."""
     me = db.query(User).filter(User.id == user.id).first()
-    for uid in (getattr(me, "trainer_id", None), user.id):
-        if uid:
-            eng = resolve_engine(db, uid)
-            if eng:
-                return eng
-    return None
+    return all_engines(db, [getattr(me, "trainer_id", None), user.id], prefer="google")
 
 
 @router.get("/ai/status")
 def ai_status(current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_client(current_user)
-    return {"available": _engine_for(db, current_user) is not None}
+    return {"available": bool(_engines_for(db, current_user))}
 
 
 def _clean_foods(raw: Any) -> List[Dict[str, Any]]:
@@ -124,8 +123,8 @@ def _vision_claude(engine: Engine, mime: str, data: bytes, lang: str) -> List[Di
                 {"type": "text", "text": f"Language for food names: {lang}."},
             ]}],
         )
-    except anthropic.APIError as e:  # auth, rate limit, connection…
-        logger.warning("Meal photo AI (anthropic) failed: %s", e)
+    except anthropic.APIError as e:  # auth, no credit, rate limit, connection…
+        logger.warning("Meal photo AI (anthropic) failed: %s", provider_error_text(e))
         raise HTTPException(status_code=502, detail="ai_unavailable")
     for block in res.content:
         if block.type == "tool_use":
@@ -168,8 +167,8 @@ async def identify_meal_photo(
 ):
     """Identify the foods in a meal photo. 503 ``no_ai_key`` when no AI key is configured."""
     _require_client(current_user)
-    engine = _engine_for(db, current_user)
-    if not engine:
+    engines = _engines_for(db, current_user)
+    if not engines:
         raise HTTPException(status_code=503, detail="no_ai_key")
     data = await file.read()
     if not data or len(data) > MAX_PHOTO_BYTES:
@@ -180,9 +179,18 @@ async def identify_meal_photo(
     lang_name = {"he": "Hebrew", "fr": "French"}.get(lang[:2], "English")
     import asyncio
 
-    fn = _vision_claude if engine.provider == "anthropic" else _vision_openai
-    foods = await asyncio.to_thread(fn, engine, mime, data, lang_name)
-    return {"foods": foods}
+    # Try each engine in turn: a key without credit or a refused model falls through to the next (QA #51).
+    last: Optional[HTTPException] = None
+    for engine in engines:
+        if engine.provider != "anthropic" and not engine.base_url:
+            continue
+        fn = _vision_claude if engine.provider == "anthropic" else _vision_openai
+        try:
+            foods = await asyncio.to_thread(fn, engine, mime, data, lang_name)
+            return {"foods": foods, "engine": engine.provider}
+        except HTTPException as e:
+            last = e
+    raise last or HTTPException(status_code=502, detail="ai_unavailable")
 
 
 # ------------------------------------------------------------------ barcode

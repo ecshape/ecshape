@@ -18,6 +18,9 @@ class User(Base):
     created_at = Column(DateTime, default=func.now())  # SQLite compatible
     updated_at = Column(DateTime, onupdate=func.now())  # SQLite compatible
     last_login = Column(DateTime, nullable=True)  # Track last login time
+    # Profile photo (Settings / trainee profile). avatar_path = file on disk, avatar_url = public URL served by /api/files/avatars
+    avatar_url = Column(String, nullable=True)
+    avatar_path = Column(String, nullable=True)
 
     # Trainer-Client relationship
     trainer_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)

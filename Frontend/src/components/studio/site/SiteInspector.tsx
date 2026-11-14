@@ -12,6 +12,10 @@ import { getIn, parsePath } from '@/lib/siteContentOps';
 import type { SiteContent } from '@/site/content';
 import { isMultilinePath, type EcSelect } from '@/site/editProtocol';
 import { SITE_SECTIONS, isSharedPath } from '@/site/sections';
+import { AgentDraft } from '@/components/studio/AgentDraft';
+import { InfoTip } from '@/components/ui/info-tip';
+import { LINKABLE, LINK_PAGES, cleanTarget, isLinkPath, kindOf, type LinkKind } from '@/site/links';
+import '@/i18n/ticketsStudio';
 
 type Json = unknown;
 const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -60,7 +64,7 @@ const Label: React.FC<{ children: React.ReactNode; changed?: boolean }> = ({ chi
   </span>
 );
 
-const AutoText: React.FC<{ value: string; onChange: (v: string) => void; multiline: boolean; autoFocus?: boolean; dir?: string }> = ({ value, onChange, multiline, autoFocus, dir }) => {
+const AutoText: React.FC<{ value: string; onChange: (v: string) => void; multiline: boolean; autoFocus?: boolean; dir?: string; className?: string; readOnly?: boolean }> = ({ value, onChange, multiline, autoFocus, dir, className, readOnly }) => {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -75,7 +79,8 @@ const AutoText: React.FC<{ value: string; onChange: (v: string) => void; multili
     <textarea
       ref={ref}
       dir={dir}
-      className="ec-studio-input"
+      className={cn('ec-studio-input', className)}
+      readOnly={readOnly}
       rows={1}
       value={value}
       onChange={(e) => onChange(multiline ? e.target.value : e.target.value.replace(/\n/g, ' '))}
@@ -157,6 +162,98 @@ export const ImageField: React.FC<ImageFieldProps> = ({ value, original, shared,
   );
 };
 
+/* ------------------------------------------------------------------ link target (#12) */
+
+const ANCHORS = ['hero', ...SITE_SECTIONS.filter((s) => s.anchor).map((s) => s.anchor as string)];
+const KINDS: LinkKind[] = ['default', 'form', 'whatsapp', 'instagram', 'section', 'page', 'url'];
+
+const LinkField: React.FC<{ path: string; content: SiteContent; onSet: EditorCtx['onSet']; sectionLabel?: (key: string) => string; label?: string }> = ({ path, content, onSet, sectionLabel, label }) => {
+  const { t } = useTranslation();
+  const links = (content.links || {}) as Record<string, string>;
+  const value = links[path] || '';
+  const kind = kindOf(value);
+  const [url, setUrl] = useState(kind === 'url' ? value : '');
+  const [bad, setBad] = useState(false);
+  useEffect(() => {
+    setUrl(kindOf(value) === 'url' ? value : '');
+    setBad(false);
+  }, [path, value]);
+  const write = (v: string) => {
+    const next = { ...links };
+    if (v) next[path] = v;
+    else delete next[path];
+    onSet('links', next);
+  };
+  const sectionName = (a: string) => {
+    const key = SITE_SECTIONS.find((s) => s.anchor === a)?.key || a;
+    return sectionLabel ? sectionLabel(key) : humanize(key);
+  };
+  const def = LINKABLE[path];
+  return (
+    <div className="ec-studio-field ec-studio-link">
+      <span className="ec-studio-label">
+        <Link2 className="h-3.5 w-3.5" />
+        {label || t('tix.site.link')}
+        {!label && <InfoTip>{t('tix.site.linkTip')}</InfoTip>}
+        {value && <i className="ec-studio-dot" aria-hidden />}
+      </span>
+      <select
+        className="ec-studio-input"
+        value={kind}
+        aria-label={label || t('tix.site.link')}
+        onChange={(e) => {
+          const k = e.target.value as LinkKind;
+          if (k === 'default') write('');
+          else if (k === 'form' || k === 'whatsapp' || k === 'instagram') write(k);
+          else if (k === 'section') write(`#${ANCHORS[1] || 'hero'}`);
+          else if (k === 'page') write(LINK_PAGES[0]);
+          else setUrl(kind === 'url' ? value : '');
+          if (k === 'url' && kind !== 'url') onSet('links', { ...links, [path]: 'https://' });
+        }}
+      >
+        {KINDS.map((k) => (
+          <option key={k} value={k}>
+            {k === 'default' ? t('tix.site.kinds.default', { what: t(`tix.site.kinds.${def}`) }) : t(`tix.site.kinds.${k}`)}
+          </option>
+        ))}
+      </select>
+      {kind === 'section' && (
+        <select className="ec-studio-input" value={value.slice(1)} onChange={(e) => write(`#${e.target.value}`)} aria-label={t('tix.site.kinds.section')}>
+          {ANCHORS.map((a) => <option key={a} value={a}>{sectionName(a)}</option>)}
+        </select>
+      )}
+      {kind === 'page' && (
+        <select className="ec-studio-input" value={(LINK_PAGES as readonly string[]).includes(value) ? value : LINK_PAGES[0]} onChange={(e) => write(e.target.value)} aria-label={t('tix.site.kinds.page')}>
+          {LINK_PAGES.map((pg) => <option key={pg} value={pg}>{t(`tix.site.pages.${pg}`)}</option>)}
+        </select>
+      )}
+      {kind === 'url' && (
+        <>
+          <input
+            className="ec-studio-input"
+            dir="ltr"
+            value={url}
+            placeholder={t('tix.site.urlPh')}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setBad(false);
+            }}
+            onBlur={() => {
+              const c = cleanTarget(url);
+              if (c && c !== 'https://') write(c);
+              else setBad(!!url.trim() && url.trim() !== 'https://');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+          />
+          {bad && <p className="ec-studio-error">{t('tix.site.badUrl')}</p>}
+        </>
+      )}
+    </div>
+  );
+};
+
 interface EditorCtx {
   content: SiteContent;
   base: SiteContent;
@@ -164,6 +261,8 @@ interface EditorCtx {
   onSet: (path: string, value: unknown, coalesce?: boolean) => void;
   onList: (listPath: string, op: ListOp, index: number) => void;
   focusPath?: string;
+  lang?: string;
+  sectionName?: string;
 }
 
 const ItemTools: React.FC<{ listPath: string; index: number; length: number; ctx: EditorCtx; compact?: boolean }> = ({ listPath, index, length, ctx, compact }) => {
@@ -206,7 +305,20 @@ const ValueEditor: React.FC<{ path: string; ctx: EditorCtx; label?: string }> = 
     return (
       <label className={cn('ec-studio-field', ctx.focusPath === path && 'is-focus')}>
         <Label changed={changed}>{name}</Label>
-        <AutoText dir={ctx.dir} value={value} multiline={isMultilinePath(path) || value.length > 90} onChange={(v) => ctx.onSet(path, v, true)} autoFocus={ctx.focusPath === path} />
+        {ctx.focusPath === path ? (
+          <AgentDraft
+            kind="site"
+            field="text"
+            lang={ctx.lang}
+            extra={{ role: humanize(key), section: ctx.sectionName, path }}
+            value={value}
+            onChange={(v) => ctx.onSet(path, isMultilinePath(path) || value.length > 90 ? v : v.replace(/\n+/g, ' '))}
+          >
+            <AutoText dir={ctx.dir} value={value} multiline={isMultilinePath(path) || value.length > 90} onChange={(v) => ctx.onSet(path, v, true)} autoFocus />
+          </AgentDraft>
+        ) : (
+          <AutoText dir={ctx.dir} value={value} multiline={isMultilinePath(path) || value.length > 90} onChange={(v) => ctx.onSet(path, v, true)} />
+        )}
       </label>
     );
   }
@@ -316,6 +428,8 @@ export interface SiteInspectorProps {
   onToggleSection: (key: string) => void;
   onAgent: (prompt: string) => void;
   langName: string;
+  /** Site language being edited (he / en / fr): inline Agent EC drafts are written in it */
+  lang?: string;
 }
 
 export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
@@ -323,9 +437,12 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
   const { select, content } = p;
   const Back = p.dir === 'rtl' ? ArrowRight : ArrowLeft;
   if (!select) return null;
-  const ctx: EditorCtx = { content, base: p.base, dir: p.dir, onSet: p.onSet, onList: p.onList, focusPath: select.kind === 'text' ? select.path : undefined };
   const group = select.path.split('.')[0];
   const sectionKey = SITE_SECTIONS.find((s) => (s.groups as string[]).includes(group))?.key || group;
+  const ctx: EditorCtx = {
+    content, base: p.base, dir: p.dir, onSet: p.onSet, onList: p.onList, focusPath: select.kind === 'text' ? select.path : undefined,
+    lang: p.lang, sectionName: p.sectionLabel(sectionKey),
+  };
   const kindLabel = t(`mysite.studio.kinds.${select.kind}`);
   const title = select.kind === 'section' ? p.sectionLabel(select.path) : humanize(select.path.split('.').pop() || '');
   const sub = select.kind === 'section' ? kindLabel : `${kindLabel} · ${p.sectionLabel(sectionKey)}`;
@@ -358,6 +475,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
           <>
             <ValueEditor path={select.path} ctx={ctx} label={t('mysite.studio.content')} />
             {isMultilinePath(select.path) && <p className="ec-studio-note">{t('mysite.studio.multiline')}</p>}
+            {isLinkPath(select.path) && <LinkField path={select.path} content={content} onSet={p.onSet} sectionLabel={p.sectionLabel} />}
           </>
         )}
 
@@ -389,12 +507,28 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
                 {p.hidden.has(select.path) ? t('mysite.studio.show') : t('mysite.studio.hide')}
               </button>
             )}
+            {(() => {
+              const groups = (sectionDef ? sectionDef.groups : [select.path]) as string[];
+              const paths = Object.keys(LINKABLE).filter((lp) => groups.some((g) => lp.startsWith(`${g}.`)));
+              return paths.length ? (
+                <div className="ec-studio-group">
+                  <div className="ec-studio-group-head">
+                    <span>{t('tix.site.links')}</span>
+                    <InfoTip>{t('tix.site.linkTip')}</InfoTip>
+                  </div>
+                  {paths.map((lp) => (
+                    <LinkField key={lp} path={lp} content={content} onSet={p.onSet} sectionLabel={p.sectionLabel} label={String(getIn(content, parsePath(lp)) ?? humanize(lp))} />
+                  ))}
+                </div>
+              ) : null;
+            })()}
             {(sectionDef ? sectionDef.groups : [select.path as keyof SiteContent]).map((g) => (
               <ValueEditor key={g} path={g} ctx={ctx} />
             ))}
           </>
         )}
 
+        {select.kind !== 'text' && (
         <button
           type="button"
           className="ec-studio-btn is-agent is-block"
@@ -409,6 +543,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
           <Sparkles className="h-4 w-4" />
           {t('mysite.studio.rewrite')}
         </button>
+        )}
       </div>
     </div>
   );

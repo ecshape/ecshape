@@ -4,7 +4,8 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import { renderSite, WA_SVG } from './render';
+import { renderSite, waLink, WA_SVG } from './render';
+import { applyLinkTargets } from './links';
 import { API_BASE_URL } from '../config/api';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -41,6 +42,8 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
   const editing = mode === 'edit';
   const live = mode === 'live';
   root.innerHTML = renderSite(content, lang, { edit: editing });
+  // Custom link targets chosen in Studio -> My site (#12); the editor keeps the default behaviour while editing
+  if (!editing) applyLinkTargets(root, content.links, { wa: waLink(content), ig: `https://www.instagram.com/${encodeURIComponent(content.contact.instagram)}` });
   const rtl = lang === 'he';
   const DIR = rtl ? 1 : -1; // horizontal motion sign: RTL content flows toward +x
 

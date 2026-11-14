@@ -1,11 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Phone, Mail, MessageCircle, Trash2, UserPlus, Sparkles, Inbox, Plus } from 'lucide-react';
+import { Search, Phone, Mail, Trash2, UserPlus, Inbox, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT, askAgent } from '@/lib/agentOps';
+import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT } from '@/lib/agentOps';
+import { AgentDraft } from '@/components/studio/AgentDraft';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { InfoTip } from '@/components/ui/info-tip';
+import '@/i18n/ticketsStudio';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/PageHeader';
+import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,6 +43,7 @@ const ProspectsPage = () => {
   const [q, setQ] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [reply, setReply] = useState('');
   const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState({ name: '', phone: '', email: '', message: '' });
@@ -101,6 +106,7 @@ const ProspectsPage = () => {
 
   useEffect(() => {
     setNotes(selected?.notes || '');
+    setReply('');
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = async (id: number, data: Partial<Lead>, quiet = false) => {
@@ -121,15 +127,17 @@ const ProspectsPage = () => {
   const label = (group: 'goals' | 'programs', value?: string | null) =>
     (value && formLabels[group].find((o) => o.value === value)?.label) || value || '—';
 
-  const waHref = (l: Lead) => (l.phone ? `https://wa.me/${l.phone.replace(/[^\d]/g, '').replace(/^0/, '972')}` : undefined);
+  const waHref = (l: Lead, text?: string) =>
+    l.phone ? `https://wa.me/${l.phone.replace(/[^\d]/g, '').replace(/^0/, '972')}${text ? `?text=${encodeURIComponent(text)}` : ''}` : undefined;
+  const leadExtra = (l: Lead) => ({ goal: label('goals', l.goal), program: label('programs', l.program), notes_in_box: notes });
 
   return (
     <Layout currentPage="prospects">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-10">
-        <PageHeader
+        <StudioHeader
           eyebrow={t('studio.groupBusiness')}
           title={t('studio.prospects.title')}
-          description={t('studio.prospects.subtitle')}
+          lead={t('studio.prospects.subtitle')}
           actions={
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <div className="relative w-full sm:w-72">
@@ -208,7 +216,7 @@ const ProspectsPage = () => {
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   {selected.phone && <Button asChild size="sm"><a href={`tel:${selected.phone}`}><Phone />{t('studio.prospects.call')}</a></Button>}
-                  {waHref(selected) && <Button asChild size="sm" variant="secondary"><a href={waHref(selected)} target="_blank" rel="noopener"><MessageCircle />{t('studio.prospects.whatsapp')}</a></Button>}
+                  {waHref(selected) && <Button asChild size="sm" variant="secondary"><a href={waHref(selected)} target="_blank" rel="noopener"><WhatsAppIcon />{t('studio.prospects.whatsapp')}</a></Button>}
                   {selected.email && <Button asChild size="sm" variant="outline"><a href={`mailto:${selected.email}`}><Mail />{t('studio.prospects.email')}</a></Button>}
                 </div>
 
@@ -246,20 +254,34 @@ const ProspectsPage = () => {
                   ))}
                 </div>
 
-                <p className="mb-2 mt-6 text-sm font-semibold">{t('studio.prospects.notes')}</p>
-                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('studio.prospects.notesPh')} rows={4} />
-                <div className="mt-3 flex flex-wrap justify-between gap-2">
-                  <Button variant="outline" size="sm" onClick={() => askAgent(`${t('studio.prospects.askAgent')}: ${selected.name} (#${selected.id})`)}>
-                    <Sparkles />{t('studio.prospects.askAgent')}
-                  </Button>
-                  <div className="flex gap-2">
-                    {selected.status !== 'converted' && (
-                      <Button variant="secondary" size="sm" onClick={async () => { await update(selected.id, { status: 'converted' }, true); navigate('/trainer-dashboard'); }}>
-                        <UserPlus />{t('studio.prospects.createClient')}
+                <p className="mb-2 mt-6 flex items-center gap-1.5 text-sm font-semibold">{t('tix.prospects.reply')}<InfoTip>{t('tix.prospects.replyTip')}</InfoTip></p>
+                <AgentDraft kind="lead" field="reply" contextId={selected.id} extra={leadExtra(selected)} value={reply} onChange={setReply}>
+                  <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder={t('tix.prospects.replyPh')} rows={4} dir="auto" />
+                </AgentDraft>
+                {reply.trim() && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {waHref(selected, reply) && (
+                      <Button asChild size="sm" variant="secondary"><a href={waHref(selected, reply)} target="_blank" rel="noopener"><WhatsAppIcon />{t('tix.prospects.sendWa')}</a></Button>
+                    )}
+                    {selected.email && (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`mailto:${selected.email}?body=${encodeURIComponent(reply)}`}><Mail />{t('tix.prospects.sendMail')}</a>
                       </Button>
                     )}
-                    <Button size="sm" onClick={() => update(selected.id, { notes })} disabled={notes === (selected.notes || '')}>{t('studio.prospects.save')}</Button>
                   </div>
+                )}
+
+                <p className="mb-2 mt-6 text-sm font-semibold">{t('studio.prospects.notes')}</p>
+                <AgentDraft kind="lead" field="notes" contextId={selected.id} extra={{ goal: label('goals', selected.goal), program: label('programs', selected.program) }} value={notes} onChange={setNotes}>
+                  <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('studio.prospects.notesPh')} rows={4} dir="auto" />
+                </AgentDraft>
+                <div className="mt-3 flex flex-wrap justify-end gap-2">
+                  {selected.status !== 'converted' && (
+                    <Button variant="secondary" size="sm" onClick={async () => { await update(selected.id, { status: 'converted' }, true); navigate('/trainer-dashboard'); }}>
+                      <UserPlus />{t('studio.prospects.createClient')}
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={() => update(selected.id, { notes })} disabled={notes === (selected.notes || '')}>{t('studio.prospects.save')}</Button>
                 </div>
               </div>
             )}

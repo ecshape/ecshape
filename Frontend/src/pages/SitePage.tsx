@@ -8,6 +8,8 @@ import { startEditBridge } from '../site/editBridge';
 import { isEditFrame, isPreviewFrame } from '../site/editProtocol';
 import { DEFAULT_CONTENT, loadPublicSite, toSiteLang, type PublicSite, type SiteLang } from '../site/content';
 import { setLanguage } from '../i18n/setLanguage';
+import { useAuth } from '../contexts/AuthContext';
+import { mountAccountBubble } from '../site/accountBubble';
 
 const setMeta = (name: string, value?: string, attr: 'name' | 'property' = 'name') => {
   if (!value) return;
@@ -38,6 +40,7 @@ const SitePage = () => {
   const [previewing] = useState(() => isPreviewFrame(location.search));
   const [site, setSite] = useState<PublicSite>({ content: DEFAULT_CONTENT[lang], seo: {}, social: {} });
   const [ready, setReady] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!editing || !ref.current) return;
@@ -81,6 +84,12 @@ const SitePage = () => {
       document.title = prevTitle;
     };
   }, [ready, site, lang, navigate, editing, previewing]);
+
+  // Signed in now or before on this device: small round photo bubble in the nav, linking to the portal (#13)
+  useEffect(() => {
+    if (editing || previewing || !ready || !ref.current) return;
+    return mountAccountBubble(ref.current, { user, lang, navigate });
+  }, [ready, site, lang, user, editing, previewing, navigate]);
 
   return (
     <div

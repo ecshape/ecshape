@@ -77,16 +77,24 @@ def ticket_dict(t: QaTicket, db: Session, with_comments: bool = False) -> Dict[s
     d = {
         "id": t.id, "title": t.title, "body": t.body, "page": t.page, "priority": t.priority,
         "status": t.status, "created_by": t.created_by,
-        "author": (db.query(User.full_name).filter(User.id == t.created_by).scalar() if t.created_by else None),
+        "author": None,
+        "author_avatar": None,
         "created_at": t.created_at.isoformat() if t.created_at else None,
         "updated_at": t.updated_at.isoformat() if t.updated_at else None,
     }
+    if t.created_by:
+        row = db.query(User.full_name, User.avatar_url).filter(User.id == t.created_by).first()
+        if row:
+            d["author"], d["author_avatar"] = row[0], row[1]
     comments = db.query(QaComment).filter(QaComment.ticket_id == t.id).order_by(QaComment.created_at).all()
     d["comment_count"] = len(comments)
     if with_comments:
-        names = {u.id: u.full_name for u in db.query(User).filter(User.id.in_({c.author_id for c in comments if c.author_id})).all()} if comments else {}
+        people = {u.id: u for u in db.query(User).filter(User.id.in_({c.author_id for c in comments if c.author_id})).all()} if comments else {}
         d["comments"] = [
-            {"id": c.id, "body": c.body, "author": names.get(c.author_id), "created_at": c.created_at.isoformat() if c.created_at else None}
+            {"id": c.id, "body": c.body,
+             "author": people[c.author_id].full_name if c.author_id in people else None,
+             "author_avatar": people[c.author_id].avatar_url if c.author_id in people else None,
+             "created_at": c.created_at.isoformat() if c.created_at else None}
             for c in comments
         ]
     return d
@@ -380,6 +388,30 @@ def agent_chat(payload: AgentChatIn, user: UserResponse = Depends(require_studio
     try:
         return {"ok": True, **run_agent(db, user, [t.model_dump() for t in payload.messages], lang=payload.lang or "he",
                                          page=payload.page.model_dump() if payload.page else None, provider=payload.provider)}
+    except AgentUnavailable as e:
+        return {"ok": False, "error": str(e), "fix": e.fix}
+
+
+class AgentDraftIn(BaseModel):
+    kind: Literal["lead", "qa", "seo", "site", "other"]
+    field: str = Field(..., min_length=1, max_length=40)
+    context_id: Optional[str] = Field(None, max_length=60)
+    lang: Optional[str] = "he"
+    current: Optional[str] = Field(None, max_length=8000)
+    extra: Dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/agent/draft")
+def agent_draft(payload: AgentDraftIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """Inline Agent EC draft for one text box (prospect reply / notes, QA ticket, SEO fields, site texts)."""
+    from app.services.agent_draft import draft_text
+    from app.services.agent_ec import AgentUnavailable
+    # Small flat context only (field values shown next to the box)
+    extra = {str(k)[:40]: (v[:3000] if isinstance(v, str) else v)
+             for k, v in list(payload.extra.items())[:20] if isinstance(v, (str, int, float, bool))}
+    try:
+        return {"ok": True, **draft_text(db, user, payload.kind, payload.field, lang=payload.lang or "he",
+                                         context_id=payload.context_id, current=payload.current, extra=extra)}
     except AgentUnavailable as e:
         return {"ok": False, "error": str(e), "fix": e.fix}
 

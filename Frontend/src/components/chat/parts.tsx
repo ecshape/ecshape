@@ -2,6 +2,7 @@ import React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { avatarSrc } from '@/lib/avatar';
 import { cn } from '@/lib/utils';
 import { initials } from './format';
 
@@ -18,7 +19,7 @@ const tone = (name: string) => {
   return TONES[h % TONES.length];
 };
 
-export const ChatAvatar: React.FC<{ name: string; size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }> = ({ name, size = 'md', className }) => (
+export const ChatAvatar: React.FC<{ name: string; size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string; src?: string | null }> = ({ name, size = 'md', className, src }) => (
   <span
     aria-hidden
     className={cn(
@@ -32,6 +33,10 @@ export const ChatAvatar: React.FC<{ name: string; size?: 'sm' | 'md' | 'lg' | 'x
     )}
   >
     {initials(name)}
+    {/* Profile photo on top of the initials (they stay as the fallback if the file fails to load) */}
+    {avatarSrc(src) && (
+      <img src={avatarSrc(src)} alt="" className="absolute inset-0 h-full w-full rounded-full object-cover" loading="lazy" decoding="async" draggable={false} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+    )}
   </span>
 );
 

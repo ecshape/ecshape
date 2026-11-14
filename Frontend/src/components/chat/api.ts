@@ -34,6 +34,8 @@ export interface Conversation {
   /** client id for trainers; trainer id for trainees */
   client_id: number;
   client_name: string;
+  /** Profile photo of the other side (null = initials) */
+  client_avatar?: string | null;
   last_message: ChatMessage | null;
   unread_count: number;
 }

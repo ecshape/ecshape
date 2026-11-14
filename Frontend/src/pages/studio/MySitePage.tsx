@@ -12,10 +12,10 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowDown, ArrowUp, Check, ExternalLink, Eye, EyeOff, Globe, Loader2, Monitor, MousePointerClick, Paintbrush, Pencil,
-  Redo2, RotateCcw, Smartphone, Sparkles, Tablet, Undo2, X,
+  PanelLeft, PanelRight, Redo2, RotateCcw, Smartphone, Sparkles, Tablet, Undo2, X,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/PageHeader';
+import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -35,10 +35,41 @@ import {
 } from '@/site/editProtocol';
 import { GLOBAL_GROUPS, SITE_SECTIONS, hiddenSections, sectionOfPath, sectionOrder, type SectionKey } from '@/site/sections';
 import '@/styles/my-site.css';
+import '@/i18n/ticketsStudio';
 
 const LANG_LABEL: Record<SiteLang, string> = { he: 'עברית', en: 'English', fr: 'Français' };
 type Device = 'desktop' | 'tablet' | 'mobile';
-const DEVICE_WIDTH: Record<Device, number | null> = { desktop: null, tablet: 820, mobile: 390 };
+/** Real viewport widths: the page is rendered at this width and scaled down to fit the stage (#11). */
+const DEVICE_WIDTH: Record<Device, number> = { desktop: 1440, tablet: 820, mobile: 390 };
+const PANELS_KEY = 'ec-ms-panels';
+
+function readPanels(): { side: boolean; insp: boolean } {
+  try {
+    const v = JSON.parse(localStorage.getItem(PANELS_KEY) || '{}');
+    return { side: v.side !== false, insp: v.insp !== false };
+  } catch {
+    return { side: true, insp: true };
+  }
+}
+
+/** Fits a device of `width` CSS px into the stage box: returns the scale and the frame height in device px. */
+function useFit(box: React.RefObject<HTMLDivElement>, width: number) {
+  const [fit, setFit] = useState({ scale: 1, w: 0, h: 0 });
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      setFit({ scale: Math.min(1, w / width), w, h });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [box, width]);
+  return fit;
+}
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
 function useSectionLabel() {
@@ -83,10 +114,10 @@ const Hub: React.FC<{ draft: SiteDraftApi; onEdit: (select?: EcSelect) => void }
   return (
     <Layout currentPage="site">
       <div className="container mx-auto p-4 md:p-6">
-        <PageHeader
+        <StudioHeader
           eyebrow={t('studio.site.title')}
           title={t('mysite.home.title')}
-          description={t('mysite.home.body')}
+          lead={t('mysite.home.body')}
           actions={
             <>
               <Button variant="outline" asChild>
@@ -172,7 +203,17 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
   const [publishing, setPublishing] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
+  const stageBox = useRef<HTMLDivElement>(null);
   const pendingScroll = useRef<EcSelect | null>(initialSelect);
+  const [panels, setPanelsState] = useState(readPanels);
+  const setPanels = (next: { side: boolean; insp: boolean }) => {
+    setPanelsState(next);
+    try {
+      localStorage.setItem(PANELS_KEY, JSON.stringify(next));
+    } catch {
+      /* private mode */
+    }
+  };
 
   const content = draft.drafts[lang];
   const base = draft.published[lang];
@@ -201,6 +242,7 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
   const setSelect = useCallback(
     (next: EcSelect | null, scroll = false) => {
       setSelectState(next);
+      if (next) setPanelsState((p) => (p.insp ? p : { ...p, insp: true }));
       if (next && scroll) post({ type: 'scroll', select: next });
     },
     [post],
@@ -261,6 +303,8 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
           break;
         case 'select':
           setSelectState(msg.select);
+          // Selecting on the page re-opens a collapsed inspector
+          if (msg.select) setPanelsState((p) => (p.insp ? p : { ...p, insp: true }));
           break;
         case 'text':
           draft.setValue(lang, msg.path, msg.value, { coalesce: true });
@@ -340,9 +384,11 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
 
   const selectedSection = select ? (select.kind === 'section' ? select.path : sectionOfPath(select.path)) : null;
   const width = DEVICE_WIDTH[device];
+  const fit = useFit(stageBox, width);
+  const frameH = fit.scale ? fit.h / fit.scale : fit.h;
 
   return createPortal(
-    <div className={cn('ec-ms-studio', mode === 'preview' && 'is-preview')} dir={uiDir}>
+    <div className={cn('ec-ms-studio', mode === 'preview' && 'is-preview', !panels.side && 'no-side', !panels.insp && 'no-insp')} dir={uiDir}>
       {/* ---- top bar */}
       <header className="ec-ms-bar">
         <div className="ec-ms-bar-start">
@@ -378,6 +424,26 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
         </div>
 
         <div className="ec-ms-bar-end">
+          <button
+            type="button"
+            className={cn('ec-ms-icon ec-ms-panel-btn', panels.side && 'is-on')}
+            onClick={() => setPanels({ ...panels, side: !panels.side })}
+            aria-pressed={panels.side}
+            title={t('tix.site.togglePages')}
+            aria-label={t('tix.site.togglePages')}
+          >
+            {uiDir === 'rtl' ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+          </button>
+          <button
+            type="button"
+            className={cn('ec-ms-icon ec-ms-panel-btn ec-ms-insp-btn', panels.insp && 'is-on')}
+            onClick={() => setPanels({ ...panels, insp: !panels.insp })}
+            aria-pressed={panels.insp}
+            title={t('tix.site.toggleInspector')}
+            aria-label={t('tix.site.toggleInspector')}
+          >
+            {uiDir === 'rtl' ? <PanelLeft className="h-4 w-4" /> : <PanelRight className="h-4 w-4" />}
+          </button>
           <button type="button" className="ec-ms-icon" onClick={draft.undo} disabled={!draft.canUndo} title={t('mysite.studio.undo')} aria-label={t('mysite.studio.undo')}>
             <Undo2 className="h-4 w-4" />
           </button>
@@ -453,26 +519,36 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
 
         {/* ---- the page */}
         <main className={cn('ec-ms-stage', `is-${device}`)}>
-          <div className="ec-ms-device" style={width ? { width } : undefined}>
-            <iframe
-              ref={frame}
-              key={lang}
-              title={t('mysite.studio.title')}
-              src={`/home?${EC_EDIT_PARAM}=1&lang=${lang}`}
-            />
-            {!frameReady && (
-              <div className="ec-ms-loading">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>{t('mysite.studio.loading')}</span>
-              </div>
-            )}
+          {/* The page renders at the real device width (1440 / 820 / 390 px) and is scaled down to fit (#11) */}
+          <div ref={stageBox} className="ec-ms-fit">
+            <div
+              className="ec-ms-device"
+              style={{ width: Math.round(width * fit.scale), height: fit.h || undefined }}
+            >
+              <iframe
+                ref={frame}
+                key={lang}
+                title={t('mysite.studio.title')}
+                src={`/home?${EC_EDIT_PARAM}=1&lang=${lang}`}
+                style={{ width, height: frameH || '100%', transform: fit.scale < 1 ? `scale(${fit.scale})` : undefined }}
+              />
+              {!frameReady && (
+                <div className="ec-ms-loading">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>{t('mysite.studio.loading')}</span>
+                </div>
+              )}
+            </div>
           </div>
-          {mode === 'edit' && (
-            <p className="ec-ms-tip">
-              <MousePointerClick className="h-4 w-4" />
-              {t('mysite.studio.tip')}
-            </p>
-          )}
+          <p className="ec-ms-tip">
+            <span className="ec-ms-scale" dir="ltr">{width}px · {Math.round(fit.scale * 100)}%</span>
+            {mode === 'edit' && (
+              <>
+                <MousePointerClick className="h-4 w-4" />
+                {t('mysite.studio.tip')}
+              </>
+            )}
+          </p>
         </main>
 
         {/* ---- inspector */}
@@ -492,6 +568,7 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
               onToggleSection={toggleSection}
               onAgent={(prompt) => askAgent(prompt)}
               langName={LANG_LABEL[lang]}
+              lang={lang}
             />
           ) : (
             <div className="ec-ms-empty">

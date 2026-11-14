@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
 import { requestNotificationPermission } from '../lib/notifications';
+import { forgetLastUser, rememberLastUser } from '../lib/avatar';
 
 export type UserRole = 'ADMIN' | 'TRAINER' | 'CLIENT';
 
@@ -13,6 +14,8 @@ export interface User {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  /** Profile photo ("/api/files/avatars/…"), null = initials. Resolve with avatarSrc() from lib/avatar. */
+  avatar_url?: string | null;
 }
 
 interface AuthContextType {
@@ -21,6 +24,10 @@ interface AuthContextType {
   /** Dev environment only: one-click demo trainer / client. */
   demoLogin: (role: 'trainer' | 'client') => Promise<User | null>;
   logout: () => void;
+  /** Re-read /auth/me (after a profile change such as a new photo). */
+  refreshUser: () => Promise<void>;
+  /** Update the photo locally right away (the server already saved it). */
+  setAvatarUrl: (url: string | null) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -229,7 +236,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     removeToken();
+    forgetLastUser();
   };
+
+  // Remember who was signed in on this device (name + photo only) for the small bubble on the public site
+  useEffect(() => {
+    if (user) rememberLastUser({ name: user.full_name, avatar_url: user.avatar_url ?? null, role: user.role });
+  }, [user]);
 
   // Check for stored token and fetch user data on mount
   useEffect(() => {
@@ -268,11 +281,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(refreshInterval);
   }, [user]);
 
+  const refreshUser = async () => {
+    const userData = await fetchCurrentUser();
+    if (userData) setUser(userData);
+  };
+  const setAvatarUrl = (url: string | null) => setUser((u) => (u ? { ...u, avatar_url: url } : u));
+
   const value: AuthContextType = {
     user,
     login,
     demoLogin,
     logout,
+    refreshUser,
+    setAvatarUrl,
     isAuthenticated: !!user,
     loading,
   };

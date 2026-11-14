@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { analyzeSeo, scoreTone, SEO_GROUPS, type SeoAnalysis, type SeoTestGroup } from '@/lib/seo/analysis';
 import type { ArticleSchemaType, ArticleSeo } from '@/lib/seo/articles';
 import { cn } from '@/lib/utils';
+import { AgentDraft, plainText } from '@/components/studio/AgentDraft';
 
 type RmTab = 'general' | 'advanced' | 'schema' | 'social';
 
@@ -22,6 +23,8 @@ export type RankMathContext = {
   /** Articles edit slug, schema and FAQ; site pages keep the basics. */
   mode: 'article' | 'page';
   brand?: string;
+  /** Language of the text (Agent EC drafts in it) */
+  lang?: string;
 };
 
 export function useSeoAnalysis(seo: ArticleSeo, ctx: RankMathContext): SeoAnalysis {
@@ -147,6 +150,7 @@ export const RankMathPanel = ({ seo, onChange, ctx, analysis, onSlugChange }: Ra
   const [tab, setTab] = useState<RmTab>('general');
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const seoTitle = seo.title || `${ctx.title} – ${ctx.brand || 'ECshape'}`;
+  const draftExtra = { page: ctx.mode === 'page' ? 'home page of the site' : 'blog article', title: ctx.title, focus_keyword: seo.focusKeyword, path: ctx.path, text: plainText(ctx.html) };
   const tabs: RmTab[] = ctx.mode === 'article' ? ['general', 'advanced', 'schema', 'social'] : ['general', 'advanced', 'social'];
   const verdict = analysis.score >= 80 ? 'good' : analysis.score >= 50 ? 'ok' : 'bad';
 
@@ -202,7 +206,9 @@ export const RankMathPanel = ({ seo, onChange, ctx, analysis, onSlugChange }: Ra
               <span className="ec-rm-label">
                 {t('studio.seo.rm.seoTitle')} <Counter value={seo.title} min={50} max={60} />
               </span>
-              <Input dir="auto" value={seo.title} placeholder={seoTitle} onChange={(e) => onChange({ title: e.target.value })} />
+              <AgentDraft inline kind="seo" field="title" lang={ctx.lang} extra={draftExtra} value={seo.title} onChange={(v) => onChange({ title: v })}>
+                <Input dir="auto" value={seo.title} placeholder={seoTitle} onChange={(e) => onChange({ title: e.target.value })} />
+              </AgentDraft>
             </label>
             {ctx.mode === 'article' && onSlugChange ? (
               <label className="ec-rm-field">
@@ -216,7 +222,9 @@ export const RankMathPanel = ({ seo, onChange, ctx, analysis, onSlugChange }: Ra
               <span className="ec-rm-label">
                 {t('studio.seo.rm.metaDescription')} <Counter value={seo.description} min={140} max={160} />
               </span>
-              <Textarea dir="auto" rows={3} value={seo.description} onChange={(e) => onChange({ description: e.target.value })} />
+              <AgentDraft kind="seo" field="description" lang={ctx.lang} extra={draftExtra} value={seo.description} onChange={(v) => onChange({ description: v })}>
+                <Textarea dir="auto" rows={3} value={seo.description} onChange={(e) => onChange({ description: e.target.value })} />
+              </AgentDraft>
             </label>
             <TestsList analysis={analysis} />
             <dl className="ec-rm-stats">

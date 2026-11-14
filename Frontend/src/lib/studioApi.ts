@@ -47,6 +47,18 @@ export interface Lead {
 
 export type QaStatus = 'new' | 'in_progress' | 'done' | 'cancelled';
 export type QaPriority = 'low' | 'normal' | 'high';
+export type AgentDraftKind = 'lead' | 'qa' | 'seo' | 'site' | 'other';
+export interface AgentDraftResult {
+  ok: boolean;
+  text?: string;
+  engine?: string;
+  model?: string;
+  tier?: 'fast' | 'strong';
+  lang?: string;
+  error?: string;
+  fix?: { label?: string; href?: string } | null;
+}
+
 export interface QaTicket {
   id: number;
   title: string;
@@ -58,7 +70,9 @@ export interface QaTicket {
   updated_at?: string | null;
   comment_count: number;
   author?: string | null;
-  comments?: { id: number; body: string; author?: string | null; created_at?: string | null }[];
+  created_by?: number | null;
+  author_avatar?: string | null;
+  comments?: { id: number; body: string; author?: string | null; author_avatar?: string | null; created_at?: string | null }[];
 }
 
 export interface PageSeoFields {
@@ -211,6 +225,9 @@ export const studioApi = {
   commentTicket: (id: number, body: string) => request<QaTicket>(`/qa/${id}/comments`, { method: 'POST', body: JSON.stringify({ body }) }),
   deleteTicket: (id: number) => request<void>(`/qa/${id}`, { method: 'DELETE' }),
 
+  /** Inline Agent EC draft for one text box (the server picks the model for the task). */
+  agentDraft: (data: { kind: AgentDraftKind; field: string; context_id?: string; lang?: string; current?: string; extra?: Record<string, string | number | boolean> }) =>
+    request<AgentDraftResult>('/agent/draft', { method: 'POST', body: JSON.stringify(data) }),
   agentStatus: () => request<{ configured: boolean; engine: string | null; source: string }>('/agent/status'),
   agentChat: (messages: AgentTurn[], lang: string, page: AgentPage, provider: string) =>
     request<AgentReply>('/agent/chat', { method: 'POST', body: JSON.stringify({ messages, lang, page, provider }) }),

@@ -1,0 +1,368 @@
+{
+  "he": {
+    "tix": {
+      "common": {
+        "cancel": "ביטול",
+        "close": "סגירה"
+      },
+      "avatar": {
+        "add": "הוספת תמונת פרופיל",
+        "change": "החלפת תמונה",
+        "remove": "הסרה",
+        "hint": "JPG, PNG או WebP. נחתך לריבוע ומוצג בפורטל, בצ'אט ובאתר.",
+        "cropTitle": "מיקום התמונה",
+        "cropHint": "גררו כדי למקם, השתמשו במחוון כדי להגדיל.",
+        "zoom": "זום",
+        "save": "שמירת התמונה",
+        "failed": "לא הצלחנו לשמור את התמונה.",
+        "notImage": "הקובץ אינו תמונה.",
+        "sectionTitle": "פרופיל",
+        "sectionHint": "התמונה שלכם מופיעה בתפריט, בצ'אט עם המתאמנים ובבועה באתר כשאתם מחוברים.",
+        "openPortal": "לפורטל שלי"
+      },
+      "draft": {
+        "write": "Agent EC יכתוב טיוטה",
+        "improve": "Agent EC ישפר את הטקסט",
+        "done": "נכתב על ידי Agent EC",
+        "undo": "ביטול",
+        "failed": "Agent EC לא הצליח לכתוב כרגע. נסו שוב.",
+        "noKey": "כדי ש-Agent EC יכתוב, צריך להוסיף מפתח AI.",
+        "openSettings": "הגדרות ← מפתחות AI"
+      },
+      "prospects": {
+        "reply": "תשובה ללקוח",
+        "replyPh": "לחצו על Agent EC בפינה לטיוטה אישית לפי הפרטים של הליד, או כתבו בעצמכם.",
+        "sendWa": "שליחה בוואטסאפ",
+        "sendMail": "שליחה במייל",
+        "replyTip": "Agent EC משתמש בפרטי הליד, בהודעה שלו ובהערות שלכם, וכותב בשפה שבה הליד פנה."
+      },
+      "wa": "וואטסאפ",
+      "qa": {
+        "tabs": {
+          "open": "פתוחות",
+          "all": "הכול"
+        },
+        "filters": "סינון",
+        "area": "אזור",
+        "allAreas": "כל האזורים",
+        "author": "מדווח",
+        "allAuthors": "כל המדווחים",
+        "sort": "מיון",
+        "sortNewest": "חדש לישן",
+        "sortOldest": "ישן לחדש",
+        "sortPriority": "עדיפות",
+        "sortAuthor": "מדווח",
+        "sortUpdated": "עודכן לאחרונה",
+        "mine": "שלי",
+        "board": "לוח",
+        "list": "רשימה",
+        "viewLabel": "תצוגה",
+        "reset": "ניקוי סינון",
+        "results": "{{count}} פניות",
+        "noResults": "אין פניות שמתאימות לסינון.",
+        "selected": "{{count}} נבחרו",
+        "selectAll": "בחירת הכול",
+        "markDone": "סימון כבוצע",
+        "markInProgress": "לטיפול",
+        "markCancelled": "ביטול",
+        "clearSelection": "ניקוי בחירה",
+        "areas": {
+          "site": "אתר ציבורי",
+          "studio": "סטודיו",
+          "trainer": "פורטל המאמן",
+          "trainee": "אפליקציית המתאמן",
+          "blog": "בלוג",
+          "other": "אחר"
+        },
+        "guideTitle": "איך מדווחים טוב",
+        "guideTip": "כל פנייה נשמרת מיד. בדקו גם בטלפון וגם במחשב, ודווחו גם על דברים קטנים שמפריעים (טקסט לא ברור, יותר מדי לחיצות).",
+        "guideGood": "פנייה טובה",
+        "guideGoodItems": [
+          "העמוד המדויק (כפתור ה-QA שומר אותו לבד)",
+          "מכשיר ודפדפן (אייפון, אנדרואיד, מחשב)",
+          "מה עשיתם, מה ציפיתם שיקרה ומה קרה בפועל",
+          "עדיפות: גבוהה רק אם משהו לא עובד"
+        ],
+        "guideChecks": "מה כדאי לבדוק",
+        "guideCheckItems": [
+          "כניסה ויציאה מהפורטל",
+          "האתר הציבורי בעברית ובאנגלית, טופס הלידים",
+          "יצירת תוכנית אימונים ותפריט למתאמן",
+          "צ'אט עם מתאמן, תמונות והעלאות",
+          "מצב כהה ובהיר, טלפון ומחשב"
+        ],
+        "filterTip": "השתמשו בסינון לפי סטטוס, עדיפות, אזור ומדווח. בתצוגת רשימה אפשר לבחור כמה פניות ולסמן אותן כבוצעו בבת אחת.",
+        "bodyLabel": "מה צריך לשנות",
+        "commentLabel": "תגובה",
+        "updated": "עודכן {{when}}"
+      },
+      "site": {
+        "togglePages": "הצגה או הסתרה של רשימת החלקים",
+        "toggleInspector": "הצגה או הסתרה של לוח העריכה",
+        "link": "לאן הכפתור מוביל",
+        "linkTip": "אפשר לשנות לאן כל כפתור או קישור באתר מוביל: לטופס, לוואטסאפ, לחלק אחר בעמוד, לעמוד בפורטל או לכתובת חיצונית. השינוי חל על כל השפות.",
+        "links": "קישורים בחלק הזה",
+        "kinds": {
+          "default": "ברירת מחדל ({{what}})",
+          "form": "טופס השארת פרטים",
+          "whatsapp": "וואטסאפ",
+          "instagram": "אינסטגרם",
+          "section": "חלק בעמוד",
+          "page": "עמוד בפורטל",
+          "url": "כתובת חיצונית"
+        },
+        "pages": {
+          "/login": "כניסה לפורטל",
+          "/blog": "בלוג",
+          "/home": "דף הבית"
+        },
+        "urlPh": "https://…",
+        "badUrl": "כתובת לא תקינה. התחילו ב-https://, ב-/ או ב-#."
+      }
+    }
+  },
+  "en": {
+    "tix": {
+      "common": {
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "avatar": {
+        "add": "Add a profile photo",
+        "change": "Change photo",
+        "remove": "Remove",
+        "hint": "JPG, PNG or WebP. Cropped square and shown in the portal, the chat and on the site.",
+        "cropTitle": "Frame your photo",
+        "cropHint": "Drag to position, use the slider to zoom.",
+        "zoom": "Zoom",
+        "save": "Save photo",
+        "failed": "The photo could not be saved.",
+        "notImage": "This file is not an image.",
+        "sectionTitle": "Profile",
+        "sectionHint": "Your photo appears in the menu, in the chat with your trainees and as a bubble on the site when you are signed in.",
+        "openPortal": "My portal"
+      },
+      "draft": {
+        "write": "Agent EC writes a draft",
+        "improve": "Agent EC improves this text",
+        "done": "Written by Agent EC",
+        "undo": "Undo",
+        "failed": "Agent EC could not write right now. Try again.",
+        "noKey": "Agent EC needs an AI key to write.",
+        "openSettings": "Settings → AI keys"
+      },
+      "prospects": {
+        "reply": "Reply to the prospect",
+        "replyPh": "Click Agent EC in the corner for a personal draft based on this lead, or write your own.",
+        "sendWa": "Send on WhatsApp",
+        "sendMail": "Send by email",
+        "replyTip": "Agent EC uses the lead's details, their message and your notes, and writes in the language they used."
+      },
+      "wa": "WhatsApp",
+      "qa": {
+        "tabs": {
+          "open": "Open",
+          "all": "All"
+        },
+        "filters": "Filters",
+        "area": "Area",
+        "allAreas": "All areas",
+        "author": "Reporter",
+        "allAuthors": "All reporters",
+        "sort": "Sort",
+        "sortNewest": "Newest first",
+        "sortOldest": "Oldest first",
+        "sortPriority": "Priority",
+        "sortAuthor": "Reporter",
+        "sortUpdated": "Recently updated",
+        "mine": "Mine",
+        "board": "Board",
+        "list": "List",
+        "viewLabel": "View",
+        "reset": "Clear filters",
+        "results": "{{count}} tickets",
+        "noResults": "No ticket matches these filters.",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "markDone": "Mark done",
+        "markInProgress": "In progress",
+        "markCancelled": "Cancel",
+        "clearSelection": "Clear selection",
+        "areas": {
+          "site": "Public site",
+          "studio": "Studio",
+          "trainer": "Trainer portal",
+          "trainee": "Trainee app",
+          "blog": "Blog",
+          "other": "Other"
+        },
+        "guideTitle": "How to report well",
+        "guideTip": "Every ticket is saved right away. Test on both phone and computer, and report small frictions too (unclear text, too many taps).",
+        "guideGood": "A good ticket",
+        "guideGoodItems": [
+          "The exact page (the QA button saves it for you)",
+          "Device and browser (iPhone, Android, computer)",
+          "What you did, what you expected and what happened",
+          "Priority: high only when something is broken"
+        ],
+        "guideChecks": "What to test",
+        "guideCheckItems": [
+          "Signing in and out of the portal",
+          "The public site in Hebrew and English, the lead form",
+          "Creating a workout plan and a meal plan for a trainee",
+          "Chat with a trainee, photos and uploads",
+          "Dark and light mode, phone and computer"
+        ],
+        "filterTip": "Filter by status, priority, area and reporter. In list view you can select several tickets and mark them done at once.",
+        "bodyLabel": "What should change",
+        "commentLabel": "Comment",
+        "updated": "updated {{when}}"
+      },
+      "site": {
+        "togglePages": "Show or hide the sections list",
+        "toggleInspector": "Show or hide the editing panel",
+        "link": "Where this button goes",
+        "linkTip": "Change where any button or link of the site leads: the lead form, WhatsApp, another part of the page, a portal page or an external address. Applies to every language.",
+        "links": "Links in this section",
+        "kinds": {
+          "default": "Default ({{what}})",
+          "form": "Lead form",
+          "whatsapp": "WhatsApp",
+          "instagram": "Instagram",
+          "section": "Section of the page",
+          "page": "Portal page",
+          "url": "External address"
+        },
+        "pages": {
+          "/login": "Portal sign-in",
+          "/blog": "Blog",
+          "/home": "Home page"
+        },
+        "urlPh": "https://…",
+        "badUrl": "Invalid address. Start with https://, / or #."
+      }
+    }
+  },
+  "fr": {
+    "tix": {
+      "common": {
+        "cancel": "Annuler",
+        "close": "Fermer"
+      },
+      "avatar": {
+        "add": "Ajouter une photo de profil",
+        "change": "Changer la photo",
+        "remove": "Retirer",
+        "hint": "JPG, PNG ou WebP. Recadrée en carré et affichée dans le portail, le chat et sur le site.",
+        "cropTitle": "Cadrer la photo",
+        "cropHint": "Glissez pour positionner, utilisez le curseur pour zoomer.",
+        "zoom": "Zoom",
+        "save": "Enregistrer la photo",
+        "failed": "La photo n'a pas pu être enregistrée.",
+        "notImage": "Ce fichier n'est pas une image.",
+        "sectionTitle": "Profil",
+        "sectionHint": "Votre photo apparaît dans le menu, dans le chat avec vos élèves et en bulle sur le site quand vous êtes connecté.",
+        "openPortal": "Mon portail"
+      },
+      "draft": {
+        "write": "Agent EC rédige un brouillon",
+        "improve": "Agent EC améliore ce texte",
+        "done": "Rédigé par Agent EC",
+        "undo": "Annuler",
+        "failed": "Agent EC n'a pas pu rédiger pour l'instant. Réessayez.",
+        "noKey": "Agent EC a besoin d'une clé IA pour rédiger.",
+        "openSettings": "Réglages → Clés IA"
+      },
+      "prospects": {
+        "reply": "Réponse au prospect",
+        "replyPh": "Cliquez sur Agent EC dans le coin pour un brouillon personnel basé sur ce prospect, ou écrivez vous-même.",
+        "sendWa": "Envoyer sur WhatsApp",
+        "sendMail": "Envoyer par e-mail",
+        "replyTip": "Agent EC utilise les infos du prospect, son message et vos notes, et écrit dans la langue qu'il a utilisée."
+      },
+      "wa": "WhatsApp",
+      "qa": {
+        "tabs": {
+          "open": "Ouverts",
+          "all": "Tous"
+        },
+        "filters": "Filtres",
+        "area": "Zone",
+        "allAreas": "Toutes les zones",
+        "author": "Auteur",
+        "allAuthors": "Tous les auteurs",
+        "sort": "Tri",
+        "sortNewest": "Plus récents",
+        "sortOldest": "Plus anciens",
+        "sortPriority": "Priorité",
+        "sortAuthor": "Auteur",
+        "sortUpdated": "Mis à jour récemment",
+        "mine": "Les miens",
+        "board": "Tableau",
+        "list": "Liste",
+        "viewLabel": "Affichage",
+        "reset": "Effacer les filtres",
+        "results": "{{count}} tickets",
+        "noResults": "Aucun ticket ne correspond à ces filtres.",
+        "selected": "{{count}} sélectionnés",
+        "selectAll": "Tout sélectionner",
+        "markDone": "Marquer comme fait",
+        "markInProgress": "En cours",
+        "markCancelled": "Annuler",
+        "clearSelection": "Vider la sélection",
+        "areas": {
+          "site": "Site public",
+          "studio": "Studio",
+          "trainer": "Portail coach",
+          "trainee": "App élève",
+          "blog": "Blog",
+          "other": "Autre"
+        },
+        "guideTitle": "Bien signaler",
+        "guideTip": "Chaque ticket est enregistré tout de suite. Testez sur téléphone et sur ordinateur, et signalez aussi les petites frictions (texte flou, trop de clics).",
+        "guideGood": "Un bon ticket",
+        "guideGoodItems": [
+          "La page exacte (le bouton QA l'enregistre pour vous)",
+          "Appareil et navigateur (iPhone, Android, ordinateur)",
+          "Ce que vous avez fait, ce que vous attendiez et ce qui s'est passé",
+          "Priorité haute seulement si quelque chose ne marche pas"
+        ],
+        "guideChecks": "Quoi tester",
+        "guideCheckItems": [
+          "Connexion et déconnexion du portail",
+          "Le site public en hébreu et en anglais, le formulaire de contact",
+          "Créer un programme d'entraînement et un plan repas pour un élève",
+          "Chat avec un élève, photos et envois",
+          "Mode sombre et clair, téléphone et ordinateur"
+        ],
+        "filterTip": "Filtrez par statut, priorité, zone et auteur. En liste, sélectionnez plusieurs tickets pour les marquer comme faits d'un coup.",
+        "bodyLabel": "Ce qu'il faut changer",
+        "commentLabel": "Commentaire",
+        "updated": "mis à jour {{when}}"
+      },
+      "site": {
+        "togglePages": "Afficher ou masquer la liste des sections",
+        "toggleInspector": "Afficher ou masquer le panneau d'édition",
+        "link": "Où mène ce bouton",
+        "linkTip": "Changez la destination de n'importe quel bouton ou lien du site : le formulaire, WhatsApp, une autre partie de la page, une page du portail ou une adresse externe. S'applique à toutes les langues.",
+        "links": "Liens de cette section",
+        "kinds": {
+          "default": "Par défaut ({{what}})",
+          "form": "Formulaire de contact",
+          "whatsapp": "WhatsApp",
+          "instagram": "Instagram",
+          "section": "Section de la page",
+          "page": "Page du portail",
+          "url": "Adresse externe"
+        },
+        "pages": {
+          "/login": "Connexion au portail",
+          "/blog": "Blog",
+          "/home": "Accueil"
+        },
+        "urlPh": "https://…",
+        "badUrl": "Adresse invalide. Commencez par https://, / ou #."
+      }
+    }
+  }
+}

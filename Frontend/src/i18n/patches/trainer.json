@@ -1,0 +1,252 @@
+{
+  "he": {
+    "trainer": {
+      "common": {
+        "back": "חזרה",
+        "close": "סגירה",
+        "save": "שמירה",
+        "saving": "שומר…",
+        "cancel": "ביטול",
+        "showPassword": "הצגת סיסמה",
+        "hidePassword": "הסתרת סיסמה",
+        "notFoundTitle": "המתאמן לא נמצא",
+        "notSet": "לא הוגדר",
+        "kg": "ק״ג",
+        "cm": "ס״מ"
+      },
+      "shell": {
+        "sidebar": "סרגל צד",
+        "navigation": "ניווט ראשי",
+        "home": "ללוח הבקרה",
+        "collapse": "כיווץ התפריט",
+        "expand": "הרחבת התפריט"
+      },
+      "dash": {
+        "greeting": {
+          "morning": "בוקר טוב,",
+          "afternoon": "צהריים טובים,",
+          "evening": "ערב טוב,"
+        },
+        "headline": "הסטודיו שלך",
+        "newPlan": "תוכנית אימון חדשה",
+        "kpis": "מדדים מרכזיים",
+        "activeOf": "{{active}} פעילים מתוך {{total}}",
+        "checkInsToday": "צ׳ק-אינים היום",
+        "workoutsWeek": "אימונים שהושלמו השבוע",
+        "workoutsChart": "אימונים שהושלמו ב-7 הימים האחרונים",
+        "newProspects": "לידים חדשים",
+        "openProspects_one": "ליד פתוח אחד",
+        "openProspects_two": "{{count}} לידים פתוחים",
+        "openProspects_other": "{{count}} לידים פתוחים",
+        "filterLabel": "סינון מתאמנים",
+        "filter": {
+          "all": "כולם",
+          "attention": "דורשים תשומת לב",
+          "checked": "עשו צ׳ק-אין",
+          "inactive": "לא פעילים"
+        },
+        "emptyTitle": "עוד אין מתאמנים",
+        "emptyBody": "הוסיפו את המתאמן הראשון כדי לבנות לו תוכנית ולעקוב אחרי ההתקדמות.",
+        "noMatchBody": "נסו חיפוש אחר או סינון אחר.",
+        "sideLabel": "היום ופעולות מהירות",
+        "today": "היום",
+        "live": "חי",
+        "quick": "פעולות מהירות",
+        "trainingNow": "מתאמן/ת עכשיו",
+        "lastActive": "פעילות אחרונה {{when}}",
+        "noActivity": "עוד אין פעילות",
+        "checkedIn": "עשה צ׳ק-אין",
+        "noCheckIn": "אין צ׳ק-אין היום",
+        "workoutsCount_one": "אימון אחד השבוע",
+        "workoutsCount_two": "{{count}} אימונים השבוע",
+        "workoutsCount_other": "{{count}} אימונים השבוע",
+        "mealsCount_one": "ארוחה אחת היום",
+        "mealsCount_two": "{{count}} ארוחות היום",
+        "mealsCount_other": "{{count}} ארוחות היום",
+        "message": "שליחת הודעה",
+        "openPlan": "תוכנית האימון",
+        "edit": "עריכת פרטים",
+        "feedEmpty": "שקט כרגע",
+        "feedEmptyBody": "צ׳ק-אינים, אימונים וארוחות של המתאמנים יופיעו כאן.",
+        "feed": {
+          "checkin": "עשה/תה צ׳ק-אין",
+          "workout": "סיים/ה אימון",
+          "training": "התחיל/ה אימון",
+          "meals_one": "סימן/ה ארוחה",
+          "meals_two": "סימן/ה {{count}} ארוחות",
+          "meals_other": "סימן/ה {{count}} ארוחות",
+          "lead": "השאיר/ה פרטים באתר",
+          "weight": "{{kg}} ק״ג",
+          "minutes_one": "דקה אחת",
+          "minutes_two": "{{count}} דקות",
+          "minutes_other": "{{count}} דקות"
+        }
+      }
+    }
+  },
+  "en": {
+    "trainer": {
+      "common": {
+        "back": "Back",
+        "close": "Close",
+        "save": "Save",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "notFoundTitle": "Client not found",
+        "notSet": "Not set",
+        "kg": "kg",
+        "cm": "cm"
+      },
+      "shell": {
+        "sidebar": "Sidebar",
+        "navigation": "Main navigation",
+        "home": "Go to dashboard",
+        "collapse": "Collapse menu",
+        "expand": "Expand menu"
+      },
+      "dash": {
+        "greeting": {
+          "morning": "Good morning,",
+          "afternoon": "Good afternoon,",
+          "evening": "Good evening,"
+        },
+        "headline": "your studio",
+        "newPlan": "New workout plan",
+        "kpis": "Key numbers",
+        "activeOf": "{{active}} of {{total}} active",
+        "checkInsToday": "Check-ins today",
+        "workoutsWeek": "Workouts completed this week",
+        "workoutsChart": "Workouts completed over the last 7 days",
+        "newProspects": "New prospects",
+        "openProspects_one": "{{count}} open prospect",
+        "openProspects_other": "{{count}} open prospects",
+        "filterLabel": "Filter clients",
+        "filter": {
+          "all": "All",
+          "attention": "Needs attention",
+          "checked": "Checked in",
+          "inactive": "Inactive"
+        },
+        "emptyTitle": "No clients yet",
+        "emptyBody": "Add your first client to build their plan and follow their progress.",
+        "noMatchBody": "Try another search or filter.",
+        "sideLabel": "Today and quick actions",
+        "today": "Today",
+        "live": "Live",
+        "quick": "Quick actions",
+        "trainingNow": "Training now",
+        "lastActive": "Active {{when}}",
+        "noActivity": "No activity yet",
+        "checkedIn": "Checked in",
+        "noCheckIn": "No check-in today",
+        "workoutsCount_one": "{{count}} workout this week",
+        "workoutsCount_other": "{{count}} workouts this week",
+        "mealsCount_one": "{{count}} meal today",
+        "mealsCount_other": "{{count}} meals today",
+        "message": "Send a message",
+        "openPlan": "Workout plan",
+        "edit": "Edit details",
+        "feedEmpty": "All quiet",
+        "feedEmptyBody": "Your clients' check-ins, workouts and meals will show up here.",
+        "feed": {
+          "checkin": "checked in",
+          "workout": "finished a workout",
+          "training": "started a workout",
+          "meals_one": "logged a meal",
+          "meals_other": "logged {{count}} meals",
+          "lead": "left their details on your site",
+          "weight": "{{kg}} kg",
+          "minutes_one": "{{count}} min",
+          "minutes_other": "{{count}} min"
+        }
+      }
+    }
+  },
+  "fr": {
+    "trainer": {
+      "common": {
+        "back": "Retour",
+        "close": "Fermer",
+        "save": "Enregistrer",
+        "saving": "Enregistrement…",
+        "cancel": "Annuler",
+        "showPassword": "Afficher le mot de passe",
+        "hidePassword": "Masquer le mot de passe",
+        "notFoundTitle": "Client introuvable",
+        "notSet": "Non renseigné",
+        "kg": "kg",
+        "cm": "cm"
+      },
+      "shell": {
+        "sidebar": "Barre latérale",
+        "navigation": "Navigation principale",
+        "home": "Aller au tableau de bord",
+        "collapse": "Réduire le menu",
+        "expand": "Déplier le menu"
+      },
+      "dash": {
+        "greeting": {
+          "morning": "Bonjour,",
+          "afternoon": "Bon après-midi,",
+          "evening": "Bonsoir,"
+        },
+        "headline": "votre studio",
+        "newPlan": "Nouveau programme",
+        "kpis": "Chiffres clés",
+        "activeOf": "{{active}} actifs sur {{total}}",
+        "checkInsToday": "Check-ins du jour",
+        "workoutsWeek": "Séances terminées cette semaine",
+        "workoutsChart": "Séances terminées sur les 7 derniers jours",
+        "newProspects": "Nouveaux prospects",
+        "openProspects_one": "{{count}} prospect en cours",
+        "openProspects_many": "{{count}} prospects en cours",
+        "openProspects_other": "{{count}} prospects en cours",
+        "filterLabel": "Filtrer les clients",
+        "filter": {
+          "all": "Tous",
+          "attention": "À relancer",
+          "checked": "Check-in fait",
+          "inactive": "Inactifs"
+        },
+        "emptyTitle": "Aucun client pour l'instant",
+        "emptyBody": "Ajoutez votre premier client pour créer son programme et suivre ses progrès.",
+        "noMatchBody": "Essayez une autre recherche ou un autre filtre.",
+        "sideLabel": "Aujourd'hui et actions rapides",
+        "today": "Aujourd'hui",
+        "live": "En direct",
+        "quick": "Actions rapides",
+        "trainingNow": "En séance",
+        "lastActive": "Actif {{when}}",
+        "noActivity": "Pas encore d'activité",
+        "checkedIn": "Check-in fait",
+        "noCheckIn": "Pas de check-in aujourd'hui",
+        "workoutsCount_one": "{{count}} séance cette semaine",
+        "workoutsCount_many": "{{count}} séances cette semaine",
+        "workoutsCount_other": "{{count}} séances cette semaine",
+        "mealsCount_one": "{{count}} repas aujourd'hui",
+        "mealsCount_many": "{{count}} repas aujourd'hui",
+        "mealsCount_other": "{{count}} repas aujourd'hui",
+        "message": "Envoyer un message",
+        "openPlan": "Programme",
+        "edit": "Modifier",
+        "feedEmpty": "Tout est calme",
+        "feedEmptyBody": "Les check-ins, séances et repas de vos clients apparaîtront ici.",
+        "feed": {
+          "checkin": "a fait son check-in",
+          "workout": "a terminé une séance",
+          "training": "a commencé une séance",
+          "meals_one": "a noté un repas",
+          "meals_many": "a noté {{count}} repas",
+          "meals_other": "a noté {{count}} repas",
+          "lead": "a laissé ses coordonnées sur votre site",
+          "weight": "{{kg}} kg",
+          "minutes_one": "{{count}} min",
+          "minutes_many": "{{count}} min",
+          "minutes_other": "{{count}} min"
+        }
+      }
+    }
+  }
+}

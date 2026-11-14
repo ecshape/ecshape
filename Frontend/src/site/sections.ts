@@ -65,6 +65,6 @@ export function sectionOfPath(path: string): SectionKey | null {
 }
 
 /** Paths whose value is the same in every language (layout and photos). */
-export const SHARED_PATHS = ['layout', 'hero.image', 'story.image'];
+export const SHARED_PATHS = ['layout', 'links', 'hero.image', 'story.image'];
 export const isSharedPath = (path: string) =>
   SHARED_PATHS.some((p) => path === p || path.startsWith(p + '.')) || /^results\.cards\.\d+\.image$/.test(path);

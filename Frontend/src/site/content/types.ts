@@ -31,6 +31,8 @@ export interface SiteContent {
   contact: { whatsapp: string; whatsappText: string; instagram: string };
   /** Page layout chosen in Studio -> My site: section order and sections hidden from visitors (same for every language). */
   layout?: SiteLayout;
+  /** Custom targets of buttons / links, keyed by the label's content path (Studio -> My site, shared by every language). See site/links.ts. */
+  links?: Record<string, string>;
 }
 
 export interface SiteLayout { order?: string[]; hidden?: string[] }

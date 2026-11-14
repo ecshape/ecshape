@@ -4,6 +4,7 @@
  */
 import type { SiteContent, SiteLang } from './content/types';
 import { hiddenSections, sectionOrder, type SectionKey } from './sections';
+import { isLinkPath } from './links';
 
 const P = '/site/photos/';
 const esc = (v: unknown) =>
@@ -76,7 +77,7 @@ export interface RenderOptions {
 export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions = {}): string {
   const edit = !!opts.edit;
   /** data-ec-path: inline-editable text (studio only). */
-  const P_ = (path: string) => (edit ? ` data-ec-path="${esc(path)}"` : '');
+  const P_ = (path: string) => (edit ? ` data-ec-path="${esc(path)}"` : '') + (isLinkPath(path) ? ` data-ec-link="${esc(path)}"` : '');
   /** Text wrapped in a span carrying its path (text mixed with other markup). */
   const T = (path: string, value: unknown) => (edit ? `<span data-ec-path="${esc(path)}">${esc(value)}</span>` : esc(value));
   const IMG = (path: string) => (edit ? ` data-ec-img="${esc(path)}"` : '');

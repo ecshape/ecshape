@@ -95,6 +95,29 @@
         "bodyLabel": "מה צריך לשנות",
         "commentLabel": "תגובה",
         "updated": "עודכן {{when}}"
+      },
+      "site": {
+        "togglePages": "הצגה או הסתרה של רשימת החלקים",
+        "toggleInspector": "הצגה או הסתרה של לוח העריכה",
+        "link": "לאן הכפתור מוביל",
+        "linkTip": "אפשר לשנות לאן כל כפתור או קישור באתר מוביל: לטופס, לוואטסאפ, לחלק אחר בעמוד, לעמוד בפורטל או לכתובת חיצונית. השינוי חל על כל השפות.",
+        "links": "קישורים בחלק הזה",
+        "kinds": {
+          "default": "ברירת מחדל ({{what}})",
+          "form": "טופס השארת פרטים",
+          "whatsapp": "וואטסאפ",
+          "instagram": "אינסטגרם",
+          "section": "חלק בעמוד",
+          "page": "עמוד בפורטל",
+          "url": "כתובת חיצונית"
+        },
+        "pages": {
+          "/login": "כניסה לפורטל",
+          "/blog": "בלוג",
+          "/home": "דף הבית"
+        },
+        "urlPh": "https://…",
+        "badUrl": "כתובת לא תקינה. התחילו ב-https://, ב-/ או ב-#."
       }
     }
   },
@@ -194,6 +217,29 @@
         "bodyLabel": "What should change",
         "commentLabel": "Comment",
         "updated": "updated {{when}}"
+      },
+      "site": {
+        "togglePages": "Show or hide the sections list",
+        "toggleInspector": "Show or hide the editing panel",
+        "link": "Where this button goes",
+        "linkTip": "Change where any button or link of the site leads: the lead form, WhatsApp, another part of the page, a portal page or an external address. Applies to every language.",
+        "links": "Links in this section",
+        "kinds": {
+          "default": "Default ({{what}})",
+          "form": "Lead form",
+          "whatsapp": "WhatsApp",
+          "instagram": "Instagram",
+          "section": "Section of the page",
+          "page": "Portal page",
+          "url": "External address"
+        },
+        "pages": {
+          "/login": "Portal sign-in",
+          "/blog": "Blog",
+          "/home": "Home page"
+        },
+        "urlPh": "https://…",
+        "badUrl": "Invalid address. Start with https://, / or #."
       }
     }
   },
@@ -293,6 +339,29 @@
         "bodyLabel": "Ce qu'il faut changer",
         "commentLabel": "Commentaire",
         "updated": "mis à jour {{when}}"
+      },
+      "site": {
+        "togglePages": "Afficher ou masquer la liste des sections",
+        "toggleInspector": "Afficher ou masquer le panneau d'édition",
+        "link": "Où mène ce bouton",
+        "linkTip": "Changez la destination de n'importe quel bouton ou lien du site : le formulaire, WhatsApp, une autre partie de la page, une page du portail ou une adresse externe. S'applique à toutes les langues.",
+        "links": "Liens de cette section",
+        "kinds": {
+          "default": "Par défaut ({{what}})",
+          "form": "Formulaire de contact",
+          "whatsapp": "WhatsApp",
+          "instagram": "Instagram",
+          "section": "Section de la page",
+          "page": "Page du portail",
+          "url": "Adresse externe"
+        },
+        "pages": {
+          "/login": "Connexion au portail",
+          "/blog": "Blog",
+          "/home": "Accueil"
+        },
+        "urlPh": "https://…",
+        "badUrl": "Adresse invalide. Commencez par https://, / ou #."
       }
     }
   }

@@ -131,14 +131,25 @@
     radial-gradient(circle at 1px 1px, hsl(var(--foreground) / .06) 1px, transparent 0) 0 0 / 22px 22px,
     hsl(var(--muted) / .45);
 }
+/* #11: the frame is rendered at the real device width and scaled down to fit this box */
+.ec-ms-fit { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; justify-content: center; }
 .ec-ms-device {
-  position: relative; flex: 1; min-height: 0; width: 100%; max-width: 100%;
+  position: relative; flex: none; max-width: 100%;
   border-radius: 14px; overflow: hidden; background: #0b0a08;
   box-shadow: 0 0 0 1px hsl(var(--border)), 0 30px 80px -30px rgb(0 0 0 / .6);
   transition: width .45s var(--ec-motion-spring, ease);
 }
-.ec-ms-stage.is-mobile .ec-ms-device { border-radius: 28px; box-shadow: 0 0 0 8px hsl(var(--card)), 0 0 0 9px hsl(var(--border)), 0 30px 80px -30px rgb(0 0 0 / .6); margin-block: 8px; }
-.ec-ms-device iframe { display: block; width: 100%; height: 100%; border: 0; }
+.ec-ms-device iframe { position: absolute; top: 0; left: 0; transform-origin: 0 0; max-width: none; }
+.ec-ms-scale { font-variant-numeric: tabular-nums; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: hsl(var(--background) / .7); }
+/* Collapsible side panels */
+.ec-ms-body { transition: grid-template-columns .4s var(--ec-motion-spring, ease); }
+.ec-ms-studio.no-side .ec-ms-side, .ec-ms-studio.no-insp .ec-ms-inspector { display: none; }
+.ec-ms-studio.no-side .ec-ms-body { grid-template-columns: minmax(0, 1fr) 340px; }
+.ec-ms-studio.no-insp .ec-ms-body { grid-template-columns: 248px minmax(0, 1fr); }
+.ec-ms-studio.no-side.no-insp .ec-ms-body { grid-template-columns: minmax(0, 1fr); }
+.ec-ms-panel-btn.is-on { color: hsl(var(--primary)); background: hsl(var(--primary) / .1); }
+.ec-ms-stage.is-mobile .ec-ms-device { border-radius: 28px; box-shadow: 0 0 0 8px hsl(var(--card)), 0 0 0 9px hsl(var(--border)), 0 30px 80px -30px rgb(0 0 0 / .6); }
+.ec-ms-device iframe { display: block; border: 0; }
 .ec-ms-loading {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px;
   color: hsl(var(--muted-foreground)); font-size: 13px; background: hsl(var(--background));
@@ -240,10 +251,16 @@
 /* ============================================================ responsive */
 @media (max-width: 1180px) {
   .ec-ms-body { grid-template-columns: 210px minmax(0, 1fr) 300px; }
+  .ec-ms-studio.no-side .ec-ms-body { grid-template-columns: minmax(0, 1fr) 300px; }
+  .ec-ms-studio.no-insp .ec-ms-body { grid-template-columns: 210px minmax(0, 1fr); }
+  .ec-ms-studio.no-side.no-insp .ec-ms-body { grid-template-columns: minmax(0, 1fr); }
   .ec-ms-agent .ec-ms-label, .ec-ms-exit .ec-ms-label { display: none; }
 }
 @media (max-width: 900px) {
-  .ec-ms-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .ec-ms-body, .ec-ms-studio.no-side .ec-ms-body, .ec-ms-studio.no-insp .ec-ms-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .ec-ms-studio.no-side .ec-ms-body { grid-template-rows: minmax(0, 1fr); }
+  .ec-ms-studio.no-insp .ec-ms-inspector { display: block; }
+  .ec-ms-insp-btn { display: none; }
   .ec-ms-side { border-inline-end: 0; border-bottom: 1px solid hsl(var(--border)); max-height: 30vh; }
   .ec-ms-inspector {
     position: fixed; inset-inline: 0; bottom: 0; max-height: 62vh; border-inline-start: 0; border-top: 1px solid hsl(var(--border));
@@ -253,6 +270,10 @@
   .ec-ms-inspector.is-open { transform: none; }
   .ec-ms-bar-mid { order: 3; width: 100%; justify-content: space-between; }
   .ec-ms-bar-title .ec-ms-status { display: none; }
+  .ec-ms-bar-end { min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; padding-block: 2px; }
+  .ec-ms-bar-end::-webkit-scrollbar { display: none; }
+  .ec-ms-bar-end > * { flex: none; }
+  .ec-ms-tip { flex-wrap: wrap; justify-content: center; text-align: center; }
 }
 
 @keyframes ecMsIn { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
@@ -263,6 +284,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ec-ms-studio, .ec-studio-inspector-inner, .ec-ms-seclist li, .ec-studio-photo-frame img { animation: none; }
-  .ec-ms-device, .ec-ms-inspector, .ec-studio-collapse, .ec-studio-chev { transition: none; }
+  .ec-ms-device, .ec-ms-inspector, .ec-studio-collapse, .ec-studio-chev, .ec-ms-body { transition: none; }
   .ec-ms-badge.is-live i { animation: none; }
 }

@@ -13,6 +13,9 @@ import type { SiteContent } from '@/site/content';
 import { isMultilinePath, type EcSelect } from '@/site/editProtocol';
 import { SITE_SECTIONS, isSharedPath } from '@/site/sections';
 import { AgentDraft } from '@/components/studio/AgentDraft';
+import { InfoTip } from '@/components/ui/info-tip';
+import { LINKABLE, LINK_PAGES, cleanTarget, isLinkPath, kindOf, type LinkKind } from '@/site/links';
+import '@/i18n/ticketsStudio';
 
 type Json = unknown;
 const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -155,6 +158,98 @@ export const ImageField: React.FC<ImageFieldProps> = ({ value, original, shared,
         </button>
       )}
       {shared && <p className="ec-studio-note">{t('mysite.studio.photo.shared')}</p>}
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ link target (#12) */
+
+const ANCHORS = ['hero', ...SITE_SECTIONS.filter((s) => s.anchor).map((s) => s.anchor as string)];
+const KINDS: LinkKind[] = ['default', 'form', 'whatsapp', 'instagram', 'section', 'page', 'url'];
+
+const LinkField: React.FC<{ path: string; content: SiteContent; onSet: EditorCtx['onSet']; sectionLabel?: (key: string) => string; label?: string }> = ({ path, content, onSet, sectionLabel, label }) => {
+  const { t } = useTranslation();
+  const links = (content.links || {}) as Record<string, string>;
+  const value = links[path] || '';
+  const kind = kindOf(value);
+  const [url, setUrl] = useState(kind === 'url' ? value : '');
+  const [bad, setBad] = useState(false);
+  useEffect(() => {
+    setUrl(kindOf(value) === 'url' ? value : '');
+    setBad(false);
+  }, [path, value]);
+  const write = (v: string) => {
+    const next = { ...links };
+    if (v) next[path] = v;
+    else delete next[path];
+    onSet('links', next);
+  };
+  const sectionName = (a: string) => {
+    const key = SITE_SECTIONS.find((s) => s.anchor === a)?.key || a;
+    return sectionLabel ? sectionLabel(key) : humanize(key);
+  };
+  const def = LINKABLE[path];
+  return (
+    <div className="ec-studio-field ec-studio-link">
+      <span className="ec-studio-label">
+        <Link2 className="h-3.5 w-3.5" />
+        {label || t('tix.site.link')}
+        {!label && <InfoTip>{t('tix.site.linkTip')}</InfoTip>}
+        {value && <i className="ec-studio-dot" aria-hidden />}
+      </span>
+      <select
+        className="ec-studio-input"
+        value={kind}
+        aria-label={label || t('tix.site.link')}
+        onChange={(e) => {
+          const k = e.target.value as LinkKind;
+          if (k === 'default') write('');
+          else if (k === 'form' || k === 'whatsapp' || k === 'instagram') write(k);
+          else if (k === 'section') write(`#${ANCHORS[1] || 'hero'}`);
+          else if (k === 'page') write(LINK_PAGES[0]);
+          else setUrl(kind === 'url' ? value : '');
+          if (k === 'url' && kind !== 'url') onSet('links', { ...links, [path]: 'https://' });
+        }}
+      >
+        {KINDS.map((k) => (
+          <option key={k} value={k}>
+            {k === 'default' ? t('tix.site.kinds.default', { what: t(`tix.site.kinds.${def}`) }) : t(`tix.site.kinds.${k}`)}
+          </option>
+        ))}
+      </select>
+      {kind === 'section' && (
+        <select className="ec-studio-input" value={value.slice(1)} onChange={(e) => write(`#${e.target.value}`)} aria-label={t('tix.site.kinds.section')}>
+          {ANCHORS.map((a) => <option key={a} value={a}>{sectionName(a)}</option>)}
+        </select>
+      )}
+      {kind === 'page' && (
+        <select className="ec-studio-input" value={(LINK_PAGES as readonly string[]).includes(value) ? value : LINK_PAGES[0]} onChange={(e) => write(e.target.value)} aria-label={t('tix.site.kinds.page')}>
+          {LINK_PAGES.map((pg) => <option key={pg} value={pg}>{t(`tix.site.pages.${pg}`)}</option>)}
+        </select>
+      )}
+      {kind === 'url' && (
+        <>
+          <input
+            className="ec-studio-input"
+            dir="ltr"
+            value={url}
+            placeholder={t('tix.site.urlPh')}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setBad(false);
+            }}
+            onBlur={() => {
+              const c = cleanTarget(url);
+              if (c && c !== 'https://') write(c);
+              else setBad(!!url.trim() && url.trim() !== 'https://');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+          />
+          {bad && <p className="ec-studio-error">{t('tix.site.badUrl')}</p>}
+        </>
+      )}
     </div>
   );
 };
@@ -380,6 +475,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
           <>
             <ValueEditor path={select.path} ctx={ctx} label={t('mysite.studio.content')} />
             {isMultilinePath(select.path) && <p className="ec-studio-note">{t('mysite.studio.multiline')}</p>}
+            {isLinkPath(select.path) && <LinkField path={select.path} content={content} onSet={p.onSet} sectionLabel={p.sectionLabel} />}
           </>
         )}
 
@@ -411,6 +507,21 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
                 {p.hidden.has(select.path) ? t('mysite.studio.show') : t('mysite.studio.hide')}
               </button>
             )}
+            {(() => {
+              const groups = (sectionDef ? sectionDef.groups : [select.path]) as string[];
+              const paths = Object.keys(LINKABLE).filter((lp) => groups.some((g) => lp.startsWith(`${g}.`)));
+              return paths.length ? (
+                <div className="ec-studio-group">
+                  <div className="ec-studio-group-head">
+                    <span>{t('tix.site.links')}</span>
+                    <InfoTip>{t('tix.site.linkTip')}</InfoTip>
+                  </div>
+                  {paths.map((lp) => (
+                    <LinkField key={lp} path={lp} content={content} onSet={p.onSet} sectionLabel={p.sectionLabel} label={String(getIn(content, parsePath(lp)) ?? humanize(lp))} />
+                  ))}
+                </div>
+              ) : null;
+            })()}
             {(sectionDef ? sectionDef.groups : [select.path as keyof SiteContent]).map((g) => (
               <ValueEditor key={g} path={g} ctx={ctx} />
             ))}

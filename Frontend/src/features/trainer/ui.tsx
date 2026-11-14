@@ -242,6 +242,31 @@ export const PageTitle: React.FC<{ eyebrow?: React.ReactNode; title: React.React
       </h1>
       {lead && <p className="tp-rise mt-3 max-w-xl text-muted-foreground" style={{ ['--i' as string]: 2 }}>{lead}</p>}
     </div>
-    {actions && <div className="tp-rise flex flex-wrap items-center gap-2" style={{ ['--i' as string]: 2 }}>{actions}</div>}
+    {actions && <div className="tp-rise tr-actions flex flex-wrap items-center gap-2" style={{ ['--i' as string]: 2 }}>{actions}</div>}
   </header>
+);
+
+/**
+ * Secondary page action (#23): icon + label on wide screens, icon-only square on phones (label kept for screen readers
+ * and as a tooltip). `compact` keeps it icon-only at every size (utility actions like export/import).
+ */
+export const ActionBtn: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  compact?: boolean;
+  className?: string;
+}> = ({ icon: Icon, label, onClick, disabled, compact, className }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    aria-label={label}
+    title={label}
+    className={cn('tp-btn tp-btn--ghost tp-btn--sm tp-press tr-act', compact && 'tr-act--compact', className)}
+  >
+    <Icon className="h-4 w-4" aria-hidden />
+    <span className="tr-act-label" aria-hidden>{label}</span>
+  </button>
 );

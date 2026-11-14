@@ -1,7 +1,7 @@
 /* Trainer portal: shell, cockpit and builders. Extends the trainee kit (tp-*) in features/trainee/trainee.css.
    Logical properties only (RTL first). Motion: transform / opacity / clip-path / CSS vars, never layout. */
 
-.tr-root {
+.tr-root, body:has(.tr-shell) :is(.tp-sheet, .tr-xs-panel) {
   --tr-side-w: 268px;
   --tr-rail-w: 88px;
   --tr-bar-h: 4.25rem;
@@ -465,6 +465,95 @@ body:has(.tr-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
 @media (prefers-reduced-motion: reduce) {
   .tr-root .tp-rise, .tr-root .tp-pop, .tr-root .tp-screen, .tr-root .ec-stagger > * { animation: none !important; }
   .tr-root .tp-press, .tr-root .ec-btn--fill::before { transition: none !important; }
+}
+
+/* ------------------------------------------------------------------ page actions: icon-only on phones (#23) */
+.tr-act-label { display: inline; }
+.tr-act--compact { width: 2.75rem; padding: 0 !important; }
+.tr-act--compact .tr-act-label { display: none; }
+@media (max-width: 639px) {
+  .tr-actions { width: 100%; flex-wrap: nowrap; }
+  .tr-act { width: 2.75rem; flex: none; padding: 0 !important; }
+  .tr-act .tr-act-label { display: none; }
+}
+
+/* ------------------------------------------------------------------ banks: search, filters, chips, cards (#15 #16 #23) */
+.tr-sbox, .tr-filter {
+  display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding-inline: .9rem; border-radius: 9999px;
+  background: hsl(var(--foreground) / .05); box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .06);
+  transition: box-shadow var(--tr-fast);
+}
+.tr-sbox:focus-within, .tr-filter:focus-within { box-shadow: inset 0 0 0 2px hsl(var(--primary)); }
+.tr-sbox input { min-width: 0; flex: 1; background: transparent; outline: none; font-size: .95rem; }
+.tr-filter { min-width: 0; padding-inline: .75rem .5rem; }
+.tr-filter select { min-width: 0; flex: 1; height: 2.75rem; background: transparent; outline: none; font-size: .85rem; font-weight: 600; text-overflow: ellipsis; }
+@media (min-width: 1024px) { .tr-filter { width: 11rem; } }
+.tr-chips { display: flex; flex: 1; min-width: 0; gap: .4rem; overflow-x: auto; padding-block: .1rem; scrollbar-width: none; mask-image: linear-gradient(to var(--tr-end, right), #000 calc(100% - 1.5rem), transparent); }
+[dir="rtl"] .tr-chips { --tr-end: left; }
+.tr-chips::-webkit-scrollbar { display: none; }
+@media (min-width: 1024px) { .tr-chips { flex-wrap: wrap; overflow: visible; mask-image: none; } }
+.tr-chip {
+  display: inline-flex; flex: none; align-items: center; gap: .4rem; min-height: 2.25rem; padding-inline: .8rem; border-radius: 9999px;
+  font-size: .8rem; font-weight: 600; line-height: 1; color: hsl(var(--muted-foreground)); background: hsl(var(--foreground) / .05);
+  transition: background-color var(--tr-fast), color var(--tr-fast);
+}
+.tr-chip > span { font-size: .7rem; font-variant-numeric: tabular-nums; opacity: .7; }
+.tr-chip:hover { color: hsl(var(--foreground)); background: hsl(var(--foreground) / .09); }
+.tr-chip[aria-pressed="true"] { color: hsl(var(--primary-foreground)); background: hsl(var(--primary)); }
+.tr-chip:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.tr-ex-grid { display: grid; align-items: start; gap: .65rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container trmain (min-width: 700px) { .tr-ex-grid { gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container trmain (min-width: 1150px) { .tr-ex-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tr-ex-grid .ec-excard > button:focus-visible { box-shadow: inset 0 0 0 2px hsl(var(--ring)); }
+.tr-card-ibtn {
+  display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; line-height: 0;
+  background: rgba(255, 255, 255, .92); color: #262626; box-shadow: 0 4px 14px -6px rgba(0, 0, 0, .5);
+  transition: transform var(--tr-fast) var(--tr-ease), background-color var(--tr-fast);
+}
+.tr-card-ibtn:hover { background: #fff; }
+.tr-card-ibtn:active { transform: scale(.95); }
+.tr-card-ibtn.text-destructive { color: hsl(var(--destructive)); }
+
+/* Wider sheet for rich content (templates, muscle groups) */
+@media (min-width: 640px) { .tp-sheet:has(.tr-wide) { width: min(46rem, calc(100vw - 2rem)); } }
+
+/* Exercise detail panel: bottom sheet on phones, side panel at the inline end on wide screens (#16) */
+.tr-xs-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); }
+.tr-xs-overlay[data-state="open"] { animation: tpFade .2s ease both; }
+.tr-xs-panel {
+  position: fixed; z-index: 61; inset-inline: 0; bottom: 0; max-height: 92dvh; display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 1.5rem 1.5rem 0 0; background: hsl(var(--card)); box-shadow: 0 -30px 60px -30px rgba(0, 0, 0, .7);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tr-xs-panel[data-state="open"] { animation: trXsUp .24s var(--tr-ease) both; }
+@keyframes trXsUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (min-width: 768px) {
+  .tr-xs-panel { inset-block: 0; inset-inline: auto 0; width: min(36rem, 100vw); max-height: none; border-radius: 0; }
+  .tr-xs-panel[data-state="open"] { animation-name: trXsSide; }
+  @keyframes trXsSide { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  [dir="rtl"] .tr-xs-panel[data-state="open"], .tr-xs-panel[dir="rtl"][data-state="open"] { animation-name: trXsSideRtl; }
+  @keyframes trXsSideRtl { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+.tr-xs-close { position: absolute; inset-inline-end: .75rem; top: .75rem; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 9999px; line-height: 0; background: rgba(255, 255, 255, .92); color: #262626; box-shadow: 0 4px 14px -6px rgba(0, 0, 0, .5); }
+
+/* Templates (#15) */
+.tr-tpl-grid { display: grid; gap: .65rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); }
+.tr-tpl-card { display: flex; flex-direction: column; padding: 1rem; }
+.tr-tpl-days { display: grid; gap: .65rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+.tr-tpl-client { display: flex; flex: 1; align-items: center; gap: .5rem; min-height: 2.75rem; padding-inline: .9rem .5rem; border-radius: 9999px; background: hsl(var(--foreground) / .06); }
+.tr-tpl-client select { min-width: 0; flex: 1; height: 2.75rem; background: transparent; outline: none; font-weight: 600; font-size: .9rem; }
+
+/* Muscle groups (#18) */
+.tr-mg-names { display: grid; gap: .6rem; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .tr-mg-names { grid-template-columns: 1fr 1fr auto; align-items: end; } .tr-mg-card[data-editing] .tr-mg-names { grid-template-columns: 1fr 1fr; } }
+.tr-mg-list { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+.tr-mg-card { display: flex; align-items: center; gap: .6rem; padding: .7rem .75rem; }
+.tr-mg-card[data-editing] { flex-wrap: wrap; }
+.tr-mg-card[data-editing] .tr-mg-names { flex: 1 1 14rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tr-xs-panel, .tr-xs-overlay { animation: none !important; }
+  .tr-chip, .tr-card-ibtn, .tr-sbox, .tr-filter { transition: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

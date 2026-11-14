@@ -1174,6 +1174,7 @@ def _meal_bank_library_fields(data: Dict[str, Any]) -> Dict[str, Any]:
     Only keys present in ``data`` are returned, so partial updates stay partial.
     """
     import json as _json
+    import re as _re
 
     out: Dict[str, Any] = {}
     for key in _MEAL_BANK_LIBRARY_KEYS:
@@ -1187,7 +1188,9 @@ def _meal_bank_library_fields(data: Dict[str, Any]) -> Dict[str, Any]:
             value = credit_string(value)
         elif key == "image_url":
             value = value.strip() if isinstance(value, str) else None
-            if value and not value.startswith("https://"):
+            # https URLs, or a photo uploaded through POST /api/files/food-photo (served by this API).
+            uploaded = bool(value) and _re.fullmatch(r"/files/media/food_photos/food_\d+_[0-9a-f]{32}\.(jpg|png|webp|gif)", value) is not None
+            if value and not value.startswith("https://") and not uploaded:
                 raise HTTPException(status_code=400, detail="image_url must be an https URL")
             value = value or None
         elif key == "nutriscore":

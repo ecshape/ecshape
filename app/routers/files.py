@@ -51,6 +51,49 @@ async def serve_exercise_image(
     
     return FileResponse(file_path)
 
+FOOD_PHOTO_EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif"}
+
+
+def _food_photo_dir(file_service: FileService) -> str:
+    return os.path.join(file_service.base_upload_path, "food_photos")
+
+
+@router.post("/food-photo", status_code=status.HTTP_201_CREATED)
+async def upload_food_photo(
+    file: UploadFile = File(...),
+    current_user: UserResponse = Depends(get_current_user),
+    file_service: FileService = Depends(get_file_service),
+):
+    """Upload a photo for a food-bank item (trainers and admins). Returns a public URL path to store in image_url."""
+    if current_user.role not in (UserRole.TRAINER, UserRole.ADMIN):
+        raise HTTPException(status_code=403, detail="Only trainers can upload food photos")
+    is_valid, error_message = await file_service.validate_file(file, "image")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_message)
+    content = await file.read()
+    import magic  # same detector FileService uses
+    import uuid
+    ext = FOOD_PHOTO_EXT.get(magic.from_buffer(content, mime=True))
+    if not ext:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+    directory = _food_photo_dir(file_service)
+    os.makedirs(directory, exist_ok=True)
+    filename = f"food_{current_user.id}_{uuid.uuid4().hex}{ext}"
+    with open(os.path.join(directory, filename), "wb") as fh:
+        fh.write(content)
+    return {"filename": filename, "url": f"/files/media/food_photos/{filename}"}
+
+
+@router.get("/media/food_photos/{filename}")
+async def serve_food_photo(filename: str, file_service: FileService = Depends(get_file_service)):
+    """Serve food-bank photos publicly (like exercise images) so <img> tags work without auth headers."""
+    safe = os.path.basename(filename)
+    path = os.path.join(_food_photo_dir(file_service), safe)
+    if safe != filename or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
+
+
 @router.get("/media/{file_type}/{filename}")
 async def serve_media_file(
     file_type: str,

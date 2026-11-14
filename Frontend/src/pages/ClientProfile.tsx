@@ -258,6 +258,26 @@ const ClientProfile = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId, location.state]);
 
+  // Live: a weigh-in / check-in / workout from this client refreshes the weigh-ins quietly (r2 cross R2)
+  useEffect(() => {
+    if (!clientId) return;
+    const onLive = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch(`${API_BASE_URL}/progress/?client_id=${clientId}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        if (!res.ok) return;
+        const data = await res.json();
+        setProgressEntries(
+          (Array.isArray(data) ? data : []).map((e: ProgressEntry & { date?: string }) => ({ ...e, recorded_at: e.recorded_at || e.date || e.created_at || '' })),
+        );
+      } catch {
+        /* next event or reload */
+      }
+    };
+    window.addEventListener('ec:live', onLive);
+    return () => window.removeEventListener('ec:live', onLive);
+  }, [clientId]);
+
   const sessionsQ = useQuery({
     queryKey: ['trainer', 'client-sessions', clientId],
     enabled: !!clientId && isStaff,

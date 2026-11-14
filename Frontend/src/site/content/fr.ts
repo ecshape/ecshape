@@ -159,7 +159,7 @@ export const fr: SiteContent = {
     name: 'Nom complet', phone: 'Téléphone', email: 'E-mail (facultatif)', goal: 'Mon objectif', program: 'Formule souhaitée', message: 'Quelque chose à me dire ?',
     messagePh: 'Combien de fois tu t’entraînes aujourd’hui, blessures, disponibilités…',
     submit: 'Envoyer', sending: 'Envoi…', success: 'C’est reçu !', successSub: 'Je te recontacte rapidement pour fixer l’appel découverte.',
-    error: 'Un problème est survenu. Réessaie ou écris-moi sur WhatsApp.', required: 'Indique ton nom et un téléphone ou un e-mail.',
+    error: 'Un problème est survenu. Réessaie ou écris-moi sur WhatsApp.', required: 'Indique ton nom et un téléphone ou un e-mail.', invalidEmail: 'Cette adresse e-mail ne semble pas valide.',
     privacy: 'Tes coordonnées servent uniquement à te recontacter au sujet du coaching.',
     goals: [
       { value: 'weight_loss', label: 'Perdre du poids' }, { value: 'muscle', label: 'Prendre du muscle' },

@@ -356,3 +356,8 @@ html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
   .ec-qa-pick-bar strong { display: none; }
   .ec-qa-pick-cancel { margin-inline-start: auto; }
 }
+
+/* Phones: while the QA card is open the edge tab hides (it peeked past the card, r2 site F7); the card has its own close */
+@media (max-width: 640px) {
+  .ec-qa-capture:has(.ec-qa-capture-modal) .ec-qa-fab-stack { visibility: hidden; }
+}

@@ -300,10 +300,12 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live' 
     const emailInput = form.querySelector('input[name="email"]');
     if (String(data.email || '').trim() && emailInput && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(String(data.email).trim())) {
       // a typo in the email would lose the lead: say so (browser-localized message) and focus the field
-      msg.textContent = emailInput.validationMessage || btn.dataset.required;
+      msg.textContent = btn.dataset.invalidEmail || btn.dataset.required;
+      emailInput.setAttribute('aria-invalid', 'true');
       emailInput.focus();
       return;
     }
+    if (emailInput) emailInput.removeAttribute('aria-invalid');
     if (!String(data.name || '').trim() || !(String(data.phone || '').trim() || String(data.email || '').trim())) {
       msg.textContent = btn.dataset.required;
       return;

@@ -185,7 +185,19 @@
       "failed_to_load_system_data": "טעינת נתוני המערכת נכשלה",
       "tests_completed": "הבדיקות הסתיימו",
       "failed_to_run_tests": "הרצת הבדיקות נכשלה",
-      "action_failed": "הפעולה נכשלה"
+      "action_failed": "הפעולה נכשלה",
+      "refresh": "רענון",
+      "unknown": "לא ידוע",
+      "uptime": "זמן פעילות",
+      "ofTotalUsers": "מתוך {{count}} משתמשים",
+      "never": "אף פעם",
+      "runningOf": "{{running}} פעילים מתוך {{total}}",
+      "health": {
+        "healthy": "תקין",
+        "warning": "אזהרה",
+        "critical": "קריטי",
+        "degraded": "ירידה בביצועים"
+      }
     },
     "studio": {
       "prospects": {
@@ -250,6 +262,27 @@
         "weightRange": "משקל בין 20 ל-400 ק״ג",
         "stepsRange": "עד 100,000 צעדים"
       }
+    },
+    "exerciseBank": {
+      "nameRequired": "שם התרגיל הוא שדה חובה",
+      "muscleRequired": "קבוצת שרירים היא שדה חובה"
+    },
+    "mealHistory": {
+      "title": "היסטוריית ארוחות יומית"
+    },
+    "trainerDashboard": {
+      "err": {
+        "username": "שם המשתמש כבר תפוס",
+        "emailTaken": "האימייל כבר רשום במערכת",
+        "email": "כתובת האימייל לא תקינה",
+        "password": "הסיסמה לא תקינה"
+      }
+    },
+    "notFound": {
+      "backHome": "חזרה לדף הבית"
+    },
+    "login": {
+      "backToSite": "חזרה לאתר ECshape"
     }
   },
   "en": {
@@ -438,7 +471,19 @@
       "failed_to_load_system_data": "Failed to load system data",
       "tests_completed": "Tests Completed",
       "failed_to_run_tests": "Failed to run tests",
-      "action_failed": "Action failed"
+      "action_failed": "Action failed",
+      "refresh": "Refresh",
+      "unknown": "Unknown",
+      "uptime": "Uptime",
+      "ofTotalUsers": "of {{count}} total users",
+      "never": "Never",
+      "runningOf": "{{running}} running out of {{total}}",
+      "health": {
+        "healthy": "Healthy",
+        "warning": "Warning",
+        "critical": "Critical",
+        "degraded": "Degraded"
+      }
     },
     "studio": {
       "prospects": {
@@ -503,6 +548,27 @@
         "weightRange": "Weight between 20 and 400 kg",
         "stepsRange": "Up to 100,000 steps"
       }
+    },
+    "exerciseBank": {
+      "nameRequired": "Exercise name is required",
+      "muscleRequired": "Muscle group is required"
+    },
+    "mealHistory": {
+      "title": "Daily meal history"
+    },
+    "trainerDashboard": {
+      "err": {
+        "username": "This username is already taken",
+        "emailTaken": "This email is already registered",
+        "email": "This email address is not valid",
+        "password": "The password is not valid"
+      }
+    },
+    "notFound": {
+      "backHome": "Back to the home page"
+    },
+    "login": {
+      "backToSite": "Back to the ECshape site"
     }
   },
   "fr": {
@@ -691,7 +757,19 @@
       "failed_to_load_system_data": "Impossible de charger les données système",
       "tests_completed": "Tests terminés",
       "failed_to_run_tests": "Échec du lancement des tests",
-      "action_failed": "L’action a échoué"
+      "action_failed": "L’action a échoué",
+      "refresh": "Actualiser",
+      "unknown": "Inconnu",
+      "uptime": "Disponibilité",
+      "ofTotalUsers": "sur {{count}} utilisateurs",
+      "never": "Jamais",
+      "runningOf": "{{running}} actifs sur {{total}}",
+      "health": {
+        "healthy": "Bon",
+        "warning": "Attention",
+        "critical": "Critique",
+        "degraded": "Dégradé"
+      }
     },
     "studio": {
       "prospects": {
@@ -756,6 +834,27 @@
         "weightRange": "Poids entre 20 et 400 kg",
         "stepsRange": "Jusqu’à 100 000 pas"
       }
+    },
+    "exerciseBank": {
+      "nameRequired": "Le nom de l’exercice est obligatoire",
+      "muscleRequired": "Le groupe musculaire est obligatoire"
+    },
+    "mealHistory": {
+      "title": "Historique quotidien des repas"
+    },
+    "trainerDashboard": {
+      "err": {
+        "username": "Ce nom d’utilisateur est déjà pris",
+        "emailTaken": "Cet e-mail est déjà enregistré",
+        "email": "Cette adresse e-mail n’est pas valide",
+        "password": "Le mot de passe n’est pas valide"
+      }
+    },
+    "notFound": {
+      "backHome": "Retour à l’accueil"
+    },
+    "login": {
+      "backToSite": "Retour au site ECshape"
     }
   }
 }

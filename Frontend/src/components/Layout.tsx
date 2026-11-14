@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Dumbbell, Home, Utensils, Target, TrendingUp, LogOut, User, Settings, MessageSquare, ChevronDown,
   Users2, Globe2, Megaphone, Bug, ExternalLink, SlidersHorizontal,
@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { studioApi } from '@/lib/studioApi';
 import TraineeShell from '@/features/trainee/TraineeShell';
 import TrainerShell from '@/features/trainer/TrainerShell';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { API_BASE_URL } from '@/config/api';
 
@@ -81,6 +81,15 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
     staleTime: 10_000,
   });
   const unreadChats = (convs ?? []).reduce((n, c) => n + (c.unread_count || 0), 0);
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const onRead = () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['trainee', 'conversations'] });
+    };
+    window.addEventListener('ec:chat-read', onRead);
+    return () => window.removeEventListener('ec:chat-read', onRead);
+  }, [queryClient]);
 
   const go = (href: string) => navigate(href);
 

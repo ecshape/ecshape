@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class DailyCheckInBase(BaseModel):
     date: datetime
@@ -18,6 +18,16 @@ class DailyCheckInCreate(DailyCheckInBase):
     steps: Optional[int] = Field(None, ge=0, le=100000)
     hunger_level: Optional[int] = Field(None, ge=1, le=10)
     sleep_hours: Optional[int] = Field(None, ge=0, le=24)
+
+    @field_validator("date")
+    @classmethod
+    def _recent_date(cls, v: datetime) -> datetime:
+        # a check-in is for today or a recent day, never years back or in the future (r2 N3)
+        naive = v.replace(tzinfo=None) if v.tzinfo else v
+        now = datetime.utcnow()
+        if naive > now + timedelta(days=2) or naive < now - timedelta(days=366):
+            raise ValueError("check-in date out of range")
+        return v
 
 class DailyCheckInUpdate(BaseModel):
     weight: Optional[float] = Field(None, ge=20, le=400)

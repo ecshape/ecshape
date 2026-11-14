@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { parseDate } from '@/features/trainee/format';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -186,11 +187,13 @@ const QaPage = () => {
   };
 
   const locale = i18n.language?.startsWith('he') ? 'he-IL' : i18n.language?.startsWith('fr') ? 'fr-FR' : 'en-GB';
-  const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+  const fmt = (iso?: string | null) => (iso ? (parseDate(iso) ?? new Date(NaN)).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
   const ago = (iso?: string | null) => {
     if (!iso) return '';
-    const mins = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+    const mins = Math.max(1, Math.round((Date.now() - (parseDate(iso)?.getTime() ?? Date.now())) / 60000)); // UTC-aware (r2 R4)
+    const base = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+    // Hebrew short forms append "(1)" / "(2)": drop it (r2 R3)
+    const rtf = { format: (v: number, u: Intl.RelativeTimeFormatUnit) => base.format(v, u).replace(/\s*\(\d+\)\s*$/, '') };
     if (mins < 60) return rtf.format(-mins, 'minute');
     if (mins < 60 * 24) return rtf.format(-Math.round(mins / 60), 'hour');
     return rtf.format(-Math.round(mins / 1440), 'day');

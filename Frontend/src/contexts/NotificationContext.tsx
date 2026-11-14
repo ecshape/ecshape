@@ -58,6 +58,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const lastLiveRefresh = useRef(0);
+  const trailingRefresh = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -162,11 +163,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             }
             // Anything live (a workout finished, a meal, a weigh-in, a chat message, a QA ticket...) refreshes the
             // data on screen right away instead of waiting for the next poll (A2A cross M4); throttled.
+            // leading refresh, plus one trailing refresh so a second event inside the window is not lost (r2 R5)
             const now = Date.now();
-            if (now - lastLiveRefresh.current > 2500) {
-              lastLiveRefresh.current = now;
+            const refresh = () => {
+              lastLiveRefresh.current = Date.now();
               queryClient.invalidateQueries({ refetchType: 'active' });
+              // screens that load with plain fetch (client profile) listen for this
+              window.dispatchEvent(new CustomEvent('ec:live', { detail: { type: data.type, event: data.event } }));
+            };
+            if (now - lastLiveRefresh.current > 2500) refresh();
+            else if (!trailingRefresh.current) {
+              trailingRefresh.current = window.setTimeout(() => {
+                trailingRefresh.current = 0;
+                refresh();
+              }, 2500 - (now - lastLiveRefresh.current));
             }
+            if (data.type === 'live_refresh') return;
             if (data.type === 'new_notification') {
               refetchServerNotifications();
               return;

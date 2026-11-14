@@ -445,7 +445,7 @@ ${page}
         <fieldset class="field"><legend>${esc(c.form.program)}</legend><div class="choice">${c.form.programs.map((p, i) => `<label><input type="radio" name="program" value="${esc(p.value)}"${i === 0 ? ' checked' : ''}><span>${esc(p.label)}</span></label>`).join('')}</div></fieldset>
         <label class="field"><span>${esc(c.form.message)}</span><textarea name="message" rows="3" maxlength="2000" placeholder="${esc(c.form.messagePh)}"></textarea></label>
         <p class="form-msg" role="status" aria-live="polite"></p>
-        <button type="submit" class="btn btn--primary btn--block" data-icon="arrow" data-sending="${esc(c.form.sending)}" data-error="${esc(c.form.error)}" data-required="${esc(c.form.required)}">${esc(c.form.submit)}</button>
+        <button type="submit" class="btn btn--primary btn--block" data-icon="arrow" data-sending="${esc(c.form.sending)}" data-error="${esc(c.form.error)}" data-required="${esc(c.form.required)}" data-invalid-email="${esc(c.form.invalidEmail || ({ he: 'כתובת האימייל לא נראית תקינה.', en: 'That email address doesn’t look right.', fr: 'Cette adresse e-mail ne semble pas valide.' } as Record<string, string>)[lang] || '')}">${esc(c.form.submit)}</button>
         <p class="form-privacy">${esc(c.form.privacy)}</p>
       </form>
       <div class="form-done" hidden>

@@ -577,3 +577,11 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
 /* Entrance animations use fill "backwards", never "both": a filled transform animation makes the element the
    containing block of every position:fixed child (rest timer, celebration, floating start button ended up inside the
    page instead of on the screen — A2A trainee F1). The end state equals the element's own style, so nothing changes. */
+
+/* Phones: the builders' save bar is one compact row right above the tab bar; the long hint is a single clipped line
+   (it wrapped onto 6 lines and floated over the form, A2A trainer F6) */
+@media (max-width: 639px) {
+  .tr-actionbar { bottom: calc(var(--tr-bar-h) + .9rem + env(safe-area-inset-bottom, 0px)); flex-wrap: nowrap; gap: .5rem; padding: .5rem .5rem .5rem .9rem; }
+  .tr-actionbar > p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .8rem; }
+  .tr-actionbar > div { flex: none; }
+}

@@ -305,13 +305,13 @@ const UsersPage = () => {
                     <Card key={u.id} className="p-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <p className="min-w-0 flex-1 basis-0 truncate text-sm font-semibold">{u.username}</p>
+                          <p className="min-w-0 flex-1 basis-0 truncate text-start text-sm font-semibold" dir="auto">{u.username}</p>
                           <Select
                             value={u.role}
                             onValueChange={(val) => handleRoleChange(u.id, val)}
                             disabled={actionLoading}
                           >
-                            <SelectTrigger className="h-7 !w-24 flex-none text-xs px-2">
+                            <SelectTrigger className="h-7 !w-auto min-w-[6rem] max-w-[9rem] flex-none text-xs px-2">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

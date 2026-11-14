@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
+from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import List, Optional
@@ -25,6 +26,7 @@ def normalize_date(value: datetime) -> datetime:
 @router.post("", response_model=DailyCheckInResponse, status_code=status.HTTP_201_CREATED)
 def create_check_in(
     check_in_data: DailyCheckInCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -67,6 +69,7 @@ def create_check_in(
     db.add(check_in)
     db.commit()
     db.refresh(check_in)
+    queue_trainer_refresh(background_tasks, db, check_in.client_id, "check_in")
     
     return check_in
 
@@ -353,6 +356,7 @@ def get_check_in(
 def update_check_in(
     check_in_id: int,
     payload: DailyCheckInUpdate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -368,6 +372,7 @@ def update_check_in(
         check_in.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(check_in)
+    queue_trainer_refresh(background_tasks, db, check_in.client_id, "check_in")
     return check_in
 
 @router.get("/trainer/dashboard", response_model=List[dict])

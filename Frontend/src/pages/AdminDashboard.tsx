@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parseDate } from '@/features/trainee/format';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,7 +148,7 @@ const AdminDashboard = () => {
             return {
               title: `${t(`time.${roleKey}Registered`)}: ${u.full_name}`,
               description: `${u.email} ${t('admin.entered')}`,
-              time: formatTimeAgo(new Date(u.created_at)),
+              time: formatTimeAgo(parseDate(u.created_at) ?? new Date()),
               icon: UserPlus,
               color: (u.role === 'ADMIN' || u.role === 'admin') ? 'bg-gradient-to-tr from-red-500 to-red-700' : 
                      (u.role === 'TRAINER' || u.role === 'trainer') ? 'bg-gradient-to-tr from-green-500 to-green-700' : 

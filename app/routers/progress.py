@@ -123,6 +123,10 @@ async def add_weight_entry(
     )
     if created:
         await websocket_service.send_new_notification_hint(created.recipient_id)
+    # silent refresh of the trainer's screens whatever their notification preferences (r2 R5)
+    _trainer_id = db.query(User.trainer_id).filter(User.id == target_client_id).scalar()
+    if _trainer_id:
+        await websocket_service.send_live_refresh(_trainer_id, "weigh_in")
 
     # Check for goal achievements
     check_client_goals(db, target_client_id)

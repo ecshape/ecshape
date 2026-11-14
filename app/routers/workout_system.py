@@ -187,11 +187,10 @@ def create_workout_plan(
     
     return workout_plan
 
-def _archive_day(db: Session, plan, day_name: str, cache: dict):
-    """Inactive plan + day that keep removed days / exercises with logged history (never deleted, A2A cross B1)."""
-    key = day_name
-    if key in cache:
-        return cache[key]
+def _archive_plan(db: Session, plan, cache: dict):
+    """Inactive plan that keeps removed days / exercises with logged history (never deleted, A2A cross B1)."""
+    if "__plan__" in cache:
+        return cache["__plan__"]
     archive = db.query(NewWorkoutPlan).filter(
         NewWorkoutPlan.client_id == plan.client_id,
         NewWorkoutPlan.is_active == False,  # noqa: E712
@@ -205,6 +204,16 @@ def _archive_day(db: Session, plan, day_name: str, cache: dict):
         )
         db.add(archive)
         db.flush()
+    cache["__plan__"] = archive
+    return archive
+
+
+def _archive_day(db: Session, plan, day_name: str, cache: dict):
+    """Day of the archive plan (same name as the day an exercise was removed from)."""
+    key = day_name
+    if key in cache:
+        return cache[key]
+    archive = _archive_plan(db, plan, cache)
     day = db.query(WorkoutDay).filter(WorkoutDay.workout_plan_id == archive.id, WorkoutDay.name == day_name).first()
     if not day:
         n = db.query(WorkoutDay).filter(WorkoutDay.workout_plan_id == archive.id).count()
@@ -223,15 +232,21 @@ def _sync_plan_days(db: Session, plan, days_in) -> None:
         db.query(WorkoutDay).filter(WorkoutDay.workout_plan_id == plan.id).all(), key=lambda d: d.order_index or 0
     )
     by_id = {d.id: d for d in existing_days}
+    original_names = {d.id: d.name for d in existing_days}
     used = set()
     cache: dict = {}
     pairs = []
+    # Clients that send day ids (current builder): a day without an id is NEW — never reuse a removed day for it, or
+    # that day's past sessions would be renamed (r2 R1). Legacy payloads without any id: match by name, then position.
+    with_ids = any(getattr(d, "id", None) for d in days_in)
     for i, day_in in enumerate(days_in):
         day = by_id.get(getattr(day_in, "id", None) or -1)
-        if day is None:
-            day = next((d for d in existing_days if d.id not in used and (d.order_index == day_in.order_index or d.order_index == i)), None)
-        if day is None:
-            day = next((d for d in existing_days if d.id not in used and getattr(day_in, "id", None) is None and d.name == day_in.name), None)
+        if day is not None and day.id in used:
+            day = None
+        if day is None and not with_ids:
+            day = next((d for d in existing_days if d.id not in used and d.name == day_in.name), None)
+            if day is None:
+                day = next((d for d in existing_days if d.id not in used and (d.order_index == day_in.order_index or d.order_index == i)), None)
         if day is None:
             day = WorkoutDay(workout_plan_id=plan.id, name=day_in.name, order_index=day_in.order_index)
             db.add(day)
@@ -245,7 +260,7 @@ def _sync_plan_days(db: Session, plan, days_in) -> None:
         has_history = db.query(NewWorkoutSession).filter(NewWorkoutSession.workout_day_id == d.id).first() is not None
         if has_history:
             # the whole day (with its exercises and sessions) moves to the archive plan
-            d.workout_plan_id = _archive_day(db, plan, "__archived_days__", cache).workout_plan_id
+            d.workout_plan_id = _archive_plan(db, plan, cache).id
         else:
             db.delete(d)
 
@@ -281,7 +296,7 @@ def _sync_plan_days(db: Session, plan, days_in) -> None:
             if e.id in taken:
                 continue
             if db.query(SetCompletion).filter(SetCompletion.workout_exercise_id == e.id).first() is not None:
-                e.workout_day_id = _archive_day(db, plan, day.name, cache).id
+                e.workout_day_id = _archive_day(db, plan, original_names.get(day.id, day.name), cache).id
             else:
                 db.delete(e)
     db.flush()
@@ -470,6 +485,7 @@ def create_complete_workout_plan(
 def get_workout_plans(
     client_id: int = None,
     active_only: bool = True,
+    include_history: bool = False,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -498,7 +514,8 @@ def get_workout_plans(
         query = query.filter(NewWorkoutPlan.is_active == True)
     
     # the history archive (removed days / exercises with logged sets) is not a plan anyone picks
-    plans = [p for p in query.all() if p.name != "__history__"]
+    # (history screens ask for it with include_history=true to name exercises removed from the plan, r2 R2)
+    plans = [p for p in query.all() if include_history or p.name != "__history__"]
     
     # Manually serialize to avoid enum serialization issues
     return [
@@ -1060,6 +1077,8 @@ def update_workout_session(
         )
         if created:
             background_tasks.add_task(websocket_service.send_new_notification_hint, created.recipient_id)
+        if client and client.trainer_id:
+            background_tasks.add_task(websocket_service.send_live_refresh, client.trainer_id, "workout")
 
     body = WorkoutSessionResponse.model_validate(session)
     return JSONResponse(content=body.model_dump(mode="json"), background=background_tasks)
@@ -1076,7 +1095,16 @@ def get_workout_sessions(
     
     if current_user.role == UserRole.CLIENT:
         query = query.filter(NewWorkoutSession.client_id == current_user.id)
-    elif current_user.role == UserRole.TRAINER and client_id:
+    elif current_user.role == UserRole.TRAINER:
+        # A trainer only ever sees their own clients' sessions (was: everyone's, r2 N2)
+        own_ids = [u.id for u in db.query(User.id).filter(User.trainer_id == current_user.id).all()]
+        if client_id is not None:
+            if client_id not in own_ids:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your client")
+            query = query.filter(NewWorkoutSession.client_id == client_id)
+        else:
+            query = query.filter(NewWorkoutSession.client_id.in_(own_ids or [-1]))
+    elif client_id is not None:
         query = query.filter(NewWorkoutSession.client_id == client_id)
     # Admins see all
     
@@ -1098,6 +1126,9 @@ def record_set_completion(
     """Record a completed set (client only)"""
     if current_user.role != UserRole.CLIENT:
         raise HTTPException(status_code=403, detail="Only clients can record set completions")
+    owned = db.query(NewWorkoutSession).filter(NewWorkoutSession.id == session_id, NewWorkoutSession.client_id == current_user.id).first()
+    if not owned:
+        raise HTTPException(status_code=404, detail="Session not found")
     
     set_completion = SetCompletion(
         workout_session_id=session_id,

@@ -9,6 +9,7 @@ import { API_BASE_URL } from '../config/api';
 import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 import LanguageSelector from '../components/LanguageSelector';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -208,7 +209,7 @@ const Login = () => {
           className="group mx-auto mb-6 inline-flex w-full max-w-[420px] items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
         >
           <Arrow className="h-4 w-4 rotate-180 transition-transform duration-300 group-hover:-translate-x-0.5" />
-          {isRtl ? 'חזרה לאתר ECshape' : 'Back to the ECshape site'}
+          {t('login.backToSite', isRtl ? 'חזרה לאתר ECshape' : 'Back to the ECshape site')}
         </Link>
         <footer className="text-xs text-muted-foreground">© {new Date().getFullYear()} ECshape · Elior Cremisi</footer>
       </section>

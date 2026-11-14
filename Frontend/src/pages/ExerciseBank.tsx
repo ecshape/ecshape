@@ -30,6 +30,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { useToast } from '../hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 import {
   ExerciseImportReviewDialog,
   type ExerciseImportPreviewRow,
@@ -1003,7 +1004,7 @@ const ExerciseBank = () => {
                     required
                   />
                   {fieldErrors.name && (
-                    <p className="text-xs text-destructive mt-1">Exercise name is required</p>
+                    <p className="text-xs text-destructive mt-1">{t('exerciseBank.nameRequired', 'Exercise name is required')}</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -1033,7 +1034,7 @@ const ExerciseBank = () => {
                     </SelectContent>
                   </Select>
                   {fieldErrors.muscle_group && (
-                    <p className="text-xs text-destructive mt-1">Muscle group is required</p>
+                    <p className="text-xs text-destructive mt-1">{t('exerciseBank.muscleRequired', 'Muscle group is required')}</p>
                   )}
                 </div>
               </div>

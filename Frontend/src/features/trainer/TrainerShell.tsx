@@ -85,6 +85,7 @@ const TrainerShell: React.FC<{
   };
 
   const go = (href: string) => {
+    setMoreOpen(false); // tapping the current page in the "more" sheet closes it too (A2A trainer F12)
     if (href !== pathname) navigate(href);
   };
 
@@ -212,7 +213,7 @@ const TrainerShell: React.FC<{
       {/* Phone "more" sheet */}
       <div className={cn('tr-more lg:hidden', !moreOpen && 'pointer-events-none')} data-open={moreOpen} aria-hidden={!moreOpen}>
         <div className="tr-more-scrim" onClick={() => setMoreOpen(false)} />
-        <div className="tr-more-panel ec-glass" role="dialog" aria-modal="true" aria-label={t('navigation.menu')}>
+        <div className="tr-more-panel ec-glass" role="dialog" aria-modal={moreOpen || undefined} aria-hidden={!moreOpen || undefined} aria-label={t('navigation.menu')}>
           <div className="mb-3 flex items-center justify-between">
             <span className="tp-title text-4xl">{t('studio.name')}</span>
             <button type="button" onClick={() => setMoreOpen(false)} className="tp-icon-btn tp-press" aria-label={t('trainer.common.close')} tabIndex={moreOpen ? 0 : -1}>

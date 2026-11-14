@@ -380,7 +380,8 @@ const CreateWorkoutPlanV2: React.FC = () => {
         }
         throw new Error(errorMessage);
       }
-      navigate('/trainer-dashboard');
+      // back to the client the plan belongs to (r2 N6)
+      navigate(formData.client_id ? `/client/${formData.client_id}` : '/trainer-dashboard');
     } catch (err) {
       console.error('Failed to create workout plan:', err);
       setError((err as Error).message || t('workoutCreation.errorCreating'));

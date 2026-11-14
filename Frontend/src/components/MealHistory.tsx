@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 
 import { API_BASE_URL } from '../config/api';
 
@@ -158,7 +159,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({ clientId }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Daily Meal History
+            {t('mealHistory.title', 'Daily Meal History')}
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -102,7 +102,11 @@ export const chatApi = {
   send: (body: { client_id: number; message: string; progress_entry_id?: number | null }) =>
     request<ChatMessage>('/v2/chat/messages', { method: 'POST', body: JSON.stringify(body) }),
   markRead: (clientId: number | null) =>
-    request<{ marked: number; read_through_id: number | null }>(`/v2/chat/read${q({ client_id: clientId })}`, { method: 'POST' }),
+    request<{ marked: number; read_through_id: number | null }>(`/v2/chat/read${q({ client_id: clientId })}`, { method: 'POST' }).then((r) => {
+      // unread badges (trainer rail, trainee Coach tab) clear now instead of on their next poll (r2 M2)
+      window.dispatchEvent(new Event('ec:chat-read'));
+      return r;
+    }),
   progress: (clientId: number | null) =>
     request<ProgressEntry[]>(`/progress/${q({ client_id: clientId })}`),
 };

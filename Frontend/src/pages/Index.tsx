@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parseDate } from '@/features/trainee/format';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -299,7 +300,7 @@ const Index = () => {
           id: `completion-${completion.id}`,
           title: `${completion.client_name || 'Client'} completed workout`,
           description: `${completion.exercise_name || 'Exercise'} - ${completion.actual_sets} sets`,
-          time: formatTimeAgo(new Date(completion.completed_at)),
+          time: formatTimeAgo(parseDate(completion.completed_at) ?? new Date()),
           type: 'workout',
           clientName: completion.client_name,
           icon: CheckCircle,
@@ -317,7 +318,7 @@ const Index = () => {
           id: `client-${client.id}`,
           title: `New client joined: ${client.full_name}`,
           description: `Started their fitness journey`,
-          time: formatTimeAgo(new Date(client.created_at)),
+          time: formatTimeAgo(parseDate(client.created_at) ?? new Date()),
           type: 'client',
           clientName: client.full_name,
           icon: UserPlus,
@@ -335,7 +336,7 @@ const Index = () => {
           id: `meal-${plan.id}`,
           title: `Created meal plan: ${plan.title}`,
           description: `${plan.total_calories} calories for ${plan.client_name || 'client'}`,
-          time: formatTimeAgo(new Date(plan.created_at)),
+          time: formatTimeAgo(parseDate(plan.created_at) ?? new Date()),
           type: 'meal',
           clientName: plan.client_name,
           icon: Utensils,

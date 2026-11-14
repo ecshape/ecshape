@@ -8,6 +8,7 @@ import { AgentDraft } from '@/components/studio/AgentDraft';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { InfoTip } from '@/components/ui/info-tip';
 import '@/i18n/ticketsStudio';
+import { parseDate } from '@/features/trainee/format';
 import Layout from '@/components/Layout';
 import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,8 @@ const STATUS_TONE: Record<LeadStatus, string> = {
 
 const formatDate = (iso?: string | null, lng = 'he') => {
   if (!iso) return '';
-  const d = new Date(iso);
+  const d = parseDate(iso); // naive API timestamps are UTC (r2 R4)
+  if (!d) return '';
   return d.toLocaleString(lng === 'he' ? 'he-IL' : lng === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 };
 

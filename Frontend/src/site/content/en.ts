@@ -159,7 +159,7 @@ export const en: SiteContent = {
     name: 'Full name', phone: 'Phone', email: 'Email (optional)', goal: 'My goal', program: 'Preferred program', message: 'Anything I should know?',
     messagePh: 'How often you train today, injuries, availability…',
     submit: 'Send', sending: 'Sending…', success: 'Got it!', successSub: "I'll get back to you shortly to book the intro call.",
-    error: 'Something went wrong. Please try again or message me on WhatsApp.', required: 'Please enter your name and a phone number or email.',
+    error: 'Something went wrong. Please try again or message me on WhatsApp.', required: 'Please enter your name and a phone number or email.', invalidEmail: 'That email address doesn’t look right.',
     privacy: 'Your details are only used to contact you about coaching.',
     goals: [
       { value: 'weight_loss', label: 'Lose weight' }, { value: 'muscle', label: 'Build muscle' },

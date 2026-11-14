@@ -67,7 +67,9 @@ export const fmtRelative = (s: string | Date | null | undefined) => {
   const rtf = { format: (v: number, u: Intl.RelativeTimeFormatUnit) => base.format(v, u).replace(/\s*\(\d+\)\s*$/, '') };
   // A day-only date ("2026-11-14") has no time: say "today" / "yesterday", never "12 hours ago" (A2A trainee F9)
   const dayOnly = typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
-  const diffMin = Math.round((d.getTime() - Date.now()) / 60000);
+  let diffMin = Math.round((d.getTime() - Date.now()) / 60000);
+  // Past events stored before the UTC fix can sit up to a few hours "in the future": they happened now-ish (r2 N1)
+  if (diffMin > 0 && diffMin <= 180) diffMin = 0;
   if (!dayOnly && Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
   const diffH = Math.round(diffMin / 60);
   if (!dayOnly && Math.abs(diffH) < 24) return rtf.format(diffH, 'hour');

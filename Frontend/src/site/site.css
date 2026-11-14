@@ -310,8 +310,10 @@ html.lenis, html.lenis body { height: auto; }
 .ec-site .hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: 58% 27%; }
 .ec-site .hero__media::before { /* blurred backdrop when the whole body is narrower than the frame */
   content: ''; position: absolute; inset: -40px; background: var(--hero-src, none) center / cover no-repeat;
-  filter: blur(28px) brightness(.5) saturate(1.1);
+  filter: blur(22px) brightness(.82) saturate(1.05);
+  /* soft fade into the sharp photo so narrow bands read as a backdrop, not letterboxing (r2 site F5) */
 }
+.ec-site .hero__media img.is-framed { box-shadow: 0 0 60px 30px rgba(11, 10, 8, .18); }
 .ec-site .hero__media img.is-framed { position: absolute; top: 0; left: 0; max-width: none; object-fit: fill; transform-origin: 0 0; }
 .ec-site .hero__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 10, 8, 0) 40%, rgba(11, 10, 8, .85)); opacity: var(--shade, 0); }
 .ec-site .hero__content {

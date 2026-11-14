@@ -102,7 +102,8 @@ export function usePlansAll() {
     queryKey: ['trainee', 'plans', 'all'],
     enabled: !!user?.id,
     staleTime: 60_000,
-    queryFn: () => api<WorkoutPlan[]>(`/v2/workouts/plans?client_id=${user!.id}&active_only=false`),
+    // include_history: the archive of removed days / exercises, so old sessions still show their names
+    queryFn: () => api<WorkoutPlan[]>(`/v2/workouts/plans?client_id=${user!.id}&active_only=false&include_history=true`),
   });
 }
 

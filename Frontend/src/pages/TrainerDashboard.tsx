@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/ticketsStudio';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity, ArrowUpRight, BookOpen, ClipboardCheck, Dumbbell, Eye, EyeOff, MessageCircle, Pencil, Plus,
@@ -25,15 +26,27 @@ type Filter = 'all' | 'attention' | 'checked' | 'inactive';
 
 const emptyForm = { username: '', email: '', full_name: '', password: '', confirmPassword: '' };
 
-/** Turns a FastAPI error body into one readable line. */
-const readError = async (res: Response, fallback: string) => {
+/** Known API messages -> interface strings (A2A trainer F8 / cross m4: raw English pydantic text in a Hebrew dialog) */
+const KNOWN_ERRORS: [RegExp, string][] = [
+  [/username already/i, 'trainerDashboard.err.username'],
+  [/email already/i, 'trainerDashboard.err.emailTaken'],
+  [/valid email|email address/i, 'trainerDashboard.err.email'],
+  [/password/i, 'trainerDashboard.err.password'],
+];
+
+/** Turns a FastAPI error body into one readable line, in the interface language when the message is known. */
+const readError = async (res: Response, fallback: string, t?: (k: string) => string) => {
+  const known = (msg: string) => {
+    const hit = t && KNOWN_ERRORS.find(([re]) => re.test(msg));
+    return hit && t ? t(hit[1]) : msg;
+  };
   try {
     const err = await res.clone().json();
     if (err.detail) {
       if (Array.isArray(err.detail)) {
-        return err.detail.map((e: { loc?: unknown[]; msg?: string }) => `${Array.isArray(e.loc) ? e.loc.slice(1).join('.') : 'field'}: ${e.msg}`).join('; ');
+        return Array.from(new Set(err.detail.map((e: { loc?: unknown[]; msg?: string }) => known(`${Array.isArray(e.loc) ? e.loc.slice(1).join('.') : 'field'}: ${e.msg}`)))).join('; ');
       }
-      return String(err.detail);
+      return known(String(err.detail));
     }
     return JSON.stringify(err);
   } catch {
@@ -342,7 +355,7 @@ const ClientCard: React.FC<{ pulse: ClientPulse; index: number; loadingActivity:
       <div className="flex items-start gap-3.5">
         <Avatar name={c.full_name} seed={c.id} size={54} live={pulse.trainingNow} src={(c as { avatar_url?: string | null }).avatar_url} />
         <div className="min-w-0 flex-1">
-          <button type="button" onClick={() => open()} className="block max-w-full truncate rounded-md text-start text-lg font-bold leading-tight hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <button type="button" dir="auto" onClick={() => open()} className="block max-w-full truncate rounded-md text-start text-lg font-bold leading-tight hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {c.full_name}
           </button>
           <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
@@ -533,13 +546,13 @@ const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => vo
         body: JSON.stringify({ username: form.username, email: form.email, full_name: form.full_name, password: form.password, role: 'CLIENT' }),
       });
       if (!res.ok) {
-        setError(await readError(res, t('trainerDashboard.failedToRegisterClient')));
+        setError(await readError(res, t('trainerDashboard.failedToRegisterClient'), t));
         return;
       }
       const client = await res.json();
       const assign = await fetch(`${API_BASE_URL}/users/clients/${client.id}/assign`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       if (!assign.ok) {
-        setError(await readError(assign, t('trainerDashboard.clientRegisteredButFailedToAssign')));
+        setError(await readError(assign, t('trainerDashboard.clientRegisteredButFailedToAssign'), t));
         return;
       }
       onOpenChange(false);

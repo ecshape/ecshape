@@ -40,7 +40,7 @@ export const en: SiteContent = {
     p2Strong: 'habits that last',
     photoRole: 'Certified personal trainer',
     values: [
-      { title: 'Personal plan', text: 'Not generic. Built exactly for you.' },
+      { title: 'Personal plan', text: 'Nothing generic. Built exactly for you.' },
       { title: 'Real support', text: 'A partner, not just a coach.' },
       { title: 'Habit change', text: 'Results that stay after the coaching.' },
     ],
@@ -71,7 +71,7 @@ export const en: SiteContent = {
     title1: "You don't need to live at the gym",
     title2: 'to get the body you want.',
     cards: [
-      { from: '"I don\'t have time"', title: 'How do I make the most of my time.', text: "We change the mindset. Workouts that fit your real schedule — not someone else's." },
+      { from: '"I don\'t have time"', title: 'Making the most of the time you have.', text: "We change the mindset. Workouts that fit your real schedule — not someone else's." },
       { from: '"I\'ll start on Monday"', title: 'Priorities, today.', text: "Setting priorities means saying yes to what moves you forward, not to what keeps you where you are. Let's bring order to your life." },
       { from: '"It\'s not for me"', title: 'A stronger version of you.', pills: ['More productive', 'More successful', 'Stronger'] },
     ],

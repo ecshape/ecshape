@@ -225,7 +225,72 @@ STAPLES: List[Dict[str, Any]] = [
             166, 7.9, 14.3, 9.6, 6, VEGAN, ("Lebanese_style_hummus.jpg", "CC BY 3.0", "Beyrouthhh"), ("חומוס",)),
 ]
 
+_BASE_CATEGORY = {
+    "chicken_breast": "meat", "turkey_breast": "meat", "lean_beef": "meat", "salmon": "fish", "tuna": "fish",
+    "eggs": "egg", "egg_whites": "egg", "cottage_cheese": "dairy", "greek_yogurt": "dairy", "tofu": "legume",
+    "white_rice": "grain", "brown_rice": "grain", "oats": "grain", "sweet_potato": "vegetable", "potato": "vegetable",
+    "whole_wheat_bread": "bread", "pasta": "grain", "quinoa": "grain", "lentils": "legume", "chickpeas": "legume",
+    "banana": "fruit", "apple": "fruit", "broccoli": "vegetable", "cucumber": "vegetable", "tomato": "vegetable",
+    "avocado": "fruit", "olive_oil": "oil", "almonds": "nut", "walnuts": "nut", "peanut_butter": "nut",
+    "tahini": "nut", "hummus": "legume",
+}
+for _s in STAPLES:
+    _s["category"] = _BASE_CATEGORY.get(_s["key"])
+
+
+def _load_extra_staples() -> None:
+    from app.services.food_staples_extra import EXTRA_STAPLES
+
+    known = {s["key"] for s in STAPLES}
+    for row in EXTRA_STAPLES:
+        key, en, he, fr, macro, kcal, p, c, f, fiber, tags, category, aliases = row
+        if key in known:
+            continue
+        staple = _staple(key, en, he, fr, macro, kcal, p, c, f, fiber, tags, None, aliases)
+        staple["category"] = category
+        STAPLES.append(staple)
+        known.add(key)
+
+
+_load_extra_staples()
 STAPLES_BY_KEY = {s["key"]: s for s in STAPLES}
+
+# One-click "starter packs" (keys of STAPLES). Titles live in the frontend i18n.
+STARTER_PACKS: Dict[str, List[str]] = {
+    "basics": [
+        "chicken_breast", "turkey_breast", "lean_beef", "salmon", "tuna", "eggs", "egg_whites", "cottage_cheese",
+        "greek_yogurt", "milk_1", "yellow_cheese_light", "white_rice", "brown_rice", "oats", "pasta", "quinoa",
+        "whole_wheat_bread", "pita", "potato", "sweet_potato", "lentils", "chickpeas", "banana", "apple", "orange",
+        "strawberries", "medjool_dates", "broccoli", "cucumber", "tomato", "carrot", "lettuce", "bell_pepper",
+        "onion", "avocado", "olive_oil", "almonds", "walnuts", "peanut_butter", "tahini",
+    ],
+    "high_protein": [
+        "chicken_breast", "chicken_breast_grilled", "chicken_thigh", "turkey_breast", "ground_turkey", "turkey_deli",
+        "lean_beef", "sirloin_steak", "salmon", "tuna", "tilapia", "cod", "shrimp", "eggs", "egg_whites",
+        "cottage_cheese", "cottage_3", "greek_yogurt", "white_cheese_5", "bulgarian_cheese", "yellow_cheese_light",
+        "whey_protein", "tofu", "tempeh", "edamame", "lentils",
+    ],
+    "israeli": [
+        "hummus", "tahini", "tahini_sauce", "pita", "pita_whole", "falafel", "cottage_cheese", "cottage_3",
+        "white_cheese_5", "labneh", "bulgarian_cheese", "yellow_cheese", "shakshuka", "schnitzel", "shawarma",
+        "majadra", "matbucha", "ptitim", "bulgur_cooked", "couscous_cooked", "challah", "bourekas_cheese",
+        "fava_beans", "green_olives", "pickles", "silan", "halva", "medjool_dates", "pomegranate", "persimmon",
+        "cucumber", "tomato",
+    ],
+    "plant_based": [
+        "tofu", "tempeh", "edamame", "lentils", "chickpeas", "black_beans", "kidney_beans", "white_beans",
+        "green_peas", "fava_beans", "quinoa", "brown_rice", "oats", "buckwheat_cooked", "soy_milk", "almonds",
+        "cashews", "chia_seeds", "flaxseed", "pumpkin_seeds", "hummus", "tahini", "avocado", "spinach", "broccoli",
+    ],
+}
+
+
+def starter_packs() -> List[Dict[str, Any]]:
+    out = []
+    for key, keys in STARTER_PACKS.items():
+        valid = [k for k in keys if k in STAPLES_BY_KEY]
+        out.append({"key": key, "count": len(valid), "staple_keys": valid})
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -360,6 +425,7 @@ def normalize_staple(staple: Dict[str, Any], lang: str = "he") -> Dict[str, Any]
         "nova_group": 1,
         "macro_type": staple["macro_type"],
         "quantity": None,
+        "category": staple.get("category"),
     }
 
 

@@ -19,6 +19,7 @@ import { studioApi } from '@/lib/studioApi';
 import TraineeShell from '@/features/trainee/TraineeShell';
 import TrainerShell from '@/features/trainer/TrainerShell';
 import { useQuery } from '@tanstack/react-query';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -116,7 +117,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="group flex items-center gap-2.5 rounded-full p-1 pe-3 transition-colors hover:bg-foreground/[.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={user?.full_name || 'account'}>
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]">{getInitials(user?.full_name)}</span>
+          <UserAvatar name={user?.full_name} src={user?.avatar_url} className="h-9 w-9 bg-primary text-sm text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/.8)]" />
           {showName && (
             <span className="hidden text-start leading-tight xl:block">
               <span className="block max-w-[140px] truncate text-sm font-semibold">{user?.full_name}</span>

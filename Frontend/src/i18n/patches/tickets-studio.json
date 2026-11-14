@@ -1,0 +1,71 @@
+{
+  "he": {
+    "tix": {
+      "common": {
+        "cancel": "ביטול",
+        "close": "סגירה"
+      },
+      "avatar": {
+        "add": "הוספת תמונת פרופיל",
+        "change": "החלפת תמונה",
+        "remove": "הסרה",
+        "hint": "JPG, PNG או WebP. נחתך לריבוע ומוצג בפורטל, בצ'אט ובאתר.",
+        "cropTitle": "מיקום התמונה",
+        "cropHint": "גררו כדי למקם, השתמשו במחוון כדי להגדיל.",
+        "zoom": "זום",
+        "save": "שמירת התמונה",
+        "failed": "לא הצלחנו לשמור את התמונה.",
+        "notImage": "הקובץ אינו תמונה.",
+        "sectionTitle": "פרופיל",
+        "sectionHint": "התמונה שלכם מופיעה בתפריט, בצ'אט עם המתאמנים ובבועה באתר כשאתם מחוברים.",
+        "openPortal": "לפורטל שלי"
+      }
+    }
+  },
+  "en": {
+    "tix": {
+      "common": {
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "avatar": {
+        "add": "Add a profile photo",
+        "change": "Change photo",
+        "remove": "Remove",
+        "hint": "JPG, PNG or WebP. Cropped square and shown in the portal, the chat and on the site.",
+        "cropTitle": "Frame your photo",
+        "cropHint": "Drag to position, use the slider to zoom.",
+        "zoom": "Zoom",
+        "save": "Save photo",
+        "failed": "The photo could not be saved.",
+        "notImage": "This file is not an image.",
+        "sectionTitle": "Profile",
+        "sectionHint": "Your photo appears in the menu, in the chat with your trainees and as a bubble on the site when you are signed in.",
+        "openPortal": "My portal"
+      }
+    }
+  },
+  "fr": {
+    "tix": {
+      "common": {
+        "cancel": "Annuler",
+        "close": "Fermer"
+      },
+      "avatar": {
+        "add": "Ajouter une photo de profil",
+        "change": "Changer la photo",
+        "remove": "Retirer",
+        "hint": "JPG, PNG ou WebP. Recadrée en carré et affichée dans le portail, le chat et sur le site.",
+        "cropTitle": "Cadrer la photo",
+        "cropHint": "Glissez pour positionner, utilisez le curseur pour zoomer.",
+        "zoom": "Zoom",
+        "save": "Enregistrer la photo",
+        "failed": "La photo n'a pas pu être enregistrée.",
+        "notImage": "Ce fichier n'est pas une image.",
+        "sectionTitle": "Profil",
+        "sectionHint": "Votre photo apparaît dans le menu, dans le chat avec vos élèves et en bulle sur le site quand vous êtes connecté.",
+        "openPortal": "Mon portail"
+      }
+    }
+  }
+}

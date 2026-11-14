@@ -107,9 +107,9 @@ const ProgressScreen: React.FC = () => {
         eyebrow={t('trainee.progress.eyebrow')}
         title={t('trainee.progress.title')}
         actions={
-          <button type="button" onClick={() => setAdding(true)} className="tp-btn tp-btn--primary tp-press">
+          <button type="button" onClick={() => setAdding(true)} className="tp-btn tp-btn--primary tp-press max-sm:!h-12 max-sm:!w-12 max-sm:!min-h-0 max-sm:!rounded-full max-sm:!p-0" aria-label={t('trainee.progress.add')}>
             <Plus className="h-5 w-5" />
-            {t('trainee.progress.add')}
+            <span className="max-sm:sr-only">{t('trainee.progress.add')}</span>
           </button>
         }
         className="!mb-4 lg:!mb-5"

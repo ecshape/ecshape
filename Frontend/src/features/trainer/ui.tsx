@@ -217,7 +217,7 @@ export const SectionCard: React.FC<{
               <Icon className="h-[18px] w-[18px]" />
             </span>
           )}
-          {title && <h2 className="truncate">{title}</h2>}
+          {title && <h2 className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">{title}</h2>}
         </div>
         {action}
       </div>

@@ -80,6 +80,45 @@
           "minutes_one": "דקה אחת",
           "minutes_two": "{{count}} דקות",
           "minutes_other": "{{count}} דקות"
+        },
+        "profile": "לפרופיל"
+      },
+      "client": {
+        "tabs": {
+          "overview": "סקירה"
+        },
+        "active": "פעיל",
+        "lastSeen": "נראה {{when}}",
+        "since": "מאז {{date}}",
+        "streak": "רצף צ׳ק-אין",
+        "days": "ימים ברצף",
+        "week": "השבוע",
+        "checkIns": "צ׳ק-אינים",
+        "training": "אימון",
+        "nutrition": "תזונה",
+        "noPlans": "אין תוכניות פעילות",
+        "exercisesCount_one": "תרגיל אחד",
+        "exercisesCount_two": "{{count}} תרגילים",
+        "exercisesCount_other": "{{count}} תרגילים",
+        "weightTrend": "מגמת משקל",
+        "details": "לפירוט",
+        "noWeights": "אין עדיין מספיק שקילות",
+        "noWeightsBody": "הגרף יופיע אחרי שתי שקילות לפחות.",
+        "consistency": "התמדה",
+        "avgSleep": "שעות שינה בממוצע",
+        "avgSteps": "צעדים בממוצע",
+        "totalCheckIns": "סה״כ צ׳ק-אינים",
+        "lastWorkout": "אימון אחרון",
+        "workoutsPerWeek": "אימונים בשבוע",
+        "last8": "8 השבועות האחרונים",
+        "timeline": "ציר זמן",
+        "tl": {
+          "workout": "השלים/ה אימון",
+          "weight": "שקילה: {{kg}} ק״ג",
+          "progress": "עדכון התקדמות",
+          "workoutPlan": "תוכנית אימון עודכנה",
+          "mealPlan": "תוכנית תזונה עודכנה",
+          "joined": "הצטרף/ה לסטודיו"
         }
       }
     }
@@ -160,6 +199,44 @@
           "weight": "{{kg}} kg",
           "minutes_one": "{{count}} min",
           "minutes_other": "{{count}} min"
+        },
+        "profile": "Profile"
+      },
+      "client": {
+        "tabs": {
+          "overview": "Overview"
+        },
+        "active": "Active",
+        "lastSeen": "Seen {{when}}",
+        "since": "Since {{date}}",
+        "streak": "Check-in streak",
+        "days": "days in a row",
+        "week": "This week",
+        "checkIns": "check-ins",
+        "training": "Training",
+        "nutrition": "Nutrition",
+        "noPlans": "No active plans",
+        "exercisesCount_one": "{{count}} exercise",
+        "exercisesCount_other": "{{count}} exercises",
+        "weightTrend": "Weight trend",
+        "details": "Details",
+        "noWeights": "Not enough weigh-ins yet",
+        "noWeightsBody": "The chart appears after at least two weigh-ins.",
+        "consistency": "Consistency",
+        "avgSleep": "Avg. sleep (h)",
+        "avgSteps": "Avg. steps",
+        "totalCheckIns": "Total check-ins",
+        "lastWorkout": "Last workout",
+        "workoutsPerWeek": "Workouts per week",
+        "last8": "Last 8 weeks",
+        "timeline": "Timeline",
+        "tl": {
+          "workout": "Completed a workout",
+          "weight": "Weigh-in: {{kg}} kg",
+          "progress": "Progress update",
+          "workoutPlan": "Workout plan updated",
+          "mealPlan": "Meal plan updated",
+          "joined": "Joined the studio"
         }
       }
     }
@@ -245,6 +322,45 @@
           "minutes_one": "{{count}} min",
           "minutes_many": "{{count}} min",
           "minutes_other": "{{count}} min"
+        },
+        "profile": "Profil"
+      },
+      "client": {
+        "tabs": {
+          "overview": "Aperçu"
+        },
+        "active": "Actif",
+        "lastSeen": "Vu {{when}}",
+        "since": "Depuis le {{date}}",
+        "streak": "Série de check-ins",
+        "days": "jours d'affilée",
+        "week": "Cette semaine",
+        "checkIns": "check-ins",
+        "training": "Entraînement",
+        "nutrition": "Nutrition",
+        "noPlans": "Aucun programme actif",
+        "exercisesCount_one": "{{count}} exercice",
+        "exercisesCount_many": "{{count}} exercices",
+        "exercisesCount_other": "{{count}} exercices",
+        "weightTrend": "Évolution du poids",
+        "details": "Détails",
+        "noWeights": "Pas encore assez de pesées",
+        "noWeightsBody": "Le graphique apparaît après au moins deux pesées.",
+        "consistency": "Régularité",
+        "avgSleep": "Sommeil moyen (h)",
+        "avgSteps": "Pas en moyenne",
+        "totalCheckIns": "Check-ins au total",
+        "lastWorkout": "Dernière séance",
+        "workoutsPerWeek": "Séances par semaine",
+        "last8": "8 dernières semaines",
+        "timeline": "Chronologie",
+        "tl": {
+          "workout": "A terminé une séance",
+          "weight": "Pesée : {{kg}} kg",
+          "progress": "Mise à jour des progrès",
+          "workoutPlan": "Programme d'entraînement mis à jour",
+          "mealPlan": "Plan alimentaire mis à jour",
+          "joined": "A rejoint le studio"
         }
       }
     }

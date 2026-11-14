@@ -213,7 +213,7 @@
 @container trmain (min-width: 1320px) { .tr-cockpit { grid-template-columns: minmax(0, 1fr) 25rem; } }
 .tr-aside { display: grid; gap: 1.25rem; align-content: start; }
 @container trmain (min-width: 640px) and (max-width: 1079px) { .tr-aside { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@container trmain (min-width: 1080px) { .tr-aside { position: sticky; top: 4.5rem; } }
+@container trmain (min-width: 1080px) { .tr-aside { position: sticky; top: 1rem; } }
 
 .tr-clients { display: grid; gap: .85rem; grid-template-columns: minmax(0, 1fr); }
 @container trmain (min-width: 600px) { .tr-clients { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -255,8 +255,9 @@
 @keyframes trPing { from { transform: scale(1); opacity: .7; } to { transform: scale(3); opacity: 0; } }
 
 /* Tabs (client profile) */
-.tr-tabs { position: sticky; top: 0; z-index: 30; margin-inline: -1rem; padding: .5rem 1rem; background: linear-gradient(hsl(var(--background)) 70%, transparent); }
-@media (min-width: 1024px) { .tr-tabs { top: 4rem; margin-inline: 0; padding-inline: 0; } }
+.tr-tabs { position: sticky; top: 0; z-index: 30; margin-inline: -1rem; padding: .5rem 1rem .75rem; background: linear-gradient(hsl(var(--background)) 75%, transparent); }
+@media (min-width: 640px) { .tr-tabs { margin-inline: -1.5rem; padding-inline: 1.5rem; } }
+@media (min-width: 1024px) { .tr-tabs { margin-inline: -2rem; padding-inline: 2rem; } }
 .tr-tabpanel { animation: tpScreen .45s var(--ease-out) both; }
 
 /* Hero (client profile) */
@@ -311,7 +312,7 @@
 @container trmain (min-width: 1000px) { .tr-builder { grid-template-columns: 17rem minmax(0, 1fr); align-items: start; } }
 .tr-days { display: flex; gap: .5rem; overflow-x: auto; scrollbar-width: none; padding-bottom: .25rem; }
 .tr-days::-webkit-scrollbar { display: none; }
-@container trmain (min-width: 1000px) { .tr-days { position: sticky; top: 4.5rem; flex-direction: column; overflow: visible; } }
+@container trmain (min-width: 1000px) { .tr-days { position: sticky; top: 1rem; flex-direction: column; overflow: visible; } }
 .tr-day {
   position: relative; display: flex; flex: none; align-items: center; gap: .7rem; min-width: 11rem; padding: .7rem .8rem; border-radius: 1.15rem; text-align: start;
   background: hsl(var(--foreground) / .04); box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .07);

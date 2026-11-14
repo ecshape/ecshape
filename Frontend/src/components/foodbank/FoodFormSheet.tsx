@@ -172,7 +172,7 @@ export const FoodFormSheet: React.FC<{
               ['fiber', t('foodBankPro.form.fiber'), null],
             ] as const).map(([k, label, dot]) => (
               <label key={k} className="tr-field">
-                <span className="tr-field-label flex items-center gap-1.5">{dot && <span className={cn('inline-block h-2 w-2 rounded-full', `fb-dot-${dot}`)} />}{label} ({t('foodBankPro.g')})</span>
+                <span className="tr-field-label flex items-center gap-1.5">{dot && <span className={cn('inline-block h-2 w-2 rounded-full', `fb-dot-${dot}`)} />}{label.includes('(') ? label : `${label} (${t('foodBankPro.g')})`}</span>
                 <input className="tp-input tr-input-sm tabular-nums" type="number" inputMode="decimal" min="0" step="0.1" value={form[k]} onChange={(e) => set(k, e.target.value)} />
               </label>
             ))}

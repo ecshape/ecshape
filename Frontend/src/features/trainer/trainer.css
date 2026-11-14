@@ -472,9 +472,12 @@ body:has(.tr-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
 .tr-act--compact { width: 2.75rem; padding: 0 !important; }
 .tr-act--compact .tr-act-label { display: none; }
 @media (max-width: 639px) {
-  .tr-actions { width: 100%; flex-wrap: nowrap; }
+  .tr-root .tr-actions { width: 100%; }
+  .tr-root .tr-actions > .tp-btn--primary { flex-basis: 100%; }
   .tr-act { width: 2.75rem; flex: none; padding: 0 !important; }
   .tr-act .tr-act-label { display: none; }
+  .tr-filter > svg { display: none; }
+  .tr-filter { padding-inline: .7rem .35rem; }
 }
 
 /* ------------------------------------------------------------------ banks: search, filters, chips, cards (#15 #16 #23) */

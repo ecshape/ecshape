@@ -4,7 +4,8 @@
    and everything is disabled under prefers-reduced-motion. */
 
 .fb-root,
-.fb-drawer {
+.fb-drawer,
+.tp-sheet {
   --fb-ease-out: cubic-bezier(.22, 1, .36, 1);
   --fb-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   --fb-protein: 18 88% 56%;
@@ -14,7 +15,8 @@
 }
 [dir='rtl'] .fb-root,
 [dir='rtl'] .fb-drawer,
-.fb-drawer[dir='rtl'] {
+.fb-drawer[dir='rtl'],
+.tp-sheet[dir='rtl'] {
   --fb-dir: -1;
 }
 

@@ -13,6 +13,20 @@ export interface LibraryExercise {
   instructions: string[];
   frames: string[];
   imported: boolean;
+  /** 'wger' for exercises from wger.de (ids are prefixed "wger:"); absent for the built-in library. */
+  source?: 'wger';
+  name_en?: string;
+  license_author?: string | null;
+  source_url?: string;
+}
+
+export type LibrarySource = 'library' | 'wger';
+
+export interface LibrarySources {
+  library: number;
+  /** null until the wger catalogue has been downloaded once by the server */
+  wger: number | null;
+  wger_attribution: string;
 }
 
 export interface LibraryFacets {
@@ -44,10 +58,12 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const exerciseLibrary = {
   facets: () => call<LibraryFacets>('/facets'),
-  search: (p: { q?: string; muscle?: string; equipment?: string; level?: string; offset?: number; limit?: number }) => {
+  sources: () => call<LibrarySources>('/sources'),
+  search: (p: { q?: string; muscle?: string; equipment?: string; level?: string; source?: LibrarySource; lang?: string; offset?: number; limit?: number }) => {
     const qs = new URLSearchParams();
     Object.entries(p).forEach(([k, v]) => v !== undefined && v !== '' && qs.set(k, String(v)));
-    return call<{ total: number; items: LibraryExercise[] }>(`?${qs}`);
+    return call<{ total: number; items: LibraryExercise[]; catalog_total?: number }>(`?${qs}`);
   },
-  importIds: (ids: string[]) => call<{ created: number; skipped: number }>('/import', { method: 'POST', body: JSON.stringify({ ids }) }),
+  importIds: (ids: string[], lang?: string) =>
+    call<{ created: number; skipped: number }>('/import', { method: 'POST', body: JSON.stringify({ ids, lang }) }),
 };

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Lock, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { IconOf, MACRO_ICON, PROPERTY_ICON } from './FoodIcons';
+import { CATEGORY_ICON, IconOf, MACRO_ICON, PROPERTY_ICON } from './FoodIcons';
 import {
   fmt,
   macroSplit,
+  type FoodCategory,
   type ImageCredit,
   type MacroType,
   type MealBankItem,
@@ -25,11 +26,13 @@ export function FoodPhoto({
   contain,
   className,
   iconSize = 44,
+  category,
   children,
 }: {
   src?: string | null;
   alt: string;
   macro: MacroType;
+  category?: FoodCategory | null;
   contain?: boolean;
   className?: string;
   iconSize?: number;
@@ -42,7 +45,7 @@ export function FoodPhoto({
     <div className={cn('fb-photo', `fb-accent-${macro}`, contain && 'fb-photo--contain', className)}>
       {(!showImg || !loaded) && (
         <div className="fb-photo__fallback" aria-hidden="true">
-          <IconOf icon={MACRO_ICON[macro]} size={iconSize} strokeWidth={1.5} />
+          <IconOf icon={(category && CATEGORY_ICON[category]) || MACRO_ICON[macro]} size={iconSize} strokeWidth={1.5} />
         </div>
       )}
       {showImg && (

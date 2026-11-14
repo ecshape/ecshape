@@ -34,7 +34,7 @@ export interface MealBankItem {
 
 export interface LibraryFood {
   id: string;
-  source: 'openfoodfacts' | 'staple';
+  source: 'openfoodfacts' | 'staple' | 'usda';
   source_id: string;
   name: string;
   name_he: string | null;
@@ -56,7 +56,15 @@ export interface LibraryFood {
   nova_group: number | null;
   macro_type: MacroType;
   quantity: string | null;
+  /** Food family used for the fallback icon (meat, fish, dairy, grain...). */
+  category?: FoodCategory | null;
+  data_type?: string | null;
+  source_url?: string | null;
 }
+
+export type FoodCategory =
+  | 'meat' | 'fish' | 'egg' | 'dairy' | 'grain' | 'bread' | 'legume' | 'vegetable' | 'fruit'
+  | 'nut' | 'oil' | 'sweet' | 'snack' | 'sauce' | 'dish' | 'drink';
 
 /** Property tags, in display order. */
 export const PROPERTY_TAGS = [

@@ -1,6 +1,15 @@
 import React from 'react';
 import {
   Apple,
+  Bean,
+  Beef,
+  Cookie,
+  CupSoda,
+  Egg,
+  Fish,
+  Nut,
+  Sandwich,
+  Soup,
   Carrot,
   Droplet,
   Dumbbell,
@@ -11,7 +20,7 @@ import {
   type LucideIcon,
   type LucideProps,
 } from 'lucide-react';
-import type { MacroType, PropertyTag } from './foodbankModel';
+import type { FoodCategory, MacroType, PropertyTag } from './foodbankModel';
 
 /* Small custom line icons drawn in the lucide style (24 grid, 2px round strokes)
    so they sit next to lucide icons without looking foreign. */
@@ -124,6 +133,26 @@ export const PROPERTY_ICON: Record<PropertyTag, AnyIcon> = {
   vegetarian: Leaf,
   gluten_free: WheatOff,
   kosher: KosherIcon,
+};
+
+/** Fallback tile icon per food family (used when a food has no photo). */
+export const CATEGORY_ICON: Record<FoodCategory, AnyIcon> = {
+  meat: Beef,
+  fish: Fish,
+  egg: Egg,
+  dairy: Milk,
+  grain: Wheat,
+  bread: Sandwich,
+  legume: Bean,
+  vegetable: Carrot,
+  fruit: Apple,
+  nut: Nut,
+  oil: Droplet,
+  sweet: Cookie,
+  snack: Cookie,
+  sauce: Droplet,
+  dish: Soup,
+  drink: CupSoda,
 };
 
 export const IconOf = ({ icon: Icon, ...rest }: { icon: AnyIcon } & LucideProps) => {

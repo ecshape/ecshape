@@ -545,6 +545,9 @@ const MealBank = () => {
             </div>
           </div>
 
+          <p className="fb-reveal -mb-2 text-xs text-muted-foreground" style={{ ['--d' as string]: 2 }}>
+            {t('banks.food.ctaScale')}
+          </p>
           <div className="fb-reveal flex flex-wrap gap-2" style={{ ['--d' as string]: 2 }}>
             <Button onClick={() => setLibraryOpen(true)} className="h-11 flex-1 gap-2 rounded-xl px-4 shadow-lg shadow-primary/20 transition-transform active:scale-[.97] sm:flex-none">
               <Library className="h-4 w-4" />

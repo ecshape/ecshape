@@ -75,6 +75,43 @@ def library_facets(user: UserResponse = Depends(get_current_user)):
     return {"total": len(lib), "muscles": muscles, "equipment": equipment, "levels": levels, "categories": categories}
 
 
+@router.get("/sources")
+def library_sources(user: UserResponse = Depends(get_current_user)):
+    """Size of each searchable source (wger is null until its catalogue was downloaded once)."""
+    from app.services import wger_service
+
+    return {
+        "library": len(_library()),
+        "wger": wger_service.cached_count(),
+        "wger_attribution": wger_service.ATTRIBUTION,
+    }
+
+
+def _search_wger(words, muscle, equipment, category, lang, offset, limit, db, user):
+    from app.services import wger_service
+
+    try:
+        items = wger_service.catalog()
+    except wger_service.WgerUnavailable:
+        raise HTTPException(status_code=503, detail="wger.de is unreachable right now")
+    res = []
+    for e in items:
+        if muscle and muscle not in e["primaryMuscles"]:
+            continue
+        if equipment and (e.get("equipment") or "other") != equipment:
+            continue
+        if category and e.get("category") != category:
+            continue
+        if words and not all(w in e["_hay"] for w in words):
+            continue
+        res.append(e)
+    if words:
+        res.sort(key=lambda e: (not any(n.lower().startswith(words[0]) for n in e["names"].values()), not e["frames"], len(e["name"])))
+    imported = _imported_ids(db, user.id)
+    page = [{**wger_service.localize(e, lang), "imported": e["id"] in imported} for e in res[offset: offset + limit]]
+    return {"total": len(res), "items": page, "source": "wger", "catalog_total": len(items)}
+
+
 @router.get("")
 def search_library(
     q: Optional[str] = None,
@@ -82,6 +119,8 @@ def search_library(
     equipment: Optional[str] = None,
     level: Optional[str] = None,
     category: Optional[str] = None,
+    source: str = Query("library"),
+    lang: str = Query("en"),
     offset: int = Query(0, ge=0),
     limit: int = Query(48, ge=1, le=200),
     user: UserResponse = Depends(get_current_user),
@@ -89,6 +128,10 @@ def search_library(
 ):
     _require_trainer(user)
     words = [w for w in (q or "").lower().split() if w]
+    if source == "wger":
+        lang = (lang or "en").lower()[:2]
+        return _search_wger(words, muscle, equipment, category, lang if lang in ("en", "fr", "he", "de") else "en",
+                            offset, limit, db, user)
     res = []
     for e in _library():
         if muscle and muscle not in e.get("primaryMuscles", []):
@@ -120,6 +163,7 @@ def _imported_ids(db: Session, user_id: int) -> set:
 
 class ImportIn(BaseModel):
     ids: List[str] = Field(..., min_length=1, max_length=100)
+    lang: Optional[str] = "en"  # wger names / instructions language (falls back to English)
 
 
 @router.post("/import")
@@ -129,6 +173,14 @@ def import_from_library(payload: ImportIn, user: UserResponse = Depends(get_curr
     from app.models.workout import Exercise
 
     by_id = {e["id"]: e for e in _library()}
+    if any(i.startswith("wger:") for i in payload.ids):
+        from app.services import wger_service
+
+        try:
+            for w in wger_service.catalog():
+                by_id[w["id"]] = w
+        except wger_service.WgerUnavailable:
+            raise HTTPException(status_code=503, detail="wger.de is unreachable right now")
     already = _imported_ids(db, user.id)
     created, skipped = [], []
     groups = {g.name.lower(): g for g in db.query(MuscleGroup).all()}
@@ -139,9 +191,17 @@ def import_from_library(payload: ImportIn, user: UserResponse = Depends(get_curr
         if lid in already:
             skipped.append(lid)
             continue
+        is_wger = lid.startswith("wger:")
+        if is_wger:
+            from app.services import wger_service
+
+            e = wger_service.localize(e, (payload.lang or "en")[:2])
+            e["frames"] = e.get("frames") or [None]
         muscle = (e.get("primaryMuscles") or ["other"])[0]
         group_id = None
-        if muscle in STATIC_GROUP:
+        if is_wger and not e.get("primaryMuscles") and e.get("category") == "cardio":
+            group_key = "cardio"
+        elif muscle in STATIC_GROUP:
             group_key = STATIC_GROUP[muscle]
         else:
             en, he = DYNAMIC_GROUP.get(muscle, (muscle.title(), None))
@@ -153,9 +213,12 @@ def import_from_library(payload: ImportIn, user: UserResponse = Depends(get_curr
                 groups[en.lower()] = group
             group_key, group_id = en.lower().replace(" ", "_"), group.id
         secondary = ", ".join(e.get("secondaryMuscles") or [])
+        credit = None
+        if is_wger:
+            credit = f"{wger_service.ATTRIBUTION}" + (f", {e['license_author']}" if e.get("license_author") else "")
         ex = Exercise(
-            name=e["name"],
-            description=" · ".join(x for x in [e.get("level"), e.get("mechanic"), e.get("force"), secondary and f"also: {secondary}"] if x),
+            name=e["name"][:200],
+            description=" · ".join(x for x in [e.get("level"), e.get("mechanic"), e.get("force"), secondary and f"also: {secondary}", credit] if x),
             image_path=e["frames"][0],
             muscle_group=group_key,
             muscle_group_id=group_id,

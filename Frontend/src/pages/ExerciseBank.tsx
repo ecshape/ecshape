@@ -46,7 +46,7 @@ interface Exercise {
 
 /** Demo frames for a bank exercise: library animation, uploaded image, or none. */
 const exerciseFrames = (e: Exercise): string[] => {
-  if (e.library_id) return libraryFrames(e.library_id);
+  if (e.library_id && !e.library_id.startsWith('wger:')) return libraryFrames(e.library_id);
   if (!e.image_path) return [];
   if (/^https?:\/\//.test(e.image_path) || e.image_path.startsWith(API_BASE_URL)) return [e.image_path];
   const file = e.image_path.split('/').pop() || e.image_path.split('\\').pop();
@@ -884,6 +884,7 @@ const ExerciseBank = () => {
           <div>
             <h1 className="ec-page-title text-foreground">{t('exerciseBank.title')}</h1>
             <p className="text-sm sm:text-base text-muted-foreground">{t('exerciseBank.subtitle')}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('banks.exercise.ctaScale')}</p>
           </div>
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto min-w-0 flex-shrink-0">
             <Button onClick={() => setLibraryOpen(true)} className="ec-exlib-cta w-full md:w-auto whitespace-nowrap">

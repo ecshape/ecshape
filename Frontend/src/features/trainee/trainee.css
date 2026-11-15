@@ -183,6 +183,8 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
   padding-bottom: var(--tp-safe-b);
 }
 .tp-sheet[data-state="open"] { animation: tpSheetUp .45s var(--ease-out) both; }
+/* QA #61: search sheets keep their height, so "no results" never shrinks the sheet out of sight behind the keyboard. */
+.tp-sheet--tall { height: min(88dvh, 46rem); }
 /* QA #35: a slim floating scrollbar that stays inside the rounded corners (track inset top and bottom). */
 @supports not selector(::-webkit-scrollbar) {
   .tp-sheet .overflow-y-auto { scrollbar-width: thin; scrollbar-color: hsl(var(--foreground) / .22) transparent; }

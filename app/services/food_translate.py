@@ -12,9 +12,12 @@ the display form. Multi-word phrases are matched before single words.
 
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 ENTRIES: List[Tuple[str, List[str], List[str]]] = [
     # --- Meat & poultry
@@ -273,6 +276,50 @@ def is_hebrew(text: str) -> bool:
 
 
 def translate_query(query: str) -> Tuple[Optional[str], bool]:
+    en, changed, _dropped = _translate_query(query)
+    return en, changed
+
+
+_MT_CACHE: Dict[str, Optional[str]] = {}
+
+
+def machine_query(query: str, src: str = "he") -> Optional[str]:
+    """QA #61: keyless machine translation of a food query (MyMemory), for words the dictionary does not know
+    ("בריוש" -> "brioche"). Cached in memory; a short timeout so a slow service never stalls the search."""
+    key = f"{src}|{fold(query)}"
+    if key in _MT_CACHE:
+        return _MT_CACHE[key]
+    out: Optional[str] = None
+    try:
+        from app.services.translate import _mm_piece
+
+        raw = _mm_piece(query.strip()[:120], src, "en", timeout=4)
+        if raw:
+            cleaned = re.sub(r"[^\w\s'-]", " ", raw).strip().lower()
+            cleaned = re.sub(r"\s+", " ", cleaned)
+            if cleaned and not is_hebrew(cleaned):
+                out = cleaned
+    except Exception as e:  # network / quota: fall back to the dictionary only
+        logger.info("Food query machine translation failed: %s", e)
+    if len(_MT_CACHE) > 2000:
+        _MT_CACHE.clear()
+    _MT_CACHE[key] = out
+    return out
+
+
+def smart_query(query: str, lang: str) -> Tuple[Optional[str], bool]:
+    """Dictionary first; when it leaves Hebrew/French words untranslated, machine-translate the whole query."""
+    en, changed, dropped = _translate_query(query)
+    if dropped or not en:
+        src = "he" if is_hebrew(query) else (lang if lang in ("fr",) else None)
+        if src:
+            mt = machine_query(query, src)
+            if mt:
+                return mt, True
+    return en, changed
+
+
+def _translate_query(query: str) -> Tuple[Optional[str], bool, bool]:
     """Translate a he/fr food query to English.
 
     Returns (english_query or None, changed). Latin words that are not in the
@@ -281,9 +328,10 @@ def translate_query(query: str) -> Tuple[Optional[str], bool]:
     """
     words = fold(query).split()
     if not words:
-        return None, False
+        return None, False, False
     out: List[str] = []
     changed = False
+    dropped = False
     i = 0
     while i < len(words):
         hit = None
@@ -309,16 +357,18 @@ def translate_query(query: str) -> Tuple[Optional[str], bool]:
             i += hit[1]
             continue
         word = words[i]
+        if is_hebrew(word):
+            dropped = True
         if not is_hebrew(word) and not word.isdigit():
             out.append(word)
         elif word.isdigit():
             pass  # "5%" style fat levels are not useful for USDA
         i += 1
     if not out:
-        return None, changed
+        return None, changed, dropped
     # Drop a generic word when a more specific phrase contains it ("chicken" + "chicken breast").
     final = [w for w in out if not any(w != o and w in o.split() for o in out)]
-    return " ".join(final), changed
+    return " ".join(final), changed, dropped
 
 
 def name_for(en_text: str, lang: str) -> Optional[str]:

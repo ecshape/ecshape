@@ -85,12 +85,12 @@ MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 MM_LANG = {"he": "he-IL", "fr": "fr-FR", "en": "en-GB"}
 
 
-def _mm_piece(text: str, src: str, dst: str) -> Optional[str]:
+def _mm_piece(text: str, src: str, dst: str, timeout: float = 20) -> Optional[str]:
     import urllib.parse
 
     url = MYMEMORY_URL + "?" + urllib.parse.urlencode({"q": text, "langpair": f"{MM_LANG[src]}|{MM_LANG[dst]}"})
     req = urllib.request.Request(url, headers={"User-Agent": "ecshape-app/1.0"})
-    with urllib.request.urlopen(req, timeout=20) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         body = json.loads(r.read().decode())
     if body.get("quotaFinished") or int(body.get("responseStatus") or 0) != 200:
         return None

@@ -242,7 +242,7 @@ def prepare_query(query: str, lang: str) -> Tuple[Optional[str], bool]:
     if not query:
         return None, False
     if lang in ("he", "fr") or food_translate.is_hebrew(query):
-        return food_translate.translate_query(query)
+        return food_translate.smart_query(query, lang)
     return query, False
 
 

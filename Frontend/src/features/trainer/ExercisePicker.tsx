@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { useSwipeClose } from '@/hooks/use-swipe-close';
 import { useTranslation } from 'react-i18next';
 import { Check, Dumbbell, Plus, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,7 @@ const ExercisePicker: React.FC<{
   subtitle?: React.ReactNode;
 }> = ({ open, onOpenChange, exercises, loading, onPick, counts, title, subtitle }) => {
   const { t, i18n } = useTranslation();
+  const swipeRef = useSwipeClose(() => onOpenChange(false), { maxWidth: 768 });
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState('all');
   const [added, setAdded] = useState(0);
@@ -70,7 +72,7 @@ const ExercisePicker: React.FC<{
       <DialogPrimitive.Portal>
         <div className="tr-root tp-root tr-picker" dir={i18n.language?.startsWith('he') ? 'rtl' : 'ltr'}>
           <DialogPrimitive.Overlay className="tr-picker-scrim" />
-          <DialogPrimitive.Content className="tr-picker-panel focus:outline-none" aria-describedby={undefined}>
+          <DialogPrimitive.Content ref={swipeRef} className="tr-picker-panel focus:outline-none" aria-describedby={undefined}>
             <div className="mx-auto mt-2.5 h-1.5 w-12 flex-none rounded-full bg-foreground/15 md:hidden" />
             <header className="flex-none space-y-3 px-4 pb-3 pt-4 sm:px-6 sm:pt-6">
               <div className="flex items-start justify-between gap-3">

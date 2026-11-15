@@ -27,7 +27,7 @@ type Props = {
   onManual: () => void;
 };
 
-function useDebounced<T>(value: T, ms: number): T {
+export function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
   useEffect(() => {
     const id = window.setTimeout(() => setV(value), ms);
@@ -143,6 +143,7 @@ const AddMealSheet: React.FC<Props> = ({ open, slot, date, onClose, onManual }) 
 
   return (
     <Sheet
+      tall={mode === 'home'}
       open={open}
       onOpenChange={(o) => !o && close()}
       title={title}
@@ -332,7 +333,7 @@ export const FoodThumb: React.FC<{ name: string; src?: string | null; needsImage
   );
 };
 
-const HitRow: React.FC<{ hit: FoodHit; aiImages: boolean; onPick: () => void }> = ({ hit, aiImages, onPick }) => {
+export const HitRow: React.FC<{ hit: FoodHit; aiImages: boolean; onPick: () => void }> = ({ hit, aiImages, onPick }) => {
   const { t } = useTranslation();
   const per = hit.unit === 'portion' ? (hit.serving_label || t('trainee.mealTools.perPortion')) : t('trainee.mealTools.per100');
   return (

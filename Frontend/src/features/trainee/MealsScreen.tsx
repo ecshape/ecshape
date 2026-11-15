@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, UtensilsCrossed,
+  AlertTriangle, ArrowLeftRight, Loader2, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Heart, MessageCircle, Minus, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mediaUrl } from '@/lib/mediaUrl';
@@ -11,8 +11,8 @@ import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import AddMealSheet from './AddMealSheet';
 import { useTranslatedMap } from './useTranslated';
-import { FoodThumb } from './AddMealSheet';
-import { useLogSaved, useSavedMeals } from './mealTools';
+import { FoodThumb, HitRow, useDebounced } from './AddMealSheet';
+import { useFoodSearch, useLogSaved, useSavedMeals, type FoodHit } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
 import {
@@ -33,6 +33,17 @@ const groupRows = (rows: PlanRow[]): RowGroup[] => {
     if (r.choice && !g.eaten) g.eaten = r;
   }
   return out;
+};
+
+/** QA #60: planned foods the trainee removed from a day's meal ("date:slot:macro" keys), kept on this device. */
+const REMOVED_KEY = 'ec-meal-removed';
+const loadRemoved = (): Record<string, true> => {
+  try {
+    const all = JSON.parse(localStorage.getItem(REMOVED_KEY) || '{}') as Record<string, true>;
+    // Forget anything older than 60 days so the list stays small.
+    const cutoff = addDays(todayISO(), -60);
+    return Object.fromEntries(Object.entries(all).filter(([k]) => k.slice(0, 10) >= cutoff)) as Record<string, true>;
+  } catch { return {}; }
 };
 
 const MealsScreen: React.FC = () => {
@@ -56,6 +67,8 @@ const MealsScreen: React.FC = () => {
   const [askSlot, setAskSlot] = useState<V3MealSlotView | null>(null);
   /** QA #45: finished meals fold to their header; the trainee can unfold one. */
   const [unfolded, setUnfolded] = useState<Record<number, boolean>>({});
+  const [removed, setRemoved] = useState<Record<string, true>>(loadRemoved);
+  useEffect(() => { try { localStorage.setItem(REMOVED_KEY, JSON.stringify(removed)); } catch { /* private mode */ } }, [removed]);
   /** QA #59: the food group whose alternatives are open (one at a time). */
   const [altOpen, setAltOpen] = useState<string | null>(null);
 
@@ -90,6 +103,25 @@ const MealsScreen: React.FC = () => {
   const pickOf = (g: RowGroup, slot: V3MealSlotView) =>
     g.eaten ?? g.rows.find((r) => r.food.id === picks[pickKey(slot.meal_slot_id, g.macro)]) ?? g.rows[0];
 
+  const visibleGroups = (slot: V3MealSlotView, data: V3DayViewResponse) =>
+    groupRows(planRows(slot, data.choices)).filter((g) => !removed[pickKey(slot.meal_slot_id, g.macro)]);
+
+  /** QA #60: remove a planned food from today's meal (un-logs it if it was eaten), with undo. */
+  const removeGroup = (slot: V3MealSlotView, g: RowGroup, name: string) => {
+    const key = pickKey(slot.meal_slot_id, g.macro);
+    haptic(8);
+    if (g.eaten?.choice) write.mutate({ kind: 'delete', id: g.eaten.choice.id }, { onError: onWriteError });
+    setRemoved((r) => ({ ...r, [key]: true }));
+    toast(t('trainee.meals.rowRemoved', { name }), {
+      action: { label: t('trainee.meals.undo'), onClick: () => setRemoved((r) => { const n = { ...r }; delete n[key]; return n; }) },
+    });
+  };
+  const restoreSlot = (slot: V3MealSlotView) => {
+    haptic(6);
+    const prefix = `${date}:${slot.meal_slot_id}:`;
+    setRemoved((r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith(prefix))) as Record<string, true>);
+  };
+
   /** QA #59: one tap = eaten (logged now); the meal completes by itself once every food group is eaten. */
   const eatGroup = (slot: V3MealSlotView, data: V3DayViewResponse, g: RowGroup) => {
     const r = pickOf(g, slot);
@@ -98,7 +130,7 @@ const MealsScreen: React.FC = () => {
       write.mutate({ kind: 'delete', id: g.eaten.choice.id }, { onError: onWriteError });
       return;
     }
-    const remaining = groupRows(planRows(slot, data.choices)).filter((x) => !x.eaten && x.macro !== g.macro).length;
+    const remaining = visibleGroups(slot, data).filter((x) => !x.eaten && x.macro !== g.macro).length;
     write.mutate(
       { kind: 'log', body: { date, meal_slot_id: slot.meal_slot_id, macro_type: r.macro, food_option_id: r.food.id, quantity: r.qty } },
       {
@@ -115,7 +147,7 @@ const MealsScreen: React.FC = () => {
 
   const completeSlot = (slot: V3MealSlotView, data: V3DayViewResponse) => {
     // Extra foods are added on top of the plan: they never cancel the planned foods.
-    const logs: V3MealLogCreateRequest[] = groupRows(planRows(slot, data.choices))
+    const logs: V3MealLogCreateRequest[] = visibleGroups(slot, data)
           .filter((g) => !g.eaten)
           .map((g) => pickOf(g, slot))
           .map((r) => ({ date, meal_slot_id: slot.meal_slot_id, macro_type: r.macro, food_option_id: r.food.id, quantity: r.qty }));
@@ -221,7 +253,9 @@ const MealsScreen: React.FC = () => {
               const rows = planRows(slot, data.choices);
               const extras = data.choices.filter((c) => c.meal_slot_id === slot.meal_slot_id && isOverallCustom(c));
               const folded = done && !unfolded[slot.meal_slot_id];
-              const groups = groupRows(rows);
+              const allGroups = groupRows(rows);
+              const groups = allGroups.filter((g) => !removed[pickKey(slot.meal_slot_id, g.macro)]);
+              const removedCount = allGroups.length - groups.length;
               const groupCount = groups.length;
               const eatenCount = groups.filter((g) => g.eaten).length;
               const toggleFold = () => { haptic(4); setUnfolded((u) => ({ ...u, [slot.meal_slot_id]: !u[slot.meal_slot_id] })); };
@@ -325,7 +359,7 @@ const MealsScreen: React.FC = () => {
                       </div>
                     )}
 
-                    {rows.length > 0 && (
+                    {groups.length > 0 && (
                       <ul className="space-y-2" data-testid="meal-rows">
                         {groups.map((g) => {
                           const key = pickKey(slot.meal_slot_id, g.macro);
@@ -366,7 +400,14 @@ const MealsScreen: React.FC = () => {
                                   aria-expanded={open}
                                   className="flex min-w-0 flex-1 items-center gap-3 text-start disabled:cursor-default"
                                 >
-                                  <FoodThumb name={r.food.name} src={r.food.image_url} needsImage={!r.food.image_url} className="h-12 w-12 rounded-xl" />
+                                  <span className="relative flex-none">
+                                    <FoodThumb name={r.food.name} src={r.food.image_url} needsImage={!r.food.image_url} className="h-12 w-12 rounded-xl" />
+                                    {alts.length > 0 && !done && (
+                                      <span className="absolute -bottom-1 -end-1 flex items-center gap-0.5 rounded-full bg-card px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground shadow ring-1 ring-border/60" aria-label={t('trainee.meals.orInstead')}>
+                                        <ArrowLeftRight className="h-3 w-3" />{alts.length}
+                                      </span>
+                                    )}
+                                  </span>
                                   <span className="min-w-0 flex-1">
                                     <span className={cn('block truncate font-semibold', eaten && 'text-[hsl(var(--tp-ok))]')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</span>
                                     <span className="block truncate text-xs text-muted-foreground">
@@ -375,16 +416,23 @@ const MealsScreen: React.FC = () => {
                                       {r.swap && <> · {t('trainee.meals.swapped')}</>}
                                     </span>
                                   </span>
-                                  {alts.length > 0 && !done && (
-                                    <span className="flex flex-none items-center gap-0.5 rounded-full bg-foreground/[.06] px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                                      <ArrowLeftRight className="h-3.5 w-3.5" />{alts.length}
-                                    </span>
-                                  )}
                                 </button>
                                 {!done && (
-                                  <button type="button" onClick={() => setSwapRow({ slot, row: r })} className="tp-icon-btn tp-press !h-9 !w-9 flex-none bg-transparent text-muted-foreground" aria-label={t('trainee.meals.swap')} title={t('trainee.meals.swap')}>
+                                  <div className="flex flex-none flex-col">
+                                  <button type="button" onClick={() => setSwapRow({ slot, row: r })} className="tp-icon-btn tp-press !h-8 !w-8 bg-transparent text-muted-foreground" aria-label={t('trainee.meals.swap')} title={t('trainee.meals.swap')}>
                                     <Search className="h-4 w-4" />
                                   </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeGroup(slot, g, r.swap ? r.swap.displayName : foodName(r.food))}
+                                    className="tp-icon-btn tp-press !h-8 !w-8 bg-transparent text-muted-foreground hover:!text-destructive"
+                                    aria-label={t('trainee.meals.removeRow', { name: r.swap ? r.swap.displayName : foodName(r.food) })}
+                                    title={t('trainee.common.delete')}
+                                    data-testid="meal-row-remove"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                  </div>
                                 )}
                               </div>
                               {open && (
@@ -407,6 +455,12 @@ const MealsScreen: React.FC = () => {
                           );
                         })}
                       </ul>
+                    )}
+
+                    {removedCount > 0 && !done && (
+                      <button type="button" onClick={() => restoreSlot(slot)} className="tp-press flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="meal-rows-restore">
+                        <RotateCcw className="h-3.5 w-3.5" />{t('trainee.meals.restoreRows', { count: removedCount })}
+                      </button>
                     )}
 
                     {extras.map((c) => (
@@ -505,11 +559,16 @@ const MealsScreen: React.FC = () => {
 };
 
 const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | null; date: string; onClose: () => void; foodName: (f: V3FoodOption) => string }> = ({ target, date, onClose, foodName }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [q, setQ] = useState('');
   const write = useMealWrite(date);
   const catalog = useCatalog(target?.row.macro ?? 'protein', !!target);
   const row = target?.row;
+  // QA #61: beyond the coach's list, search the whole food database (staples, USDA, Open Food Facts).
+  const dq = useDebounced(q.trim(), 300);
+  const db = useFoodSearch(dq, (i18n.language || 'en').slice(0, 2), !!target && dq.length >= 2);
+  const dbHits: FoodHit[] = db.data && dq.length >= 2 ? [...db.data.recent, ...db.data.coach, ...db.data.foods, ...db.data.products] : [];
+  const dbSearching = dq.length >= 2 && (db.isFetching || db.data?.query !== dq);
   const list = (catalog.data ?? []).filter((f) => {
     const s = q.trim().toLowerCase();
     return !s || f.name.toLowerCase().includes(s) || (f.name_hebrew || '').toLowerCase().includes(s);
@@ -540,8 +599,40 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
     onClose();
   };
 
+  /** A food from the database, at the plan row's amount (portions of a per-100 g food use its serving weight). */
+  const pickHit = (h: FoodHit) => {
+    if (!target || !row) return;
+    const food: V3FoodOption = {
+      name: h.name, calories: h.calories, protein: h.protein, carbs: h.carbs, fat: h.fat,
+      measurement_type: h.unit === 'portion' ? 'per_portion' : 'per_100g',
+      serving_size: h.serving_grams ? `${Math.round(h.serving_grams)}g` : null,
+    };
+    let qty = row.qty;
+    if (h.unit === 'g' && row.food.measurement_type === 'per_portion') {
+      const count = parseFloat(String(row.qty).replace(',', '.')) || 1;
+      qty = `${Math.round(count * (h.serving_grams || 100))}g`;
+    }
+    const m = foodMacros(food, qty);
+    const name = h.brand && h.source === 'product' && !h.name.includes(h.brand) ? `${h.name} · ${h.brand}` : h.name;
+    haptic();
+    write.mutate(
+      {
+        kind: 'replace',
+        deleteId: row.choice?.id,
+        body: {
+          date, meal_slot_id: target.slot.meal_slot_id, macro_type: row.macro, quantity: qty, food_option_id: null,
+          custom_food_name: encodeBankSwap(row.food.id, 0, safeName(name)),
+          custom_calories: m.calories, custom_protein: m.protein, custom_carbs: m.carbs, custom_fat: m.fat,
+        },
+      },
+      { onError: () => toast.error(t('trainee.meals.saveError')) },
+    );
+    setQ('');
+    onClose();
+  };
+
   return (
-    <Sheet open={!!target} onOpenChange={(o) => !o && onClose()} title={t('trainee.meals.swapTitle')} description={row ? t('trainee.meals.swapFor', { food: row.swap ? row.swap.displayName : foodName(row.food), qty: row.qty }) : undefined}>
+    <Sheet tall open={!!target} onOpenChange={(o) => !o && onClose()} title={t('trainee.meals.swapTitle')} description={row ? t('trainee.meals.swapFor', { food: row.swap ? row.swap.displayName : foodName(row.food), qty: row.qty }) : undefined}>
       {row && (
         <div className="space-y-3 pb-2">
           {row.swap && (
@@ -562,7 +653,7 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
           ) : catalog.isError ? (
             <ErrorState compact onRetry={() => catalog.refetch()} />
           ) : !list.length ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">{t('trainee.meals.noResults')}</p>
+            !dbHits.length && !dbSearching && <p className="py-6 text-center text-sm text-muted-foreground">{t('trainee.meals.noResults')}</p>
           ) : (
             <ul className="space-y-1.5">
               {list.slice(0, 80).map((f) => {
@@ -580,6 +671,17 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
                 );
               })}
             </ul>
+          )}
+          {dq.length >= 2 && (dbSearching || dbHits.length > 0) && (
+            <section aria-live="polite" data-testid="swap-db">
+              <p className="tp-label mb-1.5 mt-2 flex items-center gap-2">
+                {t('trainee.meals.fromDatabase')}
+                {dbSearching && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-label={t('trainee.mealTools.searching')} />}
+              </p>
+              <ul className="space-y-1.5">
+                {dbHits.slice(0, 40).map((h) => <HitRow key={h.id} hit={h} aiImages={!!db.data?.ai_images} onPick={() => pickHit(h)} />)}
+              </ul>
+            </section>
           )}
         </div>
       )}
@@ -656,6 +758,7 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
 
   return (
     <Sheet
+      tall
       open={open}
       onOpenChange={(o) => !o && close()}
       title={t('trainee.meals.addFood')}

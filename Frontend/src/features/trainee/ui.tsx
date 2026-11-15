@@ -3,6 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSwipeClose } from '@/hooks/use-swipe-close';
 import { fmtNum, prefersReducedMotion } from './format';
 
 /** Page container: phone-first gutters, comfortable max width on desktop. */
@@ -166,13 +167,16 @@ export const Sheet: React.FC<{
   description?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-}> = ({ open, onOpenChange, title, description, children, footer }) => {
+  /** Keeps a stable height (search sheets): the sheet does not collapse behind the keyboard when a search finds nothing (QA #61). */
+  tall?: boolean;
+}> = ({ open, onOpenChange, title, description, children, footer, tall }) => {
   const { t, i18n } = useTranslation();
+  const swipeRef = useSwipeClose(() => onOpenChange(false));
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="tp-sheet-overlay" />
-        <DialogPrimitive.Content className="tp-sheet tp-root focus:outline-none" dir={i18n.language?.startsWith('he') ? 'rtl' : 'ltr'}>
+        <DialogPrimitive.Content ref={swipeRef} className={cn('tp-sheet tp-root focus:outline-none', tall && 'tp-sheet--tall')} dir={i18n.language?.startsWith('he') ? 'rtl' : 'ltr'}>
           <div className="mx-auto mt-2.5 h-1.5 w-12 flex-none rounded-full bg-foreground/15 sm:hidden" />
           <div className="flex flex-none items-start justify-between gap-3 px-5 pb-2 pt-4 sm:px-6 sm:pt-6">
             <div className="min-w-0">

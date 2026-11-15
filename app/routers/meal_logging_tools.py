@@ -371,6 +371,14 @@ def search_foods(
         fu = _pool.submit(_usda_search, query, lang, page, 8)
         fo = _pool.submit(_off_search, query, lang, page, 16)
         usda_res, off_res = fu.result(), fo.result()
+        # QA #61: Open Food Facts has few Hebrew product names ("בריוש" finds nothing, "brioche" thousands):
+        # when the query was translated, also search it in English.
+        query_en = usda_res.get("query_en")
+        if query_en and query_en.lower() != query.lower() and len(off_res["results"]) < 8:
+            off_en = _off_search(query_en, lang, page, 16)
+            if off_en["results"]:
+                off_res = {**off_en, "results": off_res["results"] + off_en["results"],
+                           "count": max(off_res.get("count") or 0, off_en.get("count") or 0), "error": None}
         sections["foods"] += [_from_library(x) for x in usda_res["results"]]
         sections["products"] = [_from_library(x) for x in off_res["results"] if x.get("kcal") is not None]
         has_more = page * 16 < (off_res.get("count") or 0)

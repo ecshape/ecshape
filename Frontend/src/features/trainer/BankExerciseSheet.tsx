@@ -3,6 +3,7 @@ import '@/i18n/ticketsStudio';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Pencil, Trash2, Video, Weight, X } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { useSwipeClose } from '@/hooks/use-swipe-close';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
 import { LevelBars } from '@/components/exercises/ExerciseLibrary';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
@@ -51,6 +52,7 @@ export const BankExerciseSheet: React.FC<{
   onDelete: (e: BankExercise) => void;
 }> = ({ exercise, onClose, muscleLabel, onEdit, onDelete }) => {
   const { t, i18n } = useTranslation();
+  const swipeRef = useSwipeClose(onClose, { maxWidth: 768 });
   const [last, setLast] = useState<BankExercise | null>(exercise);
   useEffect(() => { if (exercise) setLast(exercise); }, [exercise]);
   const e = exercise ?? last;
@@ -60,7 +62,7 @@ export const BankExerciseSheet: React.FC<{
     <DialogPrimitive.Root open={!!exercise} onOpenChange={(o) => !o && onClose()}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="tr-xs-overlay" />
-        <DialogPrimitive.Content className="tr-xs-panel tp-root focus:outline-none" dir={i18n.dir()}>
+        <DialogPrimitive.Content ref={swipeRef} className="tr-xs-panel tp-root focus:outline-none" dir={i18n.dir()}>
           {e && (() => {
             const frames = exerciseFrames(e);
             const level = bankLevel(e);

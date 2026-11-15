@@ -23,6 +23,7 @@ import { exerciseLoad, exerciseMuscles } from './muscles';
 import { muscleLabel, sessionStart, setVolume, useTT } from './shared';
 import { playChime, primeChime } from './chime';
 import { useTranslatedTexts } from '../useTranslated';
+import { LibText } from '../libText';
 
 const repsFloor = (r?: string | null) => (r || '').match(/\d+/)?.[0] ?? '';
 const youtubeId = (url?: string | null) => url?.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{6,})/)?.[1] ?? null;
@@ -373,7 +374,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
           <div className="mt-4 flex items-start gap-3">
             <div className="min-w-0 flex-1">
               {ex.group_name && <span className="tp-chip tp-chip--primary mb-1.5">{ex.group_name}</span>}
-              <h1 className="text-[1.65rem] font-extrabold leading-tight sm:text-3xl" dir="auto">{name}</h1>
+              <h1 className="text-[1.65rem] font-extrabold leading-tight sm:text-3xl"><LibText text={name} lazy={false} /></h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {exerciseMuscles(ex.exercise).primary.map((m) => muscleLabel(tt, m)).join(' · ')}
                 {ex.tempo ? <> · {t('trainee.player.tempo', { tempo: ex.tempo })}</> : null}
@@ -521,10 +522,10 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
           />
         )}
       </Sheet>
-      <Sheet open={info} onOpenChange={setInfo} title={name} description={[ex.exercise?.equipment || ex.exercise?.equipment_needed, ex.exercise?.level].filter(Boolean).join(' · ') || undefined}>
+      <Sheet open={info} onOpenChange={setInfo} title={<LibText text={name} lazy={false} />} description={[ex.exercise?.equipment || ex.exercise?.equipment_needed, ex.exercise?.level].filter(Boolean).join(' · ') || undefined}>
         <ExerciseDetails ex={ex} />
       </Sheet>
-      <Sheet open={history} onOpenChange={setHistory} title={t('trainee.player.historyTitle')} description={name}>
+      <Sheet open={history} onOpenChange={setHistory} title={t('trainee.player.historyTitle')} description={<LibText text={name} lazy={false} />}>
         <ExerciseHistory sessions={sessionsQ.data ?? []} exId={ex.id} />
       </Sheet>
       <Sheet
@@ -594,7 +595,7 @@ const SwapPicker: React.FC<{ ex: WorkoutExercise; current: Swap | null; onPick: 
                 <img src={libraryFrames(it.id)[0]} alt="" loading="lazy" className="h-full w-full object-cover" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-semibold" dir="auto">{it.name}</span>
+                <span className="block truncate font-semibold"><LibText text={it.name} src="en" /></span>
                 <span className="block truncate text-xs text-muted-foreground">{[it.primaryMuscles?.[0], it.equipment, it.level].filter(Boolean).join(' · ')}</span>
               </span>
               {current?.libraryId === it.id && <Check className="h-5 w-5 flex-none text-primary" />}
@@ -661,7 +662,7 @@ const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => vo
             {over ? <Check className="mx-auto h-16 w-16 text-[hsl(var(--tp-ok))]" /> : <span className="tp-num block text-7xl leading-none" dir="ltr">{fmtClock(left)}</span>}
           </span>
         </Ring>
-        {rest.next && <p className="mt-5 text-sm text-muted-foreground">{tt('player.upNext')} <span className="font-semibold text-foreground" dir="auto">{rest.next}</span></p>}
+        {rest.next && <p className="mt-5 text-sm text-muted-foreground">{tt('player.upNext')} <LibText className="font-semibold text-foreground" text={rest.next} lazy={false} /></p>}
         <div className="mt-6 flex items-center gap-3">
           <button type="button" onClick={() => onChange({ ...rest, endsAt: Math.max(Date.now(), rest.endsAt - 15000) })} className="tp-icon-btn tp-press !h-14 !w-14 text-sm font-bold" aria-label={tt('player.minus15')}><span dir="ltr">−15</span></button>
           <button type="button" onClick={() => onChange(null)} className="tp-btn tp-btn--primary tp-press min-w-[9rem]">

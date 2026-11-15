@@ -13,6 +13,7 @@ import { fmtDate, fmtNum } from '../format';
 import BodyMap from '../BodyMap';
 import { dayGoal, dayLoad, groupSummary } from './muscles';
 import { e1rm, freqLabel, goalLabel, muscleLabel, sessionVolume, useTT } from './shared';
+import { LibText } from '../libText';
 
 /** "2 sets · 10 reps · 60 kg" lines: consecutive identical sets are grouped. */
 export const setLines = (ex: WorkoutExercise, last: SetCompletion[] | undefined) => {
@@ -136,7 +137,7 @@ const RoutineScreen: React.FC<{ dayId: number }> = ({ dayId }) => {
                       <span className="tp-num absolute bottom-1 start-1 grid h-5 min-w-5 place-items-center rounded-full bg-black/70 px-1 text-[11px] text-white" dir="ltr">{i + 1}</span>
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block break-words font-bold leading-tight" dir="auto">{name}</span>
+                      <span className="block break-words font-bold leading-tight"><LibText text={name} /></span>
                       <span className="mt-1 block space-y-0.5 text-[13px] text-muted-foreground">
                         {lines.slice(0, 3).map((l, k) => (
                           <span key={k} className="block">
@@ -258,7 +259,7 @@ export const RoutineProgress: React.FC<{ sessions: WorkoutSession[]; exercises: 
           <div className="grid grid-cols-2 gap-2">
             {bests.map(({ ex, best }) => (
               <div key={ex.id} className="rounded-2xl bg-foreground/[.05] p-3">
-                <p className="line-clamp-2 text-sm font-semibold" dir="auto">{ex.exercise?.name || ex.exercise_name}</p>
+                <p className="line-clamp-2 text-sm font-semibold"><LibText text={ex.exercise?.name || ex.exercise_name} /></p>
                 <p className="tp-num mt-1 text-xl" dir="ltr">{fmtNum(best.c.weight_used, 1)} × {best.c.reps_completed}</p>
                 <p className="text-[11px] text-muted-foreground">{fmtDate(best.at)}</p>
               </div>

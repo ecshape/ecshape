@@ -15,6 +15,7 @@ import BodyMap from '../BodyMap';
 import { MUSCLES, REGION_MUSCLE, regionsOf, type Load, type Region } from './muscles';
 import { InstructionSteps } from './SessionPlayer';
 import { muscleLabel, regionLabel, TrainingNav, useLibraryBrowse, useTT } from './shared';
+import { LibText } from '@/features/trainee/libText';
 
 const libLoad = (e: Pick<LibraryExercise, 'primaryMuscles' | 'secondaryMuscles'>): Load => {
   const out: Load = {};
@@ -122,7 +123,7 @@ const ExploreScreen: React.FC = () => {
                       <ExerciseDemo frames={e.frames?.length ? e.frames : libraryFrames(e.id)} alt={e.name} className="h-full w-full" />
                     </span>
                     <span className="flex flex-1 flex-col p-2.5">
-                      <span className="line-clamp-2 text-sm font-bold leading-snug" lang="en" dir="ltr">{e.name}</span>
+                      <span className="line-clamp-2 text-sm font-bold leading-snug"><LibText text={e.name} src="en" /></span>
                       <span className="mt-auto truncate pt-1 text-[11px] text-primary">{(e.primaryMuscles ?? []).map((m) => muscleLabel(tt, m)).join(', ')}</span>
                     </span>
                   </button>
@@ -140,7 +141,7 @@ const ExploreScreen: React.FC = () => {
         </section>
       </div>
 
-      <Sheet open={!!open} onOpenChange={(o) => !o && setOpen(null)} title={<span lang="en" dir="ltr">{open?.name}</span>} description={open ? [open.equipment && tt(`equipment.${open.equipment.replace(/\s+/g, '_')}`, { defaultValue: open.equipment }), open.level && tt(`level.${open.level}`, { defaultValue: open.level })].filter(Boolean).join(' · ') : undefined}>
+      <Sheet open={!!open} onOpenChange={(o) => !o && setOpen(null)} title={<LibText text={open?.name} src="en" lazy={false} />} description={open ? [open.equipment && tt(`equipment.${open.equipment.replace(/\s+/g, '_')}`, { defaultValue: open.equipment }), open.level && tt(`level.${open.level}`, { defaultValue: open.level })].filter(Boolean).join(' · ') : undefined}>
         {open && <LibraryDetail e={open} />}
       </Sheet>
     </Screen>

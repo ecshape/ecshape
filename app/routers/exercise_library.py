@@ -17,6 +17,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
+from app.services import food_translate
+
 from app.auth.utils import get_current_user
 from app.database import get_db
 from app.schemas.auth import UserResponse, UserRole
@@ -103,14 +105,40 @@ def _search_wger(words, muscle, equipment, category, lang, offset, limit, db, us
             continue
         if category and e.get("category") != category:
             continue
-        if words and not all(w in e["_hay"] for w in words):
+        if words and not _hit(e["_hay"], words):
             continue
         res.append(e)
     if words:
-        res.sort(key=lambda e: (not any(n.lower().startswith(words[0]) for n in e["names"].values()), not e["frames"], len(e["name"])))
+        res.sort(key=lambda e: (not any(n.lower().startswith(_lead(words)) for n in e["names"].values()), not e["frames"], len(e["name"])))
     imported = _imported_ids(db, user.id)
     page = [{**wger_service.localize(e, lang), "imported": e["id"] in imported} for e in res[offset: offset + limit]]
     return {"total": len(res), "items": page, "source": "wger", "catalog_total": len(items)}
+
+
+def _query_words(q: Optional[str]) -> List[str]:
+    """Search words. A Hebrew query is also machine-translated to English (the library is English):
+    "לחיצת חזה" finds "Bench Press". The English words follow a "|" marker."""
+    q = (q or "").strip()
+    words = [w for w in q.lower().split() if w]
+    if words and (food_translate.is_hebrew(q) or any(ord(ch) > 127 for ch in q)):  # Hebrew, or French with accents
+        en = food_translate.machine_query(q, "he" if food_translate.is_hebrew(q) else "auto")
+        if en:
+            words += ["|"] + [w for w in en.lower().split() if w]
+    return words
+
+
+def _lead(words: List[str]) -> str:
+    """The word to rank exact-ish name matches by (the English one when the query was translated)."""
+    return words[words.index("|") + 1] if "|" in words and words.index("|") + 1 < len(words) else words[0]
+
+
+def _hit(hay: str, words: List[str]) -> bool:
+    """All words of the original query, or all words of its English translation."""
+    if "|" not in words:
+        return all(w in hay for w in words)
+    i = words.index("|")
+    orig, en = words[:i], words[i + 1:]
+    return all(w in hay for w in orig) or (bool(en) and all(w in hay for w in en))
 
 
 @router.get("")
@@ -128,7 +156,7 @@ def search_library(
     db: Session = Depends(get_db),
 ):
     _require_trainer(user)
-    words = [w for w in (q or "").lower().split() if w]
+    words = _query_words(q)
     if source == "wger":
         lang = (lang or "en").lower()[:2]
         return _search_wger(words, muscle, equipment, category, lang if lang in ("en", "fr", "he", "de") else "en",
@@ -143,12 +171,12 @@ def search_library(
             continue
         if category and e.get("category") != category:
             continue
-        if words and not all(w in e["_hay"] for w in words):
+        if words and not _hit(e["_hay"], words):
             continue
         res.append(e)
     # exact-ish name matches first
     if words:
-        res.sort(key=lambda e: (not e["name"].lower().startswith(words[0]), len(e["name"])))
+        res.sort(key=lambda e: (not e["name"].lower().startswith(_lead(words)), len(e["name"])))
     imported = _imported_ids(db, user.id)
     page = [{**_public(e), "imported": e["id"] in imported} for e in res[offset: offset + limit]]
     return {"total": len(res), "items": page}
@@ -163,16 +191,16 @@ def browse_library(
     user: UserResponse = Depends(get_current_user),
 ):
     """Read-only browse of the built-in library for any signed-in user (trainee app "Explore")."""
-    words = [w for w in (q or "").lower().split() if w]
+    words = _query_words(q)
     res = []
     for e in _library():
         if muscle and muscle not in e.get("primaryMuscles", []):
             continue
-        if words and not all(w in e["_hay"] for w in words):
+        if words and not _hit(e["_hay"], words):
             continue
         res.append(e)
     if words:
-        res.sort(key=lambda e: (not e["name"].lower().startswith(words[0]), len(e["name"])))
+        res.sort(key=lambda e: (not e["name"].lower().startswith(_lead(words)), len(e["name"])))
     return {"total": len(res), "items": [_public(e) for e in res[offset: offset + limit]]}
 
 

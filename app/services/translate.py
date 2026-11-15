@@ -23,6 +23,8 @@ from app.services.ai_keys import Engine, all_engines, provider_error_text
 logger = logging.getLogger(__name__)
 
 LANGS = {"he": "Hebrew", "fr": "French", "en": "English"}
+# src_lang "auto": mixed sources (Open Food Facts names in French, wger exercises in German…), detected per text.
+SRC_NAMES = {**LANGS, "auto": "their original language (detect it per item)"}
 FAST_CLAUDE = "claude-haiku-5-5"
 _lock = threading.Lock()
 
@@ -82,7 +84,7 @@ def _call(engine: Engine, prompt: str) -> str:
 
 
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
-MM_LANG = {"he": "he-IL", "fr": "fr-FR", "en": "en-GB"}
+MM_LANG = {"he": "he-IL", "fr": "fr-FR", "en": "en-GB", "auto": "autodetect"}
 
 
 def _mm_piece(text: str, src: str, dst: str, timeout: float = 20) -> Optional[str]:
@@ -115,24 +117,27 @@ def _mm_text(text: str, src: str, dst: str) -> Optional[str]:
     return "\n".join(parts)
 
 
-def _mymemory(texts: List[str], src: str, dst: str) -> Optional[List[str]]:
-    """Keyless fallback (QA #43 #48): MyMemory free machine translation (up to ~500 chars a request), 6 at a time."""
+def _mymemory(texts: List[str], src: str, dst: str) -> List[Optional[str]]:
+    """Keyless fallback (QA #43 #48): MyMemory free machine translation (up to ~500 chars a request), 6 at a time.
+    One result per text; None where that text could not be translated (it is then not cached and retried later)."""
     from concurrent.futures import ThreadPoolExecutor
 
-    try:
-        with ThreadPoolExecutor(max_workers=6) as pool:
-            out = list(pool.map(lambda t: _mm_text(t, src, dst), texts))
-    except Exception as e:  # network / quota: keep the originals
-        logger.warning("Translation fallback (MyMemory) failed: %s", e)
-        return None
-    return out if all(x is not None for x in out) else None
+    def one(t: str) -> Optional[str]:
+        try:
+            return _mm_text(t, src, dst)
+        except Exception as e:  # network / quota / same language: keep the original
+            logger.info("Translation fallback (MyMemory) failed: %s", e)
+            return None
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        return list(pool.map(one, texts))
 
 
 def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: str = "en") -> Dict[str, object]:
     lang = (lang or "en")[:2]
-    src_lang = (src_lang or "en")[:2]
+    src_lang = "auto" if src_lang == "auto" else (src_lang or "en")[:2]
     clean = [str(t or "") for t in texts]
-    if lang not in LANGS or lang == src_lang or not any(t.strip() for t in clean):
+    if lang not in LANGS or src_lang not in SRC_NAMES or lang == src_lang or not any(t.strip() for t in clean):
         return {"texts": clean, "translated": lang == src_lang}
     hashes = [_hash(t, src_lang) for t in clean]
     rows = db.query(TranslationCache).filter(TranslationCache.lang == lang, TranslationCache.src_hash.in_(set(hashes))).all()
@@ -144,10 +149,10 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
         with _lock:  # one batch at a time per worker (avoids paying twice for the same texts)
                 for i in range(0, len(missing), 40):
                     chunk = missing[i:i + 40]
-                    out = None
+                    out: Optional[List[Optional[str]]] = None
                     for engine in engines:
                         try:
-                            out = _parse(_call(engine, _prompt(LANGS[lang], chunk, LANGS.get(src_lang, "English"))), len(chunk))
+                            out = _parse(_call(engine, _prompt(LANGS[lang], chunk, SRC_NAMES.get(src_lang, "English"))), len(chunk))
                         except Exception as e:  # provider errors must never break the screen
                             logger.warning("Translation (%s) failed: %s", engine.provider, provider_error_text(e))
                             out = None
@@ -159,6 +164,9 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
                         complete = False
                         continue
                     for src, dst in zip(chunk, out):
+                        if dst is None:
+                            complete = False
+                            continue
                         h = _hash(src, src_lang)
                         have[h] = dst
                         db.add(TranslationCache(lang=lang, src_hash=h, src=src, text=dst))

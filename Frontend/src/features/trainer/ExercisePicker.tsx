@@ -8,6 +8,7 @@ import ExerciseDemo from '@/components/exercises/ExerciseDemo';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
 import '@/styles/exercises.css';
 import { Skel } from './ui';
+import { LibText, matchesQuery, useQueryInEnglish } from '@/features/trainee/libText';
 
 export interface PickableExercise {
   id: number;
@@ -56,14 +57,15 @@ const ExercisePicker: React.FC<{
     return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k);
   }, [exercises]);
 
+  const qEn = useQueryInEnglish(q); // Hebrew search over English names
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     return exercises.filter(
       (e) =>
         (muscle === 'all' || e.muscle_group === muscle) &&
-        (!s || e.name?.toLowerCase().includes(s) || e.muscle_group?.toLowerCase().includes(s) || t(`exerciseBank.muscleGroups.${e.muscle_group}`, '').toLowerCase().includes(s)),
+        (!s || matchesQuery(e.name, s, qEn) || e.muscle_group?.toLowerCase().includes(s) || t(`exerciseBank.muscleGroups.${e.muscle_group}`, '').toLowerCase().includes(s)),
     );
-  }, [exercises, q, muscle, t]);
+  }, [exercises, q, qEn, muscle, t]);
 
   const muscleLabel = (m: string) => t(`exerciseBank.muscleGroups.${m}`, m);
 
@@ -144,7 +146,7 @@ const ExercisePicker: React.FC<{
                             {n > 1 && <span className="tr-pick-count tp-chip tp-chip--primary !bg-primary !text-white" dir="ltr">×{n}</span>}
                           </span>
                           <span className="block p-3">
-                            <span className="line-clamp-2 block text-sm font-bold leading-snug">{ex.name || t('workoutCreation.unnamedExercise', 'Unnamed exercise')}</span>
+                            <span className="line-clamp-2 block text-sm font-bold leading-snug">{ex.name ? <LibText text={ex.name} /> : t('workoutCreation.unnamedExercise', 'Unnamed exercise')}</span>
                             {ex.muscle_group && <span className="mt-1 block truncate text-xs text-muted-foreground">{muscleLabel(ex.muscle_group)}</span>}
                           </span>
                         </button>

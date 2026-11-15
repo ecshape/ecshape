@@ -12,7 +12,7 @@ import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDa
 import AddMealSheet from './AddMealSheet';
 import { useTranslatedMap } from './useTranslated';
 import { FoodThumb, HitRow, useDebounced } from './AddMealSheet';
-import { useFoodSearch, useLogSaved, useSavedMeals, type FoodHit } from './mealTools';
+import { useFoodSearch, useLocalizedHits, useLogSaved, useSavedMeals, type FoodHit } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
 import {
@@ -567,7 +567,7 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
   // QA #61: beyond the coach's list, search the whole food database (staples, USDA, Open Food Facts).
   const dq = useDebounced(q.trim(), 300);
   const db = useFoodSearch(dq, (i18n.language || 'en').slice(0, 2), !!target && dq.length >= 2);
-  const dbHits: FoodHit[] = db.data && dq.length >= 2 ? [...db.data.recent, ...db.data.coach, ...db.data.foods, ...db.data.products] : [];
+  const dbHits: FoodHit[] = useLocalizedHits(db.data && dq.length >= 2 ? [...db.data.recent, ...db.data.coach, ...db.data.foods, ...db.data.products] : []);
   const dbSearching = dq.length >= 2 && (db.isFetching || db.data?.query !== dq);
   const list = (catalog.data ?? []).filter((f) => {
     const s = q.trim().toLowerCase();
@@ -603,7 +603,7 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
   const pickHit = (h: FoodHit) => {
     if (!target || !row) return;
     const food: V3FoodOption = {
-      name: h.name, calories: h.calories, protein: h.protein, carbs: h.carbs, fat: h.fat,
+      name: h.display_name || h.name, calories: h.calories, protein: h.protein, carbs: h.carbs, fat: h.fat,
       measurement_type: h.unit === 'portion' ? 'per_portion' : 'per_100g',
       serving_size: h.serving_grams ? `${Math.round(h.serving_grams)}g` : null,
     };
@@ -613,7 +613,8 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
       qty = `${Math.round(count * (h.serving_grams || 100))}g`;
     }
     const m = foodMacros(food, qty);
-    const name = h.brand && h.source === 'product' && !h.name.includes(h.brand) ? `${h.name} · ${h.brand}` : h.name;
+    const base = h.display_name || h.name;
+    const name = h.brand && h.source === 'product' && !base.includes(h.brand) ? `${base} · ${h.brand}` : base;
     haptic();
     write.mutate(
       {

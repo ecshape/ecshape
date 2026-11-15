@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
+import { useTranslatedMap } from './useTranslated';
 
 /** A food being reviewed before it is logged. Totals scale with the amount, relative to the amount first proposed. */
 export type DraftItem = {
@@ -41,18 +42,28 @@ export type FoodHit = {
   carbs: number;
   fat: number;
   macro_type?: string | null;
+  /** The name in the app language (set on the client, see useLocalizedHits). */
+  display_name?: string;
 };
 export type FoodSearch = { query: string; recent: FoodHit[]; coach: FoodHit[]; foods: FoodHit[]; products: FoodHit[]; has_more: boolean; errors: string[]; ai_images: boolean };
 
 /** Turns a search hit into a draft at its usual serving (or 100 g / 1 portion). */
 export const hitToDraft = (h: FoodHit): DraftItem => {
-  const name = h.brand && h.source === 'product' && !h.name.includes(h.brand) ? `${h.name} · ${h.brand}` : h.name;
-  const extra = { unit: h.unit, image: h.image_url ?? null, needsImage: !!h.needs_image, hint: h.name_en ?? null };
+  const base = h.display_name || h.name;
+  const name = h.brand && h.source === 'product' && !base.includes(h.brand) ? `${base} · ${h.brand}` : base;
+  const extra = { unit: h.unit, image: h.image_url ?? null, needsImage: !!h.needs_image, hint: h.name_en ?? (base !== h.name ? h.name : null) };
   const per = { calories: h.calories, protein: h.protein, carbs: h.carbs, fat: h.fat };
   if (h.unit === 'portion') return newDraft(name, 1, per, { ...extra, baseGrams: 1 });
   const g = h.serving_grams && h.serving_grams > 0 ? Math.round(h.serving_grams) : 100;
   return newDraft(name, g, per, { ...extra, baseGrams: 100 });
 };
+
+/** Search results named in the app language, whatever language the database had them in (Open Food Facts
+ * products are often French or English; USDA is English). Originals show until the translation arrives. */
+export function useLocalizedHits(hits: FoodHit[]): FoodHit[] {
+  const map = useTranslatedMap(hits.map((h) => h.name), hits.length > 0, 'auto');
+  return hits.map((h) => (map[h.name] && map[h.name] !== h.name ? { ...h, display_name: map[h.name] } : h));
+}
 
 export function useFoodSearch(q: string, lang: string, enabled: boolean) {
   return useQuery({

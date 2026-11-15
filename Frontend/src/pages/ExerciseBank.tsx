@@ -37,6 +37,7 @@ import {
   type ExerciseImportDecision,
 } from '../components/ExerciseImportReviewDialog';
 import { PortalSelect } from '@/components/ui/portal-select';
+import { LibText, matchesQuery, useQueryInEnglish } from '@/features/trainee/libText';
 interface Exercise {
   id: number;
   name: string;
@@ -182,8 +183,9 @@ const ExerciseBank = () => {
   }, []);
 
   const q = searchTerm.trim().toLowerCase();
+  const qEn = useQueryInEnglish(searchTerm); // Hebrew search over English names
   const matches = (exercise: Exercise, skip?: 'muscle') =>
-    (!q || exercise.name.toLowerCase().includes(q) || (exercise.instructions || '').toLowerCase().includes(q)) &&
+    (!q || matchesQuery(exercise.name, q, qEn) || (exercise.instructions || '').toLowerCase().includes(q)) &&
     (skip === 'muscle' || selectedMuscleGroup === 'all' || exercise.muscle_group === selectedMuscleGroup) &&
     (equipmentFilter === 'all' || (exercise.equipment_needed || '') === equipmentFilter) &&
     (levelFilter === 'all' || levelOf(exercise) === levelFilter) &&
@@ -906,7 +908,7 @@ const ExerciseBank = () => {
                           )}
                           <span className="block space-y-2 p-3 sm:p-4">
                             <span className="flex items-start gap-2">
-                              <span className="line-clamp-2 min-w-0 flex-1 text-[.95rem] font-bold leading-snug sm:text-lg">{exercise.name}</span>
+                              <span className="line-clamp-2 min-w-0 flex-1 text-[.95rem] font-bold leading-snug sm:text-lg"><LibText text={exercise.name} /></span>
                               {level && <span className="mt-1.5 max-sm:hidden"><LevelBars level={level} /></span>}
                             </span>
                             <span className="flex flex-wrap gap-1.5 text-xs">

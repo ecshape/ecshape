@@ -9,7 +9,7 @@ import { api, ApiError } from './api';
 import { Sheet } from './ui';
 import { fmtNum, haptic } from './format';
 import {
-  downscaleImage, draftTotals, hitToDraft, newDraft, useAiAvailable, useCreateSaved, useDeleteSaved, useFoodImage, useFoodSearch, useLogDrafts, useLogSaved, useSavedMeals,
+  downscaleImage, draftTotals, hitToDraft, newDraft, useAiAvailable, useCreateSaved, useDeleteSaved, useFoodImage, useFoodSearch, useLocalizedHits, useLogDrafts, useLogSaved, useSavedMeals,
   type AiFood, type BarcodeProduct, type DraftItem, type FoodHit,
 } from './mealTools';
 import './mealToolsI18n';
@@ -105,9 +105,17 @@ const AddMealSheet: React.FC<Props> = ({ open, slot, date, onClose, onManual }) 
     }
   };
 
-  const onProduct = (p: BarcodeProduct) => {
+  const onProduct = async (p: BarcodeProduct) => {
     const g = p.serving_grams && p.serving_grams > 0 ? Math.round(p.serving_grams) : 100;
-    toReview('barcode', [newDraft(p.name, g, { ...p.per100 }, { baseGrams: 100, image: p.image_url ?? null, needsImage: !!p.needs_image })]);
+    // The product name in the app language (Open Food Facts names are often French / English).
+    let name = p.name;
+    if (!(lang === 'he' && /[\u0590-\u05FF]/.test(name))) {
+      try {
+        const r = await api<{ texts: string[] }>('/translate', { method: 'POST', body: { texts: [p.name], lang, src_lang: 'auto' } });
+        if (r.texts?.[0]?.trim()) name = r.texts[0];
+      } catch { /* keep the original name */ }
+    }
+    toReview('barcode', [newDraft(name, g, { ...p.per100 }, { baseGrams: 100, image: p.image_url ?? null, needsImage: !!p.needs_image, hint: name !== p.name ? p.name : null })]);
   };
 
   const typed = (name = '') => toReview(items.length ? source : 'search', [newDraft(name.trim(), 100, undefined, { unit: 'g' })]);
@@ -131,12 +139,15 @@ const AddMealSheet: React.FC<Props> = ({ open, slot, date, onClose, onManual }) 
   const pending = logDrafts.isPending || createSaved.isPending;
   const res = search.data;
   const searching = !!dq && (search.isFetching || dq !== res?.query);
+  // Names in the app language, whatever language the database had them in.
+  const allHits = useLocalizedHits(res ? [...res.recent, ...res.coach, ...res.foods, ...res.products] : []);
+  const loc = (list: FoodHit[]) => list.map((h) => allHits.find((x) => x.id === h.id && x.source === h.source) ?? h);
   const sections: { key: string; label: string; hits: FoodHit[] }[] = res
     ? [
-        { key: 'recent', label: t('trainee.mealTools.secRecent'), hits: res.recent },
-        { key: 'coach', label: t('trainee.mealTools.secCoach'), hits: res.coach },
-        { key: 'foods', label: t('trainee.mealTools.secFoods'), hits: res.foods },
-        { key: 'products', label: t('trainee.mealTools.secProducts'), hits: res.products },
+        { key: 'recent', label: t('trainee.mealTools.secRecent'), hits: loc(res.recent) },
+        { key: 'coach', label: t('trainee.mealTools.secCoach'), hits: loc(res.coach) },
+        { key: 'foods', label: t('trainee.mealTools.secFoods'), hits: loc(res.foods) },
+        { key: 'products', label: t('trainee.mealTools.secProducts'), hits: loc(res.products) },
       ].filter((s) => s.hits.length)
     : [];
   const hitCount = sections.reduce((a, s) => a + s.hits.length, 0);
@@ -341,7 +352,7 @@ export const HitRow: React.FC<{ hit: FoodHit; aiImages: boolean; onPick: () => v
       <button type="button" onClick={onPick} className="tp-press flex w-full items-center gap-3 rounded-2xl bg-foreground/[.04] p-1.5 pe-2 text-start hover:bg-foreground/[.07]" data-testid="food-hit">
         <FoodThumb name={hit.name} src={hit.image_url} needsImage={hit.needs_image} hint={hit.name_en || hit.brand} allowAi={aiImages} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold" dir="auto">{hit.name}</span>
+          <span className="block truncate font-semibold" dir="auto">{hit.display_name || hit.name}</span>
           <span className="block truncate text-xs text-muted-foreground" dir="auto">
             {hit.brand ? `${hit.brand} · ` : ''}<span dir="ltr">{fmtNum(hit.calories)} kcal</span> {per}
           </span>

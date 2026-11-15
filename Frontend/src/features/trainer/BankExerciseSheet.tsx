@@ -8,6 +8,7 @@ import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
 import { LevelBars } from '@/components/exercises/ExerciseLibrary';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
 import { ExerciseMuscleMap } from '@/components/exercises/ExerciseMuscleMap';
+import { LibText } from '@/features/trainee/libText';
 
 export interface BankExercise {
   id: number;
@@ -82,18 +83,18 @@ export const BankExerciseSheet: React.FC<{
                 </div>
                 <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-6">
                   <div>
-                    <DialogPrimitive.Title className="tp-title pe-12 text-4xl leading-none" style={{ textAlign: 'start' }}><bdi>{e.name}</bdi></DialogPrimitive.Title>
+                    <DialogPrimitive.Title className="tp-title pe-12 text-4xl leading-none" style={{ textAlign: 'start' }}><LibText text={e.name} lazy={false} /></DialogPrimitive.Title>
                     <DialogPrimitive.Description className="sr-only">{muscleLabel(e.muscle_group)}</DialogPrimitive.Description>
                     <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
                       <span className="rounded-full bg-primary px-2.5 py-1 font-semibold text-primary-foreground">{muscleLabel(e.muscle_group)}</span>
                       {info.secondary.map((m) => <span key={m} className="rounded-full bg-primary/12 px-2.5 py-1 text-primary">{label('muscle', m)}</span>)}
                       {e.equipment_needed && <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1"><Weight className="h-3 w-3" />{label('equipment', e.equipment_needed)}</span>}
                       {level && <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1"><LevelBars level={level} />{label('level', level)}</span>}
-                      {e.category && <span className="rounded-full bg-muted px-2.5 py-1">{e.category}</span>}
+                      {e.category && <span className="rounded-full bg-muted px-2.5 py-1"><LibText text={e.category} lazy={false} /></span>}
                       {info.meta.map((m) => <span key={m} className="rounded-full bg-muted px-2.5 py-1">{label('meta', m)}</span>)}
                     </div>
                   </div>
-                  {info.text && <p className="text-sm leading-relaxed text-muted-foreground" dir="auto">{info.text}</p>}
+                  {info.text && <p className="text-sm leading-relaxed text-muted-foreground" ><LibText text={info.text} lazy={false} /></p>}
                   <ExerciseMuscleMap primary={[e.muscle_group]} secondary={info.secondary} label={(m) => (m === e.muscle_group ? muscleLabel(m) : label('muscle', m))} />
                   <section>
                     <h3 className="tp-label mb-2.5">{t('tt.bank.instructions')}</h3>
@@ -104,7 +105,7 @@ export const BankExerciseSheet: React.FC<{
                         {steps.map((s, i) => (
                           <li key={i} className="flex gap-3 text-sm leading-relaxed">
                             <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">{i + 1}</span>
-                            <span>{s}</span>
+                            <span><LibText text={s} /></span>
                           </li>
                         ))}
                       </ol>

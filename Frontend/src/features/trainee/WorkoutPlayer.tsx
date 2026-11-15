@@ -16,6 +16,7 @@ import {
 } from './hooks';
 import { Bar, CountUp, EmptyState, ErrorState, Ring, Screen, Sheet, Skel } from './ui';
 import { dayOf, fmtClock, fmtDate, fmtNum, haptic, parseDate, todayISO } from './format';
+import { LibText } from './libText';
 
 const repsFloor = (r?: string | null) => {
   const m = (r || '').match(/\d+/);
@@ -238,7 +239,7 @@ const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="break-words text-lg font-bold leading-tight" dir="auto">{name}</span>
+                        <span className="break-words text-lg font-bold leading-tight"><LibText text={name} /></span>
                         {ex.group_name && <span className="tp-chip tp-chip--primary">{ex.group_name}</span>}
                       </span>
                       <span className="mt-1 block text-sm text-muted-foreground">
@@ -382,10 +383,10 @@ const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
 
       {rest && <RestTimer rest={rest} onChange={setRest} />}
 
-      <Sheet open={!!info} onOpenChange={(o) => !o && setInfo(null)} title={info?.exercise?.name || info?.exercise_name || ''} description={[info?.exercise?.muscle_group, info?.exercise?.equipment_needed].filter(Boolean).join(' · ') || undefined}>
+      <Sheet open={!!info} onOpenChange={(o) => !o && setInfo(null)} title={<LibText text={info?.exercise?.name || info?.exercise_name || ''} lazy={false} />} description={[info?.exercise?.muscle_group, info?.exercise?.equipment_needed].filter(Boolean).join(' · ') || undefined}>
         {info && <ExerciseInfo ex={info} />}
       </Sheet>
-      <Sheet open={!!history} onOpenChange={(o) => !o && setHistory(null)} title={t('trainee.player.historyTitle')} description={history?.exercise?.name || history?.exercise_name || undefined}>
+      <Sheet open={!!history} onOpenChange={(o) => !o && setHistory(null)} title={t('trainee.player.historyTitle')} description={history ? <LibText text={history.exercise?.name || history.exercise_name} lazy={false} /> : undefined}>
         {history && <ExerciseHistory sessions={sessionsQ.data ?? []} exId={history.id} />}
       </Sheet>
 
@@ -458,11 +459,11 @@ const ExerciseInfo: React.FC<{ ex: WorkoutExercise }> = ({ ex }) => {
       ) : url ? (
         <video className="w-full rounded-2xl bg-black" src={url} controls playsInline />
       ) : null}
-      {ex.exercise?.description && <p className="text-sm leading-relaxed" dir="auto">{ex.exercise.description}</p>}
+      {ex.exercise?.description && <p className="text-sm leading-relaxed"><LibText text={ex.exercise.description} lazy={false} /></p>}
       {ex.exercise?.instructions && (
         <div>
           <p className="tp-label mb-1">{t('trainee.player.instructions')}</p>
-          <p className="whitespace-pre-line text-sm leading-relaxed" dir="auto">{ex.exercise.instructions}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed"><LibText text={ex.exercise.instructions} lazy={false} /></p>
         </div>
       )}
     </div>

@@ -14,6 +14,7 @@ import { dayOf, fmtDate, fmtNum, fmtWeekday, isoDay, parseDate, todayISO } from 
 import BodyMap from '../BodyMap';
 import { exerciseLoad, type Load } from './muscles';
 import { dayIndex, exerciseIndex, sessionVolume, TrainingNav, usePlansAll, useTT } from './shared';
+import { LibText } from '../libText';
 
 /** Sessions worth showing: finished ones, or days with at least one logged set. */
 const visible = (all?: WorkoutSession[]) =>
@@ -287,7 +288,7 @@ export const SessionDetail: React.FC<{ sessionId: number }> = ({ sessionId }) =>
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-start gap-1.5 font-bold leading-tight" dir="auto">
-                    <span className="min-w-0 flex-1 break-words">{name}</span>
+                    <span className="min-w-0 flex-1 break-words"><LibText text={name} /></span>
                     {pr && <span className="tp-chip tp-chip--primary flex-none !px-2" title={tt('history.pr')}><Trophy className="h-3 w-3" /><span className="sr-only">{tt('history.pr')}</span></span>}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5" dir="ltr">

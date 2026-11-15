@@ -10,6 +10,7 @@ import { ExerciseDemo } from './ExerciseDemo';
 import { exerciseLibrary, LIBRARY_MUSCLES, type LibraryExercise, type LibraryFacets, type LibrarySource, type LibrarySources } from '@/lib/exerciseLibrary';
 import { cn } from '@/lib/utils';
 import { PortalSelect } from '@/components/ui/portal-select';
+import { LibText } from '@/features/trainee/libText';
 
 const PAGE = 36;
 const LEVELS = ['beginner', 'intermediate', 'expert'] as const;
@@ -209,7 +210,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
                     <button type="button" className="block w-full text-start" onClick={() => setDetail(x)}>
                       <ExerciseDemo frames={x.frames} alt={x.name} className="aspect-[4/3] w-full" />
                       <div className="p-3.5">
-                        <p className="line-clamp-2 min-h-[2.6em] text-sm font-bold leading-snug" dir="auto" style={{ textAlign: 'start' }}>{x.name}</p>
+                        <p className="line-clamp-2 min-h-[2.6em] text-sm font-bold leading-snug" dir="auto" style={{ textAlign: 'start' }}><LibText text={x.name} /></p>
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
                           <span className="rounded-full bg-primary/12 px-2 py-0.5 font-semibold text-primary">{label('muscle', x.primaryMuscles[0] || 'other')}</span>
                           {x.equipment && <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{label('equipment', x.equipment)}</span>}
@@ -284,7 +285,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
               </div>
               <div className="space-y-5 p-6">
                 <div>
-                  <h3 className="font-display text-4xl leading-none" dir="auto" style={{ textAlign: 'start' }}>{detail.name}</h3>
+                  <h3 className="font-display text-4xl leading-none" dir="auto" style={{ textAlign: 'start' }}><LibText text={detail.name} lazy={false} /></h3>
                   {detail.name_en && detail.name_en !== detail.name && (
                     <p className="mt-1 text-sm text-muted-foreground" dir="ltr" style={{ textAlign: 'start' }}>{detail.name_en}</p>
                   )}
@@ -301,7 +302,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
                   {detail.instructions.map((s, i) => (
                     <li key={i} className="flex gap-3 text-sm leading-relaxed">
                       <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 font-num text-xs text-primary">{i + 1}</span>
-                      <span>{s}</span>
+                      <span><LibText text={s} src="auto" /></span>
                     </li>
                   ))}
                 </ol>

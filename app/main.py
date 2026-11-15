@@ -281,6 +281,20 @@ async def lifespan(app: FastAPI):
     from app.routers.exercise_library import ensure_library_column
     ensure_library_column(engine)
 
+    # QA #64: bank foods get the new, better staple photos (only where there was none or an old Commons pick)
+    try:
+        from app.database import SessionLocal
+        from app.services.food_library_service import refresh_bank_photos
+        _db = SessionLocal()
+        try:
+            n = refresh_bank_photos(_db)
+            if n:
+                logger.info(f"🖼️ Updated photos of {n} food bank items")
+        finally:
+            _db.close()
+    except Exception as e:  # never block startup
+        logger.warning(f"Food bank photo refresh skipped: {e}")
+
     # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
     from app.dev_seed import run_if_enabled as run_dev_seed
     run_dev_seed(engine)

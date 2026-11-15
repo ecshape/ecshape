@@ -26,6 +26,7 @@ import logging
 import re
 import threading
 import time
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import quote
 
@@ -254,6 +255,57 @@ def _load_extra_staples() -> None:
 
 _load_extra_staples()
 STAPLES_BY_KEY = {s["key"]: s for s in STAPLES}
+
+
+def _load_picked_photos() -> None:
+    """QA #64: photos picked by tools/pick_food_photos.py (best free-licence Commons photo per food, judged by CLIP)
+    replace the old hand-picked ones and fill the foods that had none."""
+    path = Path(__file__).resolve().parents[1] / "data" / "food_photos.json"
+    try:
+        picked = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    for key, photo in picked.items():
+        if key in STAPLES_BY_KEY and isinstance(photo, list) and len(photo) == 3:
+            STAPLES_BY_KEY[key]["photo"] = tuple(photo)
+
+
+_load_picked_photos()
+
+
+def staple_photo(staple: Dict[str, Any]) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    """(image url, credit) of a staple's photo, as stored on bank items."""
+    photo = staple.get("photo")
+    if not photo:
+        return None, None
+    return _staple_image(staple, 800), {
+        "provider": "Wikimedia Commons", "author": photo[2], "license": photo[1],
+        "url": COMMONS_PAGE_URL.format(file=quote(photo[0])),
+    }
+
+
+def refresh_bank_photos(db) -> int:
+    """QA #64: give bank foods the new staple photos when they have none or still show an old Commons pick.
+    Photos from Open Food Facts or uploaded by the coach are never touched. Returns how many items changed."""
+    from app.models.meal_system import MealBank
+
+    changed = 0
+    for item in db.query(MealBank).all():
+        url = item.image_url or ""
+        if url and not url.startswith("https://commons.wikimedia.org/wiki/Special:FilePath/"):
+            continue
+        staple = STAPLES_BY_KEY.get(item.source_id or "") if item.source == "staple" else None
+        staple = staple or match_staple(item.name_hebrew, item.name)
+        if not staple:
+            continue
+        new_url, credit = staple_photo(staple)
+        if new_url and new_url != url:
+            item.image_url = new_url
+            item.image_credit = json.dumps(credit, ensure_ascii=False)
+            changed += 1
+    if changed:
+        db.commit()
+    return changed
 
 # One-click "starter packs" (keys of STAPLES). Titles live in the frontend i18n.
 STARTER_PACKS: Dict[str, List[str]] = {

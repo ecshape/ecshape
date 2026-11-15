@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EcSpinner } from '@/components/brand/EcLoader';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Check, ExternalLink, Info, Layers, Plus, Search, X } from 'lucide-react';
+import { AlertCircle, Check, ExternalLink, Heart, Info, Layers, Plus, Search, X } from 'lucide-react';
+import { LibText } from '@/features/trainee/libText';
 import { API_BASE_URL } from '@/config/api';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -43,13 +44,14 @@ interface StarterPack {
   preview: string[];
 }
 
-const LANGS: Array<{ code: 'he' | 'en' | 'fr'; label: string }> = [
-  { code: 'he', label: 'עברית' },
-  { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
-];
 
-const SOURCES: Source[] = ['all', 'usda', 'off'];
+/** QA #66: filters over the whole bank instead of choosing a data source. */
+type LibFilter = 'all' | 'favorites' | 'mine' | 'high_protein' | 'carb_source' | 'fat_source' | 'high_fiber' | 'vegetable' | 'fruit' | 'vegan';
+const FILTERS: LibFilter[] = ['all', 'favorites', 'mine', 'high_protein', 'carb_source', 'fat_source', 'high_fiber', 'vegetable', 'fruit', 'vegan'];
+const FAV_KEY = 'ec-foodlib-favorites';
+const loadFavorites = (): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]') as string[]); } catch { return new Set(); }
+};
 const MACROS: MacroType[] = ['protein', 'carb', 'fat'];
 
 export const libraryKey = (source?: string | null, sourceId?: string | null) =>
@@ -76,6 +78,8 @@ function LibraryCard({
   added,
   adding,
   onAdd,
+  favorite,
+  onFavorite,
 }: {
   food: LibraryFood;
   index: number;
@@ -83,6 +87,8 @@ function LibraryCard({
   added: boolean;
   adding: boolean;
   onAdd: (food: LibraryFood, macro: MacroType) => void;
+  favorite: boolean;
+  onFavorite: () => void;
 }) {
   const { t } = useTranslation();
   const [macro, setMacro] = useState<MacroType>(food.macro_type);
@@ -121,6 +127,16 @@ function LibraryCard({
               </>
             )}
           </span>
+          <button
+            type="button"
+            onClick={onFavorite}
+            aria-pressed={favorite}
+            aria-label={t('banks.food.favorite')}
+            title={t('banks.food.favorite')}
+            className={cn('fb-glass ms-auto me-1 grid h-7 w-7 place-items-center rounded-full transition', favorite ? 'text-[hsl(var(--primary))]' : 'opacity-80 hover:opacity-100')}
+          >
+            <Heart className={cn('h-3.5 w-3.5', favorite && 'fill-current')} />
+          </button>
           <span className="fb-glass rounded-lg px-2 py-0.5 text-xs font-bold tabular-nums">
             {food.kcal !== null ? Math.round(food.kcal) : '—'}
             <span className="ms-0.5 text-[9px] font-normal opacity-80">{t('foodBankPro.kcal')}</span>
@@ -133,8 +149,9 @@ function LibraryCard({
 
       <div className="flex flex-1 flex-col gap-2 p-2.5">
         <div className="min-w-0">
-          <h4 className="line-clamp-2 text-sm font-semibold leading-snug" dir="auto" title={name}>
-            {name}
+          <h4 className="line-clamp-2 text-sm font-semibold leading-snug" title={name}>
+            {/* QA #65: names in the site language, whatever language the database had them in */}
+            <LibText text={name} />
           </h4>
           <p className="line-clamp-2 text-[11px] text-muted-foreground" dir="auto" title={subtitle}>
             {subtitle}
@@ -329,10 +346,20 @@ export function FoodLibraryDrawer({
   const uiLang = (i18n.language || 'he').slice(0, 2);
   const isRtl = uiLang === 'he';
   const [query, setQuery] = useState('');
-  const [lang, setLang] = useState<'he' | 'en' | 'fr'>(
-    (['he', 'en', 'fr'].includes(uiLang) ? uiLang : 'he') as 'he' | 'en' | 'fr',
-  );
-  const [source, setSource] = useState<Source>('all');
+  // QA #65 #66: one full bank, searched in the site language (no language or source switch).
+  const lang = (['he', 'en', 'fr'].includes(uiLang) ? uiLang : 'he') as 'he' | 'en' | 'fr';
+  const source: Source = 'all';
+  const [filter, setFilter] = useState<LibFilter>('all');
+  const [favorites, setFavorites] = useState<Set<string>>(loadFavorites);
+  const toggleFavorite = (f: LibraryFood) => {
+    const key = libraryKey(f.source, f.source_id);
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem(FAV_KEY, JSON.stringify([...next])); } catch { /* private mode */ }
+      return next;
+    });
+  };
   const [data, setData] = useState<SearchResponse | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -498,23 +525,26 @@ export function FoodLibraryDrawer({
     return importedKeys.has(key) || justAdded.has(key);
   };
   const searched = q.length >= 2;
-  const useUsda = source !== 'off';
-  const useOff = source !== 'usda';
+  const useUsda = true;
+  const useOff = true;
   const nothing = searched && !loading && generic.length === 0 && products.length === 0;
 
-  const sections = useMemo(
-    () => [
-      {
-        key: 'staples',
-        title: q ? t('foodBankPro.library.staples') : t('banks.food.allStaples', { count: staplesTotal }),
-        items: staples,
-        count: 0,
-      },
-      { key: 'generic', title: t('banks.food.sectionUsda'), items: generic, count: data?.generic_count ?? 0 },
-      { key: 'products', title: t('banks.food.sectionOff'), items: products, count: data?.count ?? 0 },
-    ],
-    [q, staples, generic, products, staplesTotal, data?.generic_count, data?.count, t],
-  );
+  const passes = (f: LibraryFood) => {
+    if (filter === 'all') return true;
+    if (filter === 'favorites') return favorites.has(libraryKey(f.source, f.source_id));
+    if (filter === 'mine') return isAdded(f);
+    return (f.tags || []).includes(filter) || (filter === 'vegan' && (f.tags || []).includes('vegan'));
+  };
+  const merged = [...staples, ...generic, ...products];
+  const sections = [
+    {
+      key: 'all',
+      title: q ? t('banks.food.results') : t('banks.food.allStaples', { count: staplesTotal }),
+      items: merged.filter(passes),
+      count: q ? (data?.generic_count ?? 0) + (data?.count ?? 0) + staples.length : 0,
+    },
+  ];
+  const filteredOut = merged.length > 0 && sections[0].items.length === 0;
 
   const usdaNotice = () => {
     if (!searched || !useUsda || !data) return null;
@@ -585,51 +615,24 @@ export function FoodLibraryDrawer({
                   <EcSpinner className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
                 )}
               </div>
-              <div
-                className="flex h-11 shrink-0 rounded-xl border border-border bg-card p-1"
-                role="radiogroup"
-                aria-label={t('foodBankPro.library.language')}
-              >
-                {LANGS.map((l) => (
-                  <button
-                    key={l.code}
-                    type="button"
-                    role="radio"
-                    aria-checked={lang === l.code}
-                    onClick={() => setLang(l.code)}
-                    className={cn(
-                      'flex-1 rounded-lg px-3 text-xs font-medium transition-colors',
-                      lang === l.code ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
             </div>
 
-            {/* Source picker */}
-            <div
-              className="mt-2 grid grid-cols-3 gap-1 rounded-xl border border-border bg-card p-1"
-              role="radiogroup"
-              aria-label={t('banks.food.sourceLabel')}
-            >
-              {SOURCES.map((s) => (
+            {/* QA #66: filters instead of data sources */}
+            <div className="tp-scroll-x mt-2.5 -mx-1 px-1" role="radiogroup" aria-label={t('banks.food.filterLabel')}>
+              {FILTERS.map((f) => (
                 <button
-                  key={s}
+                  key={f}
                   type="button"
                   role="radio"
-                  aria-checked={source === s}
-                  onClick={() => setSource(s)}
+                  aria-checked={filter === f}
+                  onClick={() => setFilter(f)}
                   className={cn(
-                    'flex min-h-11 flex-col items-center justify-center rounded-lg px-1.5 py-1 text-center leading-tight transition-colors',
-                    source === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+                    'flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold transition-colors',
+                    filter === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  <span className="text-xs font-semibold">{t(`banks.food.source.${s}`)}</span>
-                  <span className={cn('text-[10px]', source === s ? 'opacity-90' : 'opacity-70')}>
-                    {t(`banks.food.sourceHint.${s}`)}
-                  </span>
+                  {f === 'favorites' && <Heart className={cn('h-3.5 w-3.5', filter === f && 'fill-current')} />}
+                  {f === 'all' || f === 'favorites' || f === 'mine' ? t(`banks.food.filter.${f}`) : t(`foodBankPro.props.${f}`)}
                 </button>
               ))}
             </div>
@@ -644,7 +647,7 @@ export function FoodLibraryDrawer({
               <LibrarySkeletonGrid />
             ) : (
               <div className="space-y-6">
-                {!searched && <StarterPacks packs={packs} busy={packBusy} onImport={handlePack} />}
+                {!searched && filter === 'all' && <StarterPacks packs={packs} busy={packBusy} onImport={handlePack} />}
 
                 {sections.map((section) =>
                   section.items.length > 0 ? (
@@ -672,6 +675,8 @@ export function FoodLibraryDrawer({
                             added={isAdded(food)}
                             adding={adding.has(libraryKey(food.source, food.source_id))}
                             onAdd={handleAdd}
+                            favorite={favorites.has(libraryKey(food.source, food.source_id))}
+                            onFavorite={() => toggleFavorite(food)}
                           />
                         ))}
                       </div>
@@ -681,6 +686,9 @@ export function FoodLibraryDrawer({
 
                 {!searched && (
                   <p className="text-center text-xs text-muted-foreground">{t('banks.food.typeMore')}</p>
+                )}
+                {filteredOut && (
+                  <p className="py-6 text-center text-sm text-muted-foreground">{t('banks.food.filterEmpty')}</p>
                 )}
                 {nothing && !data?.library_error && !data?.generic_error && (
                   <p className="py-6 text-center text-sm text-muted-foreground">{t('foodBankPro.library.noResults')}</p>

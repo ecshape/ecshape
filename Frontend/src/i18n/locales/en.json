@@ -1260,7 +1260,7 @@
     "splitName": "Split Name",
     "splitNamePlaceholder": "e.g., Push/Pull/Legs",
     "splitDescriptionPlaceholder": "Brief description of the split",
-    "splitHint": "Workout split is just for reference - you define days manually",
+    "splitHint": "Pick a split to lay out the training days, then add exercises to each day.",
     "create": "Create",
     "selectSplit": "Select workout split (optional)",
     "groupName": "Group name (optional)",
@@ -2781,7 +2781,25 @@
       "optional": "Optional",
       "durationPlaceholder": "e.g. 45",
       "library": "Exercise library",
-      "browse": "Open the library"
+      "browse": "Open the library",
+      "split": {
+        "full_body": "Full body",
+        "upper_lower": "Upper / Lower",
+        "push_pull_legs": "Push / Pull / Legs",
+        "bro_split": "Body-part split"
+      },
+      "dayType": {
+        "full_body": "Full body",
+        "upper": "Upper body",
+        "lower": "Lower body",
+        "push": "Push",
+        "pull": "Pull",
+        "legs": "Legs",
+        "chest": "Chest",
+        "back": "Back",
+        "shoulders": "Shoulders",
+        "arms": "Arms"
+      }
     }
   },
   "banks": {
@@ -2840,6 +2858,15 @@
           "title": "Plant-based",
           "description": "Legumes, tofu, whole grains, nuts and seeds"
         }
+      },
+      "favorite": "Favourite",
+      "results": "Results",
+      "filterLabel": "Filter",
+      "filterEmpty": "No foods match this filter.",
+      "filter": {
+        "all": "All",
+        "favorites": "Favourites",
+        "mine": "In my bank"
       }
     },
     "exercise": {

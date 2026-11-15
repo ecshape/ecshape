@@ -8,7 +8,7 @@ import { api } from '@/features/trainee/api';
 import { InfoTip } from '@/components/ui/info-tip';
 import { useToast } from '@/hooks/use-toast';
 import { LevelBars } from '@/components/exercises/ExerciseLibrary';
-import { Seg, Sheet } from './ui';
+import { Sheet } from './ui';
 import { useTrainerClients } from './hooks';
 import {
   FOODS, MEAL_TEMPLATES, WORKOUT_TEMPLATES, libName, pick,
@@ -138,7 +138,7 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
       open={open}
       onOpenChange={onOpenChange}
       title={current ? pick(current.name, lang) : t('tt.tpl.title')}
-      description={current ? pick(current.goal, lang) : t('tt.tpl.lead')}
+      description={current ? pick(current.goal, lang) : t(kind === 'meal' ? 'tt.tpl.leadMeal' : 'tt.tpl.leadWorkout')}
       footer={current ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <PortalSelect
@@ -159,15 +159,7 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
     >
       {!current ? (
         <div className="space-y-4 pb-2">
-          <Seg<Kind>
-            value={kind}
-            onChange={(k) => { setKind(k); setSelected(null); }}
-            label={t('tt.tpl.title')}
-            items={[
-              { id: 'workout', label: t('tt.tpl.workouts'), icon: Dumbbell, count: WORKOUT_TEMPLATES.length },
-              { id: 'meal', label: t('tt.tpl.meals'), icon: Salad, count: MEAL_TEMPLATES.length },
-            ]}
-          />
+          {/* QA #67: the food bank shows only ready menus, the exercise bank only ready workouts (no switch between them). */}
           <div className="tr-tpl-grid">
             {kind === 'workout'
               ? WORKOUT_TEMPLATES.map((w) => (

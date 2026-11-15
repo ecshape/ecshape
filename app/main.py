@@ -285,6 +285,14 @@ async def lifespan(app: FastAPI):
     from app.dev_seed import run_if_enabled as run_dev_seed
     run_dev_seed(engine)
 
+    # QA #51: fetch the keyless meal-photo model in the background (first photo then answers at once)
+    try:
+        from app.services import food_photo_local
+        if food_photo_local.available():
+            food_photo_local.warm_up_in_background()
+    except Exception as e:  # never block startup
+        logger.warning(f"Meal photo model warm-up skipped: {e}")
+
     # Log database pool statistics
     pool_stats = get_db_pool_stats()
     logger.info(f"📊 Database pool initialized: {pool_stats}")

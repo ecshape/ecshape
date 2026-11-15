@@ -44,6 +44,14 @@ interface WorkoutDay {
   exercises: WorkoutExercise[];
 }
 
+/** Standard splits (backend WorkoutSplitType) with their day types (backend DayType). */
+const BUILTIN_SPLITS: { id: string; days: string[] }[] = [
+  { id: 'full_body', days: ['full_body', 'full_body', 'full_body'] },
+  { id: 'upper_lower', days: ['upper', 'lower', 'upper', 'lower'] },
+  { id: 'push_pull_legs', days: ['push', 'pull', 'legs'] },
+  { id: 'bro_split', days: ['chest', 'back', 'shoulders', 'arms', 'legs'] },
+];
+
 interface WorkoutSplit {
   id: number;
   name: string;
@@ -467,6 +475,20 @@ const CreateWorkoutPlanV2: React.FC = () => {
                 <Select
                   value={formData.split_type ? String(formData.split_type) : ''}
                   onValueChange={(value) => {
+                    const builtin = BUILTIN_SPLITS.find((b) => b.id === value);
+                    if (builtin) {
+                      // QA #63: a standard split also lays out its days when the plan has no exercises yet.
+                      const empty = formData.workout_days.every((d) => !d.exercises.length);
+                      setFormData({
+                        ...formData,
+                        split_type: builtin.id,
+                        days_per_week: builtin.days.length,
+                        workout_days: empty
+                          ? builtin.days.map((dt, i) => ({ name: t(`trainer.builder.dayType.${dt}`), day_type: dt, order_index: i, notes: '', estimated_duration: null, exercises: [] }))
+                          : formData.workout_days,
+                      });
+                      return;
+                    }
                     const selectedSplit = workoutSplits.find((s) => s.id === parseInt(value));
                     setFormData({ ...formData, split_type: value || null, days_per_week: selectedSplit?.days_per_week ?? null });
                   }}
@@ -475,6 +497,12 @@ const CreateWorkoutPlanV2: React.FC = () => {
                     <SelectValue placeholder={t('workoutCreation.selectSplit')} />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* QA #63: the standard splits are always there, the coach's own splits after them */}
+                    {BUILTIN_SPLITS.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {t(`trainer.builder.split.${b.id}`)} ({b.days.length} {t('workoutCreation.daysPerWeek')})
+                      </SelectItem>
+                    ))}
                     {workoutSplits.map((split) => (
                       <SelectItem key={split.id} value={String(split.id)}>
                         {split.name}

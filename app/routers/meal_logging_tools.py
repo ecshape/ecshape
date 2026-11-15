@@ -86,7 +86,10 @@ def _engines_for(db: Session, user: UserResponse) -> List[Engine]:
 @router.get("/ai/status")
 def ai_status(current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_client(current_user)
-    return {"available": bool(_engines_for(db, current_user))}
+    # QA #51: photos work for every client with no key at all (local model); an AI key only makes them sharper.
+    from app.services import food_photo_local
+
+    return {"available": bool(_engines_for(db, current_user)) or food_photo_local.available()}
 
 
 def _clean_foods(raw: Any) -> List[Dict[str, Any]]:
@@ -165,11 +168,13 @@ async def identify_meal_photo(
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Identify the foods in a meal photo. 503 ``no_ai_key`` when no AI key is configured."""
+    """Identify the foods in a meal photo.
+
+    AI keys (coach's / server's, Gemini first) are tried in turn; with none, or when all fail, the photo is read by
+    the local open model on our server (QA #51), so every client can use it without any key.
+    """
     _require_client(current_user)
     engines = _engines_for(db, current_user)
-    if not engines:
-        raise HTTPException(status_code=503, detail="no_ai_key")
     data = await file.read()
     if not data or len(data) > MAX_PHOTO_BYTES:
         raise HTTPException(status_code=400, detail="Photo is empty or larger than 8 MB")
@@ -190,6 +195,18 @@ async def identify_meal_photo(
             return {"foods": foods, "engine": engine.provider}
         except HTTPException as e:
             last = e
+    from app.services import food_photo_local
+
+    if food_photo_local.available():
+        try:
+            foods = await asyncio.to_thread(food_photo_local.identify, data, lang[:2])
+            return {"foods": _clean_foods(foods), "engine": "local"}
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Unreadable image")
+        except Exception as e:  # model download / runtime problem
+            logger.warning("Local meal photo model failed: %s", e)
+    if not engines:
+        raise HTTPException(status_code=503, detail="no_ai_key")
     raise last or HTTPException(status_code=502, detail="ai_unavailable")
 
 

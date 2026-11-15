@@ -1359,7 +1359,7 @@
     "splitName": "שם הפיצול",
     "splitNamePlaceholder": "למשל, Push/Pull/Legs",
     "splitDescriptionPlaceholder": "תיאור קצר של הפיצול",
-    "splitHint": "פיצול האימון הוא רק לציון - אתה מגדיר את הימים באופן ידני",
+    "splitHint": "בחירת פיצול מסדרת את ימי האימון; אחר כך מוסיפים תרגילים לכל יום.",
     "create": "צור",
     "selectSplit": "בחר פיצול אימון (אופציונלי)",
     "groupName": "שם קבוצה (אופציונלי)",
@@ -2789,7 +2789,25 @@
       "optional": "אופציונלי",
       "durationPlaceholder": "למשל 45",
       "library": "מאגר התרגילים",
-      "browse": "פתיחת המאגר"
+      "browse": "פתיחת המאגר",
+      "split": {
+        "full_body": "פול באדי",
+        "upper_lower": "עליון / תחתון",
+        "push_pull_legs": "דחיפה / משיכה / רגליים",
+        "bro_split": "פיצול לפי שריר"
+      },
+      "dayType": {
+        "full_body": "פול באדי",
+        "upper": "פלג גוף עליון",
+        "lower": "פלג גוף תחתון",
+        "push": "דחיפה",
+        "pull": "משיכה",
+        "legs": "רגליים",
+        "chest": "חזה",
+        "back": "גב",
+        "shoulders": "כתפיים",
+        "arms": "ידיים"
+      }
     }
   },
   "banks": {
@@ -2848,6 +2866,15 @@
           "title": "מהצומח",
           "description": "קטניות, טופו, דגנים מלאים, אגוזים וזרעים"
         }
+      },
+      "favorite": "מועדף",
+      "results": "תוצאות",
+      "filterLabel": "סינון",
+      "filterEmpty": "אין מזונות שמתאימים לסינון הזה.",
+      "filter": {
+        "all": "הכול",
+        "favorites": "מועדפים",
+        "mine": "בבנק שלי"
       }
     },
     "exercise": {

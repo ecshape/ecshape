@@ -6,6 +6,7 @@ import { Sheet } from '@/features/trainer/ui';
 import { IconOf, MACRO_ICON } from './FoodIcons';
 import { FoodPhoto, MacroSplitBar, MacroStats, NovaBadge, NutriScoreBadge, PhotoCredit, PropertyChip } from './FoodParts';
 import { displayName, fmt, itemTags, type MealBankItem } from './foodbankModel';
+import { useLibText } from '@/features/trainee/libText';
 
 /** Every property of a food-bank item in one sheet (#16): photo, names, calories, macros, tags, source, edit/delete. */
 export const FoodDetailSheet: React.FC<{
@@ -22,7 +23,8 @@ export const FoodDetailSheet: React.FC<{
   const it = item ?? last;
   if (!it) return null;
 
-  const { primary, secondary } = displayName(it, lang);
+  const { primary: rawPrimary, secondary } = displayName(it, lang);
+  const primary = useLibText(rawPrimary); // QA #65: the bank in the site language, whoever typed it
   const per = (it.measurement_type ?? 'per_100g') === 'per_portion' ? it.serving_size || t('foodBankPro.perPortion') : t('foodBankPro.per100g');
   const tags = itemTags(it);
   const source = it.source === 'openfoodfacts' ? 'Open Food Facts' : it.source ? t('foodBankPro.library.staples') : t('tt.food.manual');

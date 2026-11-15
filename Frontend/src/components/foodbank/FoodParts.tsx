@@ -16,6 +16,7 @@ import {
   displayName,
   itemTags,
 } from './foodbankModel';
+import { useLibText } from '@/features/trainee/libText';
 
 /* ------------------------------------------------------------------ */
 /* Photo with fade-in, graceful fallback to a designed icon tile       */
@@ -266,7 +267,8 @@ export function FoodCard({
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.slice(0, 2) || 'he';
-  const { primary, secondary } = displayName(item, lang);
+  const { primary: rawPrimary, secondary } = displayName(item, lang);
+  const primary = useLibText(rawPrimary); // QA #65: the bank in the site language, whoever typed it
   const tags = itemTags(item);
   const perLabel =
     (item.measurement_type ?? 'per_100g') === 'per_portion'

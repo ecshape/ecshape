@@ -86,7 +86,7 @@ const MealsScreen: React.FC = () => {
     walk(day.data?.slots);
     return out;
   }, [day.data, he]);
-  const trNames = useTranslatedMap(untranslated);
+  const trNames = useTranslatedMap(untranslated, true, 'auto'); // QA #65: a coach's Hebrew food names reach a French trainee in French
   const foodName = (f: { name: string; name_hebrew?: string | null }) => (he && f.name_hebrew ? f.name_hebrew : trNames[f.name] || f.name);
   const doneIds = new Set((completions.data ?? []).filter((c) => c.is_completed).map((c) => c.meal_slot_id));
   const slots = useMemo(() => [...(day.data?.slots ?? [])].sort((a, b) => a.order_index - b.order_index), [day.data]);

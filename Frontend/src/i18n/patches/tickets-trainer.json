@@ -103,7 +103,9 @@
         "perWeek_other": "{{count}} פעמים בשבוע",
         "weeks_one": "שבוע אחד",
         "weeks_two": "שבועיים",
-        "weeks_other": "{{count}} שבועות"
+        "weeks_other": "{{count}} שבועות",
+        "leadMeal": "תפריטים מוכנים לפי מטרה. צפה בתפריט ושייך אותו למתאמן בלחיצה אחת.",
+        "leadWorkout": "תוכניות אימון מוכנות לפי רמה ומקום. צפה בתוכנית ושייך אותה למתאמן בלחיצה אחת."
       },
       "food": {
         "manual": "הוזן ידנית",
@@ -245,7 +247,9 @@
         "perWeek_one": "1x a week",
         "perWeek_other": "{{count}}x a week",
         "weeks_one": "1 week",
-        "weeks_other": "{{count}} weeks"
+        "weeks_other": "{{count}} weeks",
+        "leadMeal": "Ready menus by goal. Preview one and assign it to a client in one tap.",
+        "leadWorkout": "Ready workout plans by level and place. Preview one and assign it to a client in one tap."
       },
       "food": {
         "manual": "Added manually",
@@ -387,7 +391,9 @@
         "perWeek_one": "1 fois par semaine",
         "perWeek_other": "{{count}} fois par semaine",
         "weeks_one": "1 semaine",
-        "weeks_other": "{{count}} semaines"
+        "weeks_other": "{{count}} semaines",
+        "leadMeal": "Menus prêts par objectif. Prévisualisez-en un et attribuez-le à un client en un geste.",
+        "leadWorkout": "Programmes d'entraînement prêts par niveau et lieu. Prévisualisez-en un et attribuez-le à un client en un geste."
       },
       "food": {
         "manual": "Ajouté manuellement",

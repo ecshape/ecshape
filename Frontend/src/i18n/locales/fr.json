@@ -1300,7 +1300,7 @@
     "splitName": "Nom du split",
     "splitNamePlaceholder": "ex. Push/Pull/Legs",
     "splitDescriptionPlaceholder": "Brève description du split",
-    "splitHint": "Le split sert de repère — tu définis les jours toi-même",
+    "splitHint": "Choisissez un split pour créer les jours d'entraînement, puis ajoutez les exercices à chaque jour.",
     "create": "Créer",
     "selectSplit": "Choisir un split (facultatif)",
     "groupName": "Nom du groupe (facultatif)",
@@ -2789,7 +2789,25 @@
       "optional": "Facultatif",
       "durationPlaceholder": "ex. 45",
       "library": "Bibliothèque d'exercices",
-      "browse": "Ouvrir la bibliothèque"
+      "browse": "Ouvrir la bibliothèque",
+      "split": {
+        "full_body": "Full body",
+        "upper_lower": "Haut / Bas",
+        "push_pull_legs": "Push / Pull / Jambes",
+        "bro_split": "Split par muscle"
+      },
+      "dayType": {
+        "full_body": "Full body",
+        "upper": "Haut du corps",
+        "lower": "Bas du corps",
+        "push": "Push",
+        "pull": "Pull",
+        "legs": "Jambes",
+        "chest": "Pectoraux",
+        "back": "Dos",
+        "shoulders": "Épaules",
+        "arms": "Bras"
+      }
     }
   },
   "banks": {
@@ -2848,6 +2866,15 @@
           "title": "Végétal",
           "description": "Légumineuses, tofu, céréales complètes, noix et graines"
         }
+      },
+      "favorite": "Favori",
+      "results": "Résultats",
+      "filterLabel": "Filtrer",
+      "filterEmpty": "Aucun aliment ne correspond à ce filtre.",
+      "filter": {
+        "all": "Tous",
+        "favorites": "Favoris",
+        "mine": "Dans ma banque"
       }
     },
     "exercise": {

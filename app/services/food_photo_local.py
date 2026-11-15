@@ -120,6 +120,7 @@ def _download() -> Path:
                 break
             f.write(chunk)
     tmp.replace(path)
+    logger.info("Meal photo model ready (%.0f MB)", path.stat().st_size / 1e6)
     return path
 
 

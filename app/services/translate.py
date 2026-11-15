@@ -146,18 +146,22 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
     complete = True
     if missing:
         engines = engines_for(db, user_id)
-        with _lock:  # one batch at a time per worker (avoids paying twice for the same texts)
-                for i in range(0, len(missing), 40):
+        # Give the DB connection back to the pool before any slow network call: many screens translate at once
+        # and requests waiting on a translator must not hold connections (QueuePool exhaustion).
+        db.rollback()
+        for i in range(0, len(missing), 40):
                     chunk = missing[i:i + 40]
                     out: Optional[List[Optional[str]]] = None
-                    for engine in engines:
-                        try:
-                            out = _parse(_call(engine, _prompt(LANGS[lang], chunk, SRC_NAMES.get(src_lang, "English"))), len(chunk))
-                        except Exception as e:  # provider errors must never break the screen
-                            logger.warning("Translation (%s) failed: %s", engine.provider, provider_error_text(e))
-                            out = None
-                        if out:
-                            break
+                    if engines:
+                        with _lock:  # one paid AI batch at a time per worker (avoids paying twice for the same texts)
+                            for engine in engines:
+                                try:
+                                    out = _parse(_call(engine, _prompt(LANGS[lang], chunk, SRC_NAMES.get(src_lang, "English"))), len(chunk))
+                                except Exception as e:  # provider errors must never break the screen
+                                    logger.warning("Translation (%s) failed: %s", engine.provider, provider_error_text(e))
+                                    out = None
+                                if out:
+                                    break
                     if not out and src_lang in MM_LANG and lang in MM_LANG:
                         out = _mymemory(chunk, src_lang, lang)
                     if not out:

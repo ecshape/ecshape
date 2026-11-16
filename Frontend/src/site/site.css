@@ -1146,3 +1146,7 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 
 /* Phones: the floating WhatsApp button never covers the last footer links (A2A site #9) */
 @media (max-width: 900px) { .ec-site .footer { padding-bottom: 100px; } }
+
+/* QA #85: Arabic and Cyrillic letters are much wider than the condensed display font: headlines a step smaller */
+html[lang="ar"] .ec-site .h-xl, html[lang="ru"] .ec-site .h-xl { font-size: clamp(2.6rem, 6.4vw, 6.2rem); line-height: 1.12; }
+html[lang="ar"] .ec-site .h-lg, html[lang="ru"] .ec-site .h-lg { font-size: clamp(2rem, 4.4vw, 4.2rem); line-height: 1.15; }

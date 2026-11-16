@@ -659,7 +659,11 @@ def list_ai_keys(user: UserResponse = Depends(require_studio), db: Session = Dep
 def create_ai_key(payload: AiKeyIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
     from app.services.ai_keys import add_key
     try:
-        return add_key(db, user.id, payload.api_key, payload.label, payload.provider, payload.model, payload.base_url)
+        row = add_key(db, user.id, payload.api_key, payload.label, payload.provider, payload.model, payload.base_url)
+        from app.routers import i18n_bundle  # QA #85: a new key may unblock the Russian / Arabic translation now
+
+        i18n_bundle._failed_at.clear()
+        return row
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

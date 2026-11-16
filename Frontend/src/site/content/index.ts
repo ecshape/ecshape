@@ -2,9 +2,10 @@ import { API_BASE_URL } from '../../config/api';
 import { en } from './en';
 import { fr } from './fr';
 import { he } from './he';
+import { ru } from './ru';
+import { ar } from './ar';
 import type { SiteContent, SiteLang } from './types';
 import { DEFAULT_ORDER } from '../sections';
-import { extraBundle, isExtraLang, loadExtraLanguage, mergeTranslated } from '@/i18n/extraLangs';
 
 const PHOTOS = '/site/photos/opt/';
 /** Fields shared by every language (photos, layout) get their defaults here, once. */
@@ -15,8 +16,7 @@ const withShared = (c: SiteContent): SiteContent => ({
   layout: { order: [...DEFAULT_ORDER], hidden: [], ...(c.layout || {}) },
 });
 
-/** Russian / Arabic start from English; their translation is merged in by siteDefaults() (QA #85). */
-export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he: withShared(he), en: withShared(en), fr: withShared(fr), ru: withShared(en), ar: withShared(en) };
+export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he: withShared(he), en: withShared(en), fr: withShared(fr), ru: withShared(ru), ar: withShared(ar) };
 /** Languages the trainer edits in Studio. */
 export const SITE_LANGS: SiteLang[] = ['he', 'en', 'fr'];
 /** Languages visitors can read the site in. */
@@ -27,11 +27,9 @@ export const toSiteLang = (lng?: string | null): SiteLang => {
   return VISITOR_LANGS.includes(base) ? base : 'he';
 };
 
-/** Built-in content of a language; for Russian / Arabic the English texts with the server translation on top. */
+/** Built-in content of a language (Russian / Arabic site texts are written in ru.ts / ar.ts, QA #85). */
 export async function siteDefaults(lang: SiteLang): Promise<SiteContent> {
-  if (!isExtraLang(lang)) return DEFAULT_CONTENT[lang];
-  const b = extraBundle(lang) ?? (await loadExtraLanguage(lang));
-  return b ? mergeTranslated(DEFAULT_CONTENT.en, b.site) : DEFAULT_CONTENT.en;
+  return DEFAULT_CONTENT[lang] ?? DEFAULT_CONTENT.en;
 }
 
 type Json = Record<string, unknown>;

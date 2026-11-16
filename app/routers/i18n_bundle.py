@@ -12,6 +12,7 @@ import json
 import logging
 import re
 import threading
+import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -32,6 +33,8 @@ SOURCE = Path(__file__).resolve().parents[1] / "data" / "i18n_en.json"
 EXTRA_LANGS = ("ru", "ar")
 PLACEHOLDER = re.compile(r"\{\{[^}]+\}\}|\{[a-zA-Z_]+\}|<[^>]+>")
 _running: Dict[str, threading.Thread] = {}
+_failed_at: Dict[str, float] = {}  # a run that translated nothing (no key / no credit): wait before trying again
+RETRY_AFTER = 30 * 60
 _guard = threading.Lock()
 
 
@@ -123,6 +126,8 @@ def _fill(lang: str) -> None:
         if not engines:
             # Thousands of texts would use up the free fallback's daily quota that trainees' screens rely on.
             logger.warning("i18n %s: no AI key, %d texts stay in English for now", lang, len(missing))
+            with _guard:
+                _failed_at[lang] = time.time()
             return
         logger.info("i18n %s: translating %d texts", lang, len(missing))
         done = 0
@@ -137,6 +142,12 @@ def _fill(lang: str) -> None:
                     out = None
                 if out:
                     break
+            if not out and done == 0:
+                # Every key refused the first batch (no credit, wrong key): stop now, try again later.
+                logger.warning("i18n %s: no working AI key — the texts stay in English until one is added", lang)
+                with _guard:
+                    _failed_at[lang] = time.time()
+                return
             for src, dst in zip(chunk, out or []):
                 if dst and all(f"⟦{k}⟧" in dst for k in range(src.count("⟦"))):
                     db.add(TranslationCache(lang=lang, src_hash=tr._hash(src, "en"), src=src, text=dst))
@@ -157,6 +168,8 @@ def _fill(lang: str) -> None:
 def _start(lang: str) -> None:
     with _guard:
         if lang in _running and _running[lang].is_alive():
+            return
+        if time.time() - _failed_at.get(lang, 0) < RETRY_AFTER:
             return
         t = threading.Thread(target=_fill, args=(lang,), name=f"i18n-{lang}", daemon=True)
         _running[lang] = t

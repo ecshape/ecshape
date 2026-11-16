@@ -41,7 +41,7 @@ function shiftArt(i: number, lang: SiteLang) {
     const rows = [0, 1, 2, 3].map((k) => `<g class="art-list__row" style="--k:${k}"><rect x="20" y="${30 + k * 40}" width="26" height="26" rx="8"/><path class="art-list__tick" d="M26 ${44 + k * 40}l5 5 10-11" pathLength="1"/><rect class="art-list__bar" x="60" y="${37 + k * 40}" width="${[110, 86, 120, 70][k]}" height="12" rx="6"/></g>`).join('');
     return `<svg class="art-list" viewBox="0 0 200 200">${rows}</svg>`;
   }
-  return `<div class="art-phone"><img src="${appShot(lang, 2)}" alt="" loading="lazy"><span class="art-chip">${lang === 'he' ? '−6.5 ק״ג' : lang === 'fr' ? '−6,5 kg' : '−6.5 kg'}</span></div>`;
+  return `<div class="art-phone"><img src="${appShot(lang, 2)}" alt="" loading="lazy"><span class="art-chip">${lang === 'he' ? '−8 ק״ג' : '−8 kg'}</span></div>`;
 }
 
 /** Visual header of each program card. */
@@ -64,9 +64,9 @@ export function waLink(c: SiteContent) {
   return `https://wa.me/${encodeURIComponent(c.contact.whatsapp)}?text=${encodeURIComponent(c.contact.whatsappText)}`;
 }
 
-/** Real screenshots of the client app, captured from the portal (see scripts in Frontend/scripts). */
+/** Real screenshots of the trainee app, captured with Frontend/scripts/capture-app-shots.mjs. */
 export function appShot(lang: SiteLang, i: number) {
-  return `${P}app/${lang}/${i + 1}.jpg?v=4`;
+  return `${P}app/${lang}/${i + 1}.jpg?v=5`;
 }
 
 export interface RenderOptions {

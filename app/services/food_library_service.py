@@ -759,10 +759,15 @@ def is_allowed_image_url(url: Optional[str]) -> bool:
 
 def match_staple(*names: Optional[str]) -> Optional[Dict[str, Any]]:
     """Staple whose name or alias equals one of `names` (or is its plural / a longer form of it)."""
-    keys = [_fold(n) for n in names if n]
+    keys = [k for k in (_fold(n) for n in names if n) if k]
+    hays = []
     for staple in STAPLES:
         hay = [_fold(n) for n in staple["names"].values()] + [_fold(a) for a in staple["aliases"]]
         hay.append(staple["key"].replace("_", " "))
-        if any(k and (k == h or h.startswith(k + " ") or h.startswith(k + "s")) for k in keys for h in hay):
+        if any(k == h for k in keys for h in hay):
+            return staple  # an exact name wins ("תפוח" is an apple, not "תפוח אדמה")
+        hays.append((staple, hay))
+    for staple, hay in hays:
+        if any(h.startswith(k + " ") or h.startswith(k + "s") for k in keys for h in hay):
             return staple
     return None

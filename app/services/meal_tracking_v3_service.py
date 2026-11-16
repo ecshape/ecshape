@@ -8,6 +8,7 @@ contract for the frontend redesign.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple, Dict, Any
@@ -90,8 +91,21 @@ def _scale_from_measurement_type(
     return quantity_value / 100.0 if quantity_value is not None else 1.0
 
 
+@lru_cache(maxsize=2048)
+def _plan_food_photo(name_hebrew: Optional[str], name: Optional[str]) -> Optional[str]:
+    """Photo of a plan food from the built-in food library (free-licence photos, QA #64), matched by name."""
+    try:
+        from app.services import food_library_service as library
+
+        staple = library.match_staple(name_hebrew, name)
+        return library._staple_image(staple, 330) if staple else None
+    except Exception:  # a photo is a nice-to-have: never break the day view
+        return None
+
+
 def _food_option_to_v3_food(food: FoodOption) -> V3FoodOption:
     return V3FoodOption(
+        image_url=_plan_food_photo(food.name_hebrew, food.name),
         id=food.id,
         name=food.name,
         name_hebrew=food.name_hebrew,

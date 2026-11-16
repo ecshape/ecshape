@@ -984,7 +984,7 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 @media (max-width: 1000px) { .ec-site .quotes--grid { grid-template-columns: 1fr; } }
 
 /* ---- Real app screenshots inside the phone ---- */
-.ec-site .screen--shot { padding: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; background: #0f0e0c; }
+.ec-site .screen--shot { padding: 40px 0 0; box-sizing: border-box; /* status-bar strip: the notch sits above the app, not on its header */ width: 100%; height: 100%; object-fit: cover; object-position: top center; background: #0f0e0c; }
 
 /* ---- Lead form modal ---- */
 .ec-site .form-modal {

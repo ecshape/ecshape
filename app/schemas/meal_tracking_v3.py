@@ -52,6 +52,7 @@ class V3FoodOption(BaseModel):
     measurement_type: MeasurementType = MeasurementType.PER_100G
 
     notes: Optional[str] = None
+    image_url: Optional[str] = None  # photo of the food (built-in food library), when one matches
 
     class Config:
         from_attributes = True

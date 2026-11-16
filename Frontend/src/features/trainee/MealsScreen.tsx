@@ -11,6 +11,7 @@ import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import AddMealSheet from './AddMealSheet';
 import { useTranslatedMap } from './useTranslated';
+import { LibText } from './libText';
 import { FoodThumb, HitRow, useDebounced } from './AddMealSheet';
 import { useFoodSearch, useLocalizedHits, useLogSaved, useSavedMeals, type FoodHit } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
@@ -18,6 +19,10 @@ import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } fro
 import {
   encodeBankSwap, encodePlanSwap, foodMacros, isOverallCustom, planRows, rowMacros, safeName, slotConsumed, type PlanRow,
 } from './mealLogic';
+
+/** A coach's portion text ("3 ביצים או 200 גרם") in the app language; plain amounts ("150g", "2") stay as they are. */
+const PLAIN_AMOUNT = /^[\d\s.,×x/-]*(g|gr|kg|ml|גרם|ג|גר|מ"ל)?[\d\s.,]*$/i;
+const QtyText: React.FC<{ q: string | null | undefined }> = ({ q }) => (!q || PLAIN_AMOUNT.test(q) ? <>{q}</> : <LibText text={q} lazy={false} />);
 
 const MACRO_COLOR: Record<string, string> = { protein: 'hsl(var(--tp-protein))', carbs: 'hsl(var(--tp-carbs))', carb: 'hsl(var(--tp-carbs))', fat: 'hsl(var(--tp-fat))' };
 const macroKey = (m: MacroType) => (m === 'carb' ? 'carbs' : m);
@@ -267,7 +272,7 @@ const MealsScreen: React.FC = () => {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="tp-title break-words text-[2rem]" dir="auto">{slot.name}</h3>
+                        <h3 className="tp-title break-words text-[2rem]" dir="auto"><LibText text={slot.name} lazy={false} /></h3>
                         {slot.time_suggestion && <span className="tp-chip"><Clock className="h-3 w-3" /><span dir="ltr">{slot.time_suggestion}</span></span>}
                       </div>
                       <p className="text-sm text-muted-foreground">
@@ -412,7 +417,7 @@ const MealsScreen: React.FC = () => {
                                     <span className={cn('block truncate font-semibold', eaten && 'text-[hsl(var(--tp-ok))]')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</span>
                                     <span className="block truncate text-xs text-muted-foreground">
                                       <span className="me-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: MACRO_COLOR[r.macro] }} aria-hidden />
-                                      {t(`trainee.macros.${macroKey(r.macro)}`)} · <bdi dir="ltr">{fmtNum(m.calories)} kcal</bdi> · <bdi>{r.qty}</bdi>
+                                      {t(`trainee.macros.${macroKey(r.macro)}`)} · <bdi dir="ltr">{fmtNum(m.calories)} kcal</bdi> · <bdi><QtyText q={r.qty} /></bdi>
                                       {r.swap && <> · {t('trainee.meals.swapped')}</>}
                                     </span>
                                   </span>
@@ -444,7 +449,7 @@ const MealsScreen: React.FC = () => {
                                         <FoodThumb name={alt.food.name} src={alt.food.image_url} needsImage={!alt.food.image_url} className="aspect-[4/3] w-full rounded-none" />
                                         <span className="block p-1.5">
                                           <span className="line-clamp-2 block text-[11px] font-bold leading-tight" dir="auto">{foodName(alt.food)}</span>
-                                          <span className="block text-[10px] text-muted-foreground" dir="ltr">{alt.qty} · {fmtNum(am.calories)}</span>
+                                          <span className="block text-[10px] text-muted-foreground" dir="ltr"><QtyText q={alt.qty} /> · {fmtNum(am.calories)}</span>
                                         </span>
                                       </button>
                                     );

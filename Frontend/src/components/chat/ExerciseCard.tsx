@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftRight, CalendarPlus, Check, Dumbbell, Loader2, X } from 'lucide-react';
+import { ArrowLeftRight, CalendarPlus, Check, ChevronLeft, ChevronRight, Dumbbell, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { libraryFrames, type LibraryExercise } from '@/lib/exerciseLibrary';
 import { PortalSelect } from '@/components/ui/portal-select';
 import { API_BASE, type ChatMessage } from './api';
 import './chatCardsI18n';
+import { Sheet } from '@/features/trainee/ui';
+import { LibText } from '@/features/trainee/libText';
+import { LibraryDetail } from '@/features/trainee/training/ExploreScreen';
+import { muscleLabel, useTT } from '@/features/trainee/training/shared';
 
 /** Card payloads attached to chat messages (QA #42). */
 export type ExerciseRef = { library_id?: string | null; exercise_id?: number | null; name: string; image?: string | null; muscles?: string[]; level?: string | null };
@@ -51,6 +55,8 @@ export const ExerciseCardView: React.FC<{ m: ChatMessage; own: boolean; onReplie
   const [error, setError] = useState<string | null>(null);
   const [localStatus, setLocalStatus] = useState<string | null>(null);
   const isCoach = user?.role === 'TRAINER';
+  const { tt } = useTT();
+  const [info, setInfo] = useState<ExerciseRef | null>(null);
 
   const days = useQuery({
     queryKey: ['chat', 'exercise-request-days', m.id],
@@ -71,19 +77,51 @@ export const ExerciseCardView: React.FC<{ m: ChatMessage; own: boolean; onReplie
     staleTime: 10 * 60_000,
   });
 
+  // QA #70: tapping an exercise on a card opens its details (demo, muscles, steps in the app language).
+  const detail = useQuery({
+    queryKey: ['chat', 'exercise-item', info?.library_id, info?.name],
+    queryFn: () => {
+      const qs = new URLSearchParams();
+      if (info?.library_id) qs.set('library_id', info.library_id);
+      if (info?.name) qs.set('name', info.name);
+      return call<LibraryExercise>(`/exercise-library/item?${qs}`);
+    },
+    enabled: !!info,
+    staleTime: 10 * 60_000,
+    retry: false,
+  });
+  const detailSheet = (
+    <Sheet open={!!info} onOpenChange={(o) => !o && setInfo(null)} title={<LibText text={info?.name} src="en" lazy={false} />}>
+      {detail.isLoading ? <Loader2 className="mx-auto my-10 h-6 w-6 animate-spin text-muted-foreground" />
+        : detail.data ? <LibraryDetail e={detail.data} askCoach={false} />
+          : <div className="flex flex-col items-center gap-3 py-8 text-center"><Thumb ex={info} className="h-40 w-40" /><p className="text-sm text-muted-foreground">{t('chatCards.noDetails')}</p></div>}
+    </Sheet>
+  );
+  const Chevron = document.dir === 'rtl' ? ChevronLeft : ChevronRight;
+
   if (!card) return null;
 
   if (card.kind === 'exercise_reply') {
     const icon = card.action === 'decline' ? <X className="h-4 w-4" /> : card.action === 'alternative' ? <ArrowLeftRight className="h-4 w-4" /> : <Check className="h-4 w-4" />;
     return (
-      <div className={cn('mb-1.5 flex items-center gap-3 rounded-2xl p-2', own ? 'bg-white/15' : 'bg-foreground/[.05]')}>
+      <>
+      <div
+        role={card.exercise ? 'button' : undefined}
+        tabIndex={card.exercise ? 0 : undefined}
+        onClick={card.exercise ? () => setInfo(card.exercise!) : undefined}
+        onKeyDown={card.exercise ? (e) => (e.key === 'Enter' || e.key === ' ') && setInfo(card.exercise!) : undefined}
+        className={cn('mb-1.5 flex items-center gap-3 rounded-2xl p-2', card.exercise && 'tp-press cursor-pointer', own ? 'bg-white/15' : 'bg-foreground/[.05]')}
+      >
         {card.exercise ? <Thumb ex={card.exercise} className="h-12 w-12" /> : <span className="grid h-12 w-12 place-items-center rounded-2xl bg-foreground/10">{icon}</span>}
         <span className="min-w-0 flex-1 text-sm">
           <span className="flex items-center gap-1.5 font-semibold">{icon}{t(`chatCards.reply.${card.action}`)}</span>
-          {card.exercise && <span className="block truncate" dir="auto">{card.exercise.name}</span>}
+          {card.exercise && <span className="block truncate" dir="auto"><LibText text={card.exercise.name} src="en" lazy={false} /></span>}
           {card.day_name && <span className={cn('block truncate text-xs', own ? 'text-white/75' : 'text-muted-foreground')} dir="auto">{t('chatCards.inDay', { day: card.day_name })}</span>}
         </span>
+        {card.exercise && <Chevron className="h-4 w-4 flex-none opacity-60" aria-hidden />}
       </div>
+      {detailSheet}
+      </>
     );
   }
 
@@ -122,15 +160,16 @@ export const ExerciseCardView: React.FC<{ m: ChatMessage; own: boolean; onReplie
 
   return (
     <div className={cn('mb-1.5 w-[min(19rem,70vw)] rounded-2xl p-2', own ? 'bg-white/15' : 'bg-foreground/[.04]')} data-testid="exercise-card">
-      <div className="flex items-center gap-3">
+      <button type="button" onClick={() => setInfo(card.exercise)} className="tp-press flex w-full items-center gap-3 rounded-xl text-start" aria-label={t('chatCards.details')} data-testid="exercise-card-open">
         <Thumb ex={card.exercise} />
         <span className="min-w-0 flex-1">
           <span className={cn('block text-[11px] font-bold uppercase tracking-wider', own ? 'text-white/75' : 'text-primary')}>{t('chatCards.request')}</span>
-          <span className="block font-semibold leading-snug" dir="auto">{card.exercise.name}</span>
-          {!!card.exercise.muscles?.length && <span className={cn('block truncate text-xs', own ? 'text-white/75' : 'text-muted-foreground')}>{card.exercise.muscles.join(' · ')}</span>}
+          <span className="block font-semibold leading-snug" dir="auto"><LibText text={card.exercise.name} src="en" lazy={false} /></span>
+          {!!card.exercise.muscles?.length && <span className={cn('block truncate text-xs', own ? 'text-white/75' : 'text-muted-foreground')}>{card.exercise.muscles.map((m) => muscleLabel(tt, m)).join(' · ')}</span>}
           {statusChip}
         </span>
-      </div>
+        <Chevron className="h-4 w-4 flex-none opacity-60" aria-hidden />
+      </button>
 
       {canAnswer && !mode && (
         <div className="mt-2 grid grid-cols-3 gap-1.5">
@@ -183,6 +222,7 @@ export const ExerciseCardView: React.FC<{ m: ChatMessage; own: boolean; onReplie
           </div>
         </div>
       )}
+      {detailSheet}
     </div>
   );
 };

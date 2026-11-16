@@ -204,6 +204,23 @@ def browse_library(
     return {"total": len(res), "items": [_public(e) for e in res[offset: offset + limit]]}
 
 
+
+@router.get("/item")
+def library_item(
+    library_id: Optional[str] = None,
+    name: Optional[str] = None,
+    user: UserResponse = Depends(get_current_user),
+):
+    """One built-in library exercise, by id or exact name (chat exercise cards open its details, QA #70)."""
+    lib = _library()
+    e = next((x for x in lib if x.get("id") == library_id), None) if library_id else None
+    if e is None and name:
+        n = name.strip().lower()
+        e = next((x for x in lib if x["name"].lower() == n), None)
+    if e is None:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+    return _public(e)
+
 def _similarity(src: Dict, e: Dict) -> float:
     """How well `e` can stand in for `src`: same target muscle first, then movement type, equipment and level."""
     sp, ep = set(src.get("primaryMuscles") or []), set(e.get("primaryMuscles") or [])

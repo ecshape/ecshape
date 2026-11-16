@@ -49,7 +49,9 @@
         "sendHelp": "{{name}} reviews it meal by meal in the chat and picks alternatives; once approved it becomes their meal plan.",
         "sendTo": "Send to {{name}}",
         "sendMsg": "Here is your weekly menu “{{name}}”. Go through each meal, pick what you prefer and approve 🙌"
-      }
+      },
+      "details": "Exercise details",
+      "noDetails": "No more details for this exercise."
     }
   },
   "he": {
@@ -102,7 +104,9 @@
         "sendHelp": "{{name}} יעבור עליו ארוחה אחר ארוחה בצ׳אט ויבחר חלופות; אחרי האישור הוא יהפוך לתפריט שלו.",
         "sendTo": "שליחה ל{{name}}",
         "sendMsg": "הנה התפריט השבועי שלך “{{name}}”. עבור על כל ארוחה, בחר מה שאתה מעדיף ואשר 🙌"
-      }
+      },
+      "details": "פרטי התרגיל",
+      "noDetails": "אין פרטים נוספים על התרגיל הזה."
     }
   },
   "fr": {
@@ -155,7 +159,9 @@
         "sendHelp": "{{name}} le parcourt repas par repas dans le chat et choisit des alternatives ; une fois validé, il devient son plan alimentaire.",
         "sendTo": "Envoyer à {{name}}",
         "sendMsg": "Voici votre menu de la semaine « {{name}} ». Parcourez chaque repas, choisissez ce que vous préférez et validez 🙌"
-      }
+      },
+      "details": "Détails de l’exercice",
+      "noDetails": "Pas d’autres détails pour cet exercice."
     }
   }
 }

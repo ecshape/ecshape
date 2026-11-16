@@ -750,11 +750,11 @@ export const InstructionSteps: React.FC<{ steps: string[] }> = ({ steps: origina
         {t('trainee.player.instructions')}
         {lang !== 'en' && english && !tr.loading && <InfoTip label={t('trainee.player.instructions')}>{tt('explore.englishOnly')}</InfoTip>}
       </p>
-      <ol className={cn('space-y-2', tr.loading && 'opacity-70')} lang={english ? 'en' : lang} dir={english ? 'ltr' : 'auto'}>
+      <ol className={cn('space-y-2', tr.loading && 'opacity-70')} lang={english ? 'en' : lang}>
         {steps.map((s, k) => (
           <li key={k} className="flex gap-3 text-sm leading-relaxed">
             <span className="tp-num grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/15 text-xs text-primary">{k + 1}</span>
-            <span>{s}</span>
+            <span dir="auto" className="min-w-0 flex-1">{s}</span>
           </li>
         ))}
       </ol>

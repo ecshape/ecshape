@@ -148,7 +148,7 @@ const ExploreScreen: React.FC = () => {
   );
 };
 
-const LibraryDetail: React.FC<{ e: LibraryExercise }> = ({ e }) => {
+export const LibraryDetail: React.FC<{ e: LibraryExercise; askCoach?: boolean }> = ({ e, askCoach = true }) => {
   const { tt } = useTT();
   return (
     <div className="space-y-4 pb-2">
@@ -161,7 +161,7 @@ const LibraryDetail: React.FC<{ e: LibraryExercise }> = ({ e }) => {
         </div>
       </div>
       {e.instructions?.length > 0 && <InstructionSteps steps={e.instructions} />}
-      <AskCoachCard e={e} />
+      {askCoach && <AskCoachCard e={e} />}
     </div>
   );
 };
@@ -184,10 +184,18 @@ const AskCoachCard: React.FC<{ e: LibraryExercise }> = ({ e }) => {
   return (
     <div className="flex flex-col gap-3 rounded-2xl bg-primary/[.08] p-3.5 sm:flex-row sm:items-center">
       <p className="min-w-0 flex-1 text-sm">{tt('explore.askCoach')}</p>
-      <button type="button" onClick={() => send.mutate()} disabled={send.isPending || send.isSuccess} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-none" data-testid="ask-coach-exercise">
-        {send.isPending ? <EcSpinner className="h-4 w-4" mono /> : send.isSuccess ? <Check className="h-4 w-4" /> : <MessageCirclePlus className="h-4 w-4" />}
-        {send.isSuccess ? tt('explore.requestSentShort') : tt('explore.requestButton')}
-      </button>
+      {send.isSuccess ? (
+        // QA #69: once sent, the button opens the chat where the card now is.
+        <button type="button" onClick={() => navigate('/chat')} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-none" data-testid="ask-coach-open-chat">
+          <Check className="h-4 w-4" />
+          {tt('explore.requestSentShort')} · {tt('explore.openChat')}
+        </button>
+      ) : (
+        <button type="button" onClick={() => send.mutate()} disabled={send.isPending} className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-none" data-testid="ask-coach-exercise">
+          {send.isPending ? <EcSpinner className="h-4 w-4" mono /> : <MessageCirclePlus className="h-4 w-4" />}
+          {tt('explore.requestButton')}
+        </button>
+      )}
     </div>
   );
 };

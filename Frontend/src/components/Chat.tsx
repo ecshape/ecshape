@@ -403,6 +403,20 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
   // ---------------------------------------------------------- layout
   const mobileOverlay = !isDesktop && !!activeId;
   const vv = useVisualViewport(mobileOverlay);
+  // QA #71: a trainee's chat keeps the bottom tab bar (the chat layer ends above it) while the keyboard is closed.
+  const [dockSpace, setDockSpace] = useState(0);
+  const keyboardOpen = !!vv && window.innerHeight - vv.height > 120;
+  useEffect(() => {
+    if (!mobileOverlay || isTrainer || keyboardOpen) { setDockSpace(0); return; }
+    const measure = () => {
+      const bar = document.querySelector('.tr-tabbar');
+      const top = bar ? bar.getBoundingClientRect().top : 0;
+      setDockSpace(bar && top > 0 ? Math.max(0, Math.round(window.innerHeight - top + 6)) : 0);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [mobileOverlay, isTrainer, keyboardOpen]);
   const fill = useFillHeight(isDesktop);
 
   // Freeze the page under the full-screen chat (QA #47). overflow:hidden alone does not stop iOS Safari from
@@ -563,7 +577,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
           <div
             dir={dir}
             className="fixed inset-x-0 top-0 z-[60] flex flex-col overflow-hidden overscroll-none bg-background"
-            style={{ height: vv ? `${vv.height}px` : '100dvh', transform: vv ? `translateY(${vv.top}px)` : undefined }}
+            style={{ height: `calc(${vv ? `${vv.height}px` : '100dvh'} - ${dockSpace}px)`, transform: vv ? `translateY(${vv.top}px)` : undefined }}
           >
             <div className="flex min-h-0 flex-1 flex-col pt-[env(safe-area-inset-top)]">{conversationView}</div>
           </div>,

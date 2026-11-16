@@ -29,6 +29,10 @@ export function useTranslatedTexts(texts: string[], enabled = true, src: 'en' | 
       staleTime: Infinity,
       gcTime: 60 * 60_000,
       retry: false,
+      // QA #68: a batch only partly translated (translator busy / quota) is asked again a few times instead of
+      // leaving a mix of languages on screen until the next reload. Done items are cached on the server.
+      refetchInterval: (q: { state: { data?: { translated: boolean }; dataUpdateCount: number } }) =>
+        q.state.data && !q.state.data.translated && q.state.dataUpdateCount < 5 ? 8_000 * q.state.dataUpdateCount : false,
     })),
   });
   const map = new Map<string, string>();

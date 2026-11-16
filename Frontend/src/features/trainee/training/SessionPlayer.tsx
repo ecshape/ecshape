@@ -23,6 +23,7 @@ import { exerciseLoad, exerciseMuscles } from './muscles';
 import { muscleLabel, sessionStart, setVolume, useTT } from './shared';
 import { playChime, primeChime } from './chime';
 import { useHeartRate } from './useHeartRate';
+import { HeartRateSheet } from './HeartRateSheet';
 import { useTranslatedTexts } from '../useTranslated';
 import { LibText } from '../libText';
 
@@ -74,6 +75,9 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
   const [swapOpen, setSwapOpen] = useState(false);
   const [rest, setRest] = useState<Rest>(null);
   const hr = useHeartRate(); // QA #91: live BPM from a watch / strap over Bluetooth
+  const [hrOpen, setHrOpen] = useState(false);
+  const [hrManual, setHrManual] = useState<number | null>(null); // camera or typed reading
+  const shownBpm = hr.status === 'live' && hr.bpm ? hr.bpm : hrManual;
   const [info, setInfo] = useState(false);
   const [history, setHistory] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -345,17 +349,14 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                 <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                   <span dir="ltr">{logged.length}/{totalTarget}</span> {tt('player.setsDone')}
                 </span>
-                {hr.supported && (
-                  <button
-                    type="button" onClick={() => (hr.status === 'live' ? hr.disconnect() : void hr.connect())}
-                    className={cn('tp-btn tp-btn--ghost tp-btn--sm tp-press !min-h-[2.4rem] !px-3', hr.status === 'live' && '!text-red-500')}
-                    aria-label={hr.status === 'live' ? tt('player.hrOff') : tt('player.hrConnect')}
-                    title={hr.status === 'error' ? tt('player.hrError') : hr.status === 'live' ? tt('player.hrLive') : tt('player.hrConnect')}
-                  >
-                    <Heart className={cn('h-4 w-4', hr.status === 'live' && 'animate-pulse fill-current')} />
-                    {hr.status === 'live' && hr.bpm ? <span className="tp-num text-sm" dir="ltr">{hr.bpm}</span> : <span className="max-[359px]:sr-only">{tt('player.hrConnect')}</span>}
-                  </button>
-                )}
+                <button
+                  type="button" onClick={() => setHrOpen(true)}
+                  className={cn('tp-btn tp-btn--ghost tp-btn--sm tp-press !min-h-[2.4rem] !px-3', shownBpm && '!text-red-500')}
+                  aria-label={tt('player.hrConnect')} title={tt('player.hrConnect')}
+                >
+                  <Heart className={cn('h-4 w-4', hr.status === 'live' && 'animate-pulse', shownBpm && 'fill-current')} />
+                  {shownBpm ? <span className="tp-num text-sm" dir="ltr">{shownBpm}</span> : <span className="max-[359px]:sr-only">{tt('player.hrConnect')}</span>}
+                </button>
                 <button type="button" onClick={() => setConfirmEnd(true)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press !min-h-[2.4rem] !px-3.5" aria-label={tt('player.end')}>
                   <Flag className="h-4 w-4" /><span className="max-[359px]:sr-only">{tt('player.endShort')}</span>
                 </button>
@@ -523,6 +524,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
       </div>
 
       {fab && <div className="tr-float">{fab}</div>}
+      <HeartRateSheet open={hrOpen} onOpenChange={setHrOpen} hr={hr} onValue={setHrManual} />
       {rest && <RestOverlay rest={rest} onChange={setRest} onComplete={onRestComplete} />}
 
       <Sheet open={swapOpen} onOpenChange={setSwapOpen} title={tt('swap.title')} description={tt('swap.planned', { name: plannedName })}>

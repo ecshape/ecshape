@@ -22,10 +22,12 @@ import { fileURLToPath } from 'node:url';
 const APP_URL = process.env.APP_URL || 'http://localhost:5174';
 const USER = process.env.SHOT_USER || 'client1';
 const PASS = process.env.SHOT_PASS || 'client123';
+const ONLY = process.env.SHOT_ONLY ? process.env.SHOT_ONLY.split(',').map(Number) : null; // 1-based, e.g. SHOT_ONLY=1
 const LANGS = (process.env.SHOT_LANG || 'he,en,fr').split(',');
 // Order matches the site's app items: [route, scrollY in CSS px, element that must be on screen].
 const SHOTS = [
-  ['/training/day/1/session', 0, '.tp-player, main img'],
+  // The workout screen is shot scrolled to its set rows (weight x reps table), the part people ask about.
+  ['/training/day/1/session', '.tr-sets', '.tp-player, main img'],
   ['/meals', 250, 'main'],
   ['/progress', 0, 'main svg'],
   ['/chat', 0, 'main'],
@@ -71,12 +73,20 @@ for (const lang of LANGS) {
   const out = join(root, 'public/site/photos/app', lang);
   mkdirSync(out, { recursive: true });
   for (const [i, [route, scrollY, ready]] of SHOTS.entries()) {
+    if (ONLY && !ONLY.includes(i + 1)) continue;
     await page.goto(`${APP_URL}${route}`);
     await page.addStyleTag({ content: CLEAN });
     await page.waitForLoadState('networkidle');
     await page.locator(ready).first().waitFor({ timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(2500); // translated names, photos and charts settle
-    if (scrollY) {
+    if (typeof scrollY === 'string') {
+      // bring the first match to ~1/4 from the top so the exercise name stays visible above the rows
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.36);
+      }, scrollY);
+      await page.waitForTimeout(800);
+    } else if (scrollY) {
       await page.evaluate((y) => window.scrollTo(0, y), scrollY);
       await page.waitForTimeout(800);
     }

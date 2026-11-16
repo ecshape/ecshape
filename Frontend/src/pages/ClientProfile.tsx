@@ -825,7 +825,9 @@ const Overview: React.FC<{
     }
     for (const p of progress) {
       items.push({
-        id: `p${p.id}`, at: parseDate(p.created_at || p.recorded_at)?.getTime() ?? 0, // created_at: the real time, not the day's midnight (r3) icon: p.photo_path || p.photos?.length ? Activity : Scale, tone: 'text-[hsl(var(--tr-ok))]',
+        // created_at: the real time, not the day's midnight (r3)
+        id: `p${p.id}`, at: parseDate(p.created_at || p.recorded_at)?.getTime() ?? 0,
+        icon: p.photo_path || p.photos?.length ? Activity : Scale, tone: 'text-[hsl(var(--tr-ok))]',
         title: p.weight ? t('trainer.client.tl.weight', { kg: fmtNum(p.weight, 1) }) : t('trainer.client.tl.progress'), detail: p.notes || undefined,
       });
     }
@@ -910,7 +912,7 @@ const Overview: React.FC<{
               <li key={it.id} className="tp-rise relative" style={{ ['--i' as string]: Math.min(i, 10) }}>
                 <span className={cn('tr-timeline-node', it.tone)} aria-hidden />
                 <div className="flex items-start gap-3 rounded-2xl px-2 py-2.5 hover:bg-foreground/[.03]">
-                  <span className={cn('grid h-9 w-9 flex-none place-items-center rounded-xl bg-foreground/[.06]', it.tone)}><it.icon className="h-[18px] w-[18px]" /></span>
+                  <span className={cn('grid h-9 w-9 flex-none place-items-center rounded-xl bg-foreground/[.06]', it.tone)}>{React.createElement(it.icon || History, { className: 'h-[18px] w-[18px]' })}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{it.title}</p>
                     {it.detail && <p className="truncate text-xs text-muted-foreground">{it.detail}</p>}

@@ -13,7 +13,7 @@ import ar from './locales/ar.json';
 const getInitialLanguage = (): string => {
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('i18nextLng');
-    if (stored && ['he', 'en', 'fr', 'ru', 'ar'].includes(stored)) {
+    if (stored && ['he', 'en', 'fr'].includes(stored)) {
       return stored;
     }
   }
@@ -31,7 +31,7 @@ i18n
       ru: { translation: ru },
       ar: { translation: ar },
     },
-    supportedLngs: ['he', 'en', 'fr', 'ru', 'ar'], // ru / ar: QA #85
+    supportedLngs: ['he', 'en', 'fr'], // ru / ar resources exist (QA #85) but are not offered for now
     // Default to Hebrew, fallback to English if needed
     // Missing French strings fall back to English, never to Hebrew
     fallbackLng: { fr: ['en'], ru: ['en'], ar: ['en'], en: ['he'], default: ['he'] },

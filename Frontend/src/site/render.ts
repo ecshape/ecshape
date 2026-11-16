@@ -59,8 +59,6 @@ const LANGS: { code: SiteLang; label: string }[] = [
   { code: 'he', label: 'עב' },
   { code: 'en', label: 'EN' },
   { code: 'fr', label: 'FR' },
-  { code: 'ru', label: 'RU' },
-  { code: 'ar', label: 'ع' },
 ];
 
 export function waLink(c: SiteContent) {
@@ -69,7 +67,7 @@ export function waLink(c: SiteContent) {
 
 /** Real screenshots of the trainee app, captured with Frontend/scripts/capture-app-shots.mjs. */
 export function appShot(lang: SiteLang, i: number) {
-  return `${P}app/${lang}/${i + 1}.jpg?v=5`;
+  return `${P}app/${lang}/${i + 1}.jpg?v=6`;
 }
 
 export interface RenderOptions {

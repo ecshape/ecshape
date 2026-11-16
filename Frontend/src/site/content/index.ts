@@ -20,7 +20,7 @@ export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he: withShared(h
 /** Languages the trainer edits in Studio. */
 export const SITE_LANGS: SiteLang[] = ['he', 'en', 'fr'];
 /** Languages visitors can read the site in. */
-export const VISITOR_LANGS: SiteLang[] = ['he', 'en', 'fr', 'ru', 'ar'];
+export const VISITOR_LANGS: SiteLang[] = ['he', 'en', 'fr']; // + 'ru', 'ar' when they are offered again (QA #85)
 
 export const toSiteLang = (lng?: string | null): SiteLang => {
   const base = (lng || 'he').slice(0, 2) as SiteLang;

@@ -5,8 +5,7 @@ export const APP_LANGUAGES: { code: AppLanguage; name: string; short: string }[]
   { code: 'he', name: 'עברית', short: 'עב' },
   { code: 'en', name: 'English', short: 'EN' },
   { code: 'fr', name: 'Français', short: 'FR' },
-  { code: 'ru', name: 'Русский', short: 'RU' },
-  { code: 'ar', name: 'العربية', short: 'ع' },
+  // Russian / Arabic are ready (QA #85) but hidden for now: add them back here and in site/render.ts LANGS + VISITOR_LANGS.
 ];
 
 export const isRtl = (lng?: string) => /^(he|ar)/.test(lng || i18n.language || 'he');

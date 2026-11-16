@@ -384,7 +384,7 @@ type NativeDetector = new (o: { formats: string[] }) => { detect: (v: HTMLVideoE
 const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
 
 /** Live camera scan: the browser's BarcodeDetector (Chrome / Android), else ZXing (iPhone Safari, Firefox). */
-const BarcodeStep: React.FC<{ lang: string; onBack: () => void; onProduct: (p: BarcodeProduct) => void; onManual: () => void }> = ({ lang, onBack, onProduct, onManual }) => {
+export const BarcodeStep: React.FC<{ lang: string; onBack: () => void; onProduct: (p: BarcodeProduct) => void; onManual: () => void }> = ({ lang, onBack, onProduct, onManual }) => {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [state, setState] = useState<'idle' | 'looking' | 'notfound' | 'error' | 'unread'>('idle');

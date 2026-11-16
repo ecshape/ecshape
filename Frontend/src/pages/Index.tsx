@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { parseDate } from '@/features/trainee/format';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import Layout from '../components/Layout';
@@ -478,7 +479,7 @@ const Index = () => {
                 </span>
               </div>
               <div>
-                <div className="font-num text-5xl leading-none" dir="ltr" style={{ textAlign: i18n.language === 'he' ? 'right' : 'left' }}>
+                <div className="font-num text-5xl leading-none" dir="ltr" style={{ textAlign: isRtlLang(i18n.language) ? 'right' : 'left' }}>
                   {isTrainer
                     ? stats.totalWorkoutPlans
                     : clientStats && clientStats.totalDays > 0

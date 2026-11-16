@@ -3,7 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useSwipeClose } from '@/hooks/use-swipe-close';
 import { useTranslation } from 'react-i18next';
 import { Check, Dumbbell, Plus, Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import ExerciseDemo from '@/components/exercises/ExerciseDemo';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
 import '@/styles/exercises.css';
@@ -72,7 +72,7 @@ const ExercisePicker: React.FC<{
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <div className="tr-root tp-root tr-picker" dir={i18n.language?.startsWith('he') ? 'rtl' : 'ltr'}>
+        <div className="tr-root tp-root tr-picker" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
           <DialogPrimitive.Overlay className="tr-picker-scrim" />
           <DialogPrimitive.Content ref={swipeRef} className="tr-picker-panel focus:outline-none" aria-describedby={undefined}>
             <div className="mx-auto mt-2.5 h-1.5 w-12 flex-none rounded-full bg-foreground/15 md:hidden" />

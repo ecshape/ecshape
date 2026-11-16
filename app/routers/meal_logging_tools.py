@@ -77,6 +77,12 @@ def _require_client(user: UserResponse) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only clients can use this")
 
 
+def _require_member(user: UserResponse) -> None:
+    """Trainees, and coaches filling their food bank (QA #80: photo / barcode to create a bank food)."""
+    if user.role not in (UserRole.CLIENT, UserRole.TRAINER, UserRole.ADMIN):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
+
+
 def _engines_for(db: Session, user: UserResponse) -> List[Engine]:
     """Every usable engine for photos, Gemini first (free tier, strong vision), then the coach's other keys / server keys."""
     me = db.query(User).filter(User.id == user.id).first()
@@ -173,7 +179,7 @@ async def identify_meal_photo(
     AI keys (coach's / server's, Gemini first) are tried in turn; with none, or when all fail, the photo is read by
     the local open model on our server (QA #51), so every client can use it without any key.
     """
-    _require_client(current_user)
+    _require_member(current_user)
     engines = _engines_for(db, current_user)
     data = await file.read()
     if not data or len(data) > MAX_PHOTO_BYTES:
@@ -215,7 +221,7 @@ async def identify_meal_photo(
 @router.get("/barcode/{code}")
 async def lookup_barcode(code: str, lang: str = "en", current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
     """Product (nutrition per 100 g) from Open Food Facts. 404 when the product is unknown."""
-    _require_client(current_user)
+    _require_member(current_user)
     if not re.fullmatch(r"\d{6,14}", code):
         raise HTTPException(status_code=400, detail="Invalid barcode")
     import asyncio

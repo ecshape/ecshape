@@ -4,6 +4,7 @@ import { fr } from './fr';
 import { he } from './he';
 import type { SiteContent, SiteLang } from './types';
 import { DEFAULT_ORDER } from '../sections';
+import { extraBundle, isExtraLang, loadExtraLanguage, mergeTranslated } from '@/i18n/extraLangs';
 
 const PHOTOS = '/site/photos/opt/';
 /** Fields shared by every language (photos, layout) get their defaults here, once. */
@@ -14,13 +15,24 @@ const withShared = (c: SiteContent): SiteContent => ({
   layout: { order: [...DEFAULT_ORDER], hidden: [], ...(c.layout || {}) },
 });
 
-export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he: withShared(he), en: withShared(en), fr: withShared(fr) };
+/** Russian / Arabic start from English; their translation is merged in by siteDefaults() (QA #85). */
+export const DEFAULT_CONTENT: Record<SiteLang, SiteContent> = { he: withShared(he), en: withShared(en), fr: withShared(fr), ru: withShared(en), ar: withShared(en) };
+/** Languages the trainer edits in Studio. */
 export const SITE_LANGS: SiteLang[] = ['he', 'en', 'fr'];
+/** Languages visitors can read the site in. */
+export const VISITOR_LANGS: SiteLang[] = ['he', 'en', 'fr', 'ru', 'ar'];
 
 export const toSiteLang = (lng?: string | null): SiteLang => {
   const base = (lng || 'he').slice(0, 2) as SiteLang;
-  return SITE_LANGS.includes(base) ? base : 'he';
+  return VISITOR_LANGS.includes(base) ? base : 'he';
 };
+
+/** Built-in content of a language; for Russian / Arabic the English texts with the server translation on top. */
+export async function siteDefaults(lang: SiteLang): Promise<SiteContent> {
+  if (!isExtraLang(lang)) return DEFAULT_CONTENT[lang];
+  const b = extraBundle(lang) ?? (await loadExtraLanguage(lang));
+  return b ? mergeTranslated(DEFAULT_CONTENT.en, b.site) : DEFAULT_CONTENT.en;
+}
 
 type Json = Record<string, unknown>;
 const isObj = (v: unknown): v is Json => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -48,11 +60,13 @@ export interface PublicSite {
   seo: { title?: string; description?: string; image?: string; keywords?: string };
   social: { instagram?: string; whatsapp?: string };
   analyticsId?: string | null;
+  /** Google Search Console verification code (meta google-site-verification). */
+  searchConsole?: string | null;
 }
 
 /** Defaults merged with what the trainer saved in Studio → Mon site (falls back silently to defaults). */
 export async function loadPublicSite(lang: SiteLang): Promise<PublicSite> {
-  const base = DEFAULT_CONTENT[lang];
+  const base = await siteDefaults(lang);
   try {
     // Never leave visitors on a blank page: after 4 s the built-in content shows (r3 site #1)
     const ctrl = new AbortController();
@@ -65,7 +79,7 @@ export async function loadPublicSite(lang: SiteLang): Promise<PublicSite> {
     if (social.whatsapp || social.instagram) {
       content = mergeContent(content, { contact: { whatsapp: social.whatsapp, instagram: social.instagram } });
     }
-    return { content, seo: data.seo || {}, social, analyticsId: data.analytics_id };
+    return { content, seo: data.seo || {}, social, analyticsId: data.analytics_id, searchConsole: data.search_console };
   } catch {
     return { content: base, seo: {}, social: {} };
   }

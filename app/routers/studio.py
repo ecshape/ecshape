@@ -33,7 +33,7 @@ from app.schemas.auth import UserResponse, UserRole
 public_router = APIRouter()
 router = APIRouter()
 
-LANGS = ("he", "en", "fr")
+LANGS = ("he", "en", "fr", "ru", "ar")  # ru / ar: QA #85
 SITE_CONTENT_MAX = 3_000_000  # bytes of JSON per language (a few inline photos)
 LEAD_STATUSES = ("new", "contacted", "qualified", "converted", "lost")
 QA_STATUSES = ("new", "in_progress", "done", "cancelled")
@@ -166,6 +166,7 @@ def public_site(lang: str = "he", db: Session = Depends(get_db)):
         "seo": (seo.get("pages") or {}).get(lang, {}),
         "social": seo.get("social", {}),
         "analytics_id": seo.get("analytics_id"),
+        "search_console": seo.get("search_console"),  # Google verification code, rendered as a meta tag (QA #78)
     }
 
 

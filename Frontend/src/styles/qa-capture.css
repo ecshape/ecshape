@@ -361,3 +361,15 @@ html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
 @media (max-width: 640px) {
   .ec-qa-capture:has(.ec-qa-capture-modal) .ec-qa-fab-stack { visibility: hidden; }
 }
+
+/* QA #79: every icon button of the widget centres its icon (an inline svg sat on the text baseline) */
+.ec-qa-fab,
+.ec-qa-capture-x {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+.ec-qa-fab > svg,
+.ec-qa-capture-x > svg { display: block; flex: none; }
+.ec-qa-capture-x { flex: none; }

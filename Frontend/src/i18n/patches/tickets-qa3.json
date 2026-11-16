@@ -1,0 +1,266 @@
+{
+  "he": {
+    "qa3": {
+      "seoGuide": {
+        "title": "איך מחברים",
+        "open": "מדריך חיבור",
+        "close": "סגור",
+        "openSite": "פתח את האתר",
+        "analytics": {
+          "intro": "Google Analytics מראה כמה אנשים נכנסים לאתר, מאיפה ומה הם עושים. בחינם.",
+          "steps": [
+            "היכנסו ל-analytics.google.com עם חשבון Google שלכם.",
+            "לחצו על ניהול (גלגל השיניים, למטה) ← יצירה ← נכס. שם: ECshape, אזור זמן: ישראל, מטבע: ₪.",
+            "בחרו פלטפורמה \"אינטרנט\", הזינו את כתובת האתר (ecshape.com) ושם לזרם, ולחצו \"יצירת זרם\".",
+            "העתיקו את מזהה המדידה (Measurement ID) — מתחיל ב-G-.",
+            "כאן בסטודיו: לשונית \"חיבורים\" ← הדביקו בשדה \"מזהה Google Analytics\" ← שמירה.",
+            "בדיקה: פתחו את האתר בלשונית אחרת ואשרו עוגיות. ב-Analytics ← דוחות ← בזמן אמת תראו מבקר אחד תוך דקה."
+          ],
+          "note": "האתר טוען את Analytics רק אחרי שהמבקר מאשר עוגיות (חוק הפרטיות).",
+          "link": "https://analytics.google.com/"
+        },
+        "searchConsole": {
+          "intro": "Search Console מראה איך האתר מופיע בגוגל: חיפושים, הופעות, קליקים ובעיות אינדוקס. בחינם.",
+          "steps": [
+            "היכנסו ל-search.google.com/search-console עם חשבון Google.",
+            "לחצו \"הוספת נכס\" ← בחרו \"קידומת כתובת URL\" והזינו https://ecshape.com/",
+            "בשיטות האימות בחרו \"תג HTML\" והעתיקו רק את הקוד שבתוך content=\"…\".",
+            "כאן בסטודיו: לשונית \"אינדוקס\" ← הדביקו בשדה \"קוד אימות\" ← שמירה. האתר מוסיף את התג לבד.",
+            "חזרו ל-Search Console ולחצו \"אימות\".",
+            "אם האימות נכשל: בחרו \"דומיין\" במקום, העתיקו את רשומת ה-TXT והוסיפו אותה בהגדרות ה-DNS אצל רשם הדומיין (למשל Vercel ← Domains). זו השיטה הבטוחה ביותר."
+          ],
+          "note": "נתונים ראשונים מופיעים אחרי 2–3 ימים.",
+          "link": "https://search.google.com/search-console"
+        },
+        "ai": {
+          "intro": "כותב ה-AI כותב מאמרים, כותרות ותיאורים לגוגל. הוא משתמש במפתח AI שלכם (או של השרת).",
+          "steps": [
+            "פתחו חשבון אצל ספק AI: Anthropic (Claude), OpenAI (ChatGPT) או Google (Gemini — יש מסלול חינמי).",
+            "צרו מפתח API: ב-Anthropic ← console.anthropic.com ← API Keys; ב-Google ← aistudio.google.com ← Get API key.",
+            "ב-Anthropic ו-OpenAI הוסיפו קרדיט (Billing) — בלי קרדיט המפתח לא עובד.",
+            "כאן בסטודיו: הגדרות ← מפתחות AI ← הדביקו את המפתח. הספק מזוהה לבד.",
+            "לחצו \"בדיקה\" ליד המפתח — סימן ירוק אומר שהכול מחובר."
+          ],
+          "note": "המפתח נשמר מוצפן ולא מוצג שוב.",
+          "link": "/studio/preferences#ai-keys"
+        }
+      },
+      "foodQuick": {
+        "quick": "מילוי מהיר",
+        "photo": "מתמונה (AI)",
+        "barcode": "סריקת ברקוד",
+        "manual": "ידני",
+        "filled": "הפרטים מולאו — בדקו ותקנו לפני שמירה.",
+        "photoFail": "לא הצלחנו לזהות מזון בתמונה. נסו תמונה אחרת או מלאו ידנית.",
+        "reading": "מזהה את המזון…"
+      },
+      "clients": {
+        "eyebrow": "{{count}} מתאמנים",
+        "title": "המתאמנים",
+        "search": "חיפוש לפי שם, מייל או טלפון",
+        "sortLabel": "מיון",
+        "sort": {
+          "activity": "פעילות אחרונה",
+          "name": "שם (א–ת)",
+          "newest": "הצטרפו לאחרונה",
+          "consistency": "הכי עקביים"
+        },
+        "viewLabel": "תצוגה",
+        "view": {
+          "cards": "כרטיסים",
+          "list": "רשימה"
+        },
+        "col": {
+          "client": "מתאמן",
+          "checkins": "צ׳ק־אין (7 ימים)",
+          "workouts": "אימונים השבוע",
+          "meals": "ארוחות היום",
+          "lastActive": "פעילות אחרונה",
+          "actions": "פעולות"
+        },
+        "mobileLine": "{{checkins}}/7 צ׳ק־אין · {{workouts}} אימונים",
+        "checkinsAria": "{{count}} צ׳ק־אין ב־7 הימים האחרונים",
+        "trainingNow": "מתאמן עכשיו",
+        "more": "עוד פעולות",
+        "menu": "תפריט תזונה",
+        "nav": "מתאמנים"
+      }
+    }
+  },
+  "en": {
+    "qa3": {
+      "seoGuide": {
+        "title": "How to connect",
+        "open": "Setup guide",
+        "close": "Close",
+        "openSite": "Open the site",
+        "analytics": {
+          "intro": "Google Analytics shows how many people visit the site, where from and what they do. Free.",
+          "steps": [
+            "Go to analytics.google.com and sign in with your Google account.",
+            "Click Admin (gear, bottom left) → Create → Property. Name: ECshape, time zone: Israel, currency: ILS.",
+            "Choose the \"Web\" platform, enter the site address (ecshape.com) and a stream name, then \"Create stream\".",
+            "Copy the Measurement ID — it starts with G-.",
+            "Here in Studio: \"Connections\" tab → paste it into the \"Google Analytics ID\" field → Save.",
+            "Check: open the site in another tab and accept cookies. In Analytics → Reports → Realtime you should see 1 visitor within a minute."
+          ],
+          "note": "The site loads Analytics only after a visitor accepts cookies (privacy law).",
+          "link": "https://analytics.google.com/"
+        },
+        "searchConsole": {
+          "intro": "Search Console shows how the site appears on Google: searches, impressions, clicks and indexing problems. Free.",
+          "steps": [
+            "Go to search.google.com/search-console and sign in with Google.",
+            "Click \"Add property\" → choose \"URL prefix\" and enter https://ecshape.com/",
+            "Among the verification methods choose \"HTML tag\" and copy only the code inside content=\"…\".",
+            "Here in Studio: \"Indexation\" tab → paste it into the verification code field → Save. The site adds the tag itself.",
+            "Go back to Search Console and click \"Verify\".",
+            "If verification fails: choose \"Domain\" instead, copy the TXT record and add it in your domain registrar’s DNS settings (e.g. Vercel → Domains). This is the most reliable method."
+          ],
+          "note": "First data shows up after 2–3 days.",
+          "link": "https://search.google.com/search-console"
+        },
+        "ai": {
+          "intro": "The AI writer drafts articles, titles and Google descriptions. It uses your own AI key (or the server’s).",
+          "steps": [
+            "Open an account with an AI provider: Anthropic (Claude), OpenAI (ChatGPT) or Google (Gemini — has a free tier).",
+            "Create an API key: Anthropic → console.anthropic.com → API Keys; Google → aistudio.google.com → Get API key.",
+            "With Anthropic and OpenAI add credit (Billing) — without credit the key does not work.",
+            "Here in Studio: Settings → AI keys → paste the key. The provider is detected automatically.",
+            "Click \"Test\" next to the key — a green check means everything is connected."
+          ],
+          "note": "The key is stored encrypted and never shown again.",
+          "link": "/studio/preferences#ai-keys"
+        }
+      },
+      "foodQuick": {
+        "quick": "Quick fill",
+        "photo": "From a photo (AI)",
+        "barcode": "Scan a barcode",
+        "manual": "Manual",
+        "filled": "Details filled in — check and adjust before saving.",
+        "photoFail": "No food recognised in this photo. Try another photo or fill it in by hand.",
+        "reading": "Recognising the food…"
+      },
+      "clients": {
+        "eyebrow": "{{count}} trainees",
+        "title": "Clients",
+        "search": "Search by name, email or phone",
+        "sortLabel": "Sort",
+        "sort": {
+          "activity": "Recent activity",
+          "name": "Name (A–Z)",
+          "newest": "Newest",
+          "consistency": "Most consistent"
+        },
+        "viewLabel": "View",
+        "view": {
+          "cards": "Cards",
+          "list": "List"
+        },
+        "col": {
+          "client": "Client",
+          "checkins": "Check-ins (7 days)",
+          "workouts": "Workouts this week",
+          "meals": "Meals today",
+          "lastActive": "Last active",
+          "actions": "Actions"
+        },
+        "mobileLine": "{{checkins}}/7 check-ins · {{workouts}} workouts",
+        "checkinsAria": "{{count}} check-ins in the last 7 days",
+        "trainingNow": "Training now",
+        "more": "More actions",
+        "menu": "Meal plan",
+        "nav": "Clients"
+      }
+    }
+  },
+  "fr": {
+    "qa3": {
+      "seoGuide": {
+        "title": "Comment connecter",
+        "open": "Guide de connexion",
+        "close": "Fermer",
+        "openSite": "Ouvrir le site",
+        "analytics": {
+          "intro": "Google Analytics montre combien de personnes visitent le site, d’où elles viennent et ce qu’elles font. Gratuit.",
+          "steps": [
+            "Allez sur analytics.google.com et connectez-vous avec votre compte Google.",
+            "Cliquez sur Administration (roue dentée, en bas) → Créer → Propriété. Nom : ECshape, fuseau : Israël, devise : ILS.",
+            "Choisissez la plateforme « Web », saisissez l’adresse du site (ecshape.com) et un nom de flux, puis « Créer le flux ».",
+            "Copiez l’ID de mesure — il commence par G-.",
+            "Ici dans le Studio : onglet « Connexions » → collez-le dans le champ « ID Google Analytics » → Enregistrer.",
+            "Vérification : ouvrez le site dans un autre onglet et acceptez les cookies. Dans Analytics → Rapports → Temps réel, 1 visiteur apparaît en moins d’une minute."
+          ],
+          "note": "Le site ne charge Analytics qu’après l’accord du visiteur pour les cookies (loi sur la vie privée).",
+          "link": "https://analytics.google.com/"
+        },
+        "searchConsole": {
+          "intro": "Search Console montre comment le site apparaît sur Google : recherches, impressions, clics et problèmes d’indexation. Gratuit.",
+          "steps": [
+            "Allez sur search.google.com/search-console et connectez-vous avec Google.",
+            "Cliquez sur « Ajouter une propriété » → « Préfixe de l’URL » et saisissez https://ecshape.com/",
+            "Parmi les méthodes de validation, choisissez « Balise HTML » et copiez uniquement le code dans content=\"…\".",
+            "Ici dans le Studio : onglet « Indexation » → collez-le dans le champ du code de validation → Enregistrer. Le site ajoute la balise tout seul.",
+            "Revenez dans Search Console et cliquez sur « Valider ».",
+            "Si la validation échoue : choisissez plutôt « Domaine », copiez l’enregistrement TXT et ajoutez-le dans les réglages DNS de votre registraire (ex. Vercel → Domains). C’est la méthode la plus fiable."
+          ],
+          "note": "Les premières données arrivent après 2 à 3 jours.",
+          "link": "https://search.google.com/search-console"
+        },
+        "ai": {
+          "intro": "Le rédacteur IA écrit des articles, des titres et des descriptions pour Google. Il utilise votre propre clé IA (ou celle du serveur).",
+          "steps": [
+            "Ouvrez un compte chez un fournisseur d’IA : Anthropic (Claude), OpenAI (ChatGPT) ou Google (Gemini — offre gratuite).",
+            "Créez une clé API : Anthropic → console.anthropic.com → API Keys ; Google → aistudio.google.com → Get API key.",
+            "Chez Anthropic et OpenAI, ajoutez du crédit (Billing) — sans crédit la clé ne fonctionne pas.",
+            "Ici dans le Studio : Réglages → Clés IA → collez la clé. Le fournisseur est détecté automatiquement.",
+            "Cliquez sur « Tester » à côté de la clé — une coche verte signifie que tout est connecté."
+          ],
+          "note": "La clé est stockée chiffrée et n’est plus jamais affichée.",
+          "link": "/studio/preferences#ai-keys"
+        }
+      },
+      "foodQuick": {
+        "quick": "Remplissage rapide",
+        "photo": "Depuis une photo (IA)",
+        "barcode": "Scanner un code-barres",
+        "manual": "Manuel",
+        "filled": "Détails remplis — vérifiez et ajustez avant d’enregistrer.",
+        "photoFail": "Aucun aliment reconnu sur cette photo. Essayez une autre photo ou remplissez à la main.",
+        "reading": "Reconnaissance de l’aliment…"
+      },
+      "clients": {
+        "eyebrow": "{{count}} élèves",
+        "title": "Élèves",
+        "search": "Rechercher par nom, e-mail ou téléphone",
+        "sortLabel": "Trier",
+        "sort": {
+          "activity": "Activité récente",
+          "name": "Nom (A–Z)",
+          "newest": "Les plus récents",
+          "consistency": "Les plus réguliers"
+        },
+        "viewLabel": "Affichage",
+        "view": {
+          "cards": "Cartes",
+          "list": "Liste"
+        },
+        "col": {
+          "client": "Élève",
+          "checkins": "Check-ins (7 jours)",
+          "workouts": "Séances cette semaine",
+          "meals": "Repas aujourd’hui",
+          "lastActive": "Dernière activité",
+          "actions": "Actions"
+        },
+        "mobileLine": "{{checkins}}/7 check-ins · {{workouts}} séances",
+        "checkinsAria": "{{count}} check-ins sur les 7 derniers jours",
+        "trainingNow": "En séance",
+        "more": "Plus d’actions",
+        "menu": "Plan nutritionnel",
+        "nav": "Élèves"
+      }
+    }
+  }
+}

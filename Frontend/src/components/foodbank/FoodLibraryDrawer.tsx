@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle, Check, ExternalLink, Heart, Info, Layers, Plus, Search, X } from 'lucide-react';
 import { LibText } from '@/features/trainee/libText';
 import { API_BASE_URL } from '@/config/api';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { IconOf, MACRO_ICON } from './FoodIcons';
 import { FoodPhoto, MacroStats, NovaBadge, NutriScoreBadge, PhotoCredit, PropertyChip } from './FoodParts';
@@ -344,7 +344,7 @@ export function FoodLibraryDrawer({
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const uiLang = (i18n.language || 'he').slice(0, 2);
-  const isRtl = uiLang === 'he';
+  const isRtl = isRtlLang(uiLang);
   const [query, setQuery] = useState('');
   // QA #65 #66: one full bank, searched in the site language (no language or source switch).
   const lang = (['he', 'en', 'fr'].includes(uiLang) ? uiLang : 'he') as 'he' | 'en' | 'fr';

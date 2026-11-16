@@ -27,6 +27,8 @@ import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import '@/i18n/ticketsQa3';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArticleEditor } from '@/components/studio/seo/ArticleEditor';
 import { RankMathPanel, ScoreBadge, useSeoAnalysis, type RankMathContext } from '@/components/studio/seo/RankMathPanel';
@@ -34,7 +36,7 @@ import { AGENT_NEW_ARTICLE_EVENT, askAgent, useAgentChanged, useAgentForm } from
 import { analyzeSeo } from '@/lib/seo/analysis';
 import { articlePath, EMPTY_ARTICLE_SEO, isLive, type Article, type ArticleSeo } from '@/lib/seo/articles';
 import { studioApi, type AgentModelOption, type PageSeoFields, type SeoRedirect, type SeoSettings } from '@/lib/studioApi';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { DEFAULT_CONTENT, SITE_LANGS, toSiteLang, type SiteLang } from '@/site/content';
 
 type SeoTab = 'dashboard' | 'articles' | 'pages' | 'redirects' | 'indexation' | 'stats';
@@ -241,6 +243,7 @@ const Dashboard = ({
   const toImprove = scored.filter((x) => x.score < 80).sort((x, y) => x.score - y.score).slice(0, 5);
   const pagesDone = SITE_LANGS.filter((l) => settings.pages?.[l]?.title && settings.pages?.[l]?.description).length;
 
+  const [guide, setGuide] = useState<GuideId | null>(null);
   const connections = [
     { id: 'analytics', ok: Boolean(settings.analytics_id), tab: 'stats' as SeoTab },
     { id: 'searchConsole', ok: Boolean(settings.search_console), tab: 'indexation' as SeoTab },
@@ -321,6 +324,9 @@ const Dashboard = ({
                   <b>{t(`studio.seo.conn.${c.id}`)}</b>
                   <small>{t(c.ok ? 'studio.seo.conn.connected' : 'studio.seo.conn.notConnected')}</small>
                 </span>
+                <button type="button" className="ec-seo-link" onClick={() => setGuide(c.id as GuideId)}>
+                  {t('qa3.seoGuide.open')}
+                </button>
                 {c.ok ? null : c.href ? (
                   <a className="ec-seo-link" href={c.href}>
                     {t('studio.seo.conn.connect')}
@@ -335,7 +341,47 @@ const Dashboard = ({
           </ul>
         </section>
       </div>
+      <ConnectionGuide id={guide} onClose={() => setGuide(null)} />
     </div>
+  );
+};
+
+/* QA #78: step-by-step guide for each connection (Google Analytics, Search Console, AI writer). */
+type GuideId = 'analytics' | 'searchConsole' | 'ai';
+const ConnectionGuide = ({ id, onClose }: { id: GuideId | null; onClose: () => void }) => {
+  const { t } = useTranslation();
+  const steps = id ? (t(`qa3.seoGuide.${id}.steps`, { returnObjects: true }) as string[]) : [];
+  const link = id ? t(`qa3.seoGuide.${id}.link`) : '';
+  const external = link.startsWith('http');
+  return (
+    <Dialog open={!!id} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{id ? `${t('qa3.seoGuide.title')}: ${t(`studio.seo.conn.${id}`)}` : ''}</DialogTitle>
+          <DialogDescription>{id ? t(`qa3.seoGuide.${id}.intro`) : ''}</DialogDescription>
+        </DialogHeader>
+        <ol className="space-y-3">
+          {Array.isArray(steps) && steps.map((s, i) => (
+            <li key={i} className="flex gap-3 text-sm leading-relaxed">
+              <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">{i + 1}</span>
+              <span className="min-w-0 flex-1 pt-0.5">{s}</span>
+            </li>
+          ))}
+        </ol>
+        {id && <p className="rounded-xl bg-muted/60 px-3 py-2 text-xs text-muted-foreground">{t(`qa3.seoGuide.${id}.note`)}</p>}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>{t('qa3.seoGuide.close')}</Button>
+          {link && (
+            <Button asChild>
+              <a href={link} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined} onClick={external ? undefined : onClose}>
+                <ExternalLink />
+                {external ? new URL(link).hostname.replace(/^www\./, '') : t(`studio.seo.conn.${id}`)}
+              </a>
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -513,7 +559,7 @@ const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: Seo
           </Button>
         </div>
       </aside>
-      <section className="ec-seo-card is-flush" dir={lang === 'he' ? 'rtl' : 'ltr'}>
+      <section className="ec-seo-card is-flush" dir={isRtlLang(lang) ? 'rtl' : 'ltr'}>
         <RankMathPanel key={lang} seo={seo} onChange={change} ctx={ctx} analysis={analysis} />
       </section>
     </div>

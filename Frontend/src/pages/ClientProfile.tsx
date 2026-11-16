@@ -20,7 +20,7 @@ import MealHistory from '../components/MealHistory';
 import { CheckInsPanel, type CheckInSummaryData } from '@/features/trainer/CheckInsPanel';
 import ClientExerciseHistoryMatrix from '../components/ClientExerciseHistoryMatrix';
 import NutritionProfileCard from '../components/meals/NutritionProfileCard';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { api } from '@/features/trainee/api';
 import { dayOf, fmtDate, fmtNum, fmtRelative, fmtSigned, parseDate } from '@/features/trainee/format';
 import type { WorkoutSession } from '@/features/trainee/types';
@@ -561,7 +561,7 @@ const ClientProfile = () => {
                   </div>
                 }
               >
-                <div data-testid="workout-plan-card" dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+                <div data-testid="workout-plan-card" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
                   {activeWorkoutPlan.description && <p className="-mt-2 mb-4 text-sm text-muted-foreground">{activeWorkoutPlan.description}</p>}
                   {activeWorkoutPlan.workout_days?.length ? (
                     <div className="tr-grid-3">

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PROVIDER_LOGOS } from '@/lib/providerLogos';
 import { useTranslation } from 'react-i18next';
 import { Check, ExternalLink, KeyRound, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -28,17 +29,23 @@ function detectProvider(raw: string): string | null {
   return null;
 }
 
-/** Two-letter provider mark on a tinted tile: no logos, no emojis. */
+/** Provider logo on a tinted tile (QA #75); a two-letter mark for providers without a free logo. */
 const ProviderMark = ({ id, product }: { id: string; product: string }) => {
   const hue: Record<string, number> = { anthropic: 22, openai: 160, google: 210, mistral: 30, xai: 0, deepseek: 230, groq: 12, openrouter: 265, custom: 190 };
   const h = hue[id] ?? 190;
+  const logo = PROVIDER_LOGOS[id];
   return (
     <span
       className="ec-pmark grid h-11 w-11 flex-none place-items-center rounded-2xl font-num text-sm font-bold tracking-wide"
       style={{ background: `hsl(${h} 70% 50% / .14)`, color: `hsl(${h} 75% 62%)`, boxShadow: `inset 0 0 0 1px hsl(${h} 70% 55% / .25)` }}
+      title={logo?.title}
       aria-hidden
     >
-      {product.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'AI'}
+      {logo ? (
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill={logo.hex} role="img"><path d={logo.path} /></svg>
+      ) : (
+        product.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'AI'
+      )}
     </span>
   );
 };

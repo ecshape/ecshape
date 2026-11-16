@@ -104,19 +104,15 @@ export const AvatarEditor: React.FC<{ className?: string; rounded?: string; comp
       </button>
       {!compact && (
         <div className="min-w-0">
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
-              <Camera />
-              {user?.avatar_url ? t('tix.avatar.change') : t('tix.avatar.add')}
+          {/* QA #76: the photo itself (with its camera badge) adds / changes it; no second "add photo" button. */}
+          <p className="text-sm font-semibold">{user?.avatar_url ? t('tix.avatar.change') : t('tix.avatar.add')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t('tix.avatar.hint')}</p>
+          {user?.avatar_url && (
+            <Button type="button" size="sm" variant="ghost" className="-ms-3 mt-1 text-destructive" onClick={remove} disabled={busy}>
+              <Trash2 />
+              {t('tix.avatar.remove')}
             </Button>
-            {user?.avatar_url && (
-              <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={remove} disabled={busy}>
-                <Trash2 />
-                {t('tix.avatar.remove')}
-              </Button>
-            )}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">{t('tix.avatar.hint')}</p>
+          )}
           {error && !img && <p className="mt-1 text-xs font-semibold text-destructive">{error}</p>}
         </div>
       )}

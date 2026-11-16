@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -17,7 +18,7 @@ import './training.css';
 export const useTT = () => {
   const { t, i18n } = useTranslation();
   const tt = (k: string, o?: Record<string, unknown>) => String(t(`trainee.training2.${k}`, o as never));
-  const rtl = !!i18n.language?.startsWith('he');
+  const rtl = !!isRtlLang(i18n.language);
   return { t, tt, i18n, rtl, lang: (i18n.language || 'he').slice(0, 2) };
 };
 

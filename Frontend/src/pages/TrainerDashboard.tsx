@@ -339,7 +339,7 @@ const TrainerDashboard = () => {
 
 /* ------------------------------------------------------------------ client card */
 
-const ClientCard: React.FC<{ pulse: ClientPulse; index: number; loadingActivity: boolean; onProgress: () => void }> = ({ pulse, index, loadingActivity, onProgress }) => {
+export const ClientCard: React.FC<{ pulse: ClientPulse; index: number; loadingActivity: boolean; onProgress: () => void }> = ({ pulse, index, loadingActivity, onProgress }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const c = pulse.client;
@@ -485,7 +485,7 @@ const TodayFeed: React.FC<{ items: FeedItem[]; loading: boolean }> = ({ items, l
 
 /* ------------------------------------------------------------------ dialogs */
 
-const ProgressDialogBody: React.FC<{ client: TrainerClient }> = ({ client }) => {
+export const ProgressDialogBody: React.FC<{ client: TrainerClient }> = ({ client }) => {
   const { t } = useTranslation();
   const q = useQuery({
     queryKey: ['trainer', 'progress', client.id],
@@ -523,7 +523,7 @@ const PasswordInput: React.FC<{ id: string; value: string; onChange: (v: string)
   );
 };
 
-const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }> = ({ open, onOpenChange, onDone }) => {
+export const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }> = ({ open, onOpenChange, onDone }) => {
   const { t } = useTranslation();
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);

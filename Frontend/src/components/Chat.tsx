@@ -533,6 +533,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
             onAttach={attachEntry}
             onOpenProfile={() => activeId && navigate(`/client/${activeId}`)}
             className="-mx-5 -mt-4"
+            ownScroll={false}
           />
         </ChatSheet>
       )}

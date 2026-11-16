@@ -1,3 +1,4 @@
+import { legalNavFor } from '@/legal/i18n';
 /**
  * Builds the public site's HTML from editable content. Class names match site.css / siteMotion.js.
  * All text is escaped; only icons and structure are raw HTML.
@@ -58,6 +59,8 @@ const LANGS: { code: SiteLang; label: string }[] = [
   { code: 'he', label: 'עב' },
   { code: 'en', label: 'EN' },
   { code: 'fr', label: 'FR' },
+  { code: 'ru', label: 'RU' },
+  { code: 'ar', label: 'ع' },
 ];
 
 export function waLink(c: SiteContent) {
@@ -414,6 +417,7 @@ ${page}
       <a class="link-draw" href="#contact" data-open-form data-source="footer"${P_('footer.contact')}>${esc(c.footer.contact)}</a>
       <a class="link-draw" href="/login" data-route>${esc(c.nav.login)}</a>
       <a class="link-draw" href="#" id="cookieSettings"${P_('footer.cookies')}>${esc(c.footer.cookies)}</a>
+      ${(['privacy', 'terms', 'accessibility', 'credits'] as const).map((d) => `<a class="link-draw" href="/legal/${d}" data-route>${esc(legalNavFor(lang)[d])}</a>`).join('\n      ')}
     </nav>
   </div>
   <div class="footer__mark" aria-hidden="true">${'ECSHAPE'.split('').map((l) => `<span>${l}</span>`).join('')}</div>

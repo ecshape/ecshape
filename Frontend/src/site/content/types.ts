@@ -37,4 +37,4 @@ export interface SiteContent {
 
 export interface SiteLayout { order?: string[]; hidden?: string[] }
 
-export type SiteLang = 'he' | 'en' | 'fr';
+export type SiteLang = 'he' | 'en' | 'fr' | 'ru' | 'ar'; // ru / ar: translated from English on the server (QA #85)

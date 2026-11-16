@@ -1,9 +1,12 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './i18n/extraLangs'
 import { installEcMotion } from './lib/ecMotion'
+import { installAutoDir } from './lib/autoDir'
 
-installEcMotion();
+installEcMotion()
+installAutoDir();
 
 // After a new deploy, an open tab may ask for script files that no longer exist:
 // reload once to pick up the new build instead of showing a blank screen.

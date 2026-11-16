@@ -735,7 +735,8 @@ export const ExerciseDetails: React.FC<{ ex: WorkoutExercise }> = ({ ex }) => {
 export const TranslatedText: React.FC<{ text: string; className?: string }> = ({ text, className }) => {
   const tr = useTranslatedTexts([text]);
   const shown = tr.texts[0];
-  return <p className={cn(className, tr.loading && 'opacity-70')} dir="auto" lang={shown === text ? undefined : tr.lang}>{shown}</p>;
+  if (tr.loading) return <span className={cn(className, 'block space-y-1.5')} aria-busy><span className="block h-3 w-full animate-pulse rounded-full bg-foreground/10" /><span className="block h-3 w-1/2 animate-pulse rounded-full bg-foreground/10" /></span>;
+  return <p className={className} dir="auto" lang={shown === text ? undefined : tr.lang}>{shown}</p>;
 };
 
 /** Library steps come in English: shown translated into the app language when possible (QA #43). */
@@ -750,7 +751,18 @@ export const InstructionSteps: React.FC<{ steps: string[] }> = ({ steps: origina
         {t('trainee.player.instructions')}
         {lang !== 'en' && english && !tr.loading && <InfoTip label={t('trainee.player.instructions')}>{tt('explore.englishOnly')}</InfoTip>}
       </p>
-      <ol className={cn('space-y-2', tr.loading && 'opacity-70')} lang={english ? 'en' : lang}>
+      {tr.loading ? (
+        // QA #81: no English flash before the translation; placeholder lines until the steps arrive in the app language.
+        <div className="space-y-3" aria-busy>
+          {original.map((_, k) => (
+            <div key={k} className="flex gap-3">
+              <span className="tp-num grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/15 text-xs text-primary">{k + 1}</span>
+              <span className="flex-1 space-y-1.5 pt-1"><span className="block h-3 w-full animate-pulse rounded-full bg-foreground/10" /><span className="block h-3 w-2/3 animate-pulse rounded-full bg-foreground/10" /></span>
+            </div>
+          ))}
+        </div>
+      ) : (
+      <ol className="space-y-2" lang={english ? 'en' : lang}>
         {steps.map((s, k) => (
           <li key={k} className="flex gap-3 text-sm leading-relaxed">
             <span className="tp-num grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/15 text-xs text-primary">{k + 1}</span>
@@ -758,6 +770,7 @@ export const InstructionSteps: React.FC<{ steps: string[] }> = ({ steps: origina
           </li>
         ))}
       </ol>
+      )}
     </div>
   );
 };

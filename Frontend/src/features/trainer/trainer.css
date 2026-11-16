@@ -3,7 +3,7 @@
 
 .tr-root, body:has(.tr-shell, .tp-shell) :is(.tp-sheet, .tr-xs-panel) {
   --tr-side-w: 268px;
-  --tr-rail-w: 88px;
+  --tr-rail-w: 74px; /* QA #82: icons sit at the same spot (.85rem in) collapsed or not, so folding the menu moves nothing sideways */
   --tr-bar-h: 4.25rem;
   --tr-grad: linear-gradient(135deg, #F59532 0%, #E8652A 55%, #D8361E 100%);
   --tr-ok: 142 64% 45%;
@@ -400,7 +400,8 @@
 /* ------------------------------------------------------------------ collapsed rail (#17, #20) */
 /* The rail keeps a centred square around each icon: the active blob and the hover tint share its exact box. */
 .tr-side[data-collapsed="true"] .tr-nav-link {
-  width: 2.75rem; min-height: 2.75rem; margin-inline: auto; gap: 0; padding-inline: 0; border-radius: .9rem;
+  /* QA #82: anchored to the start edge (not centred): while the rail narrows the icon stays exactly where it was */
+  width: 2.75rem; min-height: 2.75rem; margin-inline: calc((var(--tr-rail-w) - 1.7rem - 2.75rem) / 2) auto; gap: 0; padding-inline: 0; border-radius: .9rem;
   justify-content: center;
 }
 .tr-side[data-collapsed="true"] .tr-nav-link > .tr-hide-rail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

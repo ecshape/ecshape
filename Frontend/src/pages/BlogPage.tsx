@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Clock } from 'lucide-react';
@@ -83,7 +84,7 @@ const fmtDate = (iso: string | null, lang: SiteLang) =>
   iso ? new Date(iso).toLocaleDateString(lang === 'he' ? 'he-IL' : lang, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
 const Shell = ({ lang, children }: { lang: SiteLang; children: React.ReactNode }) => (
-  <div className="ec-blog" dir={lang === 'he' ? 'rtl' : 'ltr'} lang={lang}>
+  <div className="ec-blog" dir={isRtlLang(lang) ? 'rtl' : 'ltr'} lang={lang}>
     <header className="ec-blog-nav">
       <Link to={`/home?lang=${lang}`} className="ec-blog-logo">
         <b>EC</b>shape

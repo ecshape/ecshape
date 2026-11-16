@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Avatar } from '@/features/trainer/ui';
 import { Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ export default function UnmatchedQuestionnaires({ clients }: { clients: ClientOp
               <SelectContent>
                 {clients.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
-                    {c.full_name}
+                    <span className="flex items-center gap-2"><Avatar name={c.full_name} seed={c.id} size={22} src={(c as { avatar_url?: string | null }).avatar_url} />{c.full_name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -10,9 +10,10 @@ import { API_BASE_URL } from '../config/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const GA_ID = 'G-6QJ1G81SGP';
+const GA_ID_DEFAULT = 'G-6QJ1G81SGP';
+let GA_ID = GA_ID_DEFAULT; // QA #78: the Measurement ID saved in Studio → SEO wins over the built-in one
 function loadGoogleAnalytics() {
-  if (window.__gaLoaded) return;
+  if (window.__gaLoaded || !GA_ID) return;
   window.__gaLoaded = true;
   const s = document.createElement('script');
   s.async = true;
@@ -38,13 +39,14 @@ const EASE = 'expo.out';
  *   mode "preview": scaled thumbnail in the studio (full motion, no intro loader, no cookie banner).
  * @returns {() => void} cleanup
  */
-export function initSite(root, { navigate, content, lang, onLang, mode = 'live' }) {
+export function initSite(root, { navigate, content, lang, onLang, mode = 'live', analyticsId = null }) {
+  if (analyticsId && /^G-[A-Z0-9]+$/i.test(analyticsId)) GA_ID = analyticsId.toUpperCase();
   const editing = mode === 'edit';
   const live = mode === 'live';
   root.innerHTML = renderSite(content, lang, { edit: editing });
   // Custom link targets chosen in Studio -> My site (#12); the editor keeps the default behaviour while editing
   if (!editing) applyLinkTargets(root, content.links, { wa: waLink(content), ig: `https://www.instagram.com/${encodeURIComponent(content.contact.instagram)}` });
-  const rtl = lang === 'he';
+  const rtl = /^(he|ar)/.test(lang);
   const DIR = rtl ? 1 : -1; // horizontal motion sign: RTL content flows toward +x
 
   const $ = (s, c) => (c || root).querySelector(s);

@@ -77,7 +77,9 @@ export const ClientPanel: React.FC<{
   onOpenProfile: () => void;
   onClose?: () => void;
   className?: string;
-}> = ({ name, avatar, entries, attachedId, onAttach, onOpenProfile, onClose, className }) => {
+  /** false inside a popup that already scrolls (QA #72: a scroll area inside another one could not scroll back up). */
+  ownScroll?: boolean;
+}> = ({ name, avatar, entries, attachedId, onAttach, onOpenProfile, onClose, className, ownScroll = true }) => {
   const { t } = useTranslation();
   const latest = entries?.[0];
   const oldest = entries && entries.length > 1 ? entries[entries.length - 1] : undefined;
@@ -121,7 +123,7 @@ export const ClientPanel: React.FC<{
         <TrendingUp className="h-4 w-4 text-primary" aria-hidden />
         <h2 className="text-sm font-semibold text-foreground">{t('chat.ui.entries')}</h2>
       </div>
-      <div className="ec-chat-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+      <div className={cn('px-4 pb-4', ownScroll && 'ec-chat-scroll min-h-0 flex-1 overflow-y-auto')}>
         <EntryList entries={entries} attachedId={attachedId} onAttach={onAttach} />
       </div>
     </aside>

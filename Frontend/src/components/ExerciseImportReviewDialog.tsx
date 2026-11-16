@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -115,7 +116,7 @@ export const ExerciseImportReviewDialog: React.FC<ExerciseImportReviewDialogProp
     return translated !== key ? translated : mg;
   };
 
-  const isRtl = i18n.language === 'he';
+  const isRtl = isRtlLang(i18n.language);
 
   if (rows.length === 0) {
     return (

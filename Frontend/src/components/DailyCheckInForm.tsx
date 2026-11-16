@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ export const DailyCheckInForm: React.FC<DailyCheckInFormProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const isRtl = i18n.language === 'he';
+  const isRtl = isRtlLang(i18n.language);
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({

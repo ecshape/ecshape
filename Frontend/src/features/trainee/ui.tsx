@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { useSwipeClose } from '@/hooks/use-swipe-close';
 import { fmtNum, prefersReducedMotion } from './format';
 
@@ -176,7 +176,7 @@ export const Sheet: React.FC<{
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="tp-sheet-overlay" />
-        <DialogPrimitive.Content ref={swipeRef} className={cn('tp-sheet tp-root focus:outline-none', tall && 'tp-sheet--tall')} dir={i18n.language?.startsWith('he') ? 'rtl' : 'ltr'}>
+        <DialogPrimitive.Content ref={swipeRef} className={cn('tp-sheet tp-root focus:outline-none', tall && 'tp-sheet--tall')} dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
           <div className="mx-auto mt-2.5 h-1.5 w-12 flex-none rounded-full bg-foreground/15 sm:hidden" />
           <div className="flex flex-none items-start justify-between gap-3 px-5 pb-2 pt-4 sm:px-6 sm:pt-6">
             <div className="min-w-0">

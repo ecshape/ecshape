@@ -54,6 +54,9 @@ on the right page while they watch. Say in one short sentence what you proposed.
 - For communication work (Instagram captions, WhatsApp replies to prospects, SEO titles and descriptions, articles), \
 write ready-to-use text in the requested language. Brand voice: direct, warm, motivating, no medical claims, no emojis \
 unless the trainer asks for them.
+- For expert tasks (training programs, menus, SEO articles, social content, sales replies, progress reviews, site copy) \
+follow the matching skill; if it is not loaded yet, call load_skill first. Use search_exercises / list_foods so plans \
+use real exercises and foods from the app. Ask for missing essentials (goal, days, restrictions) in one short message.
 - Answer in the language the trainer writes in (Hebrew, English or French). Be concise; short lists when helpful.
 - Health data is sensitive: discuss it only with the trainer.
 """
@@ -79,6 +82,15 @@ READ_TOOLS: List[Dict[str, Any]] = [
      "schema": {"type": "object", "properties": {"lang": {"type": "string", "enum": ["he", "en", "fr"]}}, "required": ["lang"], "additionalProperties": False}},
     {"name": "get_seo", "description": "SEO settings per language (Google title, description, keywords, share image) and social links.",
      "schema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "load_skill", "description": "Load the full expert method and output format for a kind of task (see the skills list). Load it before doing that task.",
+     "schema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"], "additionalProperties": False}},
+    {"name": "search_exercises", "description": "Search the exercise library (870+ exercises) by name, muscle or equipment. Use the exact names it returns in plans.",
+     "schema": {"type": "object", "properties": {"query": {"type": "string"}, "muscle": {"type": "string", "description": "e.g. chest, lats, quadriceps, hamstrings, glutes, shoulders, biceps, triceps, abdominals"},
+                                                  "equipment": {"type": "string", "description": "e.g. barbell, dumbbell, machine, cable, body only, kettlebells, bands"},
+                                                  "level": {"type": "string", "enum": ["beginner", "intermediate", "expert"]}, "limit": {"type": "integer"}},
+                "additionalProperties": False}},
+    {"name": "list_foods", "description": "Foods in the trainer's food bank with nutrition per 100 g or per portion (for menus).",
+     "schema": {"type": "object", "properties": {"search": {"type": "string"}, "macro": {"type": "string", "enum": ["protein", "carb", "fat"]}}, "additionalProperties": False}},
 ]
 
 PROPOSAL_TOOLS: List[Dict[str, Any]] = [
@@ -196,6 +208,42 @@ def _run_read_tool(db: Session, user: UserResponse, name: str, args: Dict[str, A
         return get_setting(db, f"content:{args['lang']}")
     if name == "get_seo":
         return get_setting(db, "seo")
+    if name == "load_skill":
+        from app.services import agent_skills
+
+        sk = agent_skills.get(args.get("name", ""))
+        return {"skill": sk["name"], "instructions": sk["body"]} if sk else {"error": "Unknown skill", "skills": list(agent_skills.all_skills())}
+    if name == "search_exercises":
+        from app.routers.exercise_library import _library
+
+        words = [w for w in str(args.get("query") or "").lower().split() if w]
+        muscle, equipment, level = (args.get("muscle") or "").lower(), (args.get("equipment") or "").lower(), args.get("level")
+        hits = []
+        for e in _library():
+            if muscle and muscle not in [m.lower() for m in e.get("primaryMuscles", [])]:
+                continue
+            if equipment and equipment not in (e.get("equipment") or "").lower():
+                continue
+            if level and e.get("level") != level:
+                continue
+            if words and not all(w in e["_hay"] for w in words):
+                continue
+            hits.append({"name": e["name"], "muscles": e.get("primaryMuscles", []), "secondary": e.get("secondaryMuscles", []),
+                         "equipment": e.get("equipment"), "level": e.get("level"), "mechanic": e.get("mechanic"), "force": e.get("force")})
+        hits.sort(key=lambda h: (h["mechanic"] != "compound", len(h["name"])))
+        return {"total": len(hits), "items": hits[: max(1, min(int(args.get("limit") or 25), 60))]}
+    if name == "list_foods":
+        from app.models.meal_system import MealBank
+
+        q = db.query(MealBank).filter((MealBank.created_by == user.id) | (MealBank.is_public.is_(True)))
+        if args.get("search"):
+            like = f"%{args['search']}%"
+            q = q.filter((MealBank.name.ilike(like)) | (MealBank.name_hebrew.ilike(like)))
+        if args.get("macro"):
+            q = q.filter(MealBank.macro_type == args["macro"])
+        return [{"name": f.name, "name_he": f.name_hebrew, "macro": getattr(f.macro_type, "value", f.macro_type), "kcal": f.calories,
+                 "protein": f.protein, "carbs": f.carbs, "fat": f.fat, "per": getattr(f.measurement_type, "value", f.measurement_type),
+                 "serving": f.serving_size} for f in q.order_by(MealBank.name).limit(150).all()]
     return {"error": f"Unknown tool {name}"}
 
 
@@ -328,6 +376,16 @@ def run_agent(db: Session, user: UserResponse, turns: List[Dict[str, str]], lang
             context += f"\nText the trainer selected:\n{page['selection'][:2000]}"
         if page.get("snapshot"):
             context += f"\nVisible page text (for context):\n{page['snapshot'][:9000]}"
+
+    # QA #87: the expert skill(s) for this request (workout plan, menu, SEO, social content…) go into the instructions.
+    from app.services import agent_skills
+
+    last_user = next((t["content"] for t in reversed(turns) if t.get("role") == "user"), "")
+    picked = agent_skills.pick(last_user, (page or {}).get("path"))
+    skills_text = agent_skills.catalog_text()
+    if picked:
+        skills_text += "\n\nSkills loaded for this request (follow them):\n\n" + "\n\n".join(f"## Skill: {s['title']}\n{s['body']}" for s in picked)
+    context = skills_text + "\n\n" + context
 
     ops: List[Dict[str, Any]] = []
     if engine.provider == "anthropic":

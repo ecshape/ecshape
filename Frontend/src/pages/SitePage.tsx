@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../site/site.css';
@@ -69,11 +70,13 @@ const SitePage = () => {
     setMeta('og:title', site.seo.title || site.content.meta.title, 'property');
     setMeta('og:description', site.seo.description || site.content.meta.description, 'property');
     if (site.seo.keywords) setMeta('keywords', site.seo.keywords);
+    if (site.searchConsole) setMeta('google-site-verification', site.searchConsole); // QA #78
     const cleanup = initSite(ref.current, {
       navigate,
       content: site.content,
       lang,
       mode: previewing ? 'preview' : 'live',
+      analyticsId: site.analyticsId,
       onLang: (l: SiteLang) => {
         setLanguage(l);
         if (forced) navigate({ search: `?lang=${l}` }, { replace: true });
@@ -95,7 +98,7 @@ const SitePage = () => {
     <div
       ref={ref}
       className="ec-site"
-      dir={lang === 'he' ? 'rtl' : 'ltr'}
+      dir={isRtlLang(lang) ? 'rtl' : 'ltr'}
       lang={lang}
       style={ready || editing ? undefined : { minHeight: '100vh', background: '#0b0a08' }}
     />

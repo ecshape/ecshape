@@ -6,7 +6,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import LanguageSelector from './LanguageSelector';
 import ThemeToggle from './ThemeToggle';
@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { studioApi } from '@/lib/studioApi';
 import TraineeShell from '@/features/trainee/TraineeShell';
+import '@/i18n/ticketsQa3';
 import TrainerShell from '@/features/trainer/TrainerShell';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -105,7 +106,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const dir = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
+  const dir = isRtlLang(i18n.language) ? 'rtl' : 'ltr';
   const mainRef = useRef<HTMLElement>(null);
 
   const isTrainer = user?.role === 'TRAINER';
@@ -164,6 +165,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
       title: t('studio.groupCoaching'),
       items: [
         { id: 'dashboard', label: t('navigation.dashboard'), icon: Home, href: '/trainer-dashboard' },
+        { id: 'clients', label: t('qa3.clients.nav'), icon: Users2, href: '/clients' },
         { id: 'exercises', label: t('navigation.exercises'), icon: Dumbbell, href: '/exercises' },
         { id: 'meal-bank', label: t('foodBank.title'), icon: Utensils, href: '/meal-bank' },
         { id: 'chat', label: t('navigation.chat'), icon: MessageSquare, href: '/chat', badge: unreadChats },
@@ -192,7 +194,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
 
   if (isTrainer) {
     return (
-      <TrainerShell groups={trainerGroups} currentPage={currentPage} mobilePrimary={['dashboard', 'prospects', 'site', 'chat']} userMenu={<AccountMenu />}>
+      <TrainerShell groups={trainerGroups} currentPage={currentPage} mobilePrimary={['dashboard', 'clients', 'prospects', 'chat']} userMenu={<AccountMenu />}>
         {children}
       </TrainerShell>
     );

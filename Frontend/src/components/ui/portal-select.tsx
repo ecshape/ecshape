@@ -3,7 +3,8 @@ import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-export type PortalSelectOption = { value: string; label: React.ReactNode; hint?: React.ReactNode };
+/** `media`: a small picture shown before the label (a client's profile photo, QA #83). */
+export type PortalSelectOption = { value: string; label: React.ReactNode; hint?: React.ReactNode; media?: React.ReactNode };
 
 /**
  * The portal's list picker (QA #36): same menu as the language choice — rounded panel, highlighted current
@@ -38,7 +39,7 @@ export function PortalSelect({
             className,
           )}
         >
-          {Icon && <Icon className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />}
+          {current?.media ? <span className="flex-none">{current.media}</span> : Icon && <Icon className="h-4 w-4 flex-none text-muted-foreground" aria-hidden />}
           <span className={cn('min-w-0 flex-1 truncate', !current && 'text-muted-foreground')} dir="auto">{current?.label ?? placeholder}</span>
           <ChevronDown className="h-4 w-4 flex-none text-muted-foreground transition-transform group-data-[state=open]:rotate-180" aria-hidden />
         </button>
@@ -54,7 +55,10 @@ export function PortalSelect({
               aria-checked={active}
               role="menuitemradio"
             >
-              <span className="min-w-0 truncate" dir="auto">{o.label}</span>
+              <span className="flex min-w-0 items-center gap-2.5">
+                {o.media && <span className="flex-none">{o.media}</span>}
+                <span className="min-w-0 truncate" dir="auto">{o.label}</span>
+              </span>
               {active ? <Check className="h-4 w-4 flex-none" /> : o.hint ? <span className="flex-none text-xs text-muted-foreground">{o.hint}</span> : null}
             </DropdownMenuItem>
           );

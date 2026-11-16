@@ -457,7 +457,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
                   placeholder={t('workoutCreation.selectClientPlaceholder')}
                   value={formData.client_id ? String(formData.client_id) : ''}
                   onChange={(v) => setFormData({ ...formData, client_id: parseInt(v) })}
-                  options={clients.map((c) => ({ value: String(c.id), label: c.full_name, hint: c.email }))}
+                  options={clients.map((c) => ({ value: String(c.id), label: c.full_name, hint: c.email, media: <Avatar name={c.full_name} seed={c.id} size={26} src={(c as { avatar_url?: string | null }).avatar_url} /> }))}
                 />
               </Field>
             )}

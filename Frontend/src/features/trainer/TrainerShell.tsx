@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, LayoutGrid, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -46,7 +46,7 @@ const TrainerShell: React.FC<{
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const dir = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
+  const dir = isRtlLang(i18n.language) ? 'rtl' : 'ltr';
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -62,7 +62,7 @@ const TrainerShell: React.FC<{
   const phoneItems = mobilePrimary.map((id) => all.find((i) => i.id === id)).filter(Boolean) as TrainerNavEntry[];
   const phoneActive = phoneItems.some((i) => i.id === currentPage) ? currentPage : '__more';
 
-  const sideBlob = useLiquid(navRef, active ? `${currentPage}:${collapsed}` : null, 'y', 'trainer-side');
+  const sideBlob = useLiquid(navRef, active ? currentPage : null, 'y', 'trainer-side');
   const barBlob = useLiquid(barRef, phoneActive, 'x', 'trainer-bar');
 
   useEffect(() => setMoreOpen(false), [pathname]);

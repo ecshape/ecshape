@@ -1,7 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
-import { Camera, Link2, Trash2, Wand2 } from 'lucide-react';
+import { Barcode, Camera, Link2, PencilLine, Sparkles, Trash2, Wand2 } from 'lucide-react';
+import { BarcodeStep } from '@/features/trainee/AddMealSheet';
+import { downscaleImage, type AiFood, type BarcodeProduct } from '@/features/trainee/mealTools';
+import '@/i18n/ticketsQa3';
 import { cn } from '@/lib/utils';
 import { api } from '@/features/trainee/api';
 import { Seg, Sheet } from '@/features/trainer/ui';
@@ -46,8 +49,13 @@ export const FoodFormSheet: React.FC<{
   onClose: () => void;
   saving?: boolean;
 }> = ({ open, editing, form, setForm, onSubmit, onClose, saving }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language || 'he').slice(0, 2);
   const fileRef = useRef<HTMLInputElement>(null);
+  const aiRef = useRef<HTMLInputElement>(null);
+  const [quick, setQuick] = useState<'manual' | 'barcode'>('manual');
+  const [reading, setReading] = useState(false);
+  const [quickMsg, setQuickMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [urlOpen, setUrlOpen] = useState(false);
@@ -75,6 +83,48 @@ export const FoodFormSheet: React.FC<{
     }
   };
 
+  /** QA #80: fill the form from per-100 g values (photo or barcode), like the trainee's add-meal tools. */
+  const fillFrom = (name: string, per100: { calories: number; protein: number; carbs: number; fat: number }, image?: string | null) => {
+    const r = (n: number) => String(Math.round(n * 10) / 10);
+    const energy = { protein: per100.protein * 4, carb: per100.carbs * 4, fat: per100.fat * 9 };
+    const macro = (Object.entries(energy).sort((a, b) => b[1] - a[1])[0][0]) as MacroType;
+    setForm((f) => ({
+      ...f,
+      name_hebrew: lang === 'he' ? name : f.name_hebrew,
+      name: lang === 'he' ? f.name : name,
+      calories: String(Math.round(per100.calories)), protein: r(per100.protein), carbs: r(per100.carbs), fat: r(per100.fat),
+      measurement_type: 'per_100g', serving_size: '100g', macro_type: macro,
+      image_url: image && isStorablePhoto(image) ? image : f.image_url,
+    }));
+    setQuickMsg({ ok: true, text: t('qa3.foodQuick.filled') });
+  };
+
+  const fromPhoto = async (file?: File | null) => {
+    if (!file) return;
+    setQuickMsg(null);
+    setReading(true);
+    try {
+      const blob = await downscaleImage(file);
+      const fd = new FormData();
+      fd.append('file', blob, 'food.jpg');
+      const res = await api<{ foods: AiFood[] }>(`/v3/meals/ai/photo?lang=${lang}`, { method: 'POST', body: fd });
+      const f = res.foods?.[0];
+      if (!f) { setQuickMsg({ ok: false, text: t('qa3.foodQuick.photoFail') }); return; }
+      const g = f.grams > 0 ? f.grams : 100;
+      fillFrom(f.name, { calories: (f.calories * 100) / g, protein: (f.protein * 100) / g, carbs: (f.carbs * 100) / g, fat: (f.fat * 100) / g });
+      if (!form.image_url) void upload(file); // the photo becomes the food's picture
+    } catch {
+      setQuickMsg({ ok: false, text: t('qa3.foodQuick.photoFail') });
+    } finally {
+      setReading(false);
+    }
+  };
+
+  const fromBarcode = (p: BarcodeProduct) => {
+    fillFrom(p.name, p.per100, p.image_url);
+    setQuick('manual');
+  };
+
   return (
     <Sheet
       open={open}
@@ -91,7 +141,31 @@ export const FoodFormSheet: React.FC<{
         </div>
       }
     >
-      <form id="fb-food-form" onSubmit={onSubmit} className="tr-wide space-y-5 pb-2">
+      {!editing && (
+        <section className="fb-section mb-5" aria-label={t('qa3.foodQuick.quick')}>
+          <h3 className="tp-label mb-2">{t('qa3.foodQuick.quick')}</h3>
+          <div className="grid grid-cols-3 gap-2">
+            <input ref={aiRef} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} onChange={(e) => { fromPhoto(e.target.files?.[0]); e.target.value = ''; }} />
+            <button type="button" className="tp-press flex flex-col items-center gap-1.5 rounded-2xl bg-primary/10 px-2 py-3 text-xs font-bold text-primary" onClick={() => { setQuick('manual'); aiRef.current?.click(); }} disabled={reading}>
+              {reading ? <EcSpinner className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}{t('qa3.foodQuick.photo')}
+            </button>
+            <button type="button" aria-pressed={quick === 'barcode'} className={cn('tp-press flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-xs font-bold', quick === 'barcode' ? 'bg-primary text-primary-foreground' : 'bg-foreground/[.05]')} onClick={() => { setQuickMsg(null); setQuick('barcode'); }}>
+              <Barcode className="h-5 w-5" />{t('qa3.foodQuick.barcode')}
+            </button>
+            <button type="button" aria-pressed={quick === 'manual'} className={cn('tp-press flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-xs font-bold', quick === 'manual' ? 'bg-foreground/[.1]' : 'bg-foreground/[.05]')} onClick={() => setQuick('manual')}>
+              <PencilLine className="h-5 w-5" />{t('qa3.foodQuick.manual')}
+            </button>
+          </div>
+          {reading && <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">{t('qa3.foodQuick.reading')}</p>}
+          {quickMsg && <p className={cn('mt-2 rounded-xl px-3 py-2 text-xs font-semibold', quickMsg.ok ? 'bg-[hsl(var(--tr-ok)/.12)] text-[hsl(var(--tr-ok))]' : 'bg-[hsl(var(--tr-bad)/.1)] text-[hsl(var(--tr-bad))]')} role="status">{quickMsg.text}</p>}
+          {quick === 'barcode' && (
+            <div className="mt-3">
+              <BarcodeStep lang={lang} onBack={() => setQuick('manual')} onManual={() => setQuick('manual')} onProduct={fromBarcode} />
+            </div>
+          )}
+        </section>
+      )}
+      <form id="fb-food-form" onSubmit={onSubmit} className={cn('tr-wide space-y-5 pb-2', quick === 'barcode' && !editing && 'hidden')}>
         {/* Photo + names */}
         <section className="fb-section flex flex-col gap-4 sm:flex-row">
           <div className="fb-photo-pick max-sm:mx-auto">

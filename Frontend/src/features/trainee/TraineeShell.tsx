@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Dumbbell, House, MessageCircle, TrendingUp, UtensilsCrossed } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
@@ -36,7 +36,7 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const dir = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
+  const dir = isRtlLang(i18n.language) ? 'rtl' : 'ltr';
   const { data: convs } = useConversations();
   const unread = (convs ?? []).reduce((n, c) => n + (c.unread_count || 0), 0);
 

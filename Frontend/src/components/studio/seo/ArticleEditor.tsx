@@ -47,7 +47,7 @@ import {
   type ArticleStatus,
 } from '@/lib/seo/articles';
 import { studioApi } from '@/lib/studioApi';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { SITE_LANGS, type SiteLang } from '@/site/content';
 import { AiBriefCard, LiveArticleCanvas, useArticleGeneration, type GenerationResult } from './AiStudio';
 import { RankMathPanel, ScoreBadge, useSeoAnalysis, type RankMathContext } from './RankMathPanel';
@@ -262,7 +262,7 @@ export const ArticleEditor = ({ article, lang, aiReady, aiEngine, aiModel, autoB
 
   const scheduled = draft.publishedAt && new Date(draft.publishedAt).getTime() > Date.now();
   const primaryStatus: ArticleStatus = scheduled ? 'scheduled' : 'published';
-  const dir = draft.lang === 'he' ? 'rtl' : 'ltr';
+  const dir = isRtlLang(draft.lang) ? 'rtl' : 'ltr';
 
   return (
     <div className="ec-wp" data-ec-article-editor>

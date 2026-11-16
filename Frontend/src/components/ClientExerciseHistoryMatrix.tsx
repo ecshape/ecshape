@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +37,7 @@ const ClientExerciseHistoryMatrix: React.FC<ClientExerciseHistoryMatrixProps> = 
   maxDates = MAX_DATES_DEFAULT,
 }) => {
   const { t, i18n } = useTranslation();
-  const isRtl = i18n.language === 'he';
+  const isRtl = isRtlLang(i18n.language);
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(
     exercises.length > 0 ? exercises[0].workout_exercise_id : null
   );

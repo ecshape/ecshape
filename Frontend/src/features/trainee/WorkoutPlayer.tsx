@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, Clock, Dumbbell, Flag, History, Info, NotebookPen, Plus, RotateCcw, SkipForward, Trophy, X,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import type { SetCompletion, WorkoutExercise, WorkoutSession } from './types';
 import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
@@ -34,7 +34,7 @@ type Rest = { endsAt: number; total: number; exName: string } | null;
 const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const rtl = i18n.language?.startsWith('he');
+  const rtl = isRtlLang(i18n.language);
   const Back = rtl ? ArrowRight : ArrowLeft;
 
   const dayQ = useWorkoutDay(dayId);

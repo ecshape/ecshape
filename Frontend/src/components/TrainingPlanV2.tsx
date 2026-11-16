@@ -36,7 +36,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 
 import { API_BASE_URL } from '../config/api';
@@ -368,10 +368,10 @@ const TrainingPlanV2: React.FC = () => {
                   )}
                   onClick={() => navigate(`/training/day/${day.id}`)}
                 >
-                  <CardContent className="px-6 py-4" dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+                  <CardContent className="px-6 py-4" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
                     <div className="flex items-center justify-between w-full gap-4">
                       <div className="flex items-start space-x-3 flex-1 min-w-0">
-                        <div className="flex-1 min-w-0 space-y-1" dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+                        <div className="flex-1 min-w-0 space-y-1" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
                           {/* Training Name - RTL for Hebrew, centered */}
                           <p className="font-semibold text-lg text-center">
                             {workoutPlan.name}

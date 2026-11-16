@@ -16,7 +16,7 @@ import {
 } from '@/lib/agentOps';
 import { applySiteText } from '@/lib/siteContentOps';
 import { toSiteLang } from '@/site/content';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 
 type Fix = { label: string; href: string };
 type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; engine?: string; error?: boolean; fix?: Fix | null };
@@ -37,7 +37,12 @@ function readStore(userId: number | string, fallbackTitle: string): { convs: Con
     const raw = localStorage.getItem(storageKey(userId));
     if (raw) {
       const parsed = JSON.parse(raw) as { convs?: Conversation[]; current?: string };
-      if (Array.isArray(parsed.convs) && parsed.convs.length) return { convs: parsed.convs.slice(0, 30), current: parsed.current || parsed.convs[0].id };
+      if (Array.isArray(parsed.convs) && parsed.convs.length) {
+        // QA #74: a new page visit starts on a new chat; past chats stay in the history.
+        const saved = parsed.convs.filter((c) => c.turns?.length).slice(0, 29);
+        const fresh = newConversation(fallbackTitle);
+        return { convs: [fresh, ...saved], current: fresh.id };
+      }
     }
   } catch {
     /* storage unavailable */
@@ -253,7 +258,7 @@ export function AgentEc() {
   const navigate = useNavigate();
   const { open, setOpen, width, setWidth, seed, clearSeed } = useAgentSidekick();
   useEffect(() => installFloatingToolGuard(), []);
-  const rtl = i18n.language?.startsWith('he');
+  const rtl = isRtlLang(i18n.language);
   const pathname = location.pathname;
   const userId = user?.id ?? 'me';
   const firstName = (user?.full_name || '').split(' ')[0];
@@ -418,6 +423,20 @@ export function AgentEc() {
     const fresh = newConversation(t('agent.newConversation'));
     setStore((s) => ({ convs: [fresh, ...s.convs.filter((c) => c.turns.length)].slice(0, 30), current: fresh.id }));
   };
+
+  // QA #74: every time the panel opens it starts on a new chat (past chats stay in the history list).
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      setStore((s) => {
+        const cur = s.convs.find((c) => c.id === s.current);
+        if (cur && !cur.turns.length) return s;
+        const fresh = newConversation(t('agent.newConversation'));
+        return { convs: [fresh, ...s.convs.filter((c) => c.turns.length)].slice(0, 30), current: fresh.id };
+      });
+    }
+    wasOpen.current = open;
+  }, [open, t]);
 
   const modelLabel = provider === 'auto' ? t('agent.auto') : keys?.find((k) => String(k.id) === provider)?.product || t('agent.auto');
   const suggestions = [

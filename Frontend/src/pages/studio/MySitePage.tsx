@@ -28,7 +28,7 @@ import { hasStoredDrafts, useSiteDraft, type SiteDraftApi } from '@/components/s
 import { askAgent, useAgentChanged } from '@/lib/agentOps';
 import { getIn, parsePath } from '@/lib/siteContentOps';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { SITE_LANGS, toSiteLang, type SiteLang } from '@/site/content';
 import {
   EC_EDIT_PARAM, EC_EDIT_SOURCE, EC_PREVIEW_PARAM, isEcEditMessage, type EcChildMsg, type EcEditMode, type EcFrameLabels,
@@ -221,8 +221,8 @@ const SiteStudio: React.FC<{ draft: SiteDraftApi; initialSelect: EcSelect | null
   const base = draft.published[lang];
   const order = sectionOrder(content.layout);
   const hidden = hiddenSections(content.layout);
-  const uiDir: 'rtl' | 'ltr' = i18n.language?.startsWith('he') ? 'rtl' : 'ltr';
-  const contentDir: 'rtl' | 'ltr' = lang === 'he' ? 'rtl' : 'ltr';
+  const uiDir: 'rtl' | 'ltr' = isRtlLang(i18n.language) ? 'rtl' : 'ltr';
+  const contentDir: 'rtl' | 'ltr' = isRtlLang(lang) ? 'rtl' : 'ltr';
 
   const labels: EcFrameLabels = useMemo(
     () => ({

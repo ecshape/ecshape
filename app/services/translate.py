@@ -22,7 +22,7 @@ from app.services.ai_keys import Engine, all_engines, provider_error_text
 
 logger = logging.getLogger(__name__)
 
-LANGS = {"he": "Hebrew", "fr": "French", "en": "English"}
+LANGS = {"he": "Hebrew", "fr": "French", "en": "English", "ru": "Russian", "ar": "Arabic"}  # ru / ar: QA #85
 # src_lang "auto": mixed sources (Open Food Facts names in French, wger exercises in German…), detected per text.
 SRC_NAMES = {**LANGS, "auto": "their original language (detect it per item)"}
 FAST_CLAUDE = "claude-haiku-5-5"
@@ -44,7 +44,8 @@ def _prompt(lang_name: str, texts: List[str], src_name: str = "English") -> str:
     return (
         f"Translate each item of this JSON array from {src_name} into {lang_name} for a fitness coaching app / website. "
         "Keep the meaning and tone exact, keep line breaks, emoji and simple HTML tags as they are, "
-        "use natural, simple wording a gym-goer understands, keep numbers and units, keep proper exercise names that are "
+        "use natural, simple wording a gym-goer understands, keep numbers and units, keep placeholders such as {{count}} or {name} "
+        "and markers such as ⟦0⟧ exactly as they are, keep proper exercise names that are "
         "usually said in English (e.g. Bench Press) in English when that is how people say them. Return ONLY a JSON array of "
         f"strings with exactly {len(texts)} items in the same order.\n\n" + json.dumps(texts, ensure_ascii=False)
     )
@@ -84,7 +85,7 @@ def _call(engine: Engine, prompt: str) -> str:
 
 
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
-MM_LANG = {"he": "he-IL", "fr": "fr-FR", "en": "en-GB", "auto": "autodetect"}
+MM_LANG = {"he": "he-IL", "fr": "fr-FR", "en": "en-GB", "ru": "ru-RU", "ar": "ar-SA", "auto": "autodetect"}
 
 
 def _mm_piece(text: str, src: str, dst: str, timeout: float = 20) -> Optional[str]:

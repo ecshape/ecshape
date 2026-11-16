@@ -53,6 +53,11 @@ export function needsTranslation(text: string | null | undefined, lang: string):
 
 /** One text in the app language. `enabled: false` waits (e.g. until the text is on screen). */
 export function useLibText(text: string | null | undefined, opts: { src?: Src; enabled?: boolean } = {}): string {
+  return useLibTextState(text, opts).text;
+}
+
+/** Same, plus whether the translation is still on its way (to avoid flashing the original, QA #81). */
+export function useLibTextState(text: string | null | undefined, opts: { src?: Src; enabled?: boolean } = {}): { text: string; pending: boolean } {
   const { i18n } = useTranslation();
   const lang = (i18n.language || 'en').slice(0, 2);
   const src = opts.src ?? 'auto';
@@ -66,7 +71,7 @@ export function useLibText(text: string | null | undefined, opts: { src?: Src; e
     gcTime: 60 * 60_000,
     retry: false,
   });
-  return on && q.data ? q.data : raw;
+  return { text: on && q.data ? q.data : raw, pending: on && q.isLoading };
 }
 
 /** Many texts at once (instruction steps…), same batching and cache. */
@@ -102,7 +107,9 @@ export const LibText: React.FC<{ text: string | null | undefined; src?: Src; laz
     io.observe(ref.current);
     return () => io.disconnect();
   }, [seen]);
-  const out = useLibText(text, { src, enabled: seen });
+  const { text: out, pending } = useLibTextState(text, { src, enabled: seen });
+  // QA #81: a title shown at once (not lazy) waits for its translation instead of flashing the original.
+  if (!lazy && pending) return <span ref={ref} className={className} aria-busy><span className="inline-block h-[.75em] w-[min(12rem,60%)] animate-pulse rounded-full bg-foreground/10 align-middle" /></span>;
   return <span ref={ref} className={className} dir="auto">{out}</span>;
 };
 

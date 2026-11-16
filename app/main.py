@@ -839,6 +839,8 @@ try:
 
     logger.info("Including studio routers...")
     app.include_router(studio.public_router, prefix="/api/public", tags=["Public site"])
+    from app.routers import i18n_bundle  # QA #85: Russian / Arabic interface texts
+    app.include_router(i18n_bundle.router, prefix="/api/public", tags=["Interface languages"])
     app.include_router(studio.router, prefix="/api/studio", tags=["Trainer studio"])
     logger.info("✅ Studio routers included")
     

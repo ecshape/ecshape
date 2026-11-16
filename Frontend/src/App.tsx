@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { isRtlLang } from '@/lib/utils';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,8 @@ import NotFound from "./pages/NotFound";
 import UsersPage from './pages/UsersPage';
 import SystemPage from './pages/SystemPage';
 import TrainerDashboard from './pages/TrainerDashboard';
+import ClientsPage from './pages/ClientsPage';
+import LegalPage from './pages/LegalPage';
 import ClientProfile from './pages/ClientProfile';
 import EditClient from './pages/EditClient';
 import CreateWorkout from './pages/CreateWorkout';
@@ -251,6 +254,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
+      <Route path="/legal/:doc" element={<LegalPage />} />
+      <Route path="/clients" element={<ProtectedRoute requiredRole="TRAINER"><ClientsPage /></ProtectedRoute>} />
       <Route 
         path="/exercises" 
         element={
@@ -371,12 +376,12 @@ const App = () => {
     // Check localStorage first, then i18n language, then default to Hebrew
     const storedLang = typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') : null;
     const currentLang = storedLang && ['he', 'en', 'fr'].includes(storedLang) ? storedLang : (i18n.language || 'he');
-    document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.dir = isRtlLang(currentLang) ? 'rtl' : 'ltr';
     document.documentElement.lang = currentLang;
   }, [i18n.language]);
 
   return (
-    <div dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+    <div dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />

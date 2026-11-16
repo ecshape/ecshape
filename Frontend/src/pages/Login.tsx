@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { User, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Dumbbell, UserRound } f
 import { API_BASE_URL } from '../config/api';
 import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '../contexts/AuthContext';
+import { legalNavFor } from '@/legal/i18n';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/ticketsStudio';
 import LanguageSelector from '../components/LanguageSelector';
@@ -35,7 +37,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
-  const isRtl = i18n.language === 'he';
+  const isRtl = isRtlLang(i18n.language);
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
 
   const goHome = (role?: string) => {
@@ -169,6 +171,19 @@ const Login = () => {
                 </span>
               </Button>
             </form>
+            {(() => {
+              // QA #84: signing in = accepting the terms and the privacy policy; both one tap away.
+              const nav = legalNavFor(i18n.language || 'he');
+              return (
+                <p className="mt-4 text-center text-xs text-muted-foreground">
+                  <Link to="/legal/terms" className="underline-offset-2 hover:underline">{nav.terms}</Link>
+                  {' · '}
+                  <Link to="/legal/privacy" className="underline-offset-2 hover:underline">{nav.privacy}</Link>
+                  {' · '}
+                  <Link to="/legal/accessibility" className="underline-offset-2 hover:underline">{nav.accessibility}</Link>
+                </p>
+              );
+            })()}
 
             {demoRoles.length > 0 && (
               <div className="mt-8">

@@ -3,7 +3,7 @@ import '@/i18n/ticketsStudio';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, ArrowLeftRight, ArrowRight, Check, ChevronDown, ChevronUp, Dumbbell, Eye, Flag, History, Info, Maximize2, Minus, Play, Plus, RotateCcw, SkipForward, Timer, Trophy, X,
+  ArrowLeft, ArrowLeftRight, ArrowRight, Check, ChevronDown, ChevronUp, Dumbbell, Eye, Flag, Heart, History, Info, Maximize2, Minus, Play, Plus, RotateCcw, SkipForward, Timer, Trophy, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -22,6 +22,7 @@ import BodyMap from '../BodyMap';
 import { exerciseLoad, exerciseMuscles } from './muscles';
 import { muscleLabel, sessionStart, setVolume, useTT } from './shared';
 import { playChime, primeChime } from './chime';
+import { useHeartRate } from './useHeartRate';
 import { useTranslatedTexts } from '../useTranslated';
 import { LibText } from '../libText';
 
@@ -72,6 +73,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
   });
   const [swapOpen, setSwapOpen] = useState(false);
   const [rest, setRest] = useState<Rest>(null);
+  const hr = useHeartRate(); // QA #91: live BPM from a watch / strap over Bluetooth
   const [info, setInfo] = useState(false);
   const [history, setHistory] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -343,6 +345,17 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                 <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                   <span dir="ltr">{logged.length}/{totalTarget}</span> {tt('player.setsDone')}
                 </span>
+                {hr.supported && (
+                  <button
+                    type="button" onClick={() => (hr.status === 'live' ? hr.disconnect() : void hr.connect())}
+                    className={cn('tp-btn tp-btn--ghost tp-btn--sm tp-press !min-h-[2.4rem] !px-3', hr.status === 'live' && '!text-red-500')}
+                    aria-label={hr.status === 'live' ? tt('player.hrOff') : tt('player.hrConnect')}
+                    title={hr.status === 'error' ? tt('player.hrError') : hr.status === 'live' ? tt('player.hrLive') : tt('player.hrConnect')}
+                  >
+                    <Heart className={cn('h-4 w-4', hr.status === 'live' && 'animate-pulse fill-current')} />
+                    {hr.status === 'live' && hr.bpm ? <span className="tp-num text-sm" dir="ltr">{hr.bpm}</span> : <span className="max-[359px]:sr-only">{tt('player.hrConnect')}</span>}
+                  </button>
+                )}
                 <button type="button" onClick={() => setConfirmEnd(true)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press !min-h-[2.4rem] !px-3.5" aria-label={tt('player.end')}>
                   <Flag className="h-4 w-4" /><span className="max-[359px]:sr-only">{tt('player.endShort')}</span>
                 </button>
@@ -427,7 +440,6 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                     >
                       {c ? <Check className="h-5 w-5" strokeWidth={3} /> : n}
                     </button>
-                    {p && !c && <span className="mt-1 block text-[10px] text-muted-foreground" dir="ltr">{fmtNum(p.weight_used, 1)}×{p.reps_completed}</span>}
                   </span>
                   {c ? (
                     <>
@@ -623,10 +635,12 @@ const RestOverlay: React.FC<{ rest: NonNullable<Rest>; onChange: (r: Rest) => vo
   }, [rest.endsAt]);
   const left = Math.max(0, (rest.endsAt - now) / 1000);
   const over = left <= 0;
+  const secLeft = Math.ceil(left);
+  useEffect(() => { if (!over && secLeft > 0 && secLeft <= 3) haptic(25); }, [secLeft, over]); // QA #91: small ticks for the last 3 s
   useEffect(() => {
     if (over && !buzzed.current) {
       buzzed.current = true;
-      haptic([40, 80, 40]);
+      haptic([70, 90, 70, 90, 140]);
       playChime();
       completeRef.current?.();
       const id = window.setTimeout(() => onChange(null), 1800);

@@ -276,7 +276,6 @@ const WorkoutPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                             <div key={n} className={cn('grid grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1fr)_3rem] items-center gap-2 rounded-2xl p-1 transition-colors', c && 'bg-[hsl(var(--tp-ok)/.08)]')}>
                               <span className="text-center leading-tight">
                                 <span className="tp-num block text-lg">{n}</span>
-                                {p && <span className="block text-[10px] text-muted-foreground" dir="ltr">{fmtNum(p.weight_used, 1)}×{p.reps_completed}</span>}
                               </span>
                               {c ? (
                                 <>

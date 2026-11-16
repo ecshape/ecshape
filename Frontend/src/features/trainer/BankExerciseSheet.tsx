@@ -49,8 +49,9 @@ export const BankExerciseSheet: React.FC<{
   exercise: BankExercise | null;
   onClose: () => void;
   muscleLabel: (slug: string) => string;
-  onEdit: (e: BankExercise) => void;
-  onDelete: (e: BankExercise) => void;
+  /** Without edit / delete the sheet is read-only (a plan's exercise, QA #88). */
+  onEdit?: (e: BankExercise) => void;
+  onDelete?: (e: BankExercise) => void;
 }> = ({ exercise, onClose, muscleLabel, onEdit, onDelete }) => {
   const { t, i18n } = useTranslation();
   const swipeRef = useSwipeClose(onClose, { maxWidth: 768 });
@@ -117,14 +118,16 @@ export const BankExerciseSheet: React.FC<{
                     </a>
                   )}
                 </div>
+                {(onEdit || onDelete) && (
                 <div className="flex flex-none gap-2 border-t border-border/50 px-5 py-3 sm:px-6">
-                  <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1" onClick={() => onEdit(e)}>
+                  <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press flex-1" onClick={() => onEdit?.(e)}>
                     <Pencil className="h-4 w-4" />{t('tt.common.edit')}
                   </button>
-                  <button type="button" className="tp-icon-btn tp-press text-[hsl(var(--tr-bad))]" onClick={() => onDelete(e)} aria-label={t('tt.common.delete')} title={t('tt.common.delete')}>
+                  <button type="button" className="tp-icon-btn tp-press text-[hsl(var(--tr-bad))]" onClick={() => onDelete?.(e)} aria-label={t('tt.common.delete')} title={t('tt.common.delete')}>
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
+                )}
               </>
             );
           })()}

@@ -26,6 +26,11 @@ import { dayOf, fmtDate, fmtNum, fmtRelative, fmtSigned, parseDate } from '@/fea
 import type { WorkoutSession } from '@/features/trainee/types';
 import { ActionBtn, Avatar, BackLink, CountUp, EmptyState, Ring, SectionCard, Skel, TabStrip } from '@/features/trainer/ui';
 import TrendChart from '@/features/trainer/TrendChart';
+import BankExerciseSheet, { type BankExercise } from '@/features/trainer/BankExerciseSheet';
+import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
+import { exerciseFrames } from '@/lib/exerciseLibrary';
+import { FoodThumb } from '@/features/trainee/AddMealSheet';
+import { Sheet } from '@/features/trainee/ui';
 
 interface Client {
   id: number;
@@ -61,7 +66,7 @@ interface WorkoutPlan {
   exercises?: any[];
 }
 
-interface MealPlanFoodOption { name: string; name_hebrew?: string }
+interface MealPlanFoodOption { name: string; name_hebrew?: string; image_url?: string | null; calories?: number | null; protein?: number | null; carbs?: number | null; fat?: number | null; serving_size?: string | null }
 interface MealPlanMacroCategory { macro_type: 'protein' | 'carb' | 'fat'; quantity_instruction?: string; food_options?: MealPlanFoodOption[] }
 interface MealPlanSlot { id?: number; name: string; order_index?: number; time_suggestion?: string; macro_categories?: MealPlanMacroCategory[] }
 
@@ -131,6 +136,8 @@ const ClientProfile = () => {
 
   const initialTab = (params.get('tab') as TabId) || 'overview';
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [exerciseDetail, setExerciseDetail] = useState<BankExercise | null>(null);
+  const [foodDetail, setFoodDetail] = useState<MealPlanFoodOption | null>(null);
 
   const [client, setClient] = useState<Client | null>(null);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
@@ -581,19 +588,29 @@ const ClientProfile = () => {
                             <ol className="space-y-1.5">
                               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                               {day.workout_exercises.map((exercise: any, ei: number) => (
-                                <li key={exercise.id || exercise.order_index} className="flex gap-2.5 rounded-xl bg-background/60 px-3 py-2">
-                                  <span className="w-4 flex-none pt-0.5 text-xs font-bold tabular-nums text-muted-foreground">{ei + 1}</span>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold">{exercise.exercise?.name || exercise.exercise_name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {[
-                                        exercise.target_sets ? t('clientProfile.setsShort', { count: exercise.target_sets }) : null,
-                                        exercise.target_reps || null,
-                                        exercise.rest_seconds ? t('clientProfile.restShort', { seconds: exercise.rest_seconds }) : null,
-                                      ].filter(Boolean).join(' · ') || t('clientProfile.noWorkoutDetails')}
-                                    </p>
-                                    {exercise.notes ? <p className="mt-0.5 text-xs text-primary">{t('clientProfile.notePrefix')} {exercise.notes}</p> : null}
-                                  </div>
+                                <li key={exercise.id || exercise.order_index}>
+                                  {/* QA #88: an exercise looks the same everywhere: picture on the side, tap for the full details */}
+                                  <button
+                                    type="button" onClick={() => exercise.exercise && setExerciseDetail(exercise.exercise as BankExercise)}
+                                    className="tp-press flex w-full items-center gap-3 rounded-xl bg-background/60 p-2 text-start"
+                                  >
+                                    <span className="relative h-14 w-14 flex-none overflow-hidden rounded-lg bg-foreground/[.06]">
+                                      {exercise.exercise && exerciseFrames(exercise.exercise).length > 0
+                                        ? <ExerciseDemo frames={exerciseFrames(exercise.exercise)} alt={exercise.exercise?.name || ''} className="h-full w-full" />
+                                        : <Dumbbell className="absolute inset-0 m-auto h-5 w-5 text-muted-foreground" />}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate text-sm font-semibold"><span className="me-1.5 text-xs font-bold tabular-nums text-muted-foreground">{ei + 1}</span>{exercise.exercise?.name || exercise.exercise_name}</span>
+                                      <span className="block text-xs text-muted-foreground">
+                                        {[
+                                          exercise.target_sets ? t('clientProfile.setsShort', { count: exercise.target_sets }) : null,
+                                          exercise.target_reps || null,
+                                          exercise.rest_seconds ? t('clientProfile.restShort', { seconds: exercise.rest_seconds }) : null,
+                                        ].filter(Boolean).join(' · ') || t('clientProfile.noWorkoutDetails')}
+                                      </span>
+                                      {exercise.notes ? <span className="mt-0.5 block text-xs text-primary">{t('clientProfile.notePrefix')} {exercise.notes}</span> : null}
+                                    </span>
+                                  </button>
                                 </li>
                               ))}
                             </ol>
@@ -670,7 +687,14 @@ const ClientProfile = () => {
                                 <span className="font-semibold">{t(`meals.${macro.macro_type === 'carb' ? 'carbs' : macro.macro_type}`, macro.macro_type)}: </span>
                                 <span className="text-muted-foreground">{macro.quantity_instruction || t('clientProfile.noQuantitySet')}</span>
                                 {!!macro.food_options?.length && (
-                                  <span className="block text-xs text-muted-foreground">{macro.food_options.map((f) => f.name_hebrew || f.name).join(' · ')}</span>
+                                  <div className="mt-1.5 space-y-1">
+                                    {macro.food_options.map((f, fi) => (
+                                      <button key={fi} type="button" onClick={() => setFoodDetail(f)} className="tp-press flex w-full items-center gap-2.5 rounded-xl bg-background/60 p-1.5 text-start">
+                                        <FoodThumb name={f.name} src={f.image_url} needsImage={!f.image_url} className="h-10 w-10 rounded-lg" />
+                                        <span className="min-w-0 flex-1 truncate text-xs font-semibold" dir="auto">{f.name_hebrew || f.name}</span>
+                                      </button>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                             ))}
@@ -785,6 +809,24 @@ const ClientProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BankExerciseSheet exercise={exerciseDetail} onClose={() => setExerciseDetail(null)} muscleLabel={(m) => t(`exerciseLibrary.muscle.${m}`, { defaultValue: m })} />
+      <Sheet
+        open={!!foodDetail} onOpenChange={(o) => !o && setFoodDetail(null)}
+        title={foodDetail ? (foodDetail.name_hebrew || foodDetail.name) : ''}
+        description={foodDetail?.serving_size || undefined}
+      >
+        {foodDetail && (
+          <div className="space-y-4 px-5 pb-6 sm:px-6">
+            <FoodThumb name={foodDetail.name} src={foodDetail.image_url} needsImage={!foodDetail.image_url} className="aspect-[4/3] w-full rounded-2xl" />
+            <div className="flex flex-wrap gap-2">
+              {foodDetail.calories != null && <span className="tp-chip tp-chip--primary"><Flame className="h-3.5 w-3.5" />{fmtNum(foodDetail.calories)} {t('meals.calories')}</span>}
+              {foodDetail.protein != null && <span className="tp-chip">{fmtNum(foodDetail.protein, 1)}g {t('meals.protein')}</span>}
+              {foodDetail.carbs != null && <span className="tp-chip">{fmtNum(foodDetail.carbs, 1)}g {t('meals.carbs')}</span>}
+              {foodDetail.fat != null && <span className="tp-chip">{fmtNum(foodDetail.fat, 1)}g {t('meals.fat')}</span>}
+            </div>
+          </div>
+        )}
+      </Sheet>
     </Layout>
   );
 };

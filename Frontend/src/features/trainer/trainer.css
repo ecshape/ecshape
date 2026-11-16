@@ -586,3 +586,15 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
   .tr-actionbar > p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .8rem; }
   .tr-actionbar > div { flex: none; }
 }
+
+/* QA #89: selected text is white and sits on the sliding pill. If the pill is ever left behind (layout shift, scroll, RTL,
+   late fonts) the text vanished. Each selected control now also paints its own pill behind the text, fading in after the
+   glide has had time to arrive: when the sliding pill is right nothing changes, when it is wrong the text still reads. */
+@keyframes trPillFallback { from { opacity: 0; } to { opacity: 1; } }
+.tr-seg-btn[aria-pressed="true"]::before, .tr-seg-btn[aria-selected="true"]::before,
+.tr-tab[aria-current="page"]::before, .tr-nav-link[aria-current="page"]::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: var(--tr-grad); animation: trPillFallback .2s linear .5s backwards;
+}
+@media (prefers-reduced-motion: reduce) { .tr-seg-btn::before, .tr-tab::before, .tr-nav-link::before { animation-delay: 0s !important; } }
+.tr-nav-link { isolation: isolate; }

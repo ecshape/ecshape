@@ -53,8 +53,31 @@ const TrainerShell: React.FC<{
   const mainRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const sideRef = useRef<HTMLElement>(null);
 
   usePortalMotion(mainRef);
+
+  // QA #92: the collapsed rail is as wide as its longest section title (never narrower than the default), so no title is cut off
+  useEffect(() => {
+    const side = sideRef.current;
+    if (!side) return;
+    const fit = () => {
+      let widest = 0;
+      // measure the text itself (a range), not the box, so the rail can also shrink back
+      side.querySelectorAll<HTMLElement>('.tr-nav-title').forEach((el) => {
+        const r = document.createRange();
+        r.selectNodeContents(el);
+        widest = Math.max(widest, r.getBoundingClientRect().width);
+      });
+      // side padding (.85rem x2) + the scroll gutter, rounded up
+      const need = Math.ceil(widest + 2 * 13.6 + 8);
+      side.style.setProperty('--tr-rail-w', `${Math.max(74, need)}px`);
+    };
+    fit();
+    void document.fonts?.ready.then(fit);
+    const t = window.setTimeout(fit, 300);
+    return () => window.clearTimeout(t);
+  }, [collapsed, i18n.language, groups]);
 
   const all = groups.flatMap((g) => g.items);
   const active = all.find((i) => i.id === currentPage);
@@ -92,7 +115,7 @@ const TrainerShell: React.FC<{
   return (
     <div className="tr-root tp-root tr-shell ec-portal-shell" dir={dir} data-ec-shell>
       {/* Desktop sidebar */}
-      <aside className="tr-side ec-glass" data-collapsed={collapsed} aria-label={t('trainer.shell.sidebar')}>
+      <aside ref={sideRef} className="tr-side ec-glass"data-collapsed={collapsed} aria-label={t('trainer.shell.sidebar')}>
         <button
           type="button"
           onClick={() => go('/trainer-dashboard')}

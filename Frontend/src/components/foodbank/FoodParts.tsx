@@ -254,6 +254,7 @@ export function FoodCard({
   onEdit,
   onDelete,
   onOpen,
+  readOnly,
 }: {
   item: MealBankItem;
   index: number;
@@ -264,6 +265,8 @@ export function FoodCard({
   onDelete: () => void;
   /** Opens the detail sheet; the whole card becomes clickable (stretched link on the title). */
   onOpen?: () => void;
+  /** Trainee app (QA #108): no public / private mark, the card only picks the food. */
+  readOnly?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.slice(0, 2) || 'he';
@@ -336,13 +339,13 @@ export function FoodCard({
                 primary
               )}
             </h3>
-            <span
+            {!readOnly && <span
               className="mt-0.5 shrink-0 text-muted-foreground"
               title={item.is_public ? t('foodBankPro.public') : t('foodBankPro.private')}
             >
               {item.is_public ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
               <span className="sr-only">{item.is_public ? t('foodBankPro.public') : t('foodBankPro.private')}</span>
-            </span>
+            </span>}
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground" dir="auto">
             {[secondary, item.brand && !primary.includes(item.brand) ? item.brand : null].filter(Boolean).join(' · ') || ' '}

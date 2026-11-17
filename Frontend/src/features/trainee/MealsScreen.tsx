@@ -10,6 +10,10 @@ import { mediaUrl } from '@/lib/mediaUrl';
 import type { MacroType, V3DayViewResponse, V3FoodOption, V3MealLogCreateRequest, V3MealSlotView } from '@/types/meals-v3';
 import { useCatalog, useCompleteMeal, useFoodBank, useMealCompletions, useMealDay, useMealWrite, useSendCoachMessage } from './hooks';
 import AddMealSheet from './AddMealSheet';
+import { FoodCard, PropertyChip } from '@/components/foodbank/FoodParts';
+import { IconOf, MACRO_ICON } from '@/components/foodbank/FoodIcons';
+import { PROPERTY_TAGS, itemTags, type MealBankItem, type PropertyTag } from '@/components/foodbank/foodbankModel';
+import '@/components/foodbank/foodbank.css';
 import { useTranslatedMap } from './useTranslated';
 import { LibText } from './libText';
 import { FoodThumb, HitRow, useDebounced } from './AddMealSheet';
@@ -317,7 +321,7 @@ const MealsScreen: React.FC = () => {
                     {variants.length > 0 && (
                       <div>
                         <p className="tp-label mb-2">{t('trainee.meals.options')}</p>
-                        <div className="tp-scroll-x -mx-4 px-4 sm:-mx-5 sm:px-5">
+                        <div className="tp-scroll-x -mx-4 px-4 py-1 sm:-mx-5 sm:px-5">
                           {[...variants].sort((a, b) => a.variant_index - b.variant_index).map((v, vi) => {
                             const sel = v.id === slot.selected_variant_id;
                             return (
@@ -441,11 +445,11 @@ const MealsScreen: React.FC = () => {
                                 )}
                               </div>
                               {open && (
-                                <div className="tp-scroll-x flex gap-2 px-2 pb-2.5" role="listbox" aria-label={t('trainee.meals.orInstead')}>
+                                <div className="tp-scroll-x flex gap-2 px-2.5 pb-2.5 pt-1" role="listbox" aria-label={t('trainee.meals.orInstead')}>{/* QA #107: room around each card so its outline is never cut by the row edges */}
                                   {alts.map((alt) => {
                                     const am = rowMacros(alt);
                                     return (
-                                      <button key={alt.food.id} type="button" role="option" aria-selected={false} onClick={() => choose(alt)} className="tp-press w-[6.5rem] flex-none overflow-hidden rounded-xl bg-card text-start ring-1 ring-border/60 hover:ring-primary/60">
+                                      <button key={alt.food.id} type="button" role="option" aria-selected={false} onClick={() => choose(alt)} className="tp-press relative w-[6.5rem] flex-none overflow-hidden rounded-xl bg-card text-start ring-1 ring-border/60 hover:z-10 hover:ring-2 hover:ring-primary/70 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                                         <FoodThumb name={alt.food.name} src={alt.food.image_url} needsImage={!alt.food.image_url} className="aspect-[4/3] w-full rounded-none" />
                                         <span className="block p-1.5">
                                           <span className="line-clamp-2 block text-[11px] font-bold leading-tight" dir="auto">{foodName(alt.food)}</span>
@@ -705,6 +709,10 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
   const [amount, setAmount] = useState(100);
   const write = useMealWrite(date);
   const bank = useFoodBank(open && tab === 'bank');
+  // QA #108: the same filters as the coach's food bank: macro, properties (high protein, vegan…), sort
+  const [macro, setMacro] = useState<'all' | MacroType>('all');
+  const [tags, setTags] = useState<PropertyTag[]>([]);
+  const [sort, setSort] = useState<'name' | 'protein' | 'kcalAsc'>('name');
 
   // Every food the coach put in today's plan, this meal first.
   const menu = useMemo(() => {
@@ -725,7 +733,16 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
 
   const source = tab === 'menu' ? menu : bank.data ?? [];
   const needle = q.trim().toLowerCase();
-  const list = source.filter((f) => !needle || f.name.toLowerCase().includes(needle) || (f.name_hebrew || '').toLowerCase().includes(needle));
+  const asItem = (f: V3FoodOption, i: number) => ({ ...f, id: f.id ?? -1 - i, name_hebrew: f.name_hebrew ?? null, macro_type: (f.macro_type || 'protein') as MacroType, calories: f.calories ?? null, protein: f.protein ?? null, carbs: f.carbs ?? null, fat: f.fat ?? null, created_by: 0, created_at: '' }) as unknown as MealBankItem;
+  const searched = source.filter((f) => !needle || f.name.toLowerCase().includes(needle) || (f.name_hebrew || '').toLowerCase().includes(needle) || foodName(f).toLowerCase().includes(needle));
+  const tagsOf = (f: V3FoodOption, i: number) => itemTags(asItem(f, i));
+  const macroCounts = { all: searched.length, protein: 0, carb: 0, fat: 0 } as Record<'all' | MacroType, number>;
+  searched.forEach((f) => { const m = (f.macro_type || 'protein') as MacroType; macroCounts[m] = (macroCounts[m] ?? 0) + 1; });
+  const presentTags = PROPERTY_TAGS.filter((tg) => searched.some((f, i) => tagsOf(f, i).includes(tg)) || tags.includes(tg));
+  const list = searched
+    .filter((f, i) => (macro === 'all' || (f.macro_type || 'protein') === macro) && tags.every((tg) => tagsOf(f, i).includes(tg)))
+    .sort((a, b) => sort === 'protein' ? (b.protein ?? -1) - (a.protein ?? -1) : sort === 'kcalAsc' ? (a.calories ?? Infinity) - (b.calories ?? Infinity) : foodName(a).localeCompare(foodName(b)));
+  const toggleTag = (tg: PropertyTag) => setTags((p) => (p.includes(tg) ? p.filter((x) => x !== tg) : [...p, tg]));
   const portion = chosen?.measurement_type === 'per_portion';
   const qty = portion ? `${amount}` : `${amount}g`;
   const preview = chosen ? foodMacros(chosen, qty) : null;
@@ -816,6 +833,25 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
             <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input className="tp-input ps-10" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('trainee.meals.search')} dir="auto" />
           </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="tp-scroll-x flex flex-1 gap-1.5 py-0.5" role="group" aria-label={t('foodBankPro.all')}>
+              {(['all', 'protein', 'carb', 'fat'] as const).map((m) => (
+                <button key={m} type="button" aria-pressed={macro === m} onClick={() => setMacro(m)} className={cn('tp-chip tp-press min-h-[2.25rem] gap-1.5 px-3 text-[13px]', macro === m && '!bg-primary !text-primary-foreground')}>
+                  {m !== 'all' && <IconOf icon={MACRO_ICON[m]} size={14} />}
+                  {m === 'all' ? t('foodBankPro.all') : t(`foodBankPro.macro.${m}`)}
+                  <span className="tabular-nums text-[11px] opacity-70">{macroCounts[m] ?? 0}</span>
+                </button>
+              ))}
+            </div>
+            <select className="tp-input !h-9 !w-auto !py-0 text-[13px]" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label={t('foodBankPro.sort.label')}>
+              {(['name', 'protein', 'kcalAsc'] as const).map((k) => <option key={k} value={k}>{t(`foodBankPro.sort.${k}`)}</option>)}
+            </select>
+          </div>
+          {presentTags.length > 0 && (
+            <div className="tp-scroll-x flex gap-1.5 py-0.5">
+              {presentTags.map((tg) => <PropertyChip key={tg} tag={tg} size="xs" active={tags.includes(tg)} onClick={() => toggleTag(tg)} />)}
+            </div>
+          )}
           {tab === 'bank' && bank.isLoading ? (
             <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skel key={i} className="h-14" />)}</div>
           ) : tab === 'bank' && bank.isError ? (
@@ -823,23 +859,13 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
           ) : !list.length ? (
             <p className="py-6 text-center text-sm text-muted-foreground">{tab === 'menu' && !menu.length ? t('trainee.meals.menuEmpty') : t('trainee.meals.noResults')}</p>
           ) : (
-            <ul className="space-y-1.5">
-              {list.slice(0, 120).map((f) => {
-                const m = foodMacros(f, f.measurement_type === 'per_portion' ? '1' : '100g');
-                return (
-                  <li key={`${f.id ?? ''}-${f.name}`}>
-                    <button type="button" onClick={() => choose(f)} className="tp-press flex min-h-[3.5rem] w-full items-center gap-3 rounded-2xl bg-foreground/[.04] px-2 py-2 text-start hover:bg-foreground/[.08]">
-                      {f.image_url ? <img src={mediaUrl(f.image_url)} alt="" loading="lazy" className="h-11 w-11 flex-none rounded-xl object-cover" /> : <span className="h-11 w-1.5 flex-none rounded-full" style={{ background: MACRO_COLOR[f.macro_type || 'protein'] }} aria-hidden />}
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium" dir="auto">{foodName(f)}</span>
-                        <span className="block text-xs text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{f.measurement_type === 'per_portion' ? '×1' : '100g'} · {fmtNum(m.calories)} kcal · P{fmtNum(m.protein)} C{fmtNum(m.carbs)} F{fmtNum(m.fat)}</span>
-                      </span>
-                      <Plus className="h-4 w-4 flex-none text-primary" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <div key={`${macro}|${tags.join()}|${sort}`} className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+              {list.slice(0, 120).map((f, i) => (
+                <div key={`${f.id ?? ''}-${f.name}`} className="relative">
+                  <FoodCard item={asItem(f, i)} index={Math.min(i, 8)} canEdit={false} readOnly activeTags={tags} onToggleTag={toggleTag} onEdit={() => undefined} onDelete={() => undefined} onOpen={() => choose(f)} />
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

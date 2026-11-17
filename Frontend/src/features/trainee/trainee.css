@@ -218,7 +218,8 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 }
 .tp-shell .tp-content { min-width: 0; }
 @media (min-width: 1024px) {
-  .tp-shell .tp-content { padding-inline-start: calc(var(--tr-side-w) + .75rem); }
+  .tp-shell .tp-content { padding-inline-start: calc(var(--tr-side-w) + .75rem); transition: padding-inline-start var(--tr-med, .3s) var(--tr-ease, ease); }
+  .tp-shell[data-rail] .tp-content { padding-inline-start: calc(var(--tr-rail-w) + .75rem); } /* QA #106: folded rail */
 }
 .tp-shell .tr-topbar.tp-topbar { height: calc(3.75rem + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
 @media (min-width: 1024px) {

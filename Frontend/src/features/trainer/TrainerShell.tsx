@@ -115,7 +115,7 @@ const TrainerShell: React.FC<{
   return (
     <div className="tr-root tp-root tr-shell ec-portal-shell" dir={dir} data-ec-shell>
       {/* Desktop sidebar */}
-      <aside ref={sideRef} className="tr-side ec-glass"data-collapsed={collapsed} aria-label={t('trainer.shell.sidebar')}>
+      <aside ref={sideRef} className="tr-side ec-glass" data-collapsed={collapsed} aria-label={t('trainer.shell.sidebar')}>
         <button
           type="button"
           onClick={() => go('/trainer-dashboard')}

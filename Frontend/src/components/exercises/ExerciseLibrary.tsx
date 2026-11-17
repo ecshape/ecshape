@@ -10,7 +10,7 @@ import { ExerciseDemo } from './ExerciseDemo';
 import { exerciseLibrary, LIBRARY_MUSCLES, type LibraryExercise, type LibraryFacets, type LibrarySource, type LibrarySources } from '@/lib/exerciseLibrary';
 import { cn } from '@/lib/utils';
 import { PortalSelect } from '@/components/ui/portal-select';
-import { LibText } from '@/features/trainee/libText';
+import { LibSteps, LibText } from '@/features/trainee/libText';
 
 const PAGE = 36;
 const LEVELS = ['beginner', 'intermediate', 'expert'] as const;
@@ -298,14 +298,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
                 </div>
                 <ExerciseMuscleMap primary={detail.primaryMuscles} secondary={detail.secondaryMuscles} label={(m) => label('muscle', m)} />
                 {detail.instructions.length === 0 && <p className="text-sm text-muted-foreground">{t('banks.exercise.noInstructions')}</p>}
-                <ol className="space-y-3" dir="auto">
-                  {detail.instructions.map((s, i) => (
-                    <li key={i} className="flex gap-3 text-sm leading-relaxed">
-                      <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 font-num text-xs text-primary">{i + 1}</span>
-                      <span><LibText text={s} src="auto" /></span>
-                    </li>
-                  ))}
-                </ol>
+                {detail.instructions.length > 0 && <LibSteps steps={detail.instructions} />}
                 {detail.source === 'wger' && (
                   <p className="text-[11px] text-muted-foreground">
                     {t('banks.exercise.wgerCredit')}

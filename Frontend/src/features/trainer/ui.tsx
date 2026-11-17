@@ -25,7 +25,8 @@ const liquidMemory: Record<string, Box> = {};
  * glides from the previous item to the new one.
  */
 export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string | null | undefined, axis: 'x' | 'y', memoryKey?: string) {
-  const [box, setBox] = useState<(Box & { phase: Phase }) | null>(null);
+  // arrived: the blob sits on the active item (not on its way there). Selected text turns white only then (QA #95).
+  const [box, setBox] = useState<(Box & { phase: Phase; arrived?: boolean }) | null>(null);
   const last = useRef<Box | null>(memoryKey ? liquidMemory[memoryKey] ?? null : null);
 
   useLayoutEffect(() => {
@@ -52,7 +53,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
     const timers: number[] = [];
     const same = from && from.x === target.x && from.y === target.y && from.w === target.w && from.h === target.h;
     if (!from || same || prefersReducedMotion()) {
-      setBox({ ...target, phase: from ? 'settle' : 'jump' });
+      setBox({ ...target, phase: from ? 'settle' : 'jump', arrived: true });
     } else {
       const stretchBox = (): Box => {
         if (axis === 'y') {
@@ -70,7 +71,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       timers.push(window.requestAnimationFrame(() => {
         timers.push(window.requestAnimationFrame(() => {
           setBox({ ...stretchBox(), phase: 'stretch' });
-          timers.push(window.setTimeout(() => setBox({ ...target, phase: 'settle' }), 140));
+          timers.push(window.setTimeout(() => setBox({ ...target, phase: 'settle', arrived: true }), 140));
         }));
       }));
     }
@@ -86,7 +87,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       const l = last.current;
       if (l && l.x === b.x && l.y === b.y && l.w === b.w && l.h === b.h) return;
       remember(b);
-      setBox({ ...b, phase: 'jump' });
+      setBox({ ...b, phase: 'jump', arrived: true });
     });
     // QA #52: also watch the items themselves. A count loading in widens a tab without resizing the strip; in RTL that
     // moves the selected tab, and the pill stayed behind (white text on a light background).
@@ -97,7 +98,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
       const l = last.current;
       if (b && !(l && l.x === b.x && l.y === b.y && l.w === b.w && l.h === b.h)) {
         remember(b);
-        setBox({ ...b, phase: 'jump' });
+        setBox({ ...b, phase: 'jump', arrived: true });
       }
     });
     mo.observe(wrap, { childList: true, subtree: true, characterData: true });
@@ -112,7 +113,7 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
   const style = box
     ? ({ ['--x' as string]: `${box.x}px`, ['--y' as string]: `${box.y}px`, ['--w' as string]: `${box.w}px`, ['--h' as string]: `${box.h}px` } as React.CSSProperties)
     : { opacity: 0 };
-  return { style, phase: box?.phase, visible: !!box };
+  return { style, phase: box?.phase, visible: !!box, arrived: !!box?.arrived };
 }
 
 /* ------------------------------------------------------------------ small pieces */
@@ -162,7 +163,7 @@ export function Seg<T extends string>({
   const ref = useRef<HTMLDivElement>(null);
   const blob = useLiquid(ref, value, 'x', memoryKey);
   return (
-    <div ref={ref} className={cn('tr-seg', className)} role="group" aria-label={label}>
+    <div ref={ref} className={cn('tr-seg', className)} role="group" aria-label={label} data-arrived={blob.arrived}>
       <span className="tr-hblob" data-phase={blob.phase} style={blob.style} aria-hidden />
       {items.map((it) => (
         <button
@@ -209,7 +210,7 @@ export function TabStrip<T extends string>({
     el?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }, [value]);
   return (
-    <div ref={ref} className="tr-seg w-full sm:w-auto" role="tablist" aria-label={label} onKeyDown={onKey}>
+    <div ref={ref} className="tr-seg w-full sm:w-auto" role="tablist" aria-label={label} onKeyDown={onKey} data-arrived={blob.arrived}>
       <span className="tr-hblob" data-phase={blob.phase} style={blob.style} aria-hidden />
       {items.map((it) => (
         <button

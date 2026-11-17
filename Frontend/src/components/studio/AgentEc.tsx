@@ -17,6 +17,8 @@ import {
 import { applySiteText } from '@/lib/siteContentOps';
 import { toSiteLang } from '@/site/content';
 import { cn, isRtlLang } from '@/lib/utils';
+import '@/i18n/ticketsQa3';
+import { localizeAiError } from '@/lib/aiErrors';
 
 type Fix = { label: string; href: string };
 type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; engine?: string; error?: boolean; fix?: Fix | null };
@@ -406,7 +408,7 @@ export function AgentEc() {
       const actions = res.ok ? res.actions || [] : [];
       const turn: Turn = res.ok
         ? { role: 'assistant', text: res.reply || '', actions, opStates: actions.map((): OpState => 'pending'), engine: res.engine }
-        : { role: 'assistant', text: res.error || t('agent.noAnswer'), error: true, fix: res.fix || null };
+        : { role: 'assistant', text: res.error ? (/answered with an error|api key|credit|quota|rate limit|overloaded/i.test(res.error) ? localizeAiError(res.error, t) : res.error) : t('agent.noAnswer'), error: true, fix: res.fix || null }; // QA #96
       setTurns([...next, turn]);
       if (res.ok && actions.length) {
         const turnIndex = next.length;

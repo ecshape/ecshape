@@ -130,7 +130,7 @@ const TrainerShell: React.FC<{
         </button>
 
         <div className="-me-1 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pe-1">
-          <nav ref={navRef} className="tr-nav" aria-label={t('trainer.shell.navigation')}>
+          <nav ref={navRef} className="tr-nav" data-arrived={sideBlob.arrived} aria-label={t('trainer.shell.navigation')}>
             <span className="tr-blob" data-phase={sideBlob.phase} style={sideBlob.style} aria-hidden />
             {groups.map((g) => (
               <div key={g.title} className="tr-nav-group">
@@ -206,7 +206,7 @@ const TrainerShell: React.FC<{
 
       {/* Phone bottom bar */}
       <nav className="tr-tabbar" aria-label={t('trainer.shell.navigation')}>
-        <div ref={barRef} className="ec-glass relative flex items-stretch gap-0.5 rounded-[1.6rem] p-1.5">
+        <div ref={barRef} data-arrived={barBlob.arrived} className="ec-glass relative flex items-stretch gap-0.5 rounded-[1.6rem] p-1.5">
           <span className="tr-hblob" data-phase={barBlob.phase} style={barBlob.style} aria-hidden />
           {phoneItems.map((item) => {
             const on = currentPage === item.id;

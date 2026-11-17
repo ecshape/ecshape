@@ -11,6 +11,9 @@ import { AvatarEditor } from '@/components/avatar/AvatarEditor';
 import { studioApi, type AiKey, type AiProvider } from '@/lib/studioApi';
 import { spotlight } from '@/lib/agentOps';
 import { cn } from '@/lib/utils';
+import '@/i18n/ticketsQa3';
+import { localizeAiError } from '@/lib/aiErrors';
+import { clearOpenRouterReturn, finishOpenRouterConnect, openRouterReturnCode, startOpenRouterConnect } from '@/lib/openrouterConnect';
 
 type Draft = { id?: number; provider: string; apiKey: string; model: string; baseUrl: string };
 
@@ -73,6 +76,20 @@ const SettingsPage = () => {
     refresh();
     // "Add a model" in Agent EC links here
     if (window.location.hash === '#ai-keys') window.setTimeout(() => spotlight('#ai-keys'), 350);
+    // QA #98: back from OpenRouter's "Authorize" page with a one-time code: trade it for a key and use it
+    const code = openRouterReturnCode();
+    if (code) {
+      clearOpenRouterReturn();
+      window.setTimeout(() => spotlight('#ai-keys'), 350);
+      run('or-connect', async () => {
+        let key: string;
+        try { key = await finishOpenRouterConnect(code); } catch { throw new Error(t('qa4.orConnect.failed')); }
+        const k = await studioApi.addAiKey({ api_key: key, provider: 'openrouter', model: 'openrouter/auto' });
+        await studioApi.preferAiKey(k.id);
+        return t('qa4.orConnect.done');
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const run = async (id: string, fn: () => Promise<string>) => {
@@ -83,7 +100,7 @@ const SettingsPage = () => {
       await refresh();
       return true;
     } catch (err) {
-      setMessage({ ok: false, text: (err as Error).message || t('studio.settings.failed') });
+      setMessage({ ok: false, text: localizeAiError((err as Error).message, t) }); // QA #96: in the app language
       return false;
     } finally {
       setBusy(null);
@@ -139,6 +156,21 @@ const SettingsPage = () => {
             )}
           </div>
 
+          {/* QA #98: one-click connection, no key to find or paste */}
+          {!keys.some((k) => k.provider === 'openrouter') && (
+            <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-primary/30 bg-primary/[.06] p-4">
+              <ProviderMark id="openrouter" product="OpenRouter" />
+              <div className="min-w-0 flex-1 basis-60">
+                <p className="font-bold">{t('qa4.orConnect.title')}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{t('qa4.orConnect.body')}</p>
+              </div>
+              <Button onClick={() => { setBusy('or-connect'); startOpenRouterConnect().catch(() => { setBusy(null); setMessage({ ok: false, text: t('qa4.orConnect.failed') }); }); }} disabled={busy !== null}>
+                {busy === 'or-connect' ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+                {busy === 'or-connect' ? t('qa4.orConnect.working') : t('qa4.orConnect.button')}
+              </Button>
+            </div>
+          )}
+
           {/* Engine line */}
           <div className={cn('ec-engine-line mt-6 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm', engine?.configured ? 'is-on' : 'is-off')}>
             <span className="ec-engine-dot" aria-hidden />
@@ -179,7 +211,7 @@ const SettingsPage = () => {
                       onClick={() =>
                         run(`test-${k.id}`, async () => {
                           const r = await studioApi.testAiKey(k.id);
-                          if (!r.ok) throw new Error(r.error || t('studio.settings.failed'));
+                          if (!r.ok) throw new Error(r.error || '');
                           return t('studio.settings.works', { engine: r.engine });
                         })
                       }

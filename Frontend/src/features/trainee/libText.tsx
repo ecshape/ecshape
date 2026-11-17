@@ -76,6 +76,11 @@ export function useLibTextState(text: string | null | undefined, opts: { src?: S
 
 /** Many texts at once (instruction steps…), same batching and cache. */
 export function useLibTexts(texts: string[], opts: { src?: Src; enabled?: boolean } = {}): string[] {
+  return useLibTextsState(texts, opts).texts;
+}
+
+/** Same, plus `pending` (translation on its way) and `translated` (every text now in the app language). */
+export function useLibTextsState(texts: string[], opts: { src?: Src; enabled?: boolean } = {}): { texts: string[]; pending: boolean; translated: boolean } {
   const { i18n } = useTranslation();
   const lang = (i18n.language || 'en').slice(0, 2);
   const src = opts.src ?? 'auto';
@@ -89,10 +94,41 @@ export function useLibTexts(texts: string[], opts: { src?: Src; enabled?: boolea
     gcTime: 60 * 60_000,
     retry: false,
   });
-  if (!on || !q.data) return texts;
+  if (!on) return { texts, pending: false, translated: true };
+  if (!q.data) return { texts, pending: q.isLoading, translated: false };
   const map = new Map(todo.map((t, i) => [t, q.data![i]]));
-  return texts.map((t) => map.get(t) ?? t);
+  return { texts: texts.map((t) => map.get(t) ?? t), pending: false, translated: todo.every((t) => map.get(t) !== t) };
 }
+
+/**
+ * Numbered instruction steps in the app language (QA #93): placeholder lines while the translation is on its way
+ * (no flash of the original), and the list reads in the app's direction, numbers on the start side, text aligned to
+ * the start. Only a step left untranslated (translator down) picks its own direction.
+ */
+export const LibSteps: React.FC<{ steps: string[]; src?: Src; className?: string }> = ({ steps, src = 'auto', className }) => {
+  const { i18n } = useTranslation();
+  const dir = i18n.dir();
+  const { texts, pending } = useLibTextsState(steps, { src });
+  const lang = (i18n.language || 'en').slice(0, 2);
+  return (
+    <ol className={className ?? 'space-y-3'} dir={dir} aria-busy={pending || undefined}>
+      {steps.map((orig, i) => {
+        const shown = texts[i];
+        const inAppLang = !needsTranslation(orig, lang) || shown !== orig;
+        return (
+          <li key={i} className="flex gap-3 text-sm leading-relaxed">
+            <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 font-num text-xs text-primary">{i + 1}</span>
+            {pending ? (
+              <span className="flex-1 space-y-1.5 pt-1"><span className="block h-3 w-full animate-pulse rounded-full bg-foreground/10" /><span className="block h-3 w-2/3 animate-pulse rounded-full bg-foreground/10" /></span>
+            ) : (
+              <span className="min-w-0 flex-1" style={{ textAlign: 'start' }} dir={inAppLang ? undefined : 'auto'}>{shown}</span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+};
 
 /**
  * Inline translated text. Translates only once it scrolls into view (long lists such as the 800+ exercise bank

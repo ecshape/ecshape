@@ -8,7 +8,7 @@ import { ExerciseDemo } from '@/components/exercises/ExerciseDemo';
 import { LevelBars } from '@/components/exercises/ExerciseLibrary';
 import { exerciseFrames } from '@/lib/exerciseLibrary';
 import { ExerciseMuscleMap } from '@/components/exercises/ExerciseMuscleMap';
-import { LibText } from '@/features/trainee/libText';
+import { LibSteps, LibText } from '@/features/trainee/libText';
 
 export interface BankExercise {
   id: number;
@@ -95,21 +95,14 @@ export const BankExerciseSheet: React.FC<{
                       {info.meta.map((m) => <span key={m} className="rounded-full bg-muted px-2.5 py-1">{label('meta', m)}</span>)}
                     </div>
                   </div>
-                  {info.text && <p className="text-sm leading-relaxed text-muted-foreground" ><LibText text={info.text} lazy={false} /></p>}
+                  {info.text && <p className="text-sm leading-relaxed text-muted-foreground" style={{ textAlign: 'start' }}><LibText text={info.text} lazy={false} /></p>}
                   <ExerciseMuscleMap primary={[e.muscle_group]} secondary={info.secondary} label={(m) => (m === e.muscle_group ? muscleLabel(m) : label('muscle', m))} />
                   <section>
                     <h3 className="tp-label mb-2.5">{t('tt.bank.instructions')}</h3>
                     {steps.length === 0 ? (
                       <p className="text-sm text-muted-foreground">{t('banks.exercise.noInstructions')}</p>
                     ) : (
-                      <ol className="space-y-3" dir="auto">
-                        {steps.map((s, i) => (
-                          <li key={i} className="flex gap-3 text-sm leading-relaxed">
-                            <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary">{i + 1}</span>
-                            <span><LibText text={s} /></span>
-                          </li>
-                        ))}
-                      </ol>
+                      <LibSteps steps={steps} />
                     )}
                   </section>
                   {e.video_url && (

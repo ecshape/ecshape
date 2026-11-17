@@ -782,7 +782,7 @@ export const InstructionSteps: React.FC<{ steps: string[] }> = ({ steps: origina
         {steps.map((s, k) => (
           <li key={k} className="flex gap-3 text-sm leading-relaxed">
             <span className="tp-num grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/15 text-xs text-primary">{k + 1}</span>
-            <span dir="auto" className="min-w-0 flex-1">{s}</span>
+            <span dir={english && lang !== 'en' ? 'auto' : undefined} className="min-w-0 flex-1" style={{ textAlign: 'start' }}>{s}</span>
           </li>
         ))}
       </ol>

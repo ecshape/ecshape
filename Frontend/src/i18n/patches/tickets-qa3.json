@@ -85,6 +85,28 @@
         "menu": "תפריט תזונה",
         "nav": "מתאמנים"
       }
+    },
+    "qa4": {
+      "aiErr": {
+        "generic": "שירות ה-AI לא ענה. נסו שוב בעוד רגע.",
+        "credit": "אין יתרה בחשבון אצל ספק ה-AI. הוסיפו קרדיט בחשבון שלכם אצל הספק (למשל Plans & Billing) ונסו שוב.",
+        "badKey": "המפתח לא תקין או בוטל. צרו מפתח חדש אצל הספק והדביקו אותו כאן.",
+        "forbidden": "למפתח הזה אין הרשאה למודל שנבחר. בחרו מודל אחר או בדקו את ההרשאות אצל הספק.",
+        "rateLimit": "יותר מדי בקשות בזמן קצר. חכו דקה ונסו שוב.",
+        "overloaded": "שירות ה-AI עמוס כרגע. נסו שוב בעוד כמה דקות.",
+        "model": "המודל שנבחר לא קיים או לא זמין בחשבון הזה. בחרו מודל אחר.",
+        "timeout": "שירות ה-AI לא ענה בזמן. נסו שוב.",
+        "withDetail": "שירות ה-AI החזיר שגיאה: {{detail}}"
+      },
+      "orConnect": {
+        "title": "חיבור בלחיצה אחת",
+        "body": "מתחברים ל-OpenRouter עם Google, GitHub או אימייל, מאשרים, וחוזרים לכאן מחוברים. חשבון אחד נותן גישה ל-Claude, ChatGPT, Gemini ועוד, בלי להעתיק מפתח.",
+        "button": "חיבור עם OpenRouter",
+        "working": "מחברים את החשבון…",
+        "done": "החשבון חובר. Agent EC משתמש עכשיו ב-OpenRouter.",
+        "failed": "החיבור לא הושלם. נסו שוב.",
+        "orPaste": "או הדביקו מפתח של ספק מסוים"
+      }
     }
   },
   "en": {
@@ -173,6 +195,28 @@
         "menu": "Meal plan",
         "nav": "Clients"
       }
+    },
+    "qa4": {
+      "aiErr": {
+        "generic": "The AI service did not answer. Try again in a moment.",
+        "credit": "Your AI provider account has no credit left. Add credit on your provider account (e.g. Plans & Billing) and try again.",
+        "badKey": "This key is invalid or was revoked. Create a new key at the provider and paste it here.",
+        "forbidden": "This key has no access to the chosen model. Pick another model or check the key's permissions at the provider.",
+        "rateLimit": "Too many requests in a short time. Wait a minute and try again.",
+        "overloaded": "The AI service is busy right now. Try again in a few minutes.",
+        "model": "The chosen model does not exist or is not available on this account. Pick another model.",
+        "timeout": "The AI service took too long to answer. Try again.",
+        "withDetail": "The AI service returned an error: {{detail}}"
+      },
+      "orConnect": {
+        "title": "Connect in one click",
+        "body": "Sign in to OpenRouter with Google, GitHub or email, approve, and you come back connected. One account reaches Claude, ChatGPT, Gemini and more, with no key to copy.",
+        "button": "Connect with OpenRouter",
+        "working": "Connecting your account…",
+        "done": "Account connected. Agent EC now uses OpenRouter.",
+        "failed": "The connection did not finish. Try again.",
+        "orPaste": "Or paste a key from a specific provider"
+      }
     }
   },
   "fr": {
@@ -260,6 +304,28 @@
         "more": "Plus d’actions",
         "menu": "Plan nutritionnel",
         "nav": "Élèves"
+      }
+    },
+    "qa4": {
+      "aiErr": {
+        "generic": "Le service d'IA n'a pas répondu. Réessaie dans un instant.",
+        "credit": "Ton compte chez le fournisseur d'IA n'a plus de crédit. Ajoute du crédit sur ton compte (par ex. Plans & Billing) puis réessaie.",
+        "badKey": "Cette clé est invalide ou a été révoquée. Crée une nouvelle clé chez le fournisseur et colle-la ici.",
+        "forbidden": "Cette clé n'a pas accès au modèle choisi. Choisis un autre modèle ou vérifie les autorisations chez le fournisseur.",
+        "rateLimit": "Trop de requêtes en peu de temps. Attends une minute et réessaie.",
+        "overloaded": "Le service d'IA est surchargé. Réessaie dans quelques minutes.",
+        "model": "Le modèle choisi n'existe pas ou n'est pas disponible sur ce compte. Choisis-en un autre.",
+        "timeout": "Le service d'IA a mis trop de temps à répondre. Réessaie.",
+        "withDetail": "Le service d'IA a renvoyé une erreur : {{detail}}"
+      },
+      "orConnect": {
+        "title": "Connexion en un clic",
+        "body": "Connecte-toi à OpenRouter avec Google, GitHub ou un e-mail, accepte, et tu reviens ici connecté. Un seul compte donne accès à Claude, ChatGPT, Gemini et plus, sans clé à copier.",
+        "button": "Connexion avec OpenRouter",
+        "working": "Connexion du compte…",
+        "done": "Compte connecté. L'Agent EC utilise maintenant OpenRouter.",
+        "failed": "La connexion n'a pas abouti. Réessaie.",
+        "orPaste": "Ou colle une clé d'un fournisseur précis"
       }
     }
   }

@@ -50,7 +50,6 @@
 .tr-nav-link:not([aria-current="page"]):hover { background: hsl(var(--foreground) / .05); }
 .tr-nav-link:active { transform: scale(.98); transition-duration: .06s; }
 .tr-nav-link:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-.tr-nav-link[aria-current="page"] { color: #fff; }
 .tr-nav-ico { flex: none; width: 1.2rem; height: 1.2rem; }
 .tr-nav-badge {
   margin-inline-start: auto; min-width: 1.35rem; height: 1.35rem; padding: 0 .35rem; border-radius: 9999px;
@@ -125,7 +124,6 @@
 }
 .tr-tab:active { transform: scale(.97); transition-duration: .06s; }
 .tr-tab:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
-.tr-tab[aria-current="page"] { color: #fff; }
 
 /* Phone "more" sheet */
 .tr-more { position: fixed; inset: 0; z-index: 60; }
@@ -224,7 +222,6 @@
 .tr-seg::-webkit-scrollbar { display: none; }
 .tr-seg-btn { position: relative; z-index: 1; flex: none; display: inline-flex; align-items: center; gap: .4rem; min-height: 2.35rem; padding-inline: .95rem; border-radius: 9999px; font-size: .82rem; font-weight: 700; color: hsl(var(--muted-foreground)); white-space: nowrap; transition: color var(--tr-fast); }
 .tr-seg-btn:hover { color: hsl(var(--foreground)); }
-.tr-seg-btn[aria-pressed="true"], .tr-seg-btn[aria-selected="true"] { color: #fff; }
 .tr-seg-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
 .tr-seg-count { min-width: 1.25rem; padding: 0 .3rem; border-radius: 9999px; font-size: .66rem; line-height: 1.25rem; text-align: center; background: hsl(var(--foreground) / .09); }
 .tr-seg-btn[aria-pressed="true"] .tr-seg-count, .tr-seg-btn[aria-selected="true"] .tr-seg-count { background: rgba(255, 255, 255, .24); }
@@ -342,11 +339,11 @@
 .tr-handle--danger:hover:not(:disabled) { background: hsl(var(--tr-bad) / .12); color: hsl(var(--tr-bad)); }
 
 /* Exercise picker */
-.tr-picker { position: fixed; inset: 0; z-index: 70; display: grid; place-items: end center; }
+.tr-picker { position: fixed; inset: 0; z-index: 70; display: grid; place-items: end center; grid-template-columns: minmax(0, 1fr); } /* QA #94: the one column never grows past the screen */
 @media (min-width: 768px) { .tr-picker { place-items: center; padding: 1.5rem; } }
 .tr-picker-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, .6); backdrop-filter: blur(6px); animation: tpFade .18s ease both; }
 .tr-picker-panel {
-  position: relative; display: flex; flex-direction: column; width: 100%; max-height: 92dvh; border-radius: 1.75rem 1.75rem 0 0; background: hsl(var(--card));
+  position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0; max-height: 92dvh; border-radius: 1.75rem 1.75rem 0 0; background: hsl(var(--card));
   box-shadow: inset 0 1px 0 hsl(var(--foreground) / .08), 0 -30px 60px -30px rgba(0, 0, 0, .7);
   animation: tpSheetUp .26s var(--tr-ease) both; padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -587,14 +584,11 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
   .tr-actionbar > div { flex: none; }
 }
 
-/* QA #89: selected text is white and sits on the sliding pill. If the pill is ever left behind (layout shift, scroll, RTL,
-   late fonts) the text vanished. Each selected control now also paints its own pill behind the text, fading in after the
-   glide has had time to arrive: when the sliding pill is right nothing changes, when it is wrong the text still reads. */
-@keyframes trPillFallback { from { opacity: 0; } to { opacity: 1; } }
-.tr-seg-btn[aria-pressed="true"]::before, .tr-seg-btn[aria-selected="true"]::before,
-.tr-tab[aria-current="page"]::before, .tr-nav-link[aria-current="page"]::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
-  background: var(--tr-grad); animation: trPillFallback .2s linear .5s backwards;
-}
-@media (prefers-reduced-motion: reduce) { .tr-seg-btn::before, .tr-tab::before, .tr-nav-link::before { animation-delay: 0s !important; } }
-.tr-nav-link { isolation: isolate; }
+/* QA #89 / #95 / #97: selected text is white only once the sliding pill sits under it ([data-arrived], set by useLiquid).
+   While the pill travels, or if it is ever left behind, the selected label stays in the normal text colour, so it can
+   never be white on a light background. No second pill is painted, so the shape never changes after it settles. */
+.tr-seg-btn[aria-pressed="true"], .tr-seg-btn[aria-selected="true"],
+.tr-tab[aria-current="page"], .tr-nav-link[aria-current="page"] { color: hsl(var(--foreground)); }
+[data-arrived="true"] > .tr-seg-btn[aria-pressed="true"], [data-arrived="true"] > .tr-seg-btn[aria-selected="true"],
+[data-arrived="true"] > .tr-tab[aria-current="page"], [data-arrived="true"] .tr-nav-link[aria-current="page"] { color: #fff; }
+

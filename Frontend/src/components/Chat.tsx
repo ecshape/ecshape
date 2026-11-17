@@ -9,6 +9,8 @@ import { hasNotificationPermission, requestNotificationPermission, showNotificat
 import './chat/chat.css';
 import { chatApi, toLinkedEntry, type ChatMessage, type Conversation, type LinkedEntry, type ProgressEntry } from './chat/api';
 import { MenuSendButton } from './chat/MenuCard';
+import { toast } from 'sonner';
+import { ExerciseSharePicker, FoodSharePicker, uploadChatMedia } from './chat/Attachments';
 import { useChatSocket, useFillHeight, useMediaQuery, usePageVisible, useVisualViewport, type SocketEvent } from './chat/hooks';
 import ConversationList from './chat/ConversationList';
 import MessageList from './chat/MessageList';
@@ -311,11 +313,14 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
         client_id: isTrainer ? opt.client_id : (user?.id as number),
         message: opt.message,
         progress_entry_id: opt.progress_entry_id,
+        card: opt.card ? Object.fromEntries(Object.entries(opt.card).filter(([k]) => k !== 'localUrl')) : null,
       });
       if (keyRef.current !== key) return;
       setMessages((prev) => {
         const without = prev.filter((m) => m.localId !== opt.localId);
-        return mergeMessages(without, [{ ...saved, linked_entry: saved.linked_entry ?? opt.linked_entry }]);
+        // keep the local photo / recording so it does not blink while the protected file loads
+        const card = saved.card && opt.card && (opt.card as { localUrl?: string }).localUrl ? { ...saved.card, localUrl: (opt.card as { localUrl?: string }).localUrl } : saved.card;
+        return mergeMessages(without, [{ ...saved, card, linked_entry: saved.linked_entry ?? opt.linked_entry }]);
       });
     } catch {
       if (keyRef.current !== key) return;
@@ -346,6 +351,44 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
     setAttachment(null);
     deliver(opt, convKey);
   }, [activeId, user, draft, attachment, isTrainer, deliver, convKey, setDraft]);
+
+  // ---------------------------------------------------------- attachments: photos, voice, exercises, foods (QA #111)
+  const [sharePicker, setSharePicker] = useState<null | 'exercise' | 'food'>(null);
+  const sendCard = useCallback((card: Record<string, unknown>) => {
+    if (!activeId || !user) return;
+    localSeq.current += 1;
+    const opt: ChatMessage = {
+      id: -localSeq.current,
+      localId: `local-${Date.now()}-${localSeq.current}`,
+      trainer_id: isTrainer ? user.id : activeId,
+      client_id: isTrainer ? activeId : user.id,
+      sender_id: user.id,
+      message: '',
+      progress_entry_id: null,
+      card,
+      created_at: new Date().toISOString(),
+      read_at: null,
+      status: 'sending',
+    };
+    setMessages((prev) => [...prev, opt]);
+    deliver(opt, convKey);
+  }, [activeId, user, isTrainer, deliver, convKey]);
+  const sendMedia = useCallback(async (blob: Blob, kind: 'photo' | 'voice', seconds = 0, name = 'file') => {
+    if (blob.size > 15 * 1024 * 1024) { toast.error(t('chatAtt.tooBig')); return; }
+    const localUrl = URL.createObjectURL(blob);
+    try {
+      const up = await uploadChatMedia(blob, isTrainer ? activeId : null, name);
+      sendCard(kind === 'voice' ? { kind, file: up.file, seconds, localUrl } : { kind, file: up.file, localUrl });
+    } catch {
+      toast.error(t('chatAtt.uploadFailed'));
+    }
+  }, [isTrainer, activeId, sendCard, t]);
+  const composerAttachments = activeId ? {
+    onPhoto: (f: File) => void sendMedia(f, 'photo', 0, f.name || 'photo.jpg'),
+    onVoice: (b: Blob, sec: number) => void sendMedia(b, 'voice', sec, `voice.${b.type.includes('mp4') ? 'm4a' : b.type.includes('ogg') ? 'ogg' : 'webm'}`),
+    onExercise: () => setSharePicker('exercise'),
+    onFood: () => setSharePicker('food'),
+  } : undefined;
 
   const retry = useCallback((m: ChatMessage) => {
     setMessages((prev) => prev.map((x) => (x.localId === m.localId ? { ...x, status: 'sending', created_at: new Date().toISOString() } : x)));
@@ -504,6 +547,7 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
         attachment={attachment}
         onRemoveAttachment={() => setAttachment(null)}
         onAttachClick={() => setPickerOpen(true)}
+        attachments={composerAttachments}
         extraAction={isTrainer && activeId ? (
           <MenuSendButton clientId={activeId} clientName={otherName} onSent={(m) => setMessages((prev) => mergeMessages(prev, [m]))} />
         ) : undefined}
@@ -514,6 +558,8 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
 
   const sheets = (
     <>
+      <ExerciseSharePicker open={sharePicker === 'exercise'} onOpenChange={(o) => !o && setSharePicker(null)} onPick={(exercise) => sendCard({ kind: 'exercise_share', exercise })} />
+      <FoodSharePicker open={sharePicker === 'food'} onOpenChange={(o) => !o && setSharePicker(null)} onPick={(food) => sendCard({ kind: 'food_share', food })} />
       <ChatSheet
         open={pickerOpen}
         onOpenChange={setPickerOpen}

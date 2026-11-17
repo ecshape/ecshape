@@ -4,7 +4,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, status, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -250,6 +251,103 @@ async def get_updates(
     return ChatUpdatesResponse(messages=_serialize(rows, db), read_through_id=read_through)
 
 
+# ---------------------------------------------------------------- attachments (QA #111)
+# Photos and voice messages are stored per conversation ("<trainer>_<client>_<uuid>.<ext>") and served only to
+# the coach and the trainee of that conversation. Exercises and foods travel as small JSON cards.
+
+CHAT_MEDIA_MAX = 15 * 1024 * 1024
+_AUDIO_EXT = {"audio/webm": ".webm", "video/webm": ".webm", "audio/ogg": ".ogg", "audio/mp4": ".m4a", "audio/x-m4a": ".m4a",
+              "video/mp4": ".m4a", "audio/mpeg": ".mp3", "audio/aac": ".aac", "audio/wav": ".wav", "audio/x-wav": ".wav"}
+_SHARE_KINDS = {"exercise_share", "food_share"}
+
+
+def _chat_media_dir() -> str:
+    from app.services.file_service import FileService
+    path = os.path.join(FileService().base_upload_path, "chat_media")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _media_owner(filename: str) -> Optional[Tuple[int, int]]:
+    import re
+    m = re.fullmatch(r"(\d+)_(\d+)_[0-9a-f]{32}\.(jpg|webm|ogg|m4a|mp3|aac|wav)", filename or "")
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def _clean_attachment_card(card: Optional[Dict[str, Any]], trainer_id: int, client_id: int) -> Optional[Dict[str, Any]]:
+    if not card:
+        return None
+    kind = card.get("kind")
+    if kind in ("photo", "voice"):
+        f = str(card.get("file") or "")
+        if _media_owner(f) != (trainer_id, client_id) or not os.path.exists(os.path.join(_chat_media_dir(), f)):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Attachment not found")
+        out: Dict[str, Any] = {"kind": kind, "file": f}
+        if kind == "voice":
+            try:
+                out["seconds"] = max(0, min(600, int(card.get("seconds") or 0)))
+            except (TypeError, ValueError):
+                out["seconds"] = 0
+        return out
+    if kind in _SHARE_KINDS:
+        if len(json.dumps(card, ensure_ascii=False)) > 4000:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Card too large")
+        return card
+    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Unknown attachment")
+
+
+@router.post("/media", status_code=status.HTTP_201_CREATED)
+async def upload_chat_media(
+    file: UploadFile = File(...),
+    client_id: Optional[int] = Form(None),
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Upload a photo or a voice message for a chat; returns the file name to put in the message card."""
+    import io
+    import uuid
+    if current_user.role == UserRole.CLIENT:
+        client_id = current_user.id
+    trainer_id, client_id = _resolve_pair(current_user, db, client_id)
+    raw = await file.read(CHAT_MEDIA_MAX + 1)
+    if len(raw) > CHAT_MEDIA_MAX:
+        raise HTTPException(status_code=413, detail="File too large (15 MB max)")
+    ctype = (file.content_type or "").split(";")[0].strip().lower()
+    stem = f"{trainer_id}_{client_id}_{uuid.uuid4().hex}"
+    if ctype.startswith("image/"):
+        from PIL import Image, ImageOps
+        try:
+            img = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
+        except Exception:
+            raise HTTPException(status_code=400, detail="Not a valid image")
+        img.thumbnail((1600, 1600))
+        name = stem + ".jpg"
+        img.save(os.path.join(_chat_media_dir(), name), "JPEG", quality=84)  # re-encoded: no camera metadata kept
+        return {"file": name, "kind": "photo"}
+    ext = _AUDIO_EXT.get(ctype)
+    if not ext:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    name = stem + ext
+    with open(os.path.join(_chat_media_dir(), name), "wb") as fh:
+        fh.write(raw)
+    return {"file": name, "kind": "voice"}
+
+
+@router.get("/media/{filename}")
+async def get_chat_media(filename: str, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    owner = _media_owner(filename)
+    if not owner:
+        raise HTTPException(status_code=404, detail="Not found")
+    trainer_id, client_id = owner
+    allowed = current_user.id in (trainer_id, client_id) or current_user.role == UserRole.ADMIN
+    if not allowed:
+        raise HTTPException(status_code=404, detail="Not found")
+    path = os.path.join(_chat_media_dir(), filename)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(path, headers={"Cache-Control": "private, max-age=86400"})
+
+
 @router.post("/messages", response_model=ChatMessageResponse, status_code=status.HTTP_201_CREATED)
 async def send_message(
     message_data: ChatMessageCreate,
@@ -273,7 +371,8 @@ async def send_message(
         ).first()
         if not progress_entry:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Progress entry not found or doesn't belong to this client")
-    if not text and not progress_entry_id:
+    card = _clean_attachment_card(message_data.card, trainer_id, client_id)
+    if not text and not progress_entry_id and not card:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message is empty")
 
     chat_message = ChatMessage(
@@ -282,6 +381,7 @@ async def send_message(
         sender_id=current_user.id,
         message=text,
         progress_entry_id=progress_entry_id,
+        payload=json.dumps(card, ensure_ascii=False) if card else None,
         created_at=datetime.now(timezone.utc)
     )
     db.add(chat_message)

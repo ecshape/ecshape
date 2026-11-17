@@ -7,6 +7,7 @@ import { dayKey, formatDayLabel, formatTime } from './format';
 import { LinkedEntryCard } from './LinkedEntry';
 import { ExerciseCardView } from './ExerciseCard';
 import { MenuCardView } from './MenuCard';
+import { AttachmentCardView, isAttachmentCard } from './Attachments';
 import { EmptyState } from './parts';
 
 const GROUP_GAP_MS = 5 * 60 * 1000;
@@ -216,7 +217,7 @@ const MessageList: React.FC<Props> = ({
                         )}
                       >
                         {hasEntry && <LinkedEntryCard entry={m.linked_entry} own={own} />}
-                        {hasCard && (String((m.card as { kind?: string }).kind).startsWith('menu_') ? <MenuCardView m={m} own={own} /> : <ExerciseCardView m={m} own={own} />)}
+                        {hasCard && (isAttachmentCard(m.card) ? <AttachmentCardView m={m} own={own} /> : String((m.card as { kind?: string }).kind).startsWith('menu_') ? <MenuCardView m={m} own={own} /> : <ExerciseCardView m={m} own={own} />)}
                         {text && (
                           <p dir="auto" className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere]', (hasEntry || hasCard) && 'px-2 pt-1')}>
                             <Linkified text={text} own={own} />

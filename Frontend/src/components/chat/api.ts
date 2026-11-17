@@ -101,7 +101,7 @@ export const chatApi = {
   updates: (clientId: number | null, afterId: number, signal?: AbortSignal) =>
     request<{ messages: ChatMessage[]; read_through_id: number | null }>(
       `/v2/chat/updates${q({ client_id: clientId, after_id: afterId })}`, {}, signal),
-  send: (body: { client_id: number; message: string; progress_entry_id?: number | null }) =>
+  send: (body: { client_id: number; message: string; progress_entry_id?: number | null; card?: Record<string, unknown> | null }) =>
     request<ChatMessage>('/v2/chat/messages', { method: 'POST', body: JSON.stringify(body) }),
   markRead: (clientId: number | null) =>
     request<{ marked: number; read_through_id: number | null }>(`/v2/chat/read${q({ client_id: clientId })}`, { method: 'POST' }).then((r) => {

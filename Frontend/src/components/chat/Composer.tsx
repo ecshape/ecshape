@@ -1,6 +1,7 @@
 import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowUp, Camera, Paperclip, TrendingUp, X } from 'lucide-react';
+import { ArrowUp, Camera, Mic, Paperclip, TrendingUp, X } from 'lucide-react';
+import { AttachMenu, VoiceRecorder } from './Attachments';
 import { cn } from '@/lib/utils';
 import type { LinkedEntry } from './api';
 import { formatEntryDate, formatWeight } from './format';
@@ -21,9 +22,12 @@ interface Props {
   extraAction?: React.ReactNode;
   disabled?: boolean;
   enterToSend: boolean;
+  /** QA #111: photos, voice messages, exercises and foods (the "+" menu). Without it the old paperclip stays. */
+  attachments?: { onPhoto: (f: File) => void; onVoice: (blob: Blob, seconds: number) => void; onExercise: () => void; onFood: () => void };
 }
 
-const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, attachment, onRemoveAttachment, onAttachClick, extraAction, disabled, enterToSend }, ref) => {
+const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, attachment, onRemoveAttachment, onAttachClick, extraAction, disabled, enterToSend, attachments }, ref) => {
+  const [recording, setRecording] = React.useState(false);
   const { t } = useTranslation();
   const area = useRef<HTMLTextAreaElement>(null);
 
@@ -82,11 +86,16 @@ const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, a
         )}
         <div className="flex items-end gap-1.5">
           {extraAction}
-          {onAttachClick && (
+          {attachments ? (
+            <AttachMenu disabled={disabled || recording} onPhoto={attachments.onPhoto} onVoice={() => setRecording(true)} onExercise={attachments.onExercise} onFood={attachments.onFood} onProgress={onAttachClick} />
+          ) : onAttachClick && (
             <IconButton label={t('chat.ui.attach')} onClick={onAttachClick} disabled={disabled}>
               <Paperclip className="h-5 w-5" />
             </IconButton>
           )}
+          {recording && attachments ? (
+            <VoiceRecorder onCancel={() => setRecording(false)} onDone={(b, s) => { setRecording(false); attachments.onVoice(b, s); }} />
+          ) : (<>
           <div className={cn(
             'flex min-h-[44px] flex-1 items-center rounded-[22px] border bg-muted/40 transition-[border-color,box-shadow,background-color] duration-300 focus-within:bg-background focus-within:ring-4',
             tooLong ? 'border-destructive/70 focus-within:ring-destructive/15' : 'border-border/70 focus-within:border-primary/60 focus-within:ring-primary/15',
@@ -110,6 +119,16 @@ const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, a
               className="ec-chat-scroll block max-h-40 w-full resize-none bg-transparent px-4 py-[11px] text-base leading-[22px] text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50 sm:text-[15px]"
             />
           </div>
+          {/* QA #110: the send button appears only once there is something to send; until then the mic records a voice message */}
+          {!canSend && attachments ? (
+            <button
+              type="button" onClick={() => setRecording(true)} disabled={disabled}
+              aria-label={t('chatAtt.voice')} title={t('chatAtt.voice')}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+          ) : canSend && (
           <button
             type="button"
             onClick={submit}
@@ -123,6 +142,8 @@ const Composer = forwardRef<ComposerHandle, Props>(({ value, onChange, onSend, a
           >
             <ArrowUp className="h-5 w-5" strokeWidth={2.4} aria-hidden />
           </button>
+          )}
+          </>)}
         </div>
         {value.length > MAX_LENGTH - 400 && (
           <p className={cn('mt-1 pe-14 text-end text-[11px] tabular-nums', tooLong ? 'text-destructive' : 'text-muted-foreground')} aria-live="polite">

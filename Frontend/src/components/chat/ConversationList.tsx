@@ -1,3 +1,4 @@
+import { attachmentPreview } from './Attachments';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageSquare, Search, TrendingUp, Users, X } from 'lucide-react';
@@ -100,7 +101,7 @@ const ConversationList: React.FC<Props> = ({ conversations, loading, error, onRe
               const mine = last && last.sender_id === currentUserId;
               const unread = c.unread_count > 0;
               const preview = last
-                ? (last.message?.trim() || t('chat.ui.progressEntry'))
+                ? (last.message?.trim() || attachmentPreview(last.card, t) || t('chat.ui.progressEntry'))
                 : t('chat.ui.startConversation');
               return (
                 <li key={c.client_id}>

@@ -12,6 +12,8 @@ class ChatMessageBase(BaseModel):
 
 class ChatMessageCreate(ChatMessageBase):
     client_id: int
+    # QA #111: an attachment card: {"kind": "photo"|"voice", "file": …} or {"kind": "exercise_share"|"food_share", …}
+    card: Optional[Dict[str, Any]] = None
 
 
 class ChatProgressPhoto(BaseModel):

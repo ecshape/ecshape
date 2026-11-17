@@ -1,75 +1,84 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Check, ExternalLink, KeyRound, LogOut, Moon, Sun } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, Dumbbell, ExternalLink, KeyRound, Languages, LogOut, MessageCircle, Moon, Palette, ShieldCheck, SlidersHorizontal, Sun, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Avatar, PageTitle, SectionCard, Seg } from '@/features/trainer/ui';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { APP_LANGUAGES, setLanguage } from '@/i18n/setLanguage';
 import { api } from './api';
 import { useCheckInSummary, useConversations, useSessions } from './hooks';
-import { Screen, ScreenHeader, SectionTitle, Sheet } from './ui';
+import { Screen, Sheet } from './ui';
 import { fmtDate, fmtNum } from './format';
 import { AvatarEditor } from '@/components/avatar/AvatarEditor';
 
 const ProfileScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const convs = useConversations();
   const sessions = useSessions();
   const summary = useCheckInSummary();
   const [pwOpen, setPwOpen] = useState(false);
-  const coach = convs.data?.[0]?.client_name;
+  const coachConv = convs.data?.[0];
+  const coach = coachConv?.client_name;
   const workouts = (sessions.data ?? []).filter((s) => s.is_completed).length;
+  const lang = APP_LANGUAGES.find((l) => i18n.language?.startsWith(l.code))?.code ?? APP_LANGUAGES[0].code;
 
+  // QA #109: laid out like the coach's own settings: page title, glass section cards with an icon header,
+  // sliding-pill selectors, a coach card and account rows with tinted icons.
   return (
     <Screen>
-      <ScreenHeader eyebrow={t('trainee.profile.eyebrow')} title={t('trainee.profile.title')} />
+      <PageTitle eyebrow={t('trainee.profile.eyebrow')} title={t('trainee.profile.title')} />
 
-      <section className="tp-card tp-card--hero tp-rise flex flex-wrap items-center gap-4 p-5 sm:p-6" style={{ ['--i' as string]: 2 }}>
-        {/* Profile photo (tap to change) */}
-        <AvatarEditor compact rounded="rounded-[1.6rem]" className="h-20 w-20 text-2xl shadow-[0_16px_32px_-16px_hsl(var(--primary))]" />
-        <div className="min-w-0 flex-1">
-          <h2 className="tp-title break-words text-[2.4rem]">{user?.full_name}</h2>
-          <p className="truncate text-sm text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{user?.email}</p>
-          {coach && <p className="mt-1 text-sm">{t('trainee.profile.coach', { name: coach })}</p>}
-        </div>
-        <div className="grid w-full grid-cols-3 gap-2 sm:w-auto">
-          <Mini label={t('trainee.profile.workouts')} value={fmtNum(workouts)} />
-          <Mini label={t('trainee.profile.checkins')} value={fmtNum(summary.data?.total_check_ins ?? 0)} />
-          <Mini label={t('trainee.profile.since')} value={user?.created_at ? fmtDate(user.created_at, { month: 'short', year: '2-digit' }) : '–'} />
-        </div>
-      </section>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <section className="ec-settings-card tp-rise rounded-[1.75rem] p-5 sm:p-7" style={{ ['--i' as string]: 2 }}>
+          <div className="flex flex-wrap items-center gap-5">
+            <AvatarEditor compact rounded="rounded-[1.6rem]" className="h-24 w-24 text-3xl shadow-[0_16px_32px_-16px_hsl(var(--primary))]" />
+            <div className="min-w-0 flex-1">
+              <h2 className="tp-title break-words text-[2.4rem] leading-none">{user?.full_name}</h2>
+              <p className="mt-1.5 truncate text-sm text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{user?.email}</p>
+            </div>
+          </div>
+          <div className="mt-6 grid grid-cols-3 gap-2.5">
+            <Stat icon={Dumbbell} label={t('trainee.profile.workouts')} value={fmtNum(workouts)} />
+            <Stat icon={ClipboardCheck} label={t('trainee.profile.checkins')} value={fmtNum(summary.data?.total_check_ins ?? 0)} />
+            <Stat icon={CalendarDays} label={t('trainee.profile.since')} value={user?.created_at ? fmtDate(user.created_at, { month: 'short', year: '2-digit' }) : '–'} />
+          </div>
+        </section>
 
-      <SectionTitle>{t('trainee.profile.language')}</SectionTitle>
-      <div className="grid grid-cols-3 gap-2">
-        {APP_LANGUAGES.map((l) => {
-          const on = i18n.language?.startsWith(l.code);
-          return (
-            <button key={l.code} type="button" onClick={() => setLanguage(l.code)} aria-pressed={on} className={cn('tp-card tp-press flex min-h-[4.5rem] flex-col items-center justify-center gap-1 p-3', on && 'ring-2 ring-primary')}>
-              <span className="font-semibold">{l.name}</span>
-              {on && <Check className="h-4 w-4 text-primary" />}
-            </button>
-          );
-        })}
-      </div>
+        {coach && (
+          <SectionCard icon={UserRound} title={t('trainee.profile.coach', { name: '' }).replace(/[:：]\s*$/, '').trim() || coach} className="tp-rise" style={{ ['--i' as string]: 3 }}>
+            <div className="flex items-center gap-4">
+              <Avatar name={coach} src={(coachConv as { client_avatar?: string | null } | undefined)?.client_avatar} size={56} />
+              <p className="min-w-0 flex-1 break-words text-lg font-bold leading-tight">{coach}</p>
+              <button type="button" onClick={() => navigate('/chat')} className="tp-icon-btn tp-press !bg-primary !text-primary-foreground" aria-label={t('trainee.nav.coach')} title={t('trainee.nav.coach')}>
+                <MessageCircle className="h-5 w-5" />
+              </button>
+            </div>
+          </SectionCard>
+        )}
 
-      <SectionTitle>{t('trainee.profile.appearance')}</SectionTitle>
-      <div className="grid grid-cols-2 gap-2">
-        {(['dark', 'light'] as const).map((m) => (
-          <button key={m} type="button" onClick={() => setTheme(m)} aria-pressed={theme === m} className={cn('tp-card tp-press flex min-h-[4.5rem] items-center justify-center gap-2 p-3 font-semibold', theme === m && 'ring-2 ring-primary')}>
-            {m === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-            {t(`trainee.profile.${m}`)}
-          </button>
-        ))}
-      </div>
+        <SectionCard icon={SlidersHorizontal} title={t('trainee.profile.preferences', { defaultValue: `${t('trainee.profile.language')} · ${t('trainee.profile.appearance')}` })} className="tp-rise" style={{ ['--i' as string]: 4 }} bodyClassName="space-y-5">
+          <div>
+            <p className="tp-label mb-2 flex items-center gap-1.5"><Languages className="h-3.5 w-3.5" />{t('trainee.profile.language')}</p>
+            <Seg value={lang} onChange={(v) => setLanguage(v)} label={t('trainee.profile.language')} className="w-full" items={APP_LANGUAGES.map((l) => ({ id: l.code, label: l.name }))} />
+          </div>
+          <div>
+            <p className="tp-label mb-2 flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" />{t('trainee.profile.appearance')}</p>
+            <Seg value={theme === 'light' ? 'light' : 'dark'} onChange={(v) => setTheme(v)} label={t('trainee.profile.appearance')} className="w-full"
+              items={[{ id: 'dark', label: t('trainee.profile.dark'), icon: Moon }, { id: 'light', label: t('trainee.profile.light'), icon: Sun }]} />
+          </div>
+        </SectionCard>
 
-      <SectionTitle>{t('trainee.profile.account')}</SectionTitle>
-      <div className="tp-card divide-y divide-border/50">
-        <Row icon={KeyRound} label={t('trainee.profile.changePassword')} onClick={() => setPwOpen(true)} />
-        <Row icon={ExternalLink} label={t('trainee.profile.website')} onClick={() => window.open('/home', '_blank')} />
-        <Row icon={LogOut} label={t('trainee.profile.logout')} onClick={logout} danger />
+        <SectionCard icon={ShieldCheck} title={t('trainee.profile.account')} className="tp-rise" style={{ ['--i' as string]: 5 }} bodyClassName="-mx-2 space-y-1">
+          <Row icon={KeyRound} label={t('trainee.profile.changePassword')} onClick={() => setPwOpen(true)} />
+          <Row icon={ExternalLink} label={t('trainee.profile.website')} onClick={() => window.open('/home', '_blank')} />
+          <Row icon={LogOut} label={t('trainee.profile.logout')} onClick={logout} danger />
+        </SectionCard>
       </div>
 
       <PasswordSheet open={pwOpen} onOpenChange={setPwOpen} />
@@ -77,19 +86,24 @@ const ProfileScreen: React.FC = () => {
   );
 };
 
-const Mini: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="rounded-2xl bg-foreground/[.06] px-3 py-2.5 text-center">
-    <div className="tp-num text-xl leading-none">{value}</div>
+const Stat: React.FC<{ icon: React.ElementType; label: string; value: string }> = ({ icon: Icon, label, value }) => (
+  <div className="rounded-2xl bg-foreground/[.05] p-3 ring-1 ring-border/40">
+    <Icon className="h-4 w-4 text-primary" />
+    <div className="tp-num mt-2 text-2xl leading-none">{value}</div>
     <div className="mt-1 truncate text-[11px] text-muted-foreground">{label}</div>
   </div>
 );
 
-const Row: React.FC<{ icon: React.ElementType; label: string; onClick: () => void; danger?: boolean }> = ({ icon: Icon, label, onClick, danger }) => (
-  <button type="button" onClick={onClick} className={cn('tp-press flex min-h-[3.5rem] w-full items-center gap-3 px-4 text-start font-semibold first:rounded-t-[1.5rem] last:rounded-b-[1.5rem] hover:bg-foreground/[.04]', danger && 'text-destructive')}>
-    <Icon className="h-5 w-5 flex-none" />
-    <span className="min-w-0 flex-1 truncate">{label}</span>
-  </button>
-);
+const Row: React.FC<{ icon: React.ElementType; label: string; onClick: () => void; danger?: boolean }> = ({ icon: Icon, label, onClick, danger }) => {
+  const Chev = document.dir === 'rtl' ? ChevronLeft : ChevronRight;
+  return (
+    <button type="button" onClick={onClick} className={cn('tp-press flex min-h-[3.25rem] w-full items-center gap-3 rounded-2xl px-2 text-start font-semibold hover:bg-foreground/[.05]', danger && 'text-destructive')}>
+      <span className={cn('grid h-9 w-9 flex-none place-items-center rounded-xl', danger ? 'bg-destructive/12' : 'bg-primary/12 text-primary')}><Icon className="h-4 w-4" /></span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {!danger && <Chev className="h-4 w-4 flex-none text-muted-foreground" />}
+    </button>
+  );
+};
 
 const PasswordSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void }> = ({ open, onOpenChange }) => {
   const { t } = useTranslation();

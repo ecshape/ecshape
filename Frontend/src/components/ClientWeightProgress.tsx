@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,19 +32,23 @@ interface ProgressEntry {
   waist?: number;
   hips?: number;
   thighs?: number;
+  right_thigh?: number;
+  left_thigh?: number;
   arms?: number;
   right_arm?: number;
   left_arm?: number;
   created_at: string;
 }
 
-type MeasurementField = 'chest' | 'waist' | 'hips' | 'thighs' | 'arms' | 'right_arm' | 'left_arm';
+type MeasurementField = 'chest' | 'waist' | 'hips' | 'thighs' | 'right_thigh' | 'left_thigh' | 'arms' | 'right_arm' | 'left_arm';
 
 const MEASUREMENT_FIELD_CONFIG: ReadonlyArray<{ field: MeasurementField; labelKey: string }> = [
   { field: 'chest', labelKey: 'progress.chest' },
   { field: 'waist', labelKey: 'progress.waist' },
   { field: 'hips', labelKey: 'progress.hips' },
   { field: 'thighs', labelKey: 'progress.thighs' },
+  { field: 'right_thigh', labelKey: 'trainee.progress.m_right_thigh' },
+  { field: 'left_thigh', labelKey: 'trainee.progress.m_left_thigh' },
   { field: 'arms', labelKey: 'progress.arms' },
   { field: 'right_arm', labelKey: 'progress.rightArm' },
   { field: 'left_arm', labelKey: 'progress.leftArm' },
@@ -91,7 +96,8 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
     chest: '',
     waist: '',
     hips: '',
-    thighs: '',
+    right_thigh: '',
+    left_thigh: '',
     right_arm: '',
     left_arm: ''
   });
@@ -300,8 +306,11 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
       if (addForm.hips) {
         formData.append('hips', addForm.hips);
       }
-      if (addForm.thighs) {
-        formData.append('thighs', addForm.thighs);
+      if (addForm.right_thigh) {
+        formData.append('right_thigh', addForm.right_thigh);
+      }
+      if (addForm.left_thigh) {
+        formData.append('left_thigh', addForm.left_thigh);
       }
       if (addForm.right_arm) {
         formData.append('right_arm', addForm.right_arm);
@@ -338,7 +347,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
           description: t('weightProgress.successAdd')
         });
         // Reset form
-        setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', thighs: '', right_arm: '', left_arm: '' });
+        setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', right_thigh: '', left_thigh: '', right_arm: '', left_arm: '' });
         setPhotoFiles({ front: null, side: null, back: null });
         setPhotoPreviews({ front: null, side: null, back: null });
         // Close dialog after reset
@@ -420,7 +429,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
         <Card>
           <CardContent className="flex items-center px-4 pb-4 pt-6 min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-primary to-[hsl(18_85%_44%)] rounded-lg flex items-center justify-center">
                 <Weight className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -452,7 +461,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
         <Card>
           <CardContent className="flex items-center px-4 pb-4 pt-6 min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 shrink-0 bg-gradient-to-r from-[hsl(var(--gold))] to-primary rounded-lg flex items-center justify-center">
                 <Activity className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -691,14 +700,25 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="thighs" className="text-xs text-muted-foreground">{t('progress.thighs', 'Thighs')}</Label>
+                  <Label htmlFor="right_thigh" className="text-xs text-muted-foreground">{t('trainee.progress.m_right_thigh', 'Right thigh')}</Label>
                   <Input
-                    id="thighs"
+                    id="right_thigh"
                     type="number"
                     step="0.1"
                     placeholder={t('progress.cm', 'cm')}
-                    value={addForm.thighs}
-                    onChange={(e) => setAddForm({...addForm, thighs: e.target.value})}
+                    value={addForm.right_thigh}
+                    onChange={(e) => setAddForm({...addForm, right_thigh: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="left_thigh" className="text-xs text-muted-foreground">{t('trainee.progress.m_left_thigh', 'Left thigh')}</Label>
+                  <Input
+                    id="left_thigh"
+                    type="number"
+                    step="0.1"
+                    placeholder={t('progress.cm', 'cm')}
+                    value={addForm.left_thigh}
+                    onChange={(e) => setAddForm({...addForm, left_thigh: e.target.value})}
                   />
                 </div>
                 <div>
@@ -847,7 +867,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                 variant="outline"
                 onClick={() => {
                   setShowAddDialog(false);
-                  setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', thighs: '', right_arm: '', left_arm: '' });
+                  setAddForm({ weight: '', notes: '', chest: '', waist: '', hips: '', right_thigh: '', left_thigh: '', right_arm: '', left_arm: '' });
                   setPhotoFiles({ front: null, side: null, back: null });
                   setPhotoPreviews({ front: null, side: null, back: null });
                 }}
@@ -965,7 +985,7 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                           />
                         ) : photo ? (
                           <div className="w-full h-48 bg-secondary/20 rounded-lg flex items-center justify-center">
-                            <p className="text-muted-foreground text-sm">{t('progress.loading', 'Loading...')}</p>
+                            <EcSpinner className="h-8 w-8" label={t('progress.loading', 'Loading...')} />
                           </div>
                         ) : (
                           <div className="w-full h-48 bg-secondary/20 rounded-lg flex items-center justify-center">

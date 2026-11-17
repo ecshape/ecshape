@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ export const DailyCheckInForm: React.FC<DailyCheckInFormProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const isRtl = i18n.language === 'he';
+  const isRtl = isRtlLang(i18n.language);
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -216,7 +217,7 @@ export const DailyCheckInForm: React.FC<DailyCheckInFormProps> = ({
           <div className="flex flex-col gap-2">
             <Button
               type="submit"
-              className="gradient-orange text-background w-full py-3 font-semibold hover:scale-105 transition-all"
+              className="gradient-orange text-background w-full py-3 font-semibold transition-all"
               disabled={loading}
             >
               {loading ? t('common.loading') : t('checkIn.submitButton')}

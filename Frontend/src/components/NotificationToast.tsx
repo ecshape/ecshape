@@ -47,14 +47,14 @@ const getStyles = (type: Notification['type']) => {
     case 'info':
       return {
         container: 'bg-blue-50 border-blue-200 text-blue-800',
-        icon: 'text-blue-600',
-        closeButton: 'text-blue-600 hover:bg-blue-100'
+        icon: 'text-primary',
+        closeButton: 'text-primary hover:bg-blue-100'
       };
     default:
       return {
-        container: 'bg-gray-50 border-gray-200 text-gray-800',
-        icon: 'text-gray-600',
-        closeButton: 'text-gray-600 hover:bg-gray-100'
+        container: 'bg-card border-border text-foreground',
+        icon: 'text-muted-foreground',
+        closeButton: 'text-muted-foreground hover:bg-muted'
       };
   }
 };

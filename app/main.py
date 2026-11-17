@@ -160,7 +160,7 @@ except Exception as e:
 
 try:
     logger.info("Importing router modules...")
-    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook
+    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, meal_logging_tools, translate, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook, studio
     logger.info("✅ Router modules imported successfully")
     logger.info("📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications")
 except Exception as e:
@@ -228,6 +228,12 @@ async def lifespan(app: FastAPI):
         logger.info("Running user last_login migration...")
         run_user_last_login_migration()
         logger.info("✅ User last_login migration completed")
+
+        from app.migrations.user_avatar_migration import run_user_avatar_migration
+        run_user_avatar_migration()
+
+        from app.migrations.chat_payload_migration import run_chat_payload_migration
+        run_chat_payload_migration()
         
         logger.info("Running progress measurements migration...")
         run_progress_measurements_migration()
@@ -272,6 +278,35 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️ Continuing startup despite migration errors...")
         logger.warning("⚠️ Some schema changes may not be applied. Check logs for details.")
     
+    from app.routers.exercise_library import ensure_library_column
+    ensure_library_column(engine)
+
+    # QA #64: bank foods get the new, better staple photos (only where there was none or an old Commons pick)
+    try:
+        from app.database import SessionLocal
+        from app.services.food_library_service import refresh_bank_photos
+        _db = SessionLocal()
+        try:
+            n = refresh_bank_photos(_db)
+            if n:
+                logger.info(f"🖼️ Updated photos of {n} food bank items")
+        finally:
+            _db.close()
+    except Exception as e:  # never block startup
+        logger.warning(f"Food bank photo refresh skipped: {e}")
+
+    # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
+    from app.dev_seed import run_if_enabled as run_dev_seed
+    run_dev_seed(engine)
+
+    # QA #51: fetch the keyless meal-photo model in the background (first photo then answers at once)
+    try:
+        from app.services import food_photo_local
+        if food_photo_local.available():
+            food_photo_local.warm_up_in_background()
+    except Exception as e:  # never block startup
+        logger.warning(f"Meal photo model warm-up skipped: {e}")
+
     # Log database pool statistics
     pool_stats = get_db_pool_stats()
     logger.info(f"📊 Database pool initialized: {pool_stats}")
@@ -728,6 +763,8 @@ try:
     
     logger.info("Including muscle_groups router...")
     app.include_router(muscle_groups.router, prefix="/api/muscle-groups", tags=["Muscle Groups"])
+    from app.routers import exercise_library
+    app.include_router(exercise_library.router, prefix="/api/exercise-library", tags=["Exercise library"])
     logger.info("✅ Muscle groups router included")
     
     logger.info("Including workout_splits router...")
@@ -760,6 +797,8 @@ try:
 
     logger.info("Including meal_variants_v3 router (variants)...")
     app.include_router(meal_variants_v3.router, prefix="/api/v3/meals", tags=["Meal Variants V3"])
+    app.include_router(meal_logging_tools.router, prefix="/api/v3/meals", tags=["Meal logging tools"])
+    app.include_router(translate.router, prefix="/api", tags=["Translate"])
     logger.info("✅ Meal Variants V3 router included")
 
     logger.info("Including workout_system router (v2)...")
@@ -797,6 +836,13 @@ try:
     logger.info("Including instagram_webhook router...")
     app.include_router(instagram_webhook.router, prefix="/api/instagram", tags=["Instagram"])
     logger.info("✅ Instagram webhook router included")
+
+    logger.info("Including studio routers...")
+    app.include_router(studio.public_router, prefix="/api/public", tags=["Public site"])
+    from app.routers import i18n_bundle  # QA #85: Russian / Arabic interface texts
+    app.include_router(i18n_bundle.router, prefix="/api/public", tags=["Interface languages"])
+    app.include_router(studio.router, prefix="/api/studio", tags=["Trainer studio"])
+    logger.info("✅ Studio routers included")
     
     logger.info("=" * 40)
     logger.info("✅ ALL ROUTERS INCLUDED SUCCESSFULLY")

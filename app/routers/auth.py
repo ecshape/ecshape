@@ -71,8 +71,12 @@ async def get_registered_users(db: Session = Depends(get_db)):
 async def register_user_test(user: UserCreate, db: Session = Depends(get_db)):
     """
     Test-specific registration endpoint that bypasses role restrictions.
-    This should only be used in testing environments.
+    Unauthenticated and able to create any role (ADMIN included): it only exists for the automated test suite and is
+    a 404 everywhere else (A2A r3 security finding). Enabled with ENVIRONMENT=test or ALLOW_TEST_REGISTER=1.
     """
+    import os as _os_t
+    if _os_t.getenv("ENVIRONMENT", "").lower() != "test" and _os_t.getenv("ALLOW_TEST_REGISTER") != "1":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     return auth_service.create_user(db, user)
 
 # General registration endpoint (for tests and public registration)
@@ -404,3 +408,30 @@ async def reset_password_by_trainer(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Failed to reset password"
     ) 
+
+# ---- Dev-only demo shortcuts (ecshape-dev). Disabled unless DEV_DEMO_SEED=1, so production never exposes them.
+import os as _os
+
+_DEMO_USERS = {"trainer": "trainer1", "client": "client1"}
+
+
+@router.get("/demo-accounts")
+async def demo_accounts():
+    enabled = _os.getenv("DEV_DEMO_SEED") == "1"
+    return {"enabled": enabled, "roles": list(_DEMO_USERS) if enabled else []}
+
+
+@router.post("/demo-login/{role}", response_model=Token)
+async def demo_login(role: str, db: Session = Depends(get_db)):
+    if _os.getenv("DEV_DEMO_SEED") != "1" or role not in _DEMO_USERS:
+        raise HTTPException(status_code=404, detail="Not found")
+    user = db.query(User).filter(User.username == _DEMO_USERS[role]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Demo account missing")
+    from datetime import datetime
+    from app.auth.utils import normalize_role
+    user.last_login = datetime.utcnow()
+    db.commit()
+    r = normalize_role(user.role)
+    token = create_access_token(data={"sub": str(user.id), "role": r.value if hasattr(r, "value") else str(r)})
+    return {"access_token": token, "token_type": "bearer"}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, ClipboardList, Pencil, Sparkles } from "lucide-react";
@@ -151,7 +152,7 @@ export default function NutritionProfileCard({ clientId }: NutritionProfileCardP
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <EcSpinner className="w-5 h-5" />
         ) : editing ? (
           <div className="space-y-3">
             {FIELDS.map(({ key, labelKey, fallback }) => (

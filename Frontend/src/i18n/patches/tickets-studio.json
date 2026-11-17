@@ -1,0 +1,995 @@
+{
+  "he": {
+    "tix": {
+      "common": {
+        "cancel": "ביטול",
+        "close": "סגירה"
+      },
+      "avatar": {
+        "add": "הוספת תמונת פרופיל",
+        "change": "החלפת תמונה",
+        "remove": "הסרה",
+        "hint": "JPG, PNG או WebP. נחתך לריבוע ומוצג בפורטל, בצ'אט ובאתר.",
+        "cropTitle": "מיקום התמונה",
+        "cropHint": "גררו כדי למקם, השתמשו במחוון כדי להגדיל.",
+        "zoom": "זום",
+        "save": "שמירת התמונה",
+        "failed": "לא הצלחנו לשמור את התמונה.",
+        "notImage": "הקובץ אינו תמונה.",
+        "sectionTitle": "פרופיל",
+        "sectionHint": "התמונה שלכם מופיעה בתפריט, בצ'אט עם המתאמנים ובבועה באתר כשאתם מחוברים.",
+        "openPortal": "לפורטל שלי"
+      },
+      "draft": {
+        "write": "Agent EC יכתוב טיוטה",
+        "improve": "Agent EC ישפר את הטקסט",
+        "done": "נכתב על ידי Agent EC",
+        "undo": "ביטול",
+        "failed": "Agent EC לא הצליח לכתוב כרגע. נסו שוב.",
+        "noKey": "כדי ש-Agent EC יכתוב, צריך להוסיף מפתח AI.",
+        "openSettings": "הגדרות ← מפתחות AI"
+      },
+      "prospects": {
+        "reply": "תשובה ללקוח",
+        "replyPh": "לחצו על Agent EC בפינה לטיוטה אישית לפי הפרטים של הליד, או כתבו בעצמכם.",
+        "sendWa": "שליחה בוואטסאפ",
+        "sendMail": "שליחה במייל",
+        "replyTip": "Agent EC משתמש בפרטי הליד, בהודעה שלו ובהערות שלכם, וכותב בשפה שבה הליד פנה."
+      },
+      "wa": "וואטסאפ",
+      "qa": {
+        "tabs": {
+          "open": "פתוחות",
+          "all": "הכול"
+        },
+        "filters": "סינון",
+        "area": "אזור",
+        "allAreas": "כל האזורים",
+        "author": "מדווח",
+        "allAuthors": "כל המדווחים",
+        "sort": "מיון",
+        "sortNewest": "חדש לישן",
+        "sortOldest": "ישן לחדש",
+        "sortPriority": "עדיפות",
+        "sortAuthor": "מדווח",
+        "sortUpdated": "עודכן לאחרונה",
+        "mine": "שלי",
+        "board": "לוח",
+        "list": "רשימה",
+        "viewLabel": "תצוגה",
+        "reset": "ניקוי סינון",
+        "results": "{{count}} פניות",
+        "noResults": "אין פניות שמתאימות לסינון.",
+        "selected": "{{count}} נבחרו",
+        "selectAll": "בחירת הכול",
+        "markDone": "סימון כבוצע",
+        "markInProgress": "לטיפול",
+        "markCancelled": "ביטול",
+        "clearSelection": "ניקוי בחירה",
+        "areas": {
+          "site": "אתר ציבורי",
+          "studio": "סטודיו",
+          "trainer": "פורטל המאמן",
+          "trainee": "אפליקציית המתאמן",
+          "blog": "בלוג",
+          "other": "אחר"
+        },
+        "guideTitle": "איך מדווחים טוב",
+        "guideTip": "כל פנייה נשמרת מיד. בדקו גם בטלפון וגם במחשב, ודווחו גם על דברים קטנים שמפריעים (טקסט לא ברור, יותר מדי לחיצות).",
+        "guideGood": "פנייה טובה",
+        "guideGoodItems": [
+          "העמוד המדויק (כפתור ה-QA שומר אותו לבד)",
+          "מכשיר ודפדפן (אייפון, אנדרואיד, מחשב)",
+          "מה עשיתם, מה ציפיתם שיקרה ומה קרה בפועל",
+          "עדיפות: גבוהה רק אם משהו לא עובד"
+        ],
+        "guideChecks": "מה כדאי לבדוק",
+        "guideCheckItems": [
+          "כניסה ויציאה מהפורטל",
+          "האתר הציבורי בעברית ובאנגלית, טופס הלידים",
+          "יצירת תוכנית אימונים ותפריט למתאמן",
+          "צ'אט עם מתאמן, תמונות והעלאות",
+          "מצב כהה ובהיר, טלפון ומחשב"
+        ],
+        "filterTip": "השתמשו בסינון לפי סטטוס, עדיפות, אזור ומדווח. בתצוגת רשימה אפשר לבחור כמה פניות ולסמן אותן כבוצעו בבת אחת.",
+        "bodyLabel": "מה צריך לשנות",
+        "commentLabel": "תגובה",
+        "updated": "עודכן {{when}}"
+      },
+      "site": {
+        "togglePages": "הצגה או הסתרה של רשימת החלקים",
+        "toggleInspector": "הצגה או הסתרה של לוח העריכה",
+        "link": "לאן הכפתור מוביל",
+        "linkTip": "אפשר לשנות לאן כל כפתור או קישור באתר מוביל: לטופס, לוואטסאפ, לחלק אחר בעמוד, לעמוד בפורטל או לכתובת חיצונית. השינוי חל על כל השפות.",
+        "links": "קישורים בחלק הזה",
+        "kinds": {
+          "default": "ברירת מחדל ({{what}})",
+          "form": "טופס השארת פרטים",
+          "whatsapp": "וואטסאפ",
+          "instagram": "אינסטגרם",
+          "section": "חלק בעמוד",
+          "page": "עמוד בפורטל",
+          "url": "כתובת חיצונית"
+        },
+        "pages": {
+          "/login": "כניסה לפורטל",
+          "/blog": "בלוג",
+          "/home": "דף הבית"
+        },
+        "urlPh": "https://…",
+        "badUrl": "כתובת לא תקינה. התחילו ב-https://, ב-/ או ב-#."
+      }
+    },
+    "exerciseLibrary": {
+      "musclesWorked": "שרירים עובדים",
+      "meta": {
+        "compound": "מורכב",
+        "isolation": "מבודד",
+        "push": "דחיפה",
+        "pull": "משיכה",
+        "static": "סטטי"
+      }
+    },
+    "systemPage": {
+      "system_management": "ניהול מערכת",
+      "monitor_and_manage_system_health_and_performance": "ניטור וניהול של תקינות וביצועי המערכת",
+      "overview": "סקירה",
+      "system_logs": "יומני מערכת",
+      "test_suite": "בדיקות",
+      "quick_actions": "פעולות מהירות",
+      "system_health": "תקינות המערכת",
+      "active_users": "משתמשים פעילים",
+      "memory_usage": "שימוש בזיכרון",
+      "cpu_usage": "שימוש במעבד",
+      "database_status": "מצב מסד הנתונים",
+      "connection_pool_and_performance_metrics": "חיבורים ומדדי ביצועים",
+      "active_connections": "חיבורים פעילים",
+      "database_size": "גודל מסד הנתונים",
+      "last_backup": "גיבוי אחרון",
+      "total_records": "סה״כ רשומות",
+      "system_information": "מידע על המערכת",
+      "current_system_configuration": "הגדרות המערכת הנוכחיות",
+      "api_version": "גרסת API",
+      "environment": "סביבה",
+      "platform": "פלטפורמה",
+      "python_version": "גרסת Python",
+      "docker_container_status": "מצב קונטיינרים (Docker)",
+      "docker_is_not_available_on_this_system": "Docker לא זמין במערכת הזו",
+      "containers": "קונטיינרים",
+      "images": "אימג׳ים",
+      "volumes": "ווליומים",
+      "docker_version": "גרסת Docker",
+      "running_containers": "קונטיינרים פעילים",
+      "cpu": "מעבד: ",
+      "memory": "זיכרון: ",
+      "docker_is_not_available": "Docker לא זמין",
+      "install_docker_desktop_to_monitor_containers": "התקינו Docker Desktop כדי לנטר קונטיינרים",
+      "application_processes": "תהליכי האפליקציה",
+      "system_resources": "משאבי מערכת",
+      "detailed_resource_utilization_metrics": "פירוט ניצול המשאבים",
+      "cpu_cores": "ליבות מעבד",
+      "total_memory": "זיכרון כולל",
+      "available_memory": "זיכרון פנוי",
+      "disk_usage": "שימוש בדיסק",
+      "total_disk": "נפח דיסק",
+      "free_disk": "דיסק פנוי",
+      "network_sent": "רשת – נשלח",
+      "network_received": "רשת – התקבל",
+      "recent_system_logs": "יומנים אחרונים",
+      "latest_system_events_and_activities": "אירועים ופעולות אחרונים במערכת",
+      "run_automated_tests_and_view_results": "הרצת בדיקות אוטומטיות וצפייה בתוצאות",
+      "run_tests": "הרצת בדיקות",
+      "passed": "עברו",
+      "failed": "נכשלו",
+      "skipped": "דולגו",
+      "coverage": "כיסוי",
+      "test_details": "פירוט הבדיקות",
+      "common_system_maintenance_tasks": "משימות תחזוקה נפוצות",
+      "restart_services": "הפעלה מחדש של השירותים",
+      "create_backup": "יצירת גיבוי",
+      "optimize_database": "אופטימיזציה למסד הנתונים",
+      "toggle_maintenance": "מצב תחזוקה",
+      "failed_to_load_system_data": "טעינת נתוני המערכת נכשלה",
+      "tests_completed": "הבדיקות הסתיימו",
+      "failed_to_run_tests": "הרצת הבדיקות נכשלה",
+      "action_failed": "הפעולה נכשלה",
+      "refresh": "רענון",
+      "unknown": "לא ידוע",
+      "uptime": "זמן פעילות",
+      "ofTotalUsers": "מתוך {{count}} משתמשים",
+      "never": "אף פעם",
+      "runningOf": "{{running}} פעילים מתוך {{total}}",
+      "health": {
+        "healthy": "תקין",
+        "warning": "אזהרה",
+        "critical": "קריטי",
+        "degraded": "ירידה בביצועים"
+      },
+      "uptimeFmt": "{{d}} ימים, {{h}} שעות ו-{{m}} דקות",
+      "env": {
+        "development": "פיתוח",
+        "production": "ייצור",
+        "preview": "תצוגה מקדימה"
+      }
+    },
+    "studio": {
+      "prospects": {
+        "noMatch": "אין לידים שמתאימים לסינון או לחיפוש"
+      }
+    },
+    "mysite": {
+      "field": {
+        "title": "כותרת",
+        "sub": "תת-כותרת",
+        "eyebrow": "כותרת עליונה",
+        "text": "טקסט",
+        "p": "פסקה",
+        "lead": "פתיח",
+        "description": "תיאור",
+        "caption": "כיתוב",
+        "captionAccent": "כיתוב מודגש",
+        "highlight": "הדגשה",
+        "name": "שם",
+        "role": "תפקיד",
+        "photoRole": "תפקיד בתמונה",
+        "cta": "כפתור פעולה",
+        "ctaButton": "כפתור",
+        "ctaPrimary": "כפתור ראשי",
+        "ctaSecondary": "כפתור משני",
+        "ctaCard": "כרטיס פעולה",
+        "statValue": "ערך",
+        "statSuffix": "סיומת",
+        "statTitle": "כותרת נתון",
+        "statText": "טקסט נתון",
+        "unit": "יחידה",
+        "before": "לפני",
+        "after": "אחרי",
+        "already": "כבר מתאמן/ת",
+        "submit": "כפתור שליחה",
+        "error": "הודעת שגיאה",
+        "messagePh": "טקסט עזר להודעה",
+        "privacy": "פרטיות",
+        "more": "עוד",
+        "other": "אחר",
+        "popular": "תווית \"פופולרי\"",
+        "scroll": "גלילה",
+        "start": "התחלה",
+        "close": "סגירה",
+        "whatsapp": "וואטסאפ",
+        "whatsappText": "הודעת וואטסאפ",
+        "instagram": "אינסטגרם",
+        "q": "שאלה",
+        "a": "תשובה",
+        "label": "תווית",
+        "image": "תמונה",
+        "alt": "טקסט חלופי",
+        "quote": "ציטוט",
+        "author": "מחבר",
+        "price": "מחיר",
+        "period": "תקופה"
+      }
+    },
+    "trainee": {
+      "checkin": {
+        "edit": "עריכת הצ׳ק-אין",
+        "weightRange": "משקל בין 20 ל-400 ק״ג",
+        "stepsRange": "עד 100,000 צעדים"
+      },
+      "player": {
+        "statMinutesN_one": "דקה",
+        "statMinutesN_other": "דקות",
+        "statSetsN_one": "סט",
+        "statSetsN_other": "סטים",
+        "setsCountN_one": "סט אחד",
+        "setsCountN_other": "{{count}} סטים",
+        "minutesCountN_one": "דקה אחת",
+        "minutesCountN_other": "{{count}} דקות",
+        "statMinutesN_two": "דקות",
+        "statMinutesN_many": "דקות",
+        "statSetsN_two": "סטים",
+        "statSetsN_many": "סטים",
+        "setsCountN_two": "{{count}} סטים",
+        "setsCountN_many": "{{count}} סטים",
+        "minutesCountN_two": "{{count}} דקות",
+        "minutesCountN_many": "{{count}} דקות"
+      },
+      "today": {
+        "doneSummaryN": "{{sets}} · {{minutes}}. עבודה טובה."
+      }
+    },
+    "exerciseBank": {
+      "nameRequired": "שם התרגיל הוא שדה חובה",
+      "muscleRequired": "קבוצת שרירים היא שדה חובה"
+    },
+    "mealHistory": {
+      "title": "היסטוריית ארוחות יומית",
+      "avgTitle": "ממוצע קלוריות (7 ימים)",
+      "kcal": "{{value}} קק״ל",
+      "daysTracked_one": "יום אחד במעקב",
+      "daysTracked_two": "יומיים במעקב",
+      "daysTracked_many": "{{count}} ימים במעקב",
+      "daysTracked_other": "{{count}} ימים במעקב"
+    },
+    "trainerDashboard": {
+      "err": {
+        "username": "שם המשתמש כבר תפוס",
+        "emailTaken": "האימייל כבר רשום במערכת",
+        "email": "כתובת האימייל לא תקינה",
+        "password": "הסיסמה לא תקינה"
+      }
+    },
+    "notFound": {
+      "backHome": "חזרה לדף הבית"
+    },
+    "login": {
+      "backToSite": "חזרה לאתר ECshape"
+    },
+    "trainer": {
+      "client": {
+        "daysN_one": "יום ברצף",
+        "daysN_other": "ימים ברצף",
+        "daysN_two": "ימים ברצף",
+        "daysN_many": "ימים ברצף"
+      },
+      "builder": {
+        "planSaved": "התוכנית נשמרה"
+      }
+    }
+  },
+  "en": {
+    "tix": {
+      "common": {
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "avatar": {
+        "add": "Add a profile photo",
+        "change": "Change photo",
+        "remove": "Remove",
+        "hint": "JPG, PNG or WebP. Cropped square and shown in the portal, the chat and on the site.",
+        "cropTitle": "Frame your photo",
+        "cropHint": "Drag to position, use the slider to zoom.",
+        "zoom": "Zoom",
+        "save": "Save photo",
+        "failed": "The photo could not be saved.",
+        "notImage": "This file is not an image.",
+        "sectionTitle": "Profile",
+        "sectionHint": "Your photo appears in the menu, in the chat with your trainees and as a bubble on the site when you are signed in.",
+        "openPortal": "My portal"
+      },
+      "draft": {
+        "write": "Agent EC writes a draft",
+        "improve": "Agent EC improves this text",
+        "done": "Written by Agent EC",
+        "undo": "Undo",
+        "failed": "Agent EC could not write right now. Try again.",
+        "noKey": "Agent EC needs an AI key to write.",
+        "openSettings": "Settings → AI keys"
+      },
+      "prospects": {
+        "reply": "Reply to the prospect",
+        "replyPh": "Click Agent EC in the corner for a personal draft based on this lead, or write your own.",
+        "sendWa": "Send on WhatsApp",
+        "sendMail": "Send by email",
+        "replyTip": "Agent EC uses the lead's details, their message and your notes, and writes in the language they used."
+      },
+      "wa": "WhatsApp",
+      "qa": {
+        "tabs": {
+          "open": "Open",
+          "all": "All"
+        },
+        "filters": "Filters",
+        "area": "Area",
+        "allAreas": "All areas",
+        "author": "Reporter",
+        "allAuthors": "All reporters",
+        "sort": "Sort",
+        "sortNewest": "Newest first",
+        "sortOldest": "Oldest first",
+        "sortPriority": "Priority",
+        "sortAuthor": "Reporter",
+        "sortUpdated": "Recently updated",
+        "mine": "Mine",
+        "board": "Board",
+        "list": "List",
+        "viewLabel": "View",
+        "reset": "Clear filters",
+        "results": "{{count}} tickets",
+        "noResults": "No ticket matches these filters.",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "markDone": "Mark done",
+        "markInProgress": "In progress",
+        "markCancelled": "Cancel",
+        "clearSelection": "Clear selection",
+        "areas": {
+          "site": "Public site",
+          "studio": "Studio",
+          "trainer": "Trainer portal",
+          "trainee": "Trainee app",
+          "blog": "Blog",
+          "other": "Other"
+        },
+        "guideTitle": "How to report well",
+        "guideTip": "Every ticket is saved right away. Test on both phone and computer, and report small frictions too (unclear text, too many taps).",
+        "guideGood": "A good ticket",
+        "guideGoodItems": [
+          "The exact page (the QA button saves it for you)",
+          "Device and browser (iPhone, Android, computer)",
+          "What you did, what you expected and what happened",
+          "Priority: high only when something is broken"
+        ],
+        "guideChecks": "What to test",
+        "guideCheckItems": [
+          "Signing in and out of the portal",
+          "The public site in Hebrew and English, the lead form",
+          "Creating a workout plan and a meal plan for a trainee",
+          "Chat with a trainee, photos and uploads",
+          "Dark and light mode, phone and computer"
+        ],
+        "filterTip": "Filter by status, priority, area and reporter. In list view you can select several tickets and mark them done at once.",
+        "bodyLabel": "What should change",
+        "commentLabel": "Comment",
+        "updated": "updated {{when}}"
+      },
+      "site": {
+        "togglePages": "Show or hide the sections list",
+        "toggleInspector": "Show or hide the editing panel",
+        "link": "Where this button goes",
+        "linkTip": "Change where any button or link of the site leads: the lead form, WhatsApp, another part of the page, a portal page or an external address. Applies to every language.",
+        "links": "Links in this section",
+        "kinds": {
+          "default": "Default ({{what}})",
+          "form": "Lead form",
+          "whatsapp": "WhatsApp",
+          "instagram": "Instagram",
+          "section": "Section of the page",
+          "page": "Portal page",
+          "url": "External address"
+        },
+        "pages": {
+          "/login": "Portal sign-in",
+          "/blog": "Blog",
+          "/home": "Home page"
+        },
+        "urlPh": "https://…",
+        "badUrl": "Invalid address. Start with https://, / or #."
+      }
+    },
+    "exerciseLibrary": {
+      "musclesWorked": "Muscles worked",
+      "meta": {
+        "compound": "compound",
+        "isolation": "isolation",
+        "push": "push",
+        "pull": "pull",
+        "static": "static"
+      }
+    },
+    "systemPage": {
+      "system_management": "System Management",
+      "monitor_and_manage_system_health_and_performance": "Monitor and manage system health and performance",
+      "overview": "Overview",
+      "system_logs": "System Logs",
+      "test_suite": "Test Suite",
+      "quick_actions": "Quick Actions",
+      "system_health": "System Health",
+      "active_users": "Active Users",
+      "memory_usage": "Memory Usage",
+      "cpu_usage": "CPU Usage",
+      "database_status": "Database Status",
+      "connection_pool_and_performance_metrics": "Connection pool and performance metrics",
+      "active_connections": "Active Connections",
+      "database_size": "Database Size",
+      "last_backup": "Last Backup",
+      "total_records": "Total Records",
+      "system_information": "System Information",
+      "current_system_configuration": "Current system configuration",
+      "api_version": "API Version",
+      "environment": "Environment",
+      "platform": "Platform",
+      "python_version": "Python Version",
+      "docker_container_status": "Docker Container Status",
+      "docker_is_not_available_on_this_system": "Docker is not available on this system",
+      "containers": "Containers",
+      "images": "Images",
+      "volumes": "Volumes",
+      "docker_version": "Docker Version",
+      "running_containers": "Running Containers",
+      "cpu": "CPU: ",
+      "memory": "Memory: ",
+      "docker_is_not_available": "Docker is not available",
+      "install_docker_desktop_to_monitor_containers": "Install Docker Desktop to monitor containers",
+      "application_processes": "Application Processes",
+      "system_resources": "System Resources",
+      "detailed_resource_utilization_metrics": "Detailed resource utilization metrics",
+      "cpu_cores": "CPU Cores",
+      "total_memory": "Total Memory",
+      "available_memory": "Available Memory",
+      "disk_usage": "Disk Usage",
+      "total_disk": "Total Disk",
+      "free_disk": "Free Disk",
+      "network_sent": "Network Sent",
+      "network_received": "Network Received",
+      "recent_system_logs": "Recent System Logs",
+      "latest_system_events_and_activities": "Latest system events and activities",
+      "run_automated_tests_and_view_results": "Run automated tests and view results",
+      "run_tests": "Run Tests",
+      "passed": "Passed",
+      "failed": "Failed",
+      "skipped": "Skipped",
+      "coverage": "Coverage",
+      "test_details": "Test Details",
+      "common_system_maintenance_tasks": "Common system maintenance tasks",
+      "restart_services": "Restart Services",
+      "create_backup": "Create Backup",
+      "optimize_database": "Optimize Database",
+      "toggle_maintenance": "Toggle Maintenance",
+      "failed_to_load_system_data": "Failed to load system data",
+      "tests_completed": "Tests Completed",
+      "failed_to_run_tests": "Failed to run tests",
+      "action_failed": "Action failed",
+      "refresh": "Refresh",
+      "unknown": "Unknown",
+      "uptime": "Uptime",
+      "ofTotalUsers": "of {{count}} total users",
+      "never": "Never",
+      "runningOf": "{{running}} running out of {{total}}",
+      "health": {
+        "healthy": "Healthy",
+        "warning": "Warning",
+        "critical": "Critical",
+        "degraded": "Degraded"
+      },
+      "uptimeFmt": "{{d}} days, {{h}} hours, {{m}} minutes",
+      "env": {
+        "development": "Development",
+        "production": "Production",
+        "preview": "Preview"
+      }
+    },
+    "studio": {
+      "prospects": {
+        "noMatch": "No leads match this filter or search"
+      }
+    },
+    "mysite": {
+      "field": {
+        "title": "Title",
+        "sub": "Subtitle",
+        "eyebrow": "Eyebrow",
+        "text": "Text",
+        "p": "Paragraph",
+        "lead": "Lead",
+        "description": "Description",
+        "caption": "Caption",
+        "captionAccent": "Caption accent",
+        "highlight": "Highlight",
+        "name": "Name",
+        "role": "Role",
+        "photoRole": "Photo role",
+        "cta": "Call to action",
+        "ctaButton": "Button",
+        "ctaPrimary": "Primary button",
+        "ctaSecondary": "Secondary button",
+        "ctaCard": "CTA card",
+        "statValue": "Value",
+        "statSuffix": "Suffix",
+        "statTitle": "Stat title",
+        "statText": "Stat text",
+        "unit": "Unit",
+        "before": "Before",
+        "after": "After",
+        "already": "Already a client",
+        "submit": "Submit button",
+        "error": "Error message",
+        "messagePh": "Message placeholder",
+        "privacy": "Privacy",
+        "more": "More",
+        "other": "Other",
+        "popular": "Popular badge",
+        "scroll": "Scroll hint",
+        "start": "Start",
+        "close": "Close",
+        "whatsapp": "WhatsApp",
+        "whatsappText": "WhatsApp message",
+        "instagram": "Instagram",
+        "q": "Question",
+        "a": "Answer",
+        "label": "Label",
+        "image": "Image",
+        "alt": "Alt text",
+        "quote": "Quote",
+        "author": "Author",
+        "price": "Price",
+        "period": "Period"
+      }
+    },
+    "trainee": {
+      "checkin": {
+        "edit": "Edit check-in",
+        "weightRange": "Weight between 20 and 400 kg",
+        "stepsRange": "Up to 100,000 steps"
+      },
+      "player": {
+        "statMinutesN_one": "minute",
+        "statMinutesN_other": "minutes",
+        "statSetsN_one": "set",
+        "statSetsN_other": "sets",
+        "setsCountN_one": "1 set",
+        "setsCountN_other": "{{count}} sets",
+        "minutesCountN_one": "1 min",
+        "minutesCountN_other": "{{count}} min"
+      },
+      "today": {
+        "doneSummaryN": "{{sets}} · {{minutes}}. Great work."
+      }
+    },
+    "exerciseBank": {
+      "nameRequired": "Exercise name is required",
+      "muscleRequired": "Muscle group is required"
+    },
+    "mealHistory": {
+      "title": "Daily meal history",
+      "avgTitle": "Average calories (7 days)",
+      "kcal": "{{value}} kcal",
+      "daysTracked_one": "1 day tracked",
+      "daysTracked_other": "{{count}} days tracked"
+    },
+    "trainerDashboard": {
+      "err": {
+        "username": "This username is already taken",
+        "emailTaken": "This email is already registered",
+        "email": "This email address is not valid",
+        "password": "The password is not valid"
+      }
+    },
+    "notFound": {
+      "backHome": "Back to the home page"
+    },
+    "login": {
+      "backToSite": "Back to the ECshape site"
+    },
+    "trainer": {
+      "client": {
+        "daysN_one": "day in a row",
+        "daysN_other": "days in a row"
+      },
+      "builder": {
+        "planSaved": "Plan saved"
+      }
+    }
+  },
+  "fr": {
+    "tix": {
+      "common": {
+        "cancel": "Annuler",
+        "close": "Fermer"
+      },
+      "avatar": {
+        "add": "Ajouter une photo de profil",
+        "change": "Changer la photo",
+        "remove": "Retirer",
+        "hint": "JPG, PNG ou WebP. Recadrée en carré et affichée dans le portail, le chat et sur le site.",
+        "cropTitle": "Cadrer la photo",
+        "cropHint": "Glissez pour positionner, utilisez le curseur pour zoomer.",
+        "zoom": "Zoom",
+        "save": "Enregistrer la photo",
+        "failed": "La photo n'a pas pu être enregistrée.",
+        "notImage": "Ce fichier n'est pas une image.",
+        "sectionTitle": "Profil",
+        "sectionHint": "Votre photo apparaît dans le menu, dans le chat avec vos élèves et en bulle sur le site quand vous êtes connecté.",
+        "openPortal": "Mon portail"
+      },
+      "draft": {
+        "write": "Agent EC rédige un brouillon",
+        "improve": "Agent EC améliore ce texte",
+        "done": "Rédigé par Agent EC",
+        "undo": "Annuler",
+        "failed": "Agent EC n'a pas pu rédiger pour l'instant. Réessayez.",
+        "noKey": "Agent EC a besoin d'une clé IA pour rédiger.",
+        "openSettings": "Réglages → Clés IA"
+      },
+      "prospects": {
+        "reply": "Réponse au prospect",
+        "replyPh": "Cliquez sur Agent EC dans le coin pour un brouillon personnel basé sur ce prospect, ou écrivez vous-même.",
+        "sendWa": "Envoyer sur WhatsApp",
+        "sendMail": "Envoyer par e-mail",
+        "replyTip": "Agent EC utilise les infos du prospect, son message et vos notes, et écrit dans la langue qu'il a utilisée."
+      },
+      "wa": "WhatsApp",
+      "qa": {
+        "tabs": {
+          "open": "Ouverts",
+          "all": "Tous"
+        },
+        "filters": "Filtres",
+        "area": "Zone",
+        "allAreas": "Toutes les zones",
+        "author": "Auteur",
+        "allAuthors": "Tous les auteurs",
+        "sort": "Tri",
+        "sortNewest": "Plus récents",
+        "sortOldest": "Plus anciens",
+        "sortPriority": "Priorité",
+        "sortAuthor": "Auteur",
+        "sortUpdated": "Mis à jour récemment",
+        "mine": "Les miens",
+        "board": "Tableau",
+        "list": "Liste",
+        "viewLabel": "Affichage",
+        "reset": "Effacer les filtres",
+        "results": "{{count}} tickets",
+        "noResults": "Aucun ticket ne correspond à ces filtres.",
+        "selected": "{{count}} sélectionnés",
+        "selectAll": "Tout sélectionner",
+        "markDone": "Marquer comme fait",
+        "markInProgress": "En cours",
+        "markCancelled": "Annuler",
+        "clearSelection": "Vider la sélection",
+        "areas": {
+          "site": "Site public",
+          "studio": "Studio",
+          "trainer": "Portail coach",
+          "trainee": "App élève",
+          "blog": "Blog",
+          "other": "Autre"
+        },
+        "guideTitle": "Bien signaler",
+        "guideTip": "Chaque ticket est enregistré tout de suite. Testez sur téléphone et sur ordinateur, et signalez aussi les petites frictions (texte flou, trop de clics).",
+        "guideGood": "Un bon ticket",
+        "guideGoodItems": [
+          "La page exacte (le bouton QA l'enregistre pour vous)",
+          "Appareil et navigateur (iPhone, Android, ordinateur)",
+          "Ce que vous avez fait, ce que vous attendiez et ce qui s'est passé",
+          "Priorité haute seulement si quelque chose ne marche pas"
+        ],
+        "guideChecks": "Quoi tester",
+        "guideCheckItems": [
+          "Connexion et déconnexion du portail",
+          "Le site public en hébreu et en anglais, le formulaire de contact",
+          "Créer un programme d'entraînement et un plan repas pour un élève",
+          "Chat avec un élève, photos et envois",
+          "Mode sombre et clair, téléphone et ordinateur"
+        ],
+        "filterTip": "Filtrez par statut, priorité, zone et auteur. En liste, sélectionnez plusieurs tickets pour les marquer comme faits d'un coup.",
+        "bodyLabel": "Ce qu'il faut changer",
+        "commentLabel": "Commentaire",
+        "updated": "mis à jour {{when}}"
+      },
+      "site": {
+        "togglePages": "Afficher ou masquer la liste des sections",
+        "toggleInspector": "Afficher ou masquer le panneau d'édition",
+        "link": "Où mène ce bouton",
+        "linkTip": "Changez la destination de n'importe quel bouton ou lien du site : le formulaire, WhatsApp, une autre partie de la page, une page du portail ou une adresse externe. S'applique à toutes les langues.",
+        "links": "Liens de cette section",
+        "kinds": {
+          "default": "Par défaut ({{what}})",
+          "form": "Formulaire de contact",
+          "whatsapp": "WhatsApp",
+          "instagram": "Instagram",
+          "section": "Section de la page",
+          "page": "Page du portail",
+          "url": "Adresse externe"
+        },
+        "pages": {
+          "/login": "Connexion au portail",
+          "/blog": "Blog",
+          "/home": "Accueil"
+        },
+        "urlPh": "https://…",
+        "badUrl": "Adresse invalide. Commencez par https://, / ou #."
+      }
+    },
+    "exerciseLibrary": {
+      "musclesWorked": "Muscles sollicités",
+      "meta": {
+        "compound": "polyarticulaire",
+        "isolation": "isolation",
+        "push": "poussée",
+        "pull": "tirage",
+        "static": "statique"
+      }
+    },
+    "systemPage": {
+      "system_management": "Gestion du système",
+      "monitor_and_manage_system_health_and_performance": "Surveiller et gérer la santé et les performances du système",
+      "overview": "Vue d’ensemble",
+      "system_logs": "Journaux système",
+      "test_suite": "Tests",
+      "quick_actions": "Actions rapides",
+      "system_health": "Santé du système",
+      "active_users": "Utilisateurs actifs",
+      "memory_usage": "Mémoire utilisée",
+      "cpu_usage": "Utilisation CPU",
+      "database_status": "État de la base de données",
+      "connection_pool_and_performance_metrics": "Connexions et indicateurs de performance",
+      "active_connections": "Connexions actives",
+      "database_size": "Taille de la base",
+      "last_backup": "Dernière sauvegarde",
+      "total_records": "Total des enregistrements",
+      "system_information": "Informations système",
+      "current_system_configuration": "Configuration actuelle",
+      "api_version": "Version de l’API",
+      "environment": "Environnement",
+      "platform": "Plateforme",
+      "python_version": "Version de Python",
+      "docker_container_status": "État des conteneurs Docker",
+      "docker_is_not_available_on_this_system": "Docker n’est pas disponible sur ce système",
+      "containers": "Conteneurs",
+      "images": "Images",
+      "volumes": "Volumes",
+      "docker_version": "Version de Docker",
+      "running_containers": "Conteneurs actifs",
+      "cpu": "CPU : ",
+      "memory": "Mémoire : ",
+      "docker_is_not_available": "Docker indisponible",
+      "install_docker_desktop_to_monitor_containers": "Installez Docker Desktop pour surveiller les conteneurs",
+      "application_processes": "Processus de l’application",
+      "system_resources": "Ressources système",
+      "detailed_resource_utilization_metrics": "Détail de l’utilisation des ressources",
+      "cpu_cores": "Cœurs CPU",
+      "total_memory": "Mémoire totale",
+      "available_memory": "Mémoire disponible",
+      "disk_usage": "Utilisation du disque",
+      "total_disk": "Disque total",
+      "free_disk": "Disque libre",
+      "network_sent": "Réseau envoyé",
+      "network_received": "Réseau reçu",
+      "recent_system_logs": "Journaux récents",
+      "latest_system_events_and_activities": "Derniers événements du système",
+      "run_automated_tests_and_view_results": "Lancer les tests automatisés et voir les résultats",
+      "run_tests": "Lancer les tests",
+      "passed": "Réussis",
+      "failed": "Échoués",
+      "skipped": "Ignorés",
+      "coverage": "Couverture",
+      "test_details": "Détail des tests",
+      "common_system_maintenance_tasks": "Tâches de maintenance courantes",
+      "restart_services": "Redémarrer les services",
+      "create_backup": "Créer une sauvegarde",
+      "optimize_database": "Optimiser la base",
+      "toggle_maintenance": "Mode maintenance",
+      "failed_to_load_system_data": "Impossible de charger les données système",
+      "tests_completed": "Tests terminés",
+      "failed_to_run_tests": "Échec du lancement des tests",
+      "action_failed": "L’action a échoué",
+      "refresh": "Actualiser",
+      "unknown": "Inconnu",
+      "uptime": "Disponibilité",
+      "ofTotalUsers": "sur {{count}} utilisateurs",
+      "never": "Jamais",
+      "runningOf": "{{running}} actifs sur {{total}}",
+      "health": {
+        "healthy": "Bon",
+        "warning": "Attention",
+        "critical": "Critique",
+        "degraded": "Dégradé"
+      },
+      "uptimeFmt": "{{d}} j {{h}} h {{m}} min",
+      "env": {
+        "development": "Développement",
+        "production": "Production",
+        "preview": "Aperçu"
+      }
+    },
+    "studio": {
+      "prospects": {
+        "noMatch": "Aucun prospect ne correspond à ce filtre ou à cette recherche"
+      }
+    },
+    "mysite": {
+      "field": {
+        "title": "Titre",
+        "sub": "Sous-titre",
+        "eyebrow": "Surtitre",
+        "text": "Texte",
+        "p": "Paragraphe",
+        "lead": "Chapô",
+        "description": "Description",
+        "caption": "Légende",
+        "captionAccent": "Légende accent",
+        "highlight": "Mise en avant",
+        "name": "Nom",
+        "role": "Rôle",
+        "photoRole": "Rôle sur la photo",
+        "cta": "Appel à l’action",
+        "ctaButton": "Bouton",
+        "ctaPrimary": "Bouton principal",
+        "ctaSecondary": "Bouton secondaire",
+        "ctaCard": "Carte d’action",
+        "statValue": "Valeur",
+        "statSuffix": "Suffixe",
+        "statTitle": "Titre du chiffre",
+        "statText": "Texte du chiffre",
+        "unit": "Unité",
+        "before": "Avant",
+        "after": "Après",
+        "already": "Déjà client",
+        "submit": "Bouton d’envoi",
+        "error": "Message d’erreur",
+        "messagePh": "Indication du message",
+        "privacy": "Confidentialité",
+        "more": "Plus",
+        "other": "Autre",
+        "popular": "Badge populaire",
+        "scroll": "Indication de défilement",
+        "start": "Début",
+        "close": "Fermer",
+        "whatsapp": "WhatsApp",
+        "whatsappText": "Message WhatsApp",
+        "instagram": "Instagram",
+        "q": "Question",
+        "a": "Réponse",
+        "label": "Libellé",
+        "image": "Image",
+        "alt": "Texte alternatif",
+        "quote": "Citation",
+        "author": "Auteur",
+        "price": "Prix",
+        "period": "Période"
+      }
+    },
+    "trainee": {
+      "checkin": {
+        "edit": "Modifier le bilan",
+        "weightRange": "Poids entre 20 et 400 kg",
+        "stepsRange": "Jusqu’à 100 000 pas"
+      },
+      "player": {
+        "statMinutesN_one": "minute",
+        "statMinutesN_other": "minutes",
+        "statSetsN_one": "série",
+        "statSetsN_other": "séries",
+        "setsCountN_one": "1 série",
+        "setsCountN_other": "{{count}} séries",
+        "minutesCountN_one": "1 min",
+        "minutesCountN_other": "{{count}} min",
+        "statMinutesN_many": "minutes",
+        "statSetsN_many": "séries",
+        "setsCountN_many": "{{count}} séries",
+        "minutesCountN_many": "{{count}} min"
+      },
+      "today": {
+        "doneSummaryN": "{{sets}} · {{minutes}}. Bravo."
+      }
+    },
+    "exerciseBank": {
+      "nameRequired": "Le nom de l’exercice est obligatoire",
+      "muscleRequired": "Le groupe musculaire est obligatoire"
+    },
+    "mealHistory": {
+      "title": "Historique quotidien des repas",
+      "avgTitle": "Calories moyennes (7 jours)",
+      "kcal": "{{value}} kcal",
+      "daysTracked_one": "1 jour suivi",
+      "daysTracked_many": "{{count}} jours suivis",
+      "daysTracked_other": "{{count}} jours suivis"
+    },
+    "trainerDashboard": {
+      "err": {
+        "username": "Ce nom d’utilisateur est déjà pris",
+        "emailTaken": "Cet e-mail est déjà enregistré",
+        "email": "Cette adresse e-mail n’est pas valide",
+        "password": "Le mot de passe n’est pas valide"
+      }
+    },
+    "notFound": {
+      "backHome": "Retour à l’accueil"
+    },
+    "login": {
+      "backToSite": "Retour au site ECshape"
+    },
+    "trainer": {
+      "client": {
+        "daysN_one": "jour d’affilée",
+        "daysN_other": "jours d’affilée",
+        "daysN_many": "jours d’affilée"
+      },
+      "builder": {
+        "planSaved": "Programme enregistré"
+      }
+    }
+  }
+}

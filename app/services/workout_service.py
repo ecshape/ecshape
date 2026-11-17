@@ -623,7 +623,8 @@ class WorkoutService:
             instructions=exercise.instructions,
             category=exercise.category,
             created_by=exercise.created_by,
-            created_at=exercise.created_at
+            created_at=exercise.created_at,
+            library_id=getattr(exercise, "library_id", None),
         )
 
     def _workout_plan_to_response(self, workout_plan: WorkoutPlan) -> WorkoutPlanResponse:

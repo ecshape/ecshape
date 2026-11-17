@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Save, Lock } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, HeartPulse, Lock, Phone, Save, Target, User } from 'lucide-react';
+import { Avatar, BackLink, EmptyState, Field, PageTitle, SectionCard, Skel } from '@/features/trainer/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { useTranslation } from 'react-i18next';
-import { Separator } from "@/components/ui/separator";
 
 interface Client {
   id: number;
@@ -42,6 +37,7 @@ const EditClient: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [client, setClient] = useState<Client | null>(null);
+  const [fetching, setFetching] = useState(true);
   
   const [formData, setFormData] = useState({
     username: '',
@@ -117,7 +113,9 @@ const EditClient: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching client data:', error);
-      setError('Failed to load client data');
+      setError(t('trainer.edit.loadError'));
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -150,16 +148,16 @@ const EditClient: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to update client');
+        throw new Error(errorData.detail || t('trainer.edit.saveError'));
       }
 
       // Update password if changed
       if (changePassword && passwordData.new_password) {
         if (passwordData.new_password !== passwordData.confirm_password) {
-          throw new Error('Passwords do not match');
+          throw new Error(t('trainerDashboard.passwordsDoNotMatch'));
         }
         if (passwordData.new_password.length < 8) {
-          throw new Error('Password must be at least 8 characters');
+          throw new Error(t('trainer.edit.passwordTooShort'));
         }
 
         const passwordResponse = await fetch(`${API_BASE_URL}/auth/password/reset`, {
@@ -173,7 +171,7 @@ const EditClient: React.FC = () => {
 
         if (!passwordResponse.ok) {
           const errorData = await passwordResponse.json();
-          throw new Error(errorData.detail || 'Failed to reset password');
+          throw new Error(errorData.detail || t('trainer.edit.passwordError'));
         }
       }
 
@@ -197,29 +195,41 @@ const EditClient: React.FC = () => {
 
       if (!profileResponse.ok) {
         const errorData = await profileResponse.json();
-        throw new Error(errorData.detail || 'Failed to update profile');
+        throw new Error(errorData.detail || t('trainer.edit.saveError'));
       }
 
-      setSuccess('Client updated successfully');
+      setSuccess(t('trainer.edit.saved'));
       setTimeout(() => {
         navigate(`/client/${clientId}`);
       }, 1500);
     } catch (error: any) {
-      setError(error.message || 'Failed to update client');
+      setError(error.message || t('trainer.edit.saveError'));
     } finally {
       setLoading(false);
     }
   };
 
+  const set = (k: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFormData({ ...formData, [k]: e.target.value });
+
   if (!client) {
     return (
       <Layout currentPage="dashboard">
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Client Not Found</h2>
-            <p className="text-muted-foreground mb-4">{t('clientProfile.clientNotFound')}</p>
-            <Button onClick={() => navigate('/trainer-dashboard')}>Back to Dashboard</Button>
-          </div>
+        <div className="tr-page tr-page--narrow">
+          {fetching ? (
+            <div aria-busy="true" aria-label={t('common.loading')}>
+              <Skel className="mb-6 h-10 w-28 rounded-full" />
+              <Skel className="mb-6 h-24 w-2/3" />
+              <Skel className="mb-4 h-72 rounded-[1.5rem]" />
+              <Skel className="h-72 rounded-[1.5rem]" />
+            </div>
+          ) : (
+            <EmptyState
+              icon={User}
+              title={t('trainer.common.notFoundTitle')}
+              body={error || t('clientProfile.clientNotFound')}
+              action={<button type="button" className="tp-btn tp-btn--primary tp-press" onClick={() => navigate('/trainer-dashboard')}>{t('clientProfile.backToDashboard')}</button>}
+            />
+          )}
         </div>
       </Layout>
     );
@@ -227,216 +237,113 @@ const EditClient: React.FC = () => {
 
   return (
     <Layout currentPage="dashboard">
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/client/${clientId}`)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('clientProfile.editProfile', 'Edit Profile')}</h1>
-            <p className="text-muted-foreground">{client.full_name}</p>
-          </div>
-        </div>
+      <div className="tr-page tr-page--narrow">
+        <BackLink to={`/client/${clientId}`} className="mb-4" />
+        <PageTitle
+          eyebrow={t('clientProfile.editProfile', 'Edit Profile')}
+          title={
+            <span className="flex items-center gap-4">
+              <Avatar name={formData.full_name || client.full_name} seed={client.id} size={64} src={(client as { avatar_url?: string | null }).avatar_url} />
+              <span className="min-w-0">{formData.full_name || client.full_name}</span>
+            </span>
+          }
+        />
 
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive rounded-md text-destructive">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="p-4 bg-green-500/10 border border-green-500 rounded-md text-green-600 dark:text-green-400">
-            {success}
-          </div>
-        )}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <SectionCard icon={User} title={t('clientProfile.basicInformation', 'Basic Information')} className="tp-rise" style={{ ['--i' as string]: 1 }}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={`${t('clientProfile.fullName')} *`} htmlFor="full_name" className="sm:col-span-2">
+                <input id="full_name" className="tp-input" value={formData.full_name} onChange={set('full_name')} required />
+              </Field>
+              <Field label={`${t('clientProfile.username')} *`} htmlFor="username">
+                <input id="username" className="tp-input" dir="ltr" value={formData.username} onChange={set('username')} required />
+              </Field>
+              <Field label={`${t('clientProfile.email')} *`} htmlFor="email">
+                <input id="email" type="email" className="tp-input" dir="ltr" value={formData.email} onChange={set('email')} required />
+              </Field>
+            </div>
+            <div className="tr-toggle mt-4">
+              <label htmlFor="is_active" className="min-w-0 flex-1 cursor-pointer">
+                <span className="block font-semibold">{t('clientProfile.isActive')}</span>
+                <span className="block text-sm text-muted-foreground">{t('trainer.edit.activeHint')}</span>
+              </label>
+              <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
+            </div>
+          </SectionCard>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('clientProfile.basicInformation', 'Basic Information')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="username">{t('clientProfile.username')} *</Label>
-                  <Input
-                    id="username"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">{t('clientProfile.email')} *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="full_name">{t('clientProfile.fullName')} *</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-                <Label htmlFor="is_active">{t('clientProfile.isActive')}</Label>
-              </div>
-            </CardContent>
-          </Card>
+          <SectionCard icon={HeartPulse} title={t('clientProfile.profileInformation', 'Profile Information')} info={t('tt.info.physical')} className="tp-rise" style={{ ['--i' as string]: 2 }}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={`${t('clientProfile.weight')} (${t('trainer.common.kg')})`} htmlFor="weight">
+                <input id="weight" type="number" inputMode="decimal" step="0.1" className="tp-input" value={formData.weight} onChange={set('weight')} />
+              </Field>
+              <Field label={`${t('clientProfile.height')} (${t('trainer.common.cm')})`} htmlFor="height">
+                <input id="height" type="number" inputMode="numeric" className="tp-input" value={formData.height} onChange={set('height')} />
+              </Field>
+            </div>
+          </SectionCard>
 
-          {/* Password Change */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                {t('clientProfile.changePassword', 'Change Password')}
-              </CardTitle>
-            </CardHeader>
-          <CardContent className="space-y-4 overflow-hidden">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="change_password"
-                  checked={changePassword}
-                  onCheckedChange={setChangePassword}
-                />
-                <Label htmlFor="change_password">{t('clientProfile.changePasswordToggle')}</Label>
+          <SectionCard icon={Target} title={t('clientProfile.goalsAndPreferences', 'Goals & Preferences')} info={t('tt.info.goals')} className="tp-rise" style={{ ['--i' as string]: 3 }}>
+            <div className="grid gap-4">
+              <Field label={t('clientProfile.goals')} htmlFor="goals">
+                <textarea id="goals" className="tp-input tr-textarea" value={formData.goals} onChange={set('goals')} rows={3} />
+              </Field>
+              <Field label={<span className="inline-flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-primary" />{t('clientProfile.injuries')}</span>} htmlFor="injuries">
+                <textarea id="injuries" className="tp-input tr-textarea" value={formData.injuries} onChange={set('injuries')} rows={3} />
+              </Field>
+              <Field label={t('clientProfile.preferences')} htmlFor="preferences">
+                <textarea id="preferences" className="tp-input tr-textarea" value={formData.preferences} onChange={set('preferences')} rows={3} />
+              </Field>
+            </div>
+          </SectionCard>
+
+          <SectionCard icon={Phone} title={t('trainer.edit.contact')} className="tp-rise" style={{ ['--i' as string]: 4 }}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={t('clientProfile.phone')} htmlFor="phone">
+                <input id="phone" type="tel" dir="ltr" className="tp-input" value={formData.phone} onChange={set('phone')} />
+              </Field>
+              <Field label={t('clientProfile.emergencyContact')} htmlFor="emergency_contact">
+                <input id="emergency_contact" className="tp-input" value={formData.emergency_contact} onChange={set('emergency_contact')} />
+              </Field>
+              <Field label={t('clientProfile.address')} htmlFor="address" className="sm:col-span-2">
+                <textarea id="address" className="tp-input tr-textarea !min-h-[4.5rem]" value={formData.address} onChange={set('address')} rows={2} />
+              </Field>
+            </div>
+          </SectionCard>
+
+          <SectionCard icon={Lock} title={t('clientProfile.changePassword', 'Change Password')} info={t('tt.info.password')} className="tp-rise" style={{ ['--i' as string]: 5 }}>
+            <div className="tr-toggle">
+              <label htmlFor="change_password" className="min-w-0 flex-1 cursor-pointer font-semibold">{t('clientProfile.changePasswordToggle')}</label>
+              <Switch id="change_password" checked={changePassword} onCheckedChange={setChangePassword} />
+            </div>
+            {changePassword && (
+              <div className="tp-rise mt-4 grid gap-4 sm:grid-cols-2">
+                <Field label={`${t('clientProfile.newPassword')} *`} htmlFor="new_password" hint={t('trainer.edit.passwordTooShort')}>
+                  <input id="new_password" type="password" autoComplete="new-password" className="tp-input" value={passwordData.new_password} onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })} minLength={8} required={changePassword} />
+                </Field>
+                <Field label={`${t('clientProfile.confirmPassword')} *`} htmlFor="confirm_password">
+                  <input id="confirm_password" type="password" autoComplete="new-password" className="tp-input" value={passwordData.confirm_password} onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })} minLength={8} required={changePassword} />
+                </Field>
               </div>
-              {changePassword && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                  <div>
-                    <Label htmlFor="new_password">{t('clientProfile.newPassword')} *</Label>
-                    <Input
-                      id="new_password"
-                      type="password"
-                      value={passwordData.new_password}
-                      onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
-                      minLength={8}
-                      required={changePassword}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirm_password">{t('clientProfile.confirmPassword')} *</Label>
-                    <Input
-                      id="confirm_password"
-                      type="password"
-                      value={passwordData.confirm_password}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
-                      minLength={8}
-                      required={changePassword}
-                    />
-                  </div>
-                </div>
+            )}
+          </SectionCard>
+
+          <div className="tr-actionbar ec-glass">
+            <div className="min-w-0 flex-1" aria-live="polite">
+              {error ? (
+                <p className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--tr-bad))]"><AlertTriangle className="h-4 w-4 flex-none" />{error}</p>
+              ) : success ? (
+                <p className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--tr-ok))]"><CheckCircle2 className="h-4 w-4 flex-none" />{success}</p>
+              ) : (
+                <p className="truncate text-sm text-muted-foreground">{client.full_name}</p>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Profile Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('clientProfile.profileInformation', 'Profile Information')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="weight">{t('clientProfile.weight')} (kg)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    step="0.1"
-                    value={formData.weight}
-                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="height">{t('clientProfile.height')} (cm)</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={formData.height}
-                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="goals">{t('clientProfile.goals')}</Label>
-                <Textarea
-                  id="goals"
-                  value={formData.goals}
-                  onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="injuries">{t('clientProfile.injuries')}</Label>
-                <Textarea
-                  id="injuries"
-                  value={formData.injuries}
-                  onChange={(e) => setFormData({ ...formData, injuries: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="preferences">{t('clientProfile.preferences')}</Label>
-                <Textarea
-                  id="preferences"
-                  value={formData.preferences}
-                  onChange={(e) => setFormData({ ...formData, preferences: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">{t('clientProfile.phone')}</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="address">{t('clientProfile.address')}</Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  rows={2}
-                />
-              </div>
-              <div>
-                <Label htmlFor="emergency_contact">{t('clientProfile.emergencyContact')}</Label>
-                <Input
-                  id="emergency_contact"
-                  value={formData.emergency_contact}
-                  onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => navigate(`/client/${clientId}`)}>
-              {t('common.cancel')}
-            </Button>
-            <Button type="submit" disabled={loading} className="gradient-orange">
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? t('common.saving') : t('common.save')}
-            </Button>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={() => navigate(`/client/${clientId}`)}>{t('common.cancel')}</button>
+              <button type="submit" disabled={loading} className="tp-btn tp-btn--primary tp-btn--sm tp-press">
+                <Save className="h-4 w-4" />
+                {loading ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -445,4 +352,3 @@ const EditClient: React.FC = () => {
 };
 
 export default EditClient;
-

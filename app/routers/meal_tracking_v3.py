@@ -12,7 +12,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
@@ -142,6 +143,7 @@ def get_food_catalog(
                 is_public=item.is_public,
                 created_by=item.created_by,
                 macro_type=item.macro_type,
+                image_url=getattr(item, "image_url", None),
             )
         )
     return payload
@@ -545,12 +547,18 @@ def get_v3_day_view(
             target_day=target_day,
             meal_plan=None,
         )
+        free = (
+            db.query(ClientMealChoice)
+            .filter(ClientMealChoice.client_id == target_client_id, ClientMealChoice.date >= start_of_day, ClientMealChoice.date < end_of_day)
+            .order_by(ClientMealChoice.date.desc())
+            .all()
+        )
         return V3DayViewResponse(
             date=target_day.date().isoformat(),
             meal_plan=None,
             slots=[],
             daily_macros=daily_macros,
-            choices=[],
+            choices=[ClientMealChoiceResponse.model_validate(c) for c in free],
         )
 
     # Load raw choices for the day.
@@ -624,7 +632,12 @@ def get_v3_meal_completions(
                 .first()
             )
             if not plan_exists:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+                # A trainer's own client without an active meal plan simply has no completions (was a 403 on every
+                # dashboard load, A2A studio F9); other trainers' clients stay forbidden.
+                own = db.query(User).filter(User.id == target_client_id, User.trainer_id == current_user.id).first()
+                if not own:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+                return []
 
     target_date = _parse_v3_date_to_day(date) if date else datetime.utcnow()
     normalized_date = _normalize_completion_datetime_to_day(target_date)
@@ -645,6 +658,7 @@ def get_v3_meal_completions(
 @router.post("/completions", response_model=MealCompletionStatusResponse)
 def upsert_v3_meal_completion(
     completion_data: MealCompletionStatusCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -693,6 +707,7 @@ def upsert_v3_meal_completion(
         existing_status.completed_at = completed_at
         db.commit()
         db.refresh(existing_status)
+        queue_trainer_refresh(background_tasks, db, target_client_id, "meal")  # live trainer refresh (r2 R2)
         return MealCompletionStatusResponse.model_validate(existing_status)
 
     new_status = MealCompletionStatus(
@@ -706,12 +721,14 @@ def upsert_v3_meal_completion(
     db.add(new_status)
     db.commit()
     db.refresh(new_status)
+    queue_trainer_refresh(background_tasks, db, target_client_id, "meal")  # live trainer refresh (r2 R2)
     return MealCompletionStatusResponse.model_validate(new_status)
 
 
 @router.post("/logs", response_model=ClientMealChoiceResponse, status_code=status.HTTP_201_CREATED)
 def create_v3_log(
     payload: V3MealLogCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -750,6 +767,7 @@ def create_v3_log(
     db.commit()
     db.refresh(choice)
 
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live trainer refresh (r2 R2)
     return ClientMealChoiceResponse.model_validate(choice)
 
 
@@ -757,6 +775,7 @@ def create_v3_log(
 def update_v3_log(
     choice_id: int,
     choice_data: ClientMealChoiceUpdate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -771,6 +790,8 @@ def update_v3_log(
             setattr(choice, field, value)
 
         db.commit()
+
+        queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
         db.refresh(choice)
         return ClientMealChoiceResponse.model_validate(choice)
 
@@ -783,6 +804,8 @@ def update_v3_log(
         setattr(choice, field, value)
 
     db.commit()
+
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
     db.refresh(choice)
     return ClientMealChoiceResponse.model_validate(choice)
 
@@ -790,6 +813,7 @@ def update_v3_log(
 @router.delete("/logs/{choice_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_v3_log(
     choice_id: int,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -802,5 +826,6 @@ def delete_v3_log(
 
     db.delete(choice)
     db.commit()
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
     return None
 

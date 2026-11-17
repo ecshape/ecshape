@@ -16,7 +16,9 @@ class ProgressEntry(Base):
     chest = Column(Float, nullable=True)  # in cm
     waist = Column(Float, nullable=True)  # in cm
     hips = Column(Float, nullable=True)  # in cm
-    thighs = Column(Float, nullable=True)  # in cm
+    thighs = Column(Float, nullable=True)  # in cm (deprecated - use right_thigh and left_thigh)
+    right_thigh = Column(Float, nullable=True)  # in cm - right thigh circumference (QA #55)
+    left_thigh = Column(Float, nullable=True)  # in cm - left thigh circumference
     arms = Column(Float, nullable=True)  # in cm (deprecated - use right_arm and left_arm)
     right_arm = Column(Float, nullable=True)  # in cm - right arm circumference
     left_arm = Column(Float, nullable=True)  # in cm - left arm circumference

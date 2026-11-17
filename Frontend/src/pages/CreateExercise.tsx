@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
@@ -387,7 +388,7 @@ const CreateExercise = () => {
               Back
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Create New Exercise</h1>
+              <h1 className="ec-page-title text-foreground">Create New Exercise</h1>
               <p className="text-sm text-muted-foreground">Add a new exercise to your database</p>
             </div>
           </div>
@@ -806,7 +807,7 @@ const CreateExercise = () => {
             >
               {loading ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <EcSpinner className="w-3 h-3" mono />
                   <span>Creating...</span>
                 </div>
               ) : (

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.auth.utils import get_current_user
@@ -50,6 +51,33 @@ from app.models.workout import Exercise
 router = APIRouter()
 
 # ============ Exercise Metadata ============
+
+_LIB_INDEX = None
+
+
+def _library_muscles(library_id, with_details: bool = False) -> dict:
+    """Muscles (and, for the day view, level / equipment / instructions) of a free-exercise-db exercise.
+
+    Additive fields for the trainee app body map; empty when the exercise is not from the library.
+    """
+    global _LIB_INDEX
+    if not library_id or str(library_id).startswith("wger:"):
+        return {}
+    if _LIB_INDEX is None:
+        try:
+            from app.routers.exercise_library import _library
+            _LIB_INDEX = {e["id"]: e for e in _library()}
+        except Exception:
+            _LIB_INDEX = {}
+    e = _LIB_INDEX.get(library_id)
+    if not e:
+        return {}
+    out = {"primary_muscles": e.get("primaryMuscles", []), "secondary_muscles": e.get("secondaryMuscles", [])}
+    if with_details:
+        out.update({"level": e.get("level"), "equipment": e.get("equipment"), "mechanic": e.get("mechanic"),
+                    "library_instructions": e.get("instructions", [])})
+    return out
+
 
 @router.get("/exercises/{exercise_id}", response_model=ExerciseResponse)
 def get_exercise_detail(
@@ -159,9 +187,125 @@ def create_workout_plan(
     
     return workout_plan
 
+def _archive_plan(db: Session, plan, cache: dict):
+    """Inactive plan that keeps removed days / exercises with logged history (never deleted, A2A cross B1)."""
+    if "__plan__" in cache:
+        return cache["__plan__"]
+    archive = db.query(NewWorkoutPlan).filter(
+        NewWorkoutPlan.client_id == plan.client_id,
+        NewWorkoutPlan.is_active == False,  # noqa: E712
+        NewWorkoutPlan.name == "__history__",
+    ).first()
+    if not archive:
+        archive = NewWorkoutPlan(
+            client_id=plan.client_id, trainer_id=plan.trainer_id, name="__history__",
+            description="Days and exercises removed from earlier plans, kept for the client's history",
+            split_type=WorkoutSplitType.CUSTOM, is_active=False,
+        )
+        db.add(archive)
+        db.flush()
+    cache["__plan__"] = archive
+    return archive
+
+
+def _archive_day(db: Session, plan, day_name: str, cache: dict):
+    """Day of the archive plan (same name as the day an exercise was removed from)."""
+    key = day_name
+    if key in cache:
+        return cache[key]
+    archive = _archive_plan(db, plan, cache)
+    day = db.query(WorkoutDay).filter(WorkoutDay.workout_plan_id == archive.id, WorkoutDay.name == day_name).first()
+    if not day:
+        n = db.query(WorkoutDay).filter(WorkoutDay.workout_plan_id == archive.id).count()
+        day = WorkoutDay(workout_plan_id=archive.id, name=day_name, order_index=n)
+        db.add(day)
+        db.flush()
+    cache[key] = day
+    return day
+
+
+def _sync_plan_days(db: Session, plan, days_in) -> None:
+    """Update the plan's days and exercises IN PLACE. Deleting and recreating them cascaded to every workout session
+    and logged set of the client (history wiped on each plan save, A2A cross B1). Days / exercises are matched by id,
+    then by position / exercise; anything removed that has history moves to an inactive archive plan instead."""
+    existing_days = sorted(
+        db.query(WorkoutDay).filter(WorkoutDay.workout_plan_id == plan.id).all(), key=lambda d: d.order_index or 0
+    )
+    by_id = {d.id: d for d in existing_days}
+    original_names = {d.id: d.name for d in existing_days}
+    used = set()
+    cache: dict = {}
+    pairs = []
+    # Clients that send day ids (current builder): a day without an id is NEW — never reuse a removed day for it, or
+    # that day's past sessions would be renamed (r2 R1). Legacy payloads without any id: match by name, then position.
+    with_ids = any(getattr(d, "id", None) for d in days_in)
+    for i, day_in in enumerate(days_in):
+        day = by_id.get(getattr(day_in, "id", None) or -1)
+        if day is not None and day.id in used:
+            day = None
+        if day is None and not with_ids:
+            day = next((d for d in existing_days if d.id not in used and d.name == day_in.name), None)
+            if day is None:
+                day = next((d for d in existing_days if d.id not in used and (d.order_index == day_in.order_index or d.order_index == i)), None)
+        if day is None:
+            day = WorkoutDay(workout_plan_id=plan.id, name=day_in.name, order_index=day_in.order_index)
+            db.add(day)
+            db.flush()
+        used.add(day.id)
+        pairs.append((day, day_in))
+
+    for d in existing_days:
+        if d.id in used:
+            continue
+        has_history = db.query(NewWorkoutSession).filter(NewWorkoutSession.workout_day_id == d.id).first() is not None
+        if has_history:
+            # the whole day (with its exercises and sessions) moves to the archive plan
+            d.workout_plan_id = _archive_plan(db, plan, cache).id
+        else:
+            db.delete(d)
+
+    for day, day_in in pairs:
+        day.name = day_in.name
+        day.day_type = day_in.day_type
+        day.order_index = day_in.order_index
+        day.notes = day_in.notes
+        day.estimated_duration = getattr(day_in, "estimated_duration", None)
+        current = list(db.query(NewWorkoutExercise).filter(NewWorkoutExercise.workout_day_id == day.id).all())
+        cur_by_id = {e.id: e for e in current}
+        taken = set()
+        for ex_in in day_in.exercises:
+            ex = cur_by_id.get(getattr(ex_in, "id", None) or -1)
+            if ex is None or ex.id in taken:
+                ex = next((e for e in current if e.id not in taken and e.exercise_id == ex_in.exercise_id), None)
+            if ex is None:
+                ex = NewWorkoutExercise(workout_day_id=day.id, exercise_id=ex_in.exercise_id, order_index=ex_in.order_index)
+                db.add(ex)
+            if ex.id is not None:
+                taken.add(ex.id)
+            ex.exercise_id = ex_in.exercise_id
+            ex.order_index = ex_in.order_index
+            ex.group_name = getattr(ex_in, "group_name", None)
+            ex.target_sets = ex_in.target_sets
+            ex.target_reps = ex_in.target_reps
+            ex.target_weight = ex_in.target_weight
+            ex.rest_seconds = ex_in.rest_seconds
+            ex.tempo = ex_in.tempo
+            ex.notes = ex_in.notes
+            ex.video_url = getattr(ex_in, "video_url", None)
+        for e in current:
+            if e.id in taken:
+                continue
+            if db.query(SetCompletion).filter(SetCompletion.workout_exercise_id == e.id).first() is not None:
+                e.workout_day_id = _archive_day(db, plan, original_names.get(day.id, day.name), cache).id
+            else:
+                db.delete(e)
+    db.flush()
+
+
 @router.post("/plans/complete", response_model=WorkoutPlanResponse, status_code=status.HTTP_201_CREATED)
 def create_complete_workout_plan(
     plan_data: CompleteWorkoutPlanCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -224,28 +368,6 @@ def create_complete_workout_plan(
         existing_plan.trainer_id = current_user.id
         existing_plan.is_active = True
 
-        # Remove existing days/exercises
-        try:
-            # Eagerly load exercises to avoid lazy loading issues
-            existing_plan_with_exercises = db.query(NewWorkoutPlan).options(
-                joinedload(NewWorkoutPlan.workout_days).joinedload(WorkoutDay.workout_exercises)
-            ).filter(NewWorkoutPlan.id == existing_plan.id).first()
-            
-            if existing_plan_with_exercises and existing_plan_with_exercises.workout_days:
-                for day in list(existing_plan_with_exercises.workout_days):
-                    # Delete exercises first to avoid foreign key issues
-                    if day.workout_exercises:
-                        for exercise in list(day.workout_exercises):
-                            db.delete(exercise)
-                    db.delete(day)
-            db.flush()
-        except Exception as e:
-            db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to update workout plan: {str(e)}"
-            )
-
         target_plan = existing_plan
     else:
         # Use a default split_type if None to avoid NOT NULL constraint
@@ -277,36 +399,10 @@ def create_complete_workout_plan(
         db.add(target_plan)
         db.flush()  # Get id
     
-    # Create workout days
-    for day_data in plan_data.workout_days:
-        workout_day = WorkoutDay(
-            workout_plan_id=target_plan.id,
-            name=day_data.name,
-            day_type=day_data.day_type,
-            order_index=day_data.order_index,
-            notes=day_data.notes,
-            estimated_duration=getattr(day_data, "estimated_duration", None)
-        )
-        db.add(workout_day)
-        db.flush()
-        
-        # Create workout exercises
-        for exercise_data in day_data.exercises:
-            workout_exercise = NewWorkoutExercise(
-                workout_day_id=workout_day.id,
-                exercise_id=exercise_data.exercise_id,
-                order_index=exercise_data.order_index,
-                group_name=getattr(exercise_data, "group_name", None),
-                target_sets=exercise_data.target_sets,  # Don't force default, allow None
-                target_reps=exercise_data.target_reps,  # Don't force default, allow None
-                target_weight=exercise_data.target_weight,
-                rest_seconds=exercise_data.rest_seconds,  # Don't force default, allow None
-                tempo=exercise_data.tempo,
-                notes=exercise_data.notes,  # Don't force default, allow None
-                video_url=getattr(exercise_data, "video_url", None),
-            )
-            db.add(workout_exercise)
-    
+    _sync_plan_days(db, target_plan, plan_data.workout_days)
+    # the trainee's open screens refetch the new plan (r3 #10)
+    background_tasks.add_task(websocket_service.send_live_refresh, plan_data.client_id, "plan")
+
     try:
         db.commit()
         db.refresh(target_plan)
@@ -392,6 +488,7 @@ def create_complete_workout_plan(
 def get_workout_plans(
     client_id: int = None,
     active_only: bool = True,
+    include_history: bool = False,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -419,7 +516,9 @@ def get_workout_plans(
     if active_only:
         query = query.filter(NewWorkoutPlan.is_active == True)
     
-    plans = query.all()
+    # the history archive (removed days / exercises with logged sets) is not a plan anyone picks
+    # (history screens ask for it with include_history=true to name exercises removed from the plan, r2 R2)
+    plans = [p for p in query.all() if include_history or p.name != "__history__"]
     
     # Manually serialize to avoid enum serialization issues
     return [
@@ -443,7 +542,7 @@ def get_workout_plans(
                     "id": day.id,
                     "workout_plan_id": day.workout_plan_id,
                     "name": day.name,
-                    "day_type": day.day_type.value if hasattr(day.day_type, 'value') else str(day.day_type),
+                    "day_type": day.day_type.value if hasattr(day.day_type, 'value') else (day.day_type or None),
                     "order_index": day.order_index,
                     "notes": day.notes,
                     "estimated_duration": day.estimated_duration,
@@ -464,7 +563,15 @@ def get_workout_plans(
                     "video_url": ex.video_url,
                     "group_name": ex.group_name,
                             "created_at": ex.created_at.isoformat() if ex.created_at else None,
-                            "exercise_name": ex.exercise.name if ex.exercise else None
+                            "exercise_name": ex.exercise.name if ex.exercise else None,
+                            "exercise": {
+                                "id": ex.exercise.id,
+                                "name": ex.exercise.name,
+                                "muscle_group": ex.exercise.muscle_group,
+                                "image_path": ex.exercise.image_path,
+                                "library_id": getattr(ex.exercise, "library_id", None),
+                                **_library_muscles(getattr(ex.exercise, "library_id", None)),
+                            } if ex.exercise else None,
                         }
                         for ex in day.workout_exercises
                     ]
@@ -761,6 +868,9 @@ def get_workout_day(
                 "muscle_group": ex.exercise.muscle_group,
                 "equipment_needed": ex.exercise.equipment_needed,
                 "instructions": ex.exercise.instructions,
+                "image_path": ex.exercise.image_path,
+                "library_id": getattr(ex.exercise, "library_id", None),
+                **_library_muscles(getattr(ex.exercise, "library_id", None), with_details=True),
             }
         
         exercises_data.append({
@@ -948,6 +1058,9 @@ def update_workout_session(
         raise HTTPException(status_code=403, detail="Not authorized")
     
     for field, value in session_data.model_dump(exclude_unset=True).items():
+        # aware timestamps from the app (ISO with Z) are stored as naive UTC like the rest of the database
+        if isinstance(value, datetime) and value.tzinfo is not None:
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
         setattr(session, field, value)
 
     db.commit()
@@ -967,6 +1080,8 @@ def update_workout_session(
         )
         if created:
             background_tasks.add_task(websocket_service.send_new_notification_hint, created.recipient_id)
+        if client and client.trainer_id:
+            background_tasks.add_task(websocket_service.send_live_refresh, client.trainer_id, "workout")
 
     body = WorkoutSessionResponse.model_validate(session)
     return JSONResponse(content=body.model_dump(mode="json"), background=background_tasks)
@@ -983,7 +1098,16 @@ def get_workout_sessions(
     
     if current_user.role == UserRole.CLIENT:
         query = query.filter(NewWorkoutSession.client_id == current_user.id)
-    elif current_user.role == UserRole.TRAINER and client_id:
+    elif current_user.role == UserRole.TRAINER:
+        # A trainer only ever sees their own clients' sessions (was: everyone's, r2 N2)
+        own_ids = [u.id for u in db.query(User.id).filter(User.trainer_id == current_user.id).all()]
+        if client_id is not None:
+            if client_id not in own_ids:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your client")
+            query = query.filter(NewWorkoutSession.client_id == client_id)
+        else:
+            query = query.filter(NewWorkoutSession.client_id.in_(own_ids or [-1]))
+    elif client_id is not None:
         query = query.filter(NewWorkoutSession.client_id == client_id)
     # Admins see all
     
@@ -1005,6 +1129,9 @@ def record_set_completion(
     """Record a completed set (client only)"""
     if current_user.role != UserRole.CLIENT:
         raise HTTPException(status_code=403, detail="Only clients can record set completions")
+    owned = db.query(NewWorkoutSession).filter(NewWorkoutSession.id == session_id, NewWorkoutSession.client_id == current_user.id).first()
+    if not owned:
+        raise HTTPException(status_code=404, detail="Session not found")
     
     set_completion = SetCompletion(
         workout_session_id=session_id,
@@ -1016,7 +1143,9 @@ def record_set_completion(
         rest_taken=set_data.rest_taken,
         rpe=set_data.rpe,
         form_rating=set_data.form_rating,
-        notes=set_data.notes
+        notes=set_data.notes,
+        performed_exercise_name=set_data.performed_exercise_name,
+        performed_library_id=set_data.performed_library_id,
     )
     
     db.add(set_completion)
@@ -1035,7 +1164,7 @@ def create_set_completion_direct(
 ):
     """Create a set completion directly (simplified endpoint for clients)"""
     # Create or get today's workout session
-    from datetime import datetime
+    from datetime import datetime, timezone
     today = datetime.now().date()
     
     # Get the workout exercise to find the workout day
@@ -1057,7 +1186,7 @@ def create_set_completion_direct(
         workout_session = NewWorkoutSession(
             client_id=current_user.id,
             workout_day_id=workout_exercise.workout_day_id,
-            started_at=datetime.now(),
+            started_at=datetime.utcnow(),  # UTC like every other stored timestamp (A2A cross M2)
             is_completed=False
         )
         db.add(workout_session)
@@ -1076,7 +1205,9 @@ def create_set_completion_direct(
         rpe=set_data.rpe,
         form_rating=set_data.form_rating,
         notes=set_data.notes,
-        completed_at=set_data.completed_at or datetime.now()
+        completed_at=(set_data.completed_at.astimezone(timezone.utc).replace(tzinfo=None) if set_data.completed_at and set_data.completed_at.tzinfo else set_data.completed_at) or datetime.utcnow(),
+        performed_exercise_name=set_data.performed_exercise_name,
+        performed_library_id=set_data.performed_library_id,
     )
     
     db.add(set_completion)
@@ -1190,3 +1321,26 @@ def get_personal_records(
     
     return query.all()
 
+
+
+def ensure_set_substitution_columns(engine) -> None:
+    """Additive migration: set_completions_v2.performed_* (SQLite and Postgres, idempotent)."""
+    import logging
+    from sqlalchemy import inspect, text
+    try:
+        insp = inspect(engine)
+        if "set_completions_v2" not in insp.get_table_names():
+            return
+        cols = {c["name"] for c in insp.get_columns("set_completions_v2")}
+        with engine.begin() as conn:
+            if "performed_exercise_name" not in cols:
+                conn.execute(text("ALTER TABLE set_completions_v2 ADD COLUMN performed_exercise_name VARCHAR(200)"))
+            if "performed_library_id" not in cols:
+                conn.execute(text("ALTER TABLE set_completions_v2 ADD COLUMN performed_library_id VARCHAR(120)"))
+    except Exception as e:  # never block startup
+        logging.getLogger(__name__).error("set substitution migration failed: %s", e)
+
+
+from app.database import engine as _ws_engine  # noqa: E402
+
+ensure_set_substitution_columns(_ws_engine)

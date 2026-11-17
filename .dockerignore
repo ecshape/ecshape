@@ -105,6 +105,7 @@ Frontend/playwright-report/
 *.md
 !README.md
 !LOCAL_DEVELOPMENT.md
+!app/agent_skills/*.md
 
 # IDE and editor files
 *.sublime-*

@@ -1,0 +1,167 @@
+{
+  "en": {
+    "chatCards": {
+      "request": "Exercise request",
+      "accept": "Add to plan",
+      "alternative": "Alternative",
+      "decline": "Not now",
+      "pickAlternative": "Pick an easier or harder option",
+      "day": "Plan day",
+      "chooseDay": "Choose a day",
+      "addToDay": "Add to this day",
+      "cancel": "Cancel",
+      "noPlan": "This client has no active training plan yet.",
+      "inDay": "In: {{day}}",
+      "status": {
+        "accepted": "Added",
+        "declined": "Not now",
+        "alternative": "Alternative added"
+      },
+      "reply": {
+        "accept": "Added to your plan",
+        "decline": "Not for now",
+        "alternative": "Try this instead"
+      },
+      "msg": {
+        "accept": "Done! I added {{name}} to {{day}} 💪",
+        "decline": "Let's keep {{name}} for later — your current plan already covers it.",
+        "alternative": "Good idea! Let's do {{name}} instead — I added it to {{day}}."
+      },
+      "menu": {
+        "label": "Weekly menu",
+        "meals_one": "{{count}} meal a day",
+        "meals_other": "{{count}} meals a day",
+        "review": "Review and approve",
+        "waiting": "Waiting for the client's approval",
+        "approved": "Menu approved",
+        "approvedShort": "Approved",
+        "reviewHelp": "Go through each meal: keep your coach's pick or choose an alternative, then approve.",
+        "prev": "Previous meal",
+        "approveMeal": "Approve this meal",
+        "confirm": "Confirm my menu",
+        "progress": "{{done}} of {{total}} meals approved",
+        "step": "Meal {{n}} of {{total}}",
+        "coachPick": "Coach's pick",
+        "portion": "portion",
+        "acceptMsg": "I approved the menu “{{name}}” ✅",
+        "sendButton": "Send a weekly menu",
+        "sendTitle": "Send a weekly menu",
+        "sendHelp": "{{name}} reviews it meal by meal in the chat and picks alternatives; once approved it becomes their meal plan.",
+        "sendTo": "Send to {{name}}",
+        "sendMsg": "Here is your weekly menu “{{name}}”. Go through each meal, pick what you prefer and approve 🙌"
+      },
+      "details": "Exercise details",
+      "noDetails": "No more details for this exercise."
+    }
+  },
+  "he": {
+    "chatCards": {
+      "request": "בקשת תרגיל",
+      "accept": "הוסף לתוכנית",
+      "alternative": "חלופה",
+      "decline": "לא עכשיו",
+      "pickAlternative": "בחר חלופה קלה או קשה יותר",
+      "day": "יום בתוכנית",
+      "chooseDay": "בחר יום",
+      "addToDay": "הוסף ליום הזה",
+      "cancel": "ביטול",
+      "noPlan": "למתאמן אין עדיין תוכנית אימון פעילה.",
+      "inDay": "ב: {{day}}",
+      "status": {
+        "accepted": "נוסף",
+        "declined": "לא עכשיו",
+        "alternative": "נוספה חלופה"
+      },
+      "reply": {
+        "accept": "נוסף לתוכנית שלך",
+        "decline": "לא כרגע",
+        "alternative": "נסה את זה במקום"
+      },
+      "msg": {
+        "accept": "בוצע! הוספתי את {{name}} ל{{day}} 💪",
+        "decline": "נשאיר את {{name}} להמשך — התוכנית הנוכחית כבר מכסה את זה.",
+        "alternative": "רעיון טוב! נעשה במקום זה {{name}} — הוספתי ל{{day}}."
+      },
+      "menu": {
+        "label": "תפריט שבועי",
+        "meals_one": "ארוחה אחת ביום",
+        "meals_other": "{{count}} ארוחות ביום",
+        "review": "לעבור ולאשר",
+        "waiting": "ממתין לאישור המתאמן",
+        "approved": "התפריט אושר",
+        "approvedShort": "אושר",
+        "reviewHelp": "עברו על כל ארוחה: השאירו את בחירת המאמן או בחרו חלופה, ואשרו.",
+        "prev": "הארוחה הקודמת",
+        "approveMeal": "אישור הארוחה",
+        "confirm": "אישור התפריט שלי",
+        "progress": "{{done}} מתוך {{total}} ארוחות אושרו",
+        "step": "ארוחה {{n}} מתוך {{total}}",
+        "coachPick": "בחירת המאמן",
+        "portion": "מנה",
+        "acceptMsg": "אישרתי את התפריט “{{name}}” ✅",
+        "sendButton": "שליחת תפריט שבועי",
+        "sendTitle": "שליחת תפריט שבועי",
+        "sendHelp": "{{name}} יעבור עליו ארוחה אחר ארוחה בצ׳אט ויבחר חלופות; אחרי האישור הוא יהפוך לתפריט שלו.",
+        "sendTo": "שליחה ל{{name}}",
+        "sendMsg": "הנה התפריט השבועי שלך “{{name}}”. עבור על כל ארוחה, בחר מה שאתה מעדיף ואשר 🙌"
+      },
+      "details": "פרטי התרגיל",
+      "noDetails": "אין פרטים נוספים על התרגיל הזה."
+    }
+  },
+  "fr": {
+    "chatCards": {
+      "request": "Demande d'exercice",
+      "accept": "Ajouter au plan",
+      "alternative": "Alternative",
+      "decline": "Pas maintenant",
+      "pickAlternative": "Choisissez une option plus facile ou plus dure",
+      "day": "Jour du plan",
+      "chooseDay": "Choisir un jour",
+      "addToDay": "Ajouter à ce jour",
+      "cancel": "Annuler",
+      "noPlan": "Ce client n'a pas encore de plan d'entraînement actif.",
+      "inDay": "Dans : {{day}}",
+      "status": {
+        "accepted": "Ajouté",
+        "declined": "Pas maintenant",
+        "alternative": "Alternative ajoutée"
+      },
+      "reply": {
+        "accept": "Ajouté à votre plan",
+        "decline": "Pas pour l'instant",
+        "alternative": "Essayez plutôt ceci"
+      },
+      "msg": {
+        "accept": "C'est fait ! J'ai ajouté {{name}} à {{day}} 💪",
+        "decline": "Gardons {{name}} pour plus tard — votre plan actuel le couvre déjà.",
+        "alternative": "Bonne idée ! Faisons plutôt {{name}} — je l'ai ajouté à {{day}}."
+      },
+      "menu": {
+        "label": "Menu de la semaine",
+        "meals_one": "{{count}} repas par jour",
+        "meals_other": "{{count}} repas par jour",
+        "review": "Parcourir et valider",
+        "waiting": "En attente de la validation du client",
+        "approved": "Menu validé",
+        "approvedShort": "Validé",
+        "reviewHelp": "Parcourez chaque repas : gardez le choix du coach ou prenez une alternative, puis validez.",
+        "prev": "Repas précédent",
+        "approveMeal": "Valider ce repas",
+        "confirm": "Valider mon menu",
+        "progress": "{{done}} repas sur {{total}} validés",
+        "step": "Repas {{n}} sur {{total}}",
+        "coachPick": "Choix du coach",
+        "portion": "portion",
+        "acceptMsg": "J'ai validé le menu « {{name}} » ✅",
+        "sendButton": "Envoyer un menu de la semaine",
+        "sendTitle": "Envoyer un menu de la semaine",
+        "sendHelp": "{{name}} le parcourt repas par repas dans le chat et choisit des alternatives ; une fois validé, il devient son plan alimentaire.",
+        "sendTo": "Envoyer à {{name}}",
+        "sendMsg": "Voici votre menu de la semaine « {{name}} ». Parcourez chaque repas, choisissez ce que vous préférez et validez 🙌"
+      },
+      "details": "Détails de l’exercice",
+      "noDetails": "Pas d’autres détails pour cet exercice."
+    }
+  }
+}

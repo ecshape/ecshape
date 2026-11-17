@@ -1,4 +1,5 @@
 import React from 'react';
+import { parseDate } from '@/features/trainee/format';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { YesNoSkipButtons } from './YesNoSkipButtons';
@@ -51,7 +52,7 @@ export const ClientCheckInDetail: React.FC<ClientCheckInDetailProps> = ({
           })}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          {t('checkIn.submittedAt')}: {format(new Date(checkIn.created_at), 'PPp', {
+          {t('checkIn.submittedAt')}: {format(parseDate(checkIn.created_at) ?? new Date(), 'PPp', {
             locale: i18n.language === 'he' ? he : enUS
           })}
         </p>

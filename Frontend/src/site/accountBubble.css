@@ -1,0 +1,16 @@
+/* Account bubble in the public site nav (#13): small, round, non-intrusive */
+.ec-site .ec-me {
+  position: relative; flex: none; display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
+  background: var(--accent, #f26b1d); color: #fff; font: 700 13px/1 inherit; text-decoration: none;
+  box-shadow: 0 0 0 2px var(--surface-2, rgba(255, 255, 255, .12)), 0 6px 16px -6px rgba(0, 0, 0, .5);
+  transition: transform .35s cubic-bezier(.22, 1, .36, 1), box-shadow .35s;
+}
+.ec-site .ec-me img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ec-site .ec-me:hover { transform: scale(1.06); box-shadow: 0 0 0 2px var(--accent, #f26b1d), 0 8px 20px -6px rgba(0, 0, 0, .55); }
+.ec-site .ec-me:focus-visible { outline: 2px solid var(--accent, #f26b1d); outline-offset: 3px; }
+.ec-site .ec-me--phone { display: none; margin-inline-start: auto; width: 36px; height: 36px; }
+@media (max-width: 900px) {
+  .ec-site .ec-me--phone { display: grid; }
+}
+@media (prefers-reduced-motion: reduce) { .ec-site .ec-me { transition: none; } }

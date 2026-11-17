@@ -1,62 +1,52 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Globe, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Globe } from 'lucide-react';
+import { APP_LANGUAGES, setLanguage } from '@/i18n/setLanguage';
+import { cn } from '@/lib/utils';
 
-const languages = [
-  { code: 'he', name: 'עברית', flag: '🇮🇱' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-];
-
-const LanguageSelector: React.FC = () => {
+/** Language picker for the portal: Hebrew, English, French. */
+const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact }) => {
   const { i18n, t } = useTranslation();
-
-  const changeLanguage = (languageCode: string) => {
-    // Store preference first
-    localStorage.setItem('i18nextLng', languageCode);
-    // Change language with explicit lng option to ensure it's saved
-    i18n.changeLanguage(languageCode, { lng: languageCode });
-    // Update HTML dir attribute for RTL support
-    document.documentElement.dir = languageCode === 'he' ? 'rtl' : 'ltr';
-    // Update HTML lang attribute
-    document.documentElement.lang = languageCode;
-  };
-
-  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
+  const current = APP_LANGUAGES.find((l) => i18n.language?.startsWith(l.code)) || APP_LANGUAGES[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
-          <Globe className="h-5 w-5" />
-          <span className="sr-only">{t('common.selectLanguage')}</span>
-        </Button>
+        <button
+          type="button"
+          className={cn(
+            'inline-flex h-10 items-center gap-1.5 rounded-full border border-border/70 px-3 text-xs font-bold transition-colors hover:bg-foreground/[.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            compact && 'px-2.5'
+          )}
+          aria-label={t('common.selectLanguage')}
+        >
+          <Globe className="h-4 w-4" />
+          <span>{current.short}</span>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[150px]">
-        {languages.map((language) => (
-          <DropdownMenuItem
-            key={language.code}
-            onClick={() => changeLanguage(language.code)}
-            className={`cursor-pointer ${
-              currentLanguage.code === language.code 
-                ? 'font-semibold' 
-                : ''
-            }`}
-          >
-            <span className="mr-2">{language.flag}</span>
-            <span>{language.name}</span>
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="end" className="w-44">
+        {APP_LANGUAGES.map((lang) => {
+          const active = lang.code === current.code;
+          return (
+            <DropdownMenuItem
+              key={lang.code}
+              onClick={() => setLanguage(lang.code)}
+              className={cn('justify-between gap-3', active && 'bg-primary/10 font-semibold text-primary')}
+            >
+              <span>{lang.name}</span>
+              {active ? <Check className="h-4 w-4" /> : <span className="text-xs text-muted-foreground">{lang.short}</span>}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
 export default LanguageSelector;
-

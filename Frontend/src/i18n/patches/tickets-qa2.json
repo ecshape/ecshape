@@ -1,0 +1,290 @@
+{
+  "en": {
+    "trainee": {
+      "today": {
+        "checkinStart": "Start check-in"
+      },
+      "mealsFold": {
+        "show": "Show details",
+        "hide": "Hide details",
+        "doneSummary": "Logged · {{kcal}} kcal",
+        "eat": "Mark {{name}} as eaten",
+        "uneat": "Undo: {{name}} not eaten",
+        "ateAll": "I ate it all",
+        "ateRest": "I ate the rest"
+      },
+      "measureGuide": {
+        "open": "How to measure: {{name}}",
+        "how": "How to measure",
+        "tips": "For comparable results: measure in the morning before eating, on bare skin, with a flexible tape held level, snug but not pressing into the skin. Take each measure twice and keep the average.",
+        "waist": {
+          "what": "Waist circumference: the best simple marker of belly fat.",
+          "steps": [
+            "Stand upright, feet together, arms relaxed, belly relaxed (don't pull it in).",
+            "Find the lowest rib and the top of the hip bone (iliac crest) on your side.",
+            "Place the tape horizontally halfway between them, usually just above the belly button.",
+            "Read the value at the end of a normal breath out."
+          ]
+        },
+        "chest": {
+          "what": "Chest circumference, at the fullest part of the chest.",
+          "steps": [
+            "Stand upright with arms relaxed at your sides.",
+            "Pass the tape under the armpits and around the fullest part of the chest (nipple level), across the shoulder blades at the back.",
+            "Keep the tape level all around, without lifting the shoulders.",
+            "Read the value at the end of a normal breath out."
+          ]
+        },
+        "hips": {
+          "what": "Hip circumference at the widest point of the buttocks.",
+          "steps": [
+            "Stand with feet together and weight on both legs, glutes relaxed.",
+            "Look from the side to find the most prominent point of the buttocks.",
+            "Wrap the tape horizontally around that widest point.",
+            "Keep the tape level front to back and read the value."
+          ]
+        },
+        "right_thigh": {
+          "what": "Thigh circumference, measured on each leg separately.",
+          "steps": [
+            "Stand with feet hip-width apart and weight on both legs, thigh relaxed.",
+            "Find the crease under the buttock (gluteal fold).",
+            "Wrap the tape horizontally around the thigh about 1 cm below that crease, at its thickest part.",
+            "Measure the same spot every time (you can note the distance from the kneecap)."
+          ]
+        },
+        "left_thigh": {
+          "what": "Thigh circumference, measured on each leg separately.",
+          "steps": [
+            "Stand with feet hip-width apart and weight on both legs, thigh relaxed.",
+            "Find the crease under the buttock (gluteal fold).",
+            "Wrap the tape horizontally around the thigh about 1 cm below that crease, at its thickest part.",
+            "Measure the same spot every time (you can note the distance from the kneecap)."
+          ]
+        },
+        "right_arm": {
+          "what": "Relaxed upper-arm circumference, measured on each arm separately.",
+          "steps": [
+            "Let the arm hang loose by your side, palm facing your thigh.",
+            "Find the point halfway between the tip of the shoulder (acromion) and the tip of the elbow.",
+            "Wrap the tape horizontally around the arm at that point, without squeezing.",
+            "Keep the muscle relaxed (not flexed) and read the value."
+          ]
+        },
+        "left_arm": {
+          "what": "Relaxed upper-arm circumference, measured on each arm separately.",
+          "steps": [
+            "Let the arm hang loose by your side, palm facing your thigh.",
+            "Find the point halfway between the tip of the shoulder (acromion) and the tip of the elbow.",
+            "Wrap the tape horizontally around the arm at that point, without squeezing.",
+            "Keep the muscle relaxed (not flexed) and read the value."
+          ]
+        }
+      }
+    },
+    "meals": {
+      "favorites": {
+        "tapHeart": "tap ♥ on a food below.",
+        "filter": "Filter"
+      }
+    },
+    "mysite": {
+      "studio": {
+        "syncedLangs": "Also translated into {{langs}}.",
+        "syncUnavailable": "Other languages were not updated: add an AI key in Settings → AI keys to translate automatically."
+      }
+    }
+  },
+  "he": {
+    "trainee": {
+      "today": {
+        "checkinStart": "התחל צ׳ק-אין"
+      },
+      "mealsFold": {
+        "show": "הצג פרטים",
+        "hide": "הסתר פרטים",
+        "doneSummary": "נרשם · {{kcal}} קק״ל",
+        "eat": "סמן ש{{name}} נאכל",
+        "uneat": "ביטול: {{name}} לא נאכל",
+        "ateAll": "אכלתי הכול",
+        "ateRest": "אכלתי את השאר"
+      },
+      "measureGuide": {
+        "open": "איך מודדים: {{name}}",
+        "how": "איך מודדים",
+        "tips": "לתוצאות שאפשר להשוות: מודדים בבוקר לפני האוכל, על עור חשוף, עם סרט מדידה גמיש ומאוזן, צמוד אבל בלי ללחוץ על העור. מודדים כל היקף פעמיים ולוקחים ממוצע.",
+        "waist": {
+          "what": "היקף מותניים: המדד הפשוט הטוב ביותר לשומן בטני.",
+          "steps": [
+            "עמדו זקוף, רגליים צמודות, ידיים רפויות והבטן רפויה (בלי לאסוף אותה).",
+            "מצאו בצד הגוף את הצלע התחתונה ואת קצה עצם האגן העליון.",
+            "הניחו את הסרט אופקית באמצע ביניהם, בדרך כלל קצת מעל הטבור.",
+            "קראו את המדידה בסוף נשיפה רגילה."
+          ]
+        },
+        "chest": {
+          "what": "היקף חזה, בחלק המלא ביותר של החזה.",
+          "steps": [
+            "עמדו זקוף, ידיים רפויות לצד הגוף.",
+            "העבירו את הסרט מתחת לבתי השחי סביב החלק המלא של החזה (בגובה הפטמות), ובגב על השכמות.",
+            "שמרו על הסרט מאוזן מסביב בלי להרים כתפיים.",
+            "קראו את המדידה בסוף נשיפה רגילה."
+          ]
+        },
+        "hips": {
+          "what": "היקף האגן בנקודה הרחבה ביותר של הישבן.",
+          "steps": [
+            "עמדו עם רגליים צמודות ומשקל על שתי הרגליים, ישבן רפוי.",
+            "הסתכלו מהצד ומצאו את הנקודה הבולטת ביותר של הישבן.",
+            "עטפו את הסרט אופקית סביב הנקודה הרחבה הזו.",
+            "שמרו על הסרט מאוזן מקדימה לאחור וקראו את המדידה."
+          ]
+        },
+        "right_thigh": {
+          "what": "היקף ירך, נמדד בכל רגל בנפרד.",
+          "steps": [
+            "עמדו עם רגליים ברוחב האגן ומשקל על שתי הרגליים, ירך רפויה.",
+            "מצאו את הקפל שמתחת לישבן.",
+            "עטפו את הסרט אופקית סביב הירך כס״מ אחד מתחת לקפל, בחלק העבה ביותר.",
+            "מדדו בכל פעם באותה נקודה (אפשר לרשום את המרחק מהברך)."
+          ]
+        },
+        "left_thigh": {
+          "what": "היקף ירך, נמדד בכל רגל בנפרד.",
+          "steps": [
+            "עמדו עם רגליים ברוחב האגן ומשקל על שתי הרגליים, ירך רפויה.",
+            "מצאו את הקפל שמתחת לישבן.",
+            "עטפו את הסרט אופקית סביב הירך כס״מ אחד מתחת לקפל, בחלק העבה ביותר.",
+            "מדדו בכל פעם באותה נקודה (אפשר לרשום את המרחק מהברך)."
+          ]
+        },
+        "right_arm": {
+          "what": "היקף זרוע רפויה, נמדד בכל יד בנפרד.",
+          "steps": [
+            "תנו ליד לרדת רפויה לצד הגוף, כף היד פונה לירך.",
+            "מצאו את הנקודה שבאמצע בין קצה הכתף לקצה המרפק.",
+            "עטפו את הסרט אופקית סביב הזרוע בנקודה הזו, בלי לחץ.",
+            "השאירו את השריר רפוי (לא מכווץ) וקראו את המדידה."
+          ]
+        },
+        "left_arm": {
+          "what": "היקף זרוע רפויה, נמדד בכל יד בנפרד.",
+          "steps": [
+            "תנו ליד לרדת רפויה לצד הגוף, כף היד פונה לירך.",
+            "מצאו את הנקודה שבאמצע בין קצה הכתף לקצה המרפק.",
+            "עטפו את הסרט אופקית סביב הזרוע בנקודה הזו, בלי לחץ.",
+            "השאירו את השריר רפוי (לא מכווץ) וקראו את המדידה."
+          ]
+        }
+      }
+    },
+    "meals": {
+      "favorites": {
+        "tapHeart": "הקישו ♥ על מזון למטה.",
+        "filter": "סינון"
+      }
+    },
+    "mysite": {
+      "studio": {
+        "syncedLangs": "תורגם גם ל־{{langs}}.",
+        "syncUnavailable": "השפות האחרות לא עודכנו: הוסיפו מפתח AI בהגדרות ← מפתחות AI כדי לתרגם אוטומטית."
+      }
+    }
+  },
+  "fr": {
+    "trainee": {
+      "today": {
+        "checkinStart": "Commencer le check-in"
+      },
+      "mealsFold": {
+        "show": "Voir le détail",
+        "hide": "Masquer le détail",
+        "doneSummary": "Enregistré · {{kcal}} kcal",
+        "eat": "Marquer {{name}} comme mangé",
+        "uneat": "Annuler : {{name}} pas mangé",
+        "ateAll": "J'ai tout mangé",
+        "ateRest": "J'ai mangé le reste"
+      },
+      "measureGuide": {
+        "open": "Comment mesurer : {{name}}",
+        "how": "Comment mesurer",
+        "tips": "Pour des résultats comparables : mesurez le matin avant de manger, sur la peau, avec un mètre ruban souple bien horizontal, ajusté sans comprimer. Prenez chaque mesure deux fois et gardez la moyenne.",
+        "waist": {
+          "what": "Tour de taille : le meilleur indicateur simple de la graisse abdominale.",
+          "steps": [
+            "Tenez-vous droit, pieds joints, bras et ventre relâchés (sans le rentrer).",
+            "Repérez sur le côté la dernière côte et le haut de l'os de la hanche (crête iliaque).",
+            "Placez le ruban horizontalement à mi-chemin entre les deux, souvent juste au-dessus du nombril.",
+            "Lisez la valeur à la fin d'une expiration normale."
+          ]
+        },
+        "chest": {
+          "what": "Tour de poitrine, à l'endroit le plus large.",
+          "steps": [
+            "Tenez-vous droit, bras relâchés le long du corps.",
+            "Passez le ruban sous les aisselles, autour de la partie la plus large de la poitrine (hauteur des mamelons) et sur les omoplates.",
+            "Gardez le ruban horizontal sans lever les épaules.",
+            "Lisez la valeur à la fin d'une expiration normale."
+          ]
+        },
+        "hips": {
+          "what": "Tour de hanches au point le plus large des fessiers.",
+          "steps": [
+            "Pieds joints, poids sur les deux jambes, fessiers relâchés.",
+            "De profil, repérez le point le plus saillant des fessiers.",
+            "Enroulez le ruban horizontalement autour de ce point.",
+            "Gardez le ruban horizontal de l'avant à l'arrière et lisez la valeur."
+          ]
+        },
+        "right_thigh": {
+          "what": "Tour de cuisse, mesuré sur chaque jambe séparément.",
+          "steps": [
+            "Pieds écartés largeur de hanches, poids sur les deux jambes, cuisse relâchée.",
+            "Repérez le pli sous la fesse (pli fessier).",
+            "Enroulez le ruban horizontalement autour de la cuisse environ 1 cm sous ce pli, à l'endroit le plus épais.",
+            "Mesurez toujours au même endroit (notez la distance depuis la rotule)."
+          ]
+        },
+        "left_thigh": {
+          "what": "Tour de cuisse, mesuré sur chaque jambe séparément.",
+          "steps": [
+            "Pieds écartés largeur de hanches, poids sur les deux jambes, cuisse relâchée.",
+            "Repérez le pli sous la fesse (pli fessier).",
+            "Enroulez le ruban horizontalement autour de la cuisse environ 1 cm sous ce pli, à l'endroit le plus épais.",
+            "Mesurez toujours au même endroit (notez la distance depuis la rotule)."
+          ]
+        },
+        "right_arm": {
+          "what": "Tour de bras relâché, mesuré sur chaque bras séparément.",
+          "steps": [
+            "Laissez le bras pendre le long du corps, paume vers la cuisse.",
+            "Repérez le point à mi-chemin entre la pointe de l'épaule (acromion) et la pointe du coude.",
+            "Enroulez le ruban horizontalement autour du bras à ce point, sans serrer.",
+            "Gardez le muscle relâché (pas contracté) et lisez la valeur."
+          ]
+        },
+        "left_arm": {
+          "what": "Tour de bras relâché, mesuré sur chaque bras séparément.",
+          "steps": [
+            "Laissez le bras pendre le long du corps, paume vers la cuisse.",
+            "Repérez le point à mi-chemin entre la pointe de l'épaule (acromion) et la pointe du coude.",
+            "Enroulez le ruban horizontalement autour du bras à ce point, sans serrer.",
+            "Gardez le muscle relâché (pas contracté) et lisez la valeur."
+          ]
+        }
+      }
+    },
+    "meals": {
+      "favorites": {
+        "tapHeart": "touchez ♥ sur un aliment ci-dessous.",
+        "filter": "Filtrer"
+      }
+    },
+    "mysite": {
+      "studio": {
+        "syncedLangs": "Aussi traduit en {{langs}}.",
+        "syncUnavailable": "Les autres langues n'ont pas été mises à jour : ajoutez une clé IA dans Réglages → Clés IA pour traduire automatiquement."
+      }
+    }
+  }
+}

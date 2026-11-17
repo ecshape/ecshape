@@ -1,0 +1,27 @@
+/* Exercise library + bank: animated demos, card entrance, detail sheet */
+.ec-exdemo img { transition: opacity .35s ease; }
+.ec-exdemo-b { opacity: 0; }
+.ec-exdemo-b.is-playing { animation: ec-exdemo-swap 2.2s cubic-bezier(.65,0,.35,1) infinite; }
+@keyframes ec-exdemo-swap { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+.ec-exdemo-live { position: absolute; bottom: 8px; inset-inline-start: 8px; width: 8px; height: 8px; border-radius: 99px; background: hsl(var(--primary)); opacity: 0; transition: opacity .3s; }
+.ec-exdemo-live.is-on { opacity: .9; animation: ec-exdemo-dot 2.2s ease-in-out infinite; }
+@keyframes ec-exdemo-dot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.6); opacity: .5; } }
+.ec-exdemo { background: hsl(var(--muted)); }
+
+.ec-excard { animation: ec-excard-in .6s cubic-bezier(.22,1,.36,1) both; }
+.ec-excard:hover { transform: translateY(-4px); box-shadow: 0 22px 44px -26px hsl(var(--primary) / .55); }
+@keyframes ec-excard-in { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.ec-exlib-chips { scrollbar-width: none; mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent); }
+.ec-exlib-chips::-webkit-scrollbar { display: none; }
+.ec-exlib-detail { animation: ec-fade-in .3s ease both; }
+.ec-exlib-sheet { animation: ec-sheet-in .55s cubic-bezier(.22,1,.36,1) both; }
+[dir="rtl"] .ec-exlib-sheet { animation-name: ec-sheet-in-rtl; }
+@keyframes ec-sheet-in { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ec-sheet-in-rtl { from { transform: translateX(-40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ec-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-exdemo-b.is-playing, .ec-exdemo-live.is-on, .ec-excard, .ec-exlib-sheet, .ec-exlib-detail { animation: none; }
+  .ec-excard:hover { transform: none; }
+}

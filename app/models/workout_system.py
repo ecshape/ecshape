@@ -135,6 +135,9 @@ class SetCompletion(Base):
     form_rating = Column(Integer)  # Self-rated form quality (1-5)
     notes = Column(Text)  # Set-specific notes
     completed_at = Column(DateTime, default=func.now())
+    # Substitution: the exercise actually performed when the trainee swapped the planned one (null = as planned)
+    performed_exercise_name = Column(String(200), nullable=True)
+    performed_library_id = Column(String(120), nullable=True)
     
     # Relationships
     workout_session = relationship("WorkoutSessionV2", back_populates="set_completions")

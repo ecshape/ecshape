@@ -52,6 +52,7 @@ class V3FoodOption(BaseModel):
     measurement_type: MeasurementType = MeasurementType.PER_100G
 
     notes: Optional[str] = None
+    image_url: Optional[str] = None  # photo of the food (built-in food library), when one matches
 
     class Config:
         from_attributes = True
@@ -296,8 +297,8 @@ class V3MealLogCreateRequest(BaseModel):
 
     date: str  # YYYY-MM-DD or ISO datetime (backend will normalize)
 
-    meal_slot_id: int
-    macro_type: MacroType
+    meal_slot_id: Optional[int] = None  # None = free entry outside the plan
+    macro_type: Optional[MacroType] = None
 
     # Plan food
     food_option_id: Optional[int] = None
@@ -321,6 +322,7 @@ class V3MealLogDeleteResponse(BaseModel):
 # ============ Catalog response ============
 
 class V3FoodCatalogItemResponse(V3FoodOption):
+    image_url: Optional[str] = None
     is_public: Optional[bool] = None
     created_by: Optional[int] = None
     macro_type: Optional[MacroType] = None

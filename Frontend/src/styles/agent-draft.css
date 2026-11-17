@@ -1,0 +1,50 @@
+/* Inline Agent EC draft button in the corner of studio text boxes (#22). Logical properties: RTL-correct. */
+.ec-draft { position: relative; }
+/* Physical side (the box itself may be dir=auto): the button sits on the page's inline-end side */
+html:not([dir='rtl']) .ec-draft > .ec-draft-input { padding-right: 2.75rem; }
+[dir='rtl'] .ec-draft > .ec-draft-input { padding-left: 2.75rem; }
+.ec-draft-btn {
+  position: absolute; top: 8px; inset-inline-end: 8px; z-index: 2;
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px;
+  background: hsl(var(--background) / .7); border: 1px solid hsl(var(--border) / .8);
+  backdrop-filter: blur(6px); cursor: pointer;
+  transition: transform .3s cubic-bezier(.22,1,.36,1), border-color .3s, box-shadow .3s;
+}
+.ec-draft-btn:hover:not(:disabled) { transform: scale(1.08); border-color: hsl(var(--primary) / .6); box-shadow: 0 6px 18px -8px hsl(var(--primary) / .8); }
+.ec-draft-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.ec-draft-btn:disabled { cursor: progress; }
+.ec-draft.is-inline .ec-draft-btn { top: 50%; transform: translateY(-50%); }
+.ec-draft.is-inline .ec-draft-btn:hover:not(:disabled) { transform: translateY(-50%) scale(1.08); }
+.ec-draft.is-inline .ec-draft-bar { position: absolute; top: calc(100% + 4px); inset-inline-end: 0; z-index: 3; margin: 0; }
+
+/* Shimmer while drafting */
+.ec-draft-shimmer {
+  position: absolute; inset: 1px; border-radius: inherit; pointer-events: none; overflow: hidden; border-radius: calc(var(--radius, 12px));
+  background: linear-gradient(100deg, transparent 20%, hsl(var(--primary) / .14) 45%, hsl(var(--gold, 40 90% 55%) / .16) 55%, transparent 80%);
+  background-size: 220% 100%; animation: ec-draft-shimmer 1.3s linear infinite;
+}
+.ec-draft.is-busy > .ec-draft-input { color: hsl(var(--muted-foreground)); }
+@keyframes ec-draft-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* Status bar under the box: undo / error */
+.ec-draft-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px;
+  padding: 5px 6px 5px 10px; border-radius: 999px; font-size: 12px; width: fit-content; max-width: 100%;
+  background: hsl(var(--muted) / .7); color: hsl(var(--muted-foreground));
+  animation: ec-draft-in .35s cubic-bezier(.22,1,.36,1) both;
+}
+[dir='rtl'] .ec-draft-bar { padding: 5px 10px 5px 6px; }
+.ec-draft-err { color: hsl(var(--destructive)); font-weight: 600; }
+.ec-draft-link { font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 2px; }
+.ec-draft-undo, .ec-draft-x {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px;
+  background: hsl(var(--background)); color: hsl(var(--foreground)); font-weight: 700; cursor: pointer;
+}
+.ec-draft-x { padding: 4px; }
+@keyframes ec-draft-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-draft-shimmer { animation: none; background: hsl(var(--primary) / .08); }
+  .ec-draft-bar { animation: none; }
+  .ec-draft-btn { transition: none; }
+}

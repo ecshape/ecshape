@@ -46,13 +46,15 @@ function shiftArt(i: number, lang: SiteLang) {
 }
 
 /** Visual header of each program card. */
-function programArt(id: string, lang: SiteLang) {
-  if (id === 'online') return `<div class="prog__art prog__art--app"><img src="${appShot(lang, 0)}" alt="" loading="lazy"><img src="${appShot(lang, 1)}" alt="" loading="lazy"></div>`;
+function programArt(id: string, lang: SiteLang, image?: string, imgAttr = '') {
+  // QA #103: a photo chosen in Studio replaces the drawn header
+  if (image) return `<div class="prog__art prog__art--photo"${imgAttr}><img src="${esc(image)}" alt="" loading="lazy" data-parallax></div>`;
+  if (id === 'online') return `<div class="prog__art prog__art--app"${imgAttr}><img src="${appShot(lang, 0)}" alt="" loading="lazy"><img src="${appShot(lang, 1)}" alt="" loading="lazy"></div>`;
   if (id === 'group') {
     const dots = [0, 1, 2, 3, 4, 5].map((k) => `<i style="--k:${k}"></i>`).join('');
-    return `<div class="prog__art prog__art--group" aria-hidden="true"><span class="prog__crowd">${dots}</span></div>`;
+    return `<div class="prog__art prog__art--group" aria-hidden="true"${imgAttr}><span class="prog__crowd">${dots}</span></div>`;
   }
-  return `<div class="prog__art prog__art--photo"><img src="${P}opt/trainer.jpg" alt="" loading="lazy" data-parallax></div>`;
+  return `<div class="prog__art prog__art--photo"${imgAttr}><img src="${P}opt/trainer.jpg" alt="" loading="lazy" data-parallax></div>`;
 }
 
 const LANGS: { code: SiteLang; label: string }[] = [
@@ -75,14 +77,24 @@ export interface RenderOptions {
   edit?: boolean;
 }
 
-export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions = {}): string {
+/** QA #101: list items switched off in Studio ({ hidden: true }) are dropped for visitors; the editor keeps them, ghosted. */
+function withoutHiddenItems<T>(v: T): T {
+  if (Array.isArray(v)) return v.filter((x) => !(x && typeof x === 'object' && (x as { hidden?: boolean }).hidden)).map(withoutHiddenItems) as T;
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, withoutHiddenItems(x)])) as T;
+  return v;
+}
+
+const itemAt = (c: SiteContent, path: string): unknown => path.split('.').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), c);
+
+export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOptions = {}): string {
   const edit = !!opts.edit;
+  const c = edit ? content : withoutHiddenItems(content);
   /** data-ec-path: inline-editable text (studio only). */
   const P_ = (path: string) => (edit ? ` data-ec-path="${esc(path)}"` : '') + (isLinkPath(path) ? ` data-ec-link="${esc(path)}"` : '');
   /** Text wrapped in a span carrying its path (text mixed with other markup). */
   const T = (path: string, value: unknown) => (edit ? `<span data-ec-path="${esc(path)}">${esc(value)}</span>` : esc(value));
   const IMG = (path: string) => (edit ? ` data-ec-img="${esc(path)}"` : '');
-  const ITEM = (path: string) => (edit ? ` data-ec-item="${esc(path)}"` : '');
+  const ITEM = (path: string) => (edit ? ` data-ec-item="${esc(path)}"${(itemAt(c, path) as { hidden?: boolean } | undefined)?.hidden ? ' data-ec-hidden' : ''}` : '');
   const splitLines = (a: string, pa: string, b: string, pb: string, cls = '') =>
     `<span class="line"${P_(pa)}>${esc(a)}</span><span class="line ${cls || 'accent'}"${P_(pb)}>${esc(b)}</span>`;
   const titles = (g: 'story' | 'results' | 'shift' | 'programs' | 'app' | 'process' | 'voices' | 'faq') =>
@@ -145,7 +157,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     </div>
     <div class="manifesto__art" aria-hidden="true">
       <svg class="mart__ring" viewBox="0 0 200 200"><g class="mart__spin">${Array.from({ length: 60 }, (_, k) => `<line x1="100" y1="4" x2="100" y2="${k % 5 ? 9 : 14}" transform="rotate(${k * 6} 100 100)"/>`).join('')}<circle class="mart__arc" cx="100" cy="100" r="88" pathLength="100"/></g></svg>
-      <figure class="mart__photo"><img src="${P}opt/trainer_portrait.jpg" alt="" loading="lazy"></figure>
+      <figure class="mart__photo"${IMG('manifesto.image')}><img src="${esc(c.manifesto.image || `${P}opt/trainer_portrait.jpg`)}" alt="" loading="lazy"></figure>
       ${c.hero.stats.slice(0, 3).map((s, i) => `<div class="mart__chip mart__chip--${i}"><span class="num" dir="ltr">${esc(s.value)}${esc(s.suffix)}</span><small>${esc(s.label)}</small></div>`).join('')}
     </div>
   </div>
@@ -252,7 +264,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
     </div>
     <div class="programs" data-stagger>
       ${c.programs.items.map((p, i) => `<article class="prog${p.featured ? ' prog--feat' : ''}"${ITEM(`programs.items.${i}`)}>
-        ${programArt(p.id, lang)}
+        ${programArt(p.id, lang, p.image, IMG(`programs.items.${i}.image`))}
         <div class="prog__top"><span class="prog__idx">0${i + 1} /</span>${p.featured ? `<span class="badge"${P_('programs.popular')}>${esc(c.programs.popular)}</span>` : ''}</div>
         <h3${P_(`programs.items.${i}.name`)}>${esc(p.name)}</h3>
         <p${P_(`programs.items.${i}.text`)}>${esc(p.text)}</p>
@@ -281,7 +293,8 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
       <div class="phone">
         <div class="phone__notch" aria-hidden="true"></div>
         <div class="phone__screen">
-          ${c.app.items.map((it, i) => `<img class="screen screen--shot${i === 0 ? ' is-active' : ''}" src="${appShot(lang, i % 4)}" alt="${esc(it.title)}" loading="lazy">`).join('')}
+          <div class="phone__status" aria-hidden="true" dir="ltr"><b>9:41</b><span><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.3 2.5l1.2-1.3A10.9 10.9 0 0 0 8 .4 10.9 10.9 0 0 0 .5 3.4l1.2 1.3A9 9 0 0 1 8 2.2Zm0 3.7c1.4 0 2.7.5 3.7 1.4l1.2-1.3A7.3 7.3 0 0 0 8 4.1a7.3 7.3 0 0 0-4.9 1.9l1.2 1.3c1-.9 2.3-1.4 3.7-1.4ZM8 9.6c.5 0 1 .2 1.3.5L8 11.5 6.7 10.1c.3-.3.8-.5 1.3-.5Z"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="8" rx="2"/><path d="M25 4v4c.8-.3 1.3-1.1 1.3-2S25.8 4.3 25 4Z" opacity=".4"/></svg></span></div>
+          ${c.app.items.map((it, i) => `<img class="screen screen--shot${i === 0 ? ' is-active' : ''}" src="${esc(it.image || appShot(lang, i % 4))}" alt="${esc(it.title)}" loading="lazy"${IMG(`app.items.${i}.image`)}>`).join('')}
         </div>
       </div>
     </div>
@@ -313,7 +326,7 @@ export function renderSite(c: SiteContent, lang: SiteLang, opts: RenderOptions =
       ${c.voices.quotes.map((q, i) => `<figure class="quote"${ITEM(`voices.quotes.${i}`)}>
         <div class="quote__stars" role="img" aria-label="5/5"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></div>
         <blockquote>“${T(`voices.quotes.${i}.text`, q.text)}”</blockquote>
-        <footer><span class="avatar">${esc((q.name || '?').trim().charAt(0))}</span><div><b${P_(`voices.quotes.${i}.name`)}>${esc(q.name)}</b><small${P_(`voices.quotes.${i}.role`)}>${esc(q.role)}</small></div></footer>
+        <footer>${q.photo ? `<span class="avatar avatar--photo"${IMG(`voices.quotes.${i}.photo`)}><img src="${esc(q.photo)}" alt="${esc(q.name)}" loading="lazy"></span>` : `<span class="avatar"${IMG(`voices.quotes.${i}.photo`)}>${esc((q.name || '?').trim().charAt(0))}</span>`}<div><b${P_(`voices.quotes.${i}.name`)}>${esc(q.name)}</b><small${P_(`voices.quotes.${i}.role`)}>${esc(q.role)}</small></div></footer>
       </figure>`).join('')}
     </div>
   </div>

@@ -335,8 +335,8 @@ html.lenis, html.lenis body { height: auto; }
   background: rgba(25, 23, 18, .7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-radius: 18px; box-shadow: inset 0 0 0 1px var(--line);
 }
-.ec-site .chip .num { font-size: 1.9rem; color: var(--accent); }
-.ec-site .chip small { font-size: .78rem; color: var(--ink-2); line-height: 1.2; }
+.ec-site .chip .num { font-size: 1.9rem; color: var(--accent-2); text-shadow: 0 0 18px rgba(255, 138, 61, .35); } /* QA #102: a touch brighter */
+.ec-site .chip small { font-size: .78rem; color: rgba(245, 240, 230, .82); line-height: 1.2; }
 .ec-site .hero__scroll {
   position: absolute; z-index: 3; inset-inline-end: var(--gutter); bottom: 34px;
   display: flex; align-items: center; gap: 12px; font-size: .8rem; color: var(--ink-3); letter-spacing: .1em;
@@ -399,7 +399,7 @@ html.lenis, html.lenis body { height: auto; }
   box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 40px -16px rgba(0, 0, 0, .8);
   animation: martFloat 7s var(--ease-in-out) infinite;
 }
-.ec-site .mart__chip .num { font-size: 1.55rem; color: var(--accent); }
+.ec-site .mart__chip .num { font-size: 1.55rem; color: var(--accent-2); }
 .ec-site .mart__chip small { font-size: .74rem; line-height: 1.2; color: var(--ink-2); }
 .ec-site .mart__chip--0 { top: 12%; inset-inline-start: 0; }
 .ec-site .mart__chip--1 { top: 46%; inset-inline-end: 0; animation-delay: -2.4s; }
@@ -539,7 +539,7 @@ html.lenis, html.lenis body { height: auto; }
 .ec-site .stack__card h3 { font-family: var(--f-display); font-weight: 700; font-size: clamp(2.8rem, 5.4vw, 5.6rem); line-height: .92; }
 .ec-site .stack__card p { font-size: 1.15rem; color: var(--ink-2); max-width: 40ch; }
 .ec-site .stack__card:nth-child(3) p { color: rgba(255, 255, 255, .85); }
-.ec-site .stack__idx { font-family: var(--f-num); font-size: clamp(6rem, 14vw, 13rem); line-height: .8; color: transparent; -webkit-text-stroke: 1.5px var(--line-2); justify-self: end; direction: ltr; }
+.ec-site .stack__idx { font-family: var(--f-num); font-size: clamp(6rem, 14vw, 13rem); line-height: .8; color: transparent; -webkit-text-stroke: 1.5px rgba(245, 240, 230, .34); justify-self: end; direction: ltr; } /* QA #102: brighter outline */
 .ec-site .stack__card:nth-child(3) .stack__idx { -webkit-text-stroke-color: rgba(255, 255, 255, .5); }
 .ec-site .pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
 .ec-site .pill {
@@ -550,7 +550,7 @@ html.lenis, html.lenis body { height: auto; }
 
 /* Visuals of the "why" cards: big outline number behind an animated illustration */
 .ec-site .stack__art { position: relative; display: grid; place-items: center; min-height: 260px; }
-.ec-site .stack__art .stack__idx { position: absolute; inset-inline-end: 0; top: 50%; transform: translateY(-50%); opacity: .55; }
+.ec-site .stack__art .stack__idx { position: absolute; inset-inline-end: 0; top: 50%; transform: translateY(-50%); opacity: .8; }
 .ec-site .stack__art > svg, .ec-site .stack__art > .art-phone { position: relative; z-index: 1; }
 .ec-site .art-clock { width: min(260px, 70%); overflow: visible; }
 .ec-site .art-clock__ring { fill: none; stroke: var(--line-2); stroke-width: 2; }
@@ -684,7 +684,14 @@ html.lenis, html.lenis body { height: auto; }
   position: relative; width: min(300px, 78vw, 34vh); aspect-ratio: 9 / 19.2; border-radius: 48px; padding: 12px;
   background: linear-gradient(160deg, #2b2822, #0e0d0b); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .12), 0 50px 100px -30px rgba(0, 0, 0, .9);
 }
-.ec-site .phone__notch { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 92px; height: 26px; border-radius: 20px; background: #000; z-index: 3; }
+.ec-site .phone__notch { position: absolute; top: 21px; left: 50%; transform: translateX(-50%); width: 84px; height: 24px; border-radius: 20px; background: #000; z-index: 3; }
+/* QA #104: a real iPhone status bar (time · signal · Wi-Fi · battery) on both sides of the Dynamic Island,
+   in the strip above the app instead of an empty band */
+.ec-site .phone__status { position: absolute; z-index: 2; top: 0; left: 0; right: 0; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 2px 24px 0 28px; color: #fff; pointer-events: none; }
+.ec-site .phone__status b { font: 600 12px/1 -apple-system, "SF Pro Text", system-ui, sans-serif; letter-spacing: -.01em; }
+.ec-site .phone__status span { display: inline-flex; align-items: center; gap: 4px; }
+.ec-site .phone__status svg { height: 9px; width: auto; fill: currentColor; }
+.ec-site .phone__status svg:last-child { height: 10px; }
 .ec-site .phone__screen { position: relative; height: 100%; border-radius: 38px; overflow: hidden; background: #0f0e0c; }
 .ec-site .screen {
   position: absolute; inset: 0; padding: 62px 18px 18px; display: flex; flex-direction: column; gap: 12px;
@@ -764,6 +771,8 @@ html.lenis, html.lenis body { height: auto; }
 .ec-site .quote blockquote { font-size: 1.12rem; line-height: 1.7; margin-bottom: 20px; }
 .ec-site .quote footer { display: flex; align-items: center; gap: 12px; }
 .ec-site .avatar { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--accent), var(--gold)); }
+.ec-site .avatar--photo { overflow: hidden; background: var(--bg-2); } /* QA #105: a client's photo instead of the initial */
+.ec-site .avatar--photo img { width: 100%; height: 100%; object-fit: cover; }
 .ec-site .quote footer b { display: block; font-size: .98rem; }
 .ec-site .quote footer small { color: var(--accent-2); }
 .ec-site .wall {
@@ -829,7 +838,7 @@ html.lenis, html.lenis body { height: auto; }
 .ec-site .trust { display: inline-flex; margin-top: 56px; border-radius: 22px; box-shadow: inset 0 0 0 1px var(--line); }
 .ec-site .trust div { padding: 18px 30px; }
 .ec-site .trust div + div { border-inline-start: 1px solid var(--line); }
-.ec-site .trust .num { font-size: 1.7rem; color: var(--accent); }
+.ec-site .trust .num { font-size: 1.7rem; color: var(--accent-2); }
 .ec-site .trust small { display: block; font-size: .78rem; color: var(--ink-3); }
 
 .ec-site .ig {

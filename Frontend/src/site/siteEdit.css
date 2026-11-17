@@ -90,3 +90,6 @@ html.ec-mode-edit .ec-site [data-ec-img].is-ec-selected > .ec-edit-imgbtn { opac
   html.ec-editing .ec-site .ec-sec,
   html.ec-editing .ec-site .ec-sec > * { transition: none !important; }
 }
+
+/* QA #101: list items switched off for visitors stay in the editor, ghosted, so they can be switched back on */
+html.ec-editing .ec-site [data-ec-hidden] { opacity: .35; filter: grayscale(.7); outline: 2px dashed rgba(255, 255, 255, .35) !important; outline-offset: 4px; }

@@ -2,7 +2,7 @@ import { floatingToolProps, floatingTouchProps, installFloatingToolGuard } from 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, KeyRound, Plus, X, Wand2, PenLine, Users2, HeartPulse, Bug, Search as SearchIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, KeyRound, Plus, RotateCcw, X, Wand2, PenLine, Users2, HeartPulse, Bug, Search as SearchIcon } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -21,7 +21,7 @@ import '@/i18n/ticketsQa3';
 import { localizeAiError } from '@/lib/aiErrors';
 
 type Fix = { label: string; href: string };
-type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; engine?: string; error?: boolean; fix?: Fix | null };
+type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; engine?: string; error?: boolean; fix?: Fix | null; fallbackFrom?: string };
 type Conversation = { id: string; title: string; updatedAt: string; turns: Turn[] };
 
 const MIN_W = 340;
@@ -391,10 +391,17 @@ export function AgentEc() {
     }
   }
 
-  async function send(text: string) {
+  /** QA #99: resend the last question after an error (the error answer is dropped first). */
+  function retry() {
+    const lastUser = turns.map((x, k) => [x, k] as const).filter(([x]) => x.role === 'user').pop();
+    if (!lastUser || busy) return;
+    void send(lastUser[0].text, turns.slice(0, lastUser[1]));
+  }
+
+  async function send(text: string, history: Turn[] = turns) {
     const question = text.trim();
     if (!question || busy) return;
-    const next: Turn[] = [...turns, { role: 'user', text: question }];
+    const next: Turn[] = [...history, { role: 'user', text: question }];
     setTurns(next);
     setInput('');
     setBusy(true);
@@ -407,7 +414,7 @@ export function AgentEc() {
       );
       const actions = res.ok ? res.actions || [] : [];
       const turn: Turn = res.ok
-        ? { role: 'assistant', text: res.reply || '', actions, opStates: actions.map((): OpState => 'pending'), engine: res.engine }
+        ? { role: 'assistant', text: res.reply || '', actions, opStates: actions.map((): OpState => 'pending'), engine: res.engine, fallbackFrom: res.fallback_from }
         : { role: 'assistant', text: res.error ? (/answered with an error|api key|credit|quota|rate limit|overloaded/i.test(res.error) ? localizeAiError(res.error, t) : res.error) : t('agent.noAnswer'), error: true, fix: res.fix || null }; // QA #96
       setTurns([...next, turn]);
       if (res.ok && actions.length) {
@@ -462,7 +469,7 @@ export function AgentEc() {
     <div style={{ display: 'contents' }} {...floatingToolProps}>
       {!open ? <AgentEdgeTab rtl={!!rtl} onOpen={() => setOpen(true)} /> : null}
       {open ? (
-        <aside className="ec-psk" aria-label="Agent EC" style={{ width: `min(${width}px, 100vw)` }} data-qa-ignore {...floatingTouchProps}>
+        <aside className="ec-psk" aria-label="Agent EC" style={{ width: `min(${width}px, 100vw)` }} {...floatingTouchProps}>
           <div className="ec-psk-resize" role="separator" aria-orientation="vertical" aria-label={t('agent.resize')} title={t('agent.resize')} onPointerDown={startResize} />
           <header className="ec-psk-head">
             <AgentEcIcon busy={busy} />
@@ -526,6 +533,12 @@ export function AgentEc() {
             {turns.map((turn, i) => (
               <div key={i} className={cn('ec-psk-msg', `is-${turn.role}`, turn.error && 'is-error')}>
                 {turn.role === 'assistant' && !turn.error ? <Rich text={turn.text} /> : <p>{turn.text}</p>}
+                {turn.fallbackFrom && turn.engine && <p className="ec-psk-fallback">{t('qa5.agent.fallback', { from: turn.fallbackFrom, to: turn.engine })}</p>}
+                {turn.error && i === turns.length - 1 && !busy && (
+                  <button type="button" className="ec-psk-op-btn ec-psk-retry" onClick={retry}>
+                    <RotateCcw className="h-3.5 w-3.5" />{t('qa5.agent.retry')}
+                  </button>
+                )}
                 {turn.actions?.length ? (
                   <div className="ec-psk-ops">
                     {turn.actions.map((op, j) => {

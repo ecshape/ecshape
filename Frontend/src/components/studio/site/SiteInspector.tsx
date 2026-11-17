@@ -16,9 +16,23 @@ import { AgentDraft } from '@/components/studio/AgentDraft';
 import { InfoTip } from '@/components/ui/info-tip';
 import { LINKABLE, LINK_PAGES, cleanTarget, isLinkPath, kindOf, type LinkKind } from '@/site/links';
 import '@/i18n/ticketsStudio';
+import '@/i18n/ticketsQa3';
 
 type Json = unknown;
 const isObj = (v: Json): v is Record<string, Json> => !!v && typeof v === 'object' && !Array.isArray(v);
+/** Fields shown as a photo picker (QA #100 / #103 / #105): every photo of the site can be changed. */
+const IMAGE_KEYS = new Set(['image', 'before', 'after', 'photo']);
+/** Photos a block can have even when it does not have one yet (the site then draws its default). */
+const OPTIONAL_IMAGES: [RegExp, string[]][] = [
+  [/^hero$/, ['image']],
+  [/^story$/, ['image']],
+  [/^manifesto$/, ['image']],
+  [/^results\.cards\.\d+$/, ['before', 'after']],
+  [/^programs\.items\.\d+$/, ['image']],
+  [/^app\.items\.\d+$/, ['image']],
+  [/^voices\.quotes\.\d+$/, ['photo']],
+];
+const optionalImageKeys = (path: string) => OPTIONAL_IMAGES.find(([re]) => re.test(path))?.[1] ?? [];
 export const humanize = (k: string) =>
   /^\d+$/.test(k) ? `#${Number(k) + 1}` : k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/(\D)(\d+)$/, '$1 $2');
 
@@ -282,8 +296,22 @@ const ItemTools: React.FC<{ listPath: string; index: number; length: number; ctx
     ['duplicate', Copy, t('mysite.studio.items.duplicate'), false],
     ['remove', Trash2, length <= 1 ? t('mysite.studio.items.keepOne') : t('mysite.studio.items.remove'), length <= 1],
   ];
+  // QA #101: hide an item from visitors without deleting it (results cards, quotes, programs…)
+  const item = getIn(ctx.content, parsePath(`${listPath}.${index}`));
+  const canHide = isObj(item);
+  const isHidden = canHide && !!(item as Record<string, Json>).hidden;
   return (
     <span className={cn('ec-studio-itemtools', compact && 'is-compact')}>
+      {canHide && (
+        <button
+          type="button" className={isHidden ? 'is-on' : ''}
+          title={isHidden ? t('qa5.site.showItem') : t('qa5.site.hideItem')} aria-label={isHidden ? t('qa5.site.showItem') : t('qa5.site.hideItem')}
+          aria-pressed={isHidden}
+          onClick={() => ctx.onSet(`${listPath}.${index}.hidden`, !isHidden)}
+        >
+          {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        </button>
+      )}
       {tools.map(([op, Icon, label, disabled]) => (
         <button key={op} type="button" title={label} aria-label={label} disabled={disabled} className={op === 'remove' ? 'is-danger' : ''} onClick={() => ctx.onList(listPath, op, index)}>
           <Icon className="h-3.5 w-3.5" />
@@ -302,11 +330,13 @@ const ValueEditor: React.FC<{ path: string; ctx: EditorCtx; label?: string }> = 
   const name = label ?? fieldLabel(key, t);
   const changed = JSON.stringify(value) !== JSON.stringify(base);
 
-  if (key === 'image' && typeof value === 'string') {
+  if (key === 'hidden') return null; // switched with the eye in the item tools
+  if (IMAGE_KEYS.has(key) && (typeof value === 'string' || value === undefined)) {
+    const v = typeof value === 'string' ? value : '';
     return (
       <div className="ec-studio-field">
         <Label changed={changed}>{name}</Label>
-        <ImageField value={value} original={typeof base === 'string' ? base : undefined} shared={isSharedPath(path)} onChange={(v) => ctx.onSet(path, v)} />
+        <ImageField value={v} original={typeof base === 'string' ? base : undefined} shared={isSharedPath(path)} onChange={(nv) => ctx.onSet(path, nv)} />
       </div>
     );
   }
@@ -351,7 +381,7 @@ const ValueEditor: React.FC<{ path: string; ctx: EditorCtx; label?: string }> = 
   if (isObj(value)) {
     return (
       <div className="ec-studio-fields">
-        {Object.keys(value).map((k) => (
+        {[...Object.keys(value), ...optionalImageKeys(path).filter((k) => !(k in value))].map((k) => (
           <ValueEditor key={k} path={`${path}.${k}`} ctx={ctx} />
         ))}
       </div>

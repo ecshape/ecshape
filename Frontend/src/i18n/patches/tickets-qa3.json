@@ -107,6 +107,23 @@
         "failed": "החיבור לא הושלם. נסו שוב.",
         "orPaste": "או הדביקו מפתח של ספק מסוים"
       }
+    },
+    "qa5": {
+      "site": {
+        "hideItem": "הסתרה מהמבקרים",
+        "showItem": "הצגה למבקרים"
+      },
+      "agent": {
+        "retry": "לנסות שוב",
+        "fallback": "{{from}} לא ענה, אז ענה {{to}}."
+      }
+    },
+    "mysite": {
+      "field": {
+        "photo": "תמונה",
+        "before": "תמונת לפני",
+        "after": "תמונת אחרי"
+      }
     }
   },
   "en": {
@@ -217,6 +234,23 @@
         "failed": "The connection did not finish. Try again.",
         "orPaste": "Or paste a key from a specific provider"
       }
+    },
+    "qa5": {
+      "site": {
+        "hideItem": "Hide from visitors",
+        "showItem": "Show to visitors"
+      },
+      "agent": {
+        "retry": "Try again",
+        "fallback": "{{from}} did not answer, so {{to}} answered."
+      }
+    },
+    "mysite": {
+      "field": {
+        "photo": "Photo",
+        "before": "Before photo",
+        "after": "After photo"
+      }
     }
   },
   "fr": {
@@ -326,6 +360,23 @@
         "done": "Compte connecté. L'Agent EC utilise maintenant OpenRouter.",
         "failed": "La connexion n'a pas abouti. Réessaie.",
         "orPaste": "Ou colle une clé d'un fournisseur précis"
+      }
+    },
+    "qa5": {
+      "site": {
+        "hideItem": "Masquer aux visiteurs",
+        "showItem": "Afficher aux visiteurs"
+      },
+      "agent": {
+        "retry": "Réessayer",
+        "fallback": "{{from}} n'a pas répondu, {{to}} a pris le relais."
+      }
+    },
+    "mysite": {
+      "field": {
+        "photo": "Photo",
+        "before": "Photo avant",
+        "after": "Photo après"
       }
     }
   }

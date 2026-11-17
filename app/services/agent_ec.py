@@ -387,14 +387,30 @@ def run_agent(db: Session, user: UserResponse, turns: List[Dict[str, str]], lang
         skills_text += "\n\nSkills loaded for this request (follow them):\n\n" + "\n\n".join(f"## Skill: {s['title']}\n{s['body']}" for s in picked)
     context = skills_text + "\n\n" + context
 
-    ops: List[Dict[str, Any]] = []
-    if engine.provider == "anthropic":
-        system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}, {"type": "text", "text": context}]
-        messages: List[Dict[str, Any]] = [{"role": t["role"], "content": t["content"]} for t in turns]
-        reply = _run_claude(engine, db, user, system, messages, ops)
-    else:
-        reply = _run_openai_compatible(engine, db, user, SYSTEM_PROMPT + "\n\n" + context, turns, ops)
-    return {"reply": reply, "actions": ops, "engine": engine.label}
+    # QA #99: when the chosen model fails (no credit, refused key, provider down…), the other connected models are
+    # tried in turn, so the trainer gets an answer whenever any of their models works.
+    from app.services.ai_keys import all_engines
+
+    engines = [engine] + [e for e in all_engines(db, [user.id]) if (e.provider, e.api_key, e.model) != (engine.provider, engine.api_key, engine.model)]
+    first_error: Optional[AgentUnavailable] = None
+    for i, eng in enumerate(engines[:5]):
+        ops: List[Dict[str, Any]] = []
+        try:
+            if eng.provider == "anthropic":
+                system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}, {"type": "text", "text": context}]
+                messages: List[Dict[str, Any]] = [{"role": t["role"], "content": t["content"]} for t in turns]
+                reply = _run_claude(eng, db, user, system, messages, ops)
+            else:
+                reply = _run_openai_compatible(eng, db, user, SYSTEM_PROMPT + "\n\n" + context, turns, ops)
+        except AgentUnavailable as e:
+            logger.warning("Agent EC: %s failed (%s), trying the next model", eng.label, e)
+            first_error = first_error or e
+            continue
+        out: Dict[str, Any] = {"reply": reply, "actions": ops, "engine": eng.label}
+        if i > 0:
+            out["fallback_from"] = engine.label
+        return out
+    raise first_error or AgentUnavailable("The AI service could not be reached.")
 
 
 def test_engine(db: Session, user: UserResponse, key_id: int) -> str:

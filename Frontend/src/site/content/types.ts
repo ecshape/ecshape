@@ -5,20 +5,20 @@ export interface SiteContent {
   hero: { image?: string; eyebrow: string; title1: string; title2: string; sub: string; ctaPrimary: string; ctaSecondary: string; scroll: string; caption: string; captionAccent: string;
     stats: { value: number; suffix: string; label: string }[] };
   marquee: { row1: string[]; row2: string[] };
-  manifesto: { eyebrow: string; text: string; highlight: string; role: string };
+  manifesto: { image?: string; eyebrow: string; text: string; highlight: string; role: string };
   story: { image?: string; eyebrow: string; title1: string; title2: string; p1: string; p1Strong: string; p2: string; p2Strong: string; photoRole: string;
     values: { title: string; text: string }[]; statValue: number; statSuffix: string; statTitle: string; statText: string };
   /** Result cards are uniform before/after objects: `before` / `after` are same-ratio (2:3) crops; without them the
    *  combined `image` is split in two halves; with no photo at all, `fromKg` / `toKg` are drawn as scale readouts. `kg` = kilos lost (shown as "−X KG"); `big` = text badge when there is no kg. */
   results: { eyebrow: string; title1: string; title2: string; lead: string; ctaCard: string; ctaButton: string;
     before: string; after: string; unit: string;
-    cards: { image: string; before?: string; after?: string; fromKg?: string; toKg?: string; kg?: string; tag: string; title: string; sub: string; big?: string; tall?: boolean }[] };
+    cards: { image: string; before?: string; after?: string; fromKg?: string; toKg?: string; kg?: string; tag: string; title: string; sub: string; big?: string; tall?: boolean; hidden?: boolean }[] };
   shift: { eyebrow: string; title1: string; title2: string; cards: { from: string; title: string; text?: string; pills?: string[] }[] };
   programs: { eyebrow: string; title1: string; title2: string; lead: string; popular: string; more: string; start: string;
-    items: { id: string; name: string; text: string; features: string[]; featured?: boolean }[] };
-  app: { eyebrow: string; title1: string; title2: string; lead: string; already: string; items: { title: string; text: string }[] };
+    items: { id: string; name: string; text: string; features: string[]; featured?: boolean; image?: string; hidden?: boolean }[] };
+  app: { eyebrow: string; title1: string; title2: string; lead: string; already: string; items: { title: string; text: string; image?: string }[] };
   process: { eyebrow: string; title1: string; title2: string; steps: { title: string; text: string }[] };
-  voices: { eyebrow: string; title1: string; title2: string; quotes: { text: string; name: string; role: string }[] };
+  voices: { eyebrow: string; title1: string; title2: string; quotes: { text: string; name: string; role: string; photo?: string; hidden?: boolean }[] };
   faq: { eyebrow: string; title1: string; title2: string; other: string; items: { q: string; a: string }[] };
   cta: { eyebrow: string; title1: string; title2: string; lead: string; form: string; whatsapp: string;
     trust: { value: string; label: string }[] };

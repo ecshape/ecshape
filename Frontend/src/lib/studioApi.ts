@@ -124,6 +124,8 @@ export interface AgentReply {
   reply?: string;
   actions?: import('./agentOps').AgentOp[];
   engine?: string;
+  /** QA #99: the chosen model failed and this one answered instead */
+  fallback_from?: string;
   error?: string;
   fix?: { label: string; href: string } | null;
 }

@@ -62,10 +62,13 @@ export const he: SiteContent = {
     after: 'אחרי',
     unit: 'KG',
     cards: [
+      { image: P + 'before_after_18kg.jpeg', before: R + '18kg_before.jpg', after: R + '18kg_after.jpg', kg: '18', tag: '6 חודשים', title: 'ירידה במשקל', sub: 'מינוס 18 ק״ג בחצי שנה' },
       { image: P + 'before_after_52days.jpeg', before: R + '52days_before.jpg', after: R + '52days_after.jpg', kg: '8', tag: '52 ימים', title: 'ירידה במשקל', sub: '98.3 ← 90.7 ק״ג' },
       { image: P + 'before_after_recomp.jpeg', before: R + 'recomp_before.jpg', after: R + 'recomp_after.jpg', big: 'RECOMP', tag: 'Body Recomp', title: 'בניית שריר תוך ירידה בשומן', sub: 'הרכב גוף חדש לגמרי' },
+      { image: P + 'before_after_recomp2.jpeg', before: R + 'recomp2_before.jpg', after: R + 'recomp2_after.jpg', big: 'RECOMP', tag: 'Body Recomp', title: 'חיטוב ובניית שריר', sub: 'גוף חזק וחטוב בכל גיל' },
       { image: '', fromKg: '93', toKg: '88', kg: '5', tag: '6 שבועות', title: 'גבי', sub: '93 ← 88 ק״ג · התמדה + איזון תזונתי' },
       { image: P + 'before_after_60days.jpeg', before: R + '60days_before.jpg', after: R + '60days_after.jpg', kg: '10', tag: '60 ימים', title: 'ירידה במשקל', sub: 'חיטוב וכוח' },
+      { image: P + 'before_after_recomp3.jpeg', before: R + 'recomp3_before.jpg', after: R + 'recomp3_after.jpg', big: 'RECOMP', tag: 'Body Recomp', title: 'יותר שריר, פחות שומן', sub: 'מסה וחיטוב באותו תהליך' },
     ],
   },
   shift: {

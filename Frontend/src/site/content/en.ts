@@ -60,10 +60,13 @@ export const en: SiteContent = {
     after: 'After',
     unit: 'KG',
     cards: [
-      { ...he.results.cards[0], tag: '52 days', title: 'Weight loss', sub: '98.3 → 90.7 kg' },
-      { ...he.results.cards[1], tag: 'Body Recomp', title: 'Muscle gain while losing fat', sub: 'A whole new body composition' },
-      { ...he.results.cards[2], tag: '6 weeks', title: 'Gabi', sub: '93 → 88 kg · consistency + balanced nutrition' },
-      { ...he.results.cards[3], tag: '60 days', title: 'Weight loss', sub: 'Leaner and stronger' },
+      { ...he.results.cards[0], tag: '6 months', title: 'Weight loss', sub: '18 kg down in half a year' },
+      { ...he.results.cards[1], tag: '52 days', title: 'Weight loss', sub: '98.3 → 90.7 kg' },
+      { ...he.results.cards[2], tag: 'Body Recomp', title: 'Muscle gain while losing fat', sub: 'A whole new body composition' },
+      { ...he.results.cards[3], tag: 'Body Recomp', title: 'Leaner and more muscular', sub: 'A strong, defined body at any age' },
+      { ...he.results.cards[4], tag: '6 weeks', title: 'Gabi', sub: '93 → 88 kg · consistency + balanced nutrition' },
+      { ...he.results.cards[5], tag: '60 days', title: 'Weight loss', sub: 'Leaner and stronger' },
+      { ...he.results.cards[6], tag: 'Body Recomp', title: 'More muscle, less fat', sub: 'Size and definition in one process' },
     ],
   },
   shift: {

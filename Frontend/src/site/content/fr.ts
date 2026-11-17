@@ -60,10 +60,13 @@ export const fr: SiteContent = {
     after: 'Après',
     unit: 'KG',
     cards: [
-      { ...he.results.cards[0], tag: '52 jours', title: 'Perte de poids', sub: '98,3 → 90,7 kg' },
-      { ...he.results.cards[1], tag: 'Recomposition', title: 'Prise de muscle et perte de gras', sub: 'Une toute nouvelle composition corporelle' },
-      { ...he.results.cards[2], tag: '6 semaines', title: 'Gabi', sub: '93 → 88 kg · régularité + nutrition équilibrée' },
-      { ...he.results.cards[3], tag: '60 jours', title: 'Perte de poids', sub: 'Plus sec et plus fort' },
+      { ...he.results.cards[0], tag: '6 mois', title: 'Perte de poids', sub: '18 kg en moins en six mois' },
+      { ...he.results.cards[1], tag: '52 jours', title: 'Perte de poids', sub: '98,3 → 90,7 kg' },
+      { ...he.results.cards[2], tag: 'Recomposition', title: 'Prise de muscle et perte de gras', sub: 'Une toute nouvelle composition corporelle' },
+      { ...he.results.cards[3], tag: 'Recomposition', title: 'Plus sec et plus musclé', sub: 'Un corps fort et dessiné à tout âge' },
+      { ...he.results.cards[4], tag: '6 semaines', title: 'Gabi', sub: '93 → 88 kg · régularité + nutrition équilibrée' },
+      { ...he.results.cards[5], tag: '60 jours', title: 'Perte de poids', sub: 'Plus sec et plus fort' },
+      { ...he.results.cards[6], tag: 'Recomposition', title: 'Plus de muscle, moins de gras', sub: 'Volume et définition en un seul parcours' },
     ],
   },
   shift: {

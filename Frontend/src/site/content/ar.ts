@@ -61,10 +61,13 @@ export const ar: SiteContent = {
     after: 'بعد',
     unit: 'كغ',
     cards: [
-      { ...he.results.cards[0], tag: '52 يومًا', title: 'خسارة وزن', sub: '98.3 ← 90.7 كغ' },
-      { ...he.results.cards[1], tag: 'إعادة تشكيل الجسم', title: 'بناء عضلات مع حرق الدهون', sub: 'تركيبة جسم جديدة تمامًا' },
-      { ...he.results.cards[2], tag: '6 أسابيع', title: 'غابي', sub: '93 ← 88 كغ · استمرارية + تغذية متوازنة' },
-      { ...he.results.cards[3], tag: '60 يومًا', title: 'خسارة وزن', sub: 'أنحف وأقوى' },
+      { ...he.results.cards[0], tag: '6 أشهر', title: 'خسارة وزن', sub: 'ناقص 18 كغ خلال نصف سنة' },
+      { ...he.results.cards[1], tag: '52 يومًا', title: 'خسارة وزن', sub: '98.3 ← 90.7 كغ' },
+      { ...he.results.cards[2], tag: 'إعادة تشكيل الجسم', title: 'بناء عضلات مع حرق الدهون', sub: 'تركيبة جسم جديدة تمامًا' },
+      { ...he.results.cards[3], tag: 'إعادة تشكيل الجسم', title: 'تنشيف وبناء عضلات', sub: 'جسم قوي ومشدود في أي عمر' },
+      { ...he.results.cards[4], tag: '6 أسابيع', title: 'غابي', sub: '93 ← 88 كغ · استمرارية + تغذية متوازنة' },
+      { ...he.results.cards[5], tag: '60 يومًا', title: 'خسارة وزن', sub: 'أنحف وأقوى' },
+      { ...he.results.cards[6], tag: 'إعادة تشكيل الجسم', title: 'عضلات أكثر ودهون أقل', sub: 'كتلة وتنشيف في عملية واحدة' },
     ],
   },
   shift: {

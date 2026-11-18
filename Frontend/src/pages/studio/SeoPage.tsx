@@ -35,7 +35,7 @@ import { RankMathPanel, ScoreBadge, useSeoAnalysis, type RankMathContext } from 
 import { AGENT_NEW_ARTICLE_EVENT, askAgent, useAgentChanged, useAgentForm } from '@/lib/agentOps';
 import { analyzeSeo } from '@/lib/seo/analysis';
 import { articlePath, EMPTY_ARTICLE_SEO, isLive, type Article, type ArticleSeo } from '@/lib/seo/articles';
-import { studioApi, type AgentModelOption, type PageSeoFields, type SeoRedirect, type SeoSettings } from '@/lib/studioApi';
+import { studioApi, type SitePage, type AgentModelOption, type PageSeoFields, type SeoRedirect, type SeoSettings } from '@/lib/studioApi';
 import { cn, isRtlLang } from '@/lib/utils';
 import { DEFAULT_CONTENT, SITE_LANGS, toSiteLang, type SiteLang } from '@/site/content';
 
@@ -544,6 +544,7 @@ const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: Seo
             </li>
           ))}
         </ul>
+        <CustomPagesList />
         <div className="ec-seo-page-actions">
           <Button
             size="sm"
@@ -562,6 +563,59 @@ const PagesSeo = ({ settings, onSave }: { settings: SeoSettings; onSave: (s: Seo
       <section className="ec-seo-card is-flush" dir={isRtlLang(lang) ? 'rtl' : 'ltr'}>
         <RankMathPanel key={lang} seo={seo} onChange={change} ctx={ctx} analysis={analysis} />
       </section>
+    </div>
+  );
+};
+
+/** Pages of the site created in Studio or by Agent EC (/p/<slug>): see, publish / unpublish, delete, ask for a new one. */
+const CustomPagesList = () => {
+  const { t } = useTranslation();
+  const [items, setItems] = useState<SitePage[] | null>(null);
+  const load = useCallback(() => {
+    studioApi.sitePages().then(setItems).catch(() => setItems([]));
+  }, []);
+  useEffect(load, [load]);
+  useAgentChanged(load);
+
+  const toggle = async (p: SitePage) => {
+    await studioApi.saveSitePage({ ...p, status: p.status === 'published' ? 'draft' : 'published' }).catch(() => toast.error(t('common.error')));
+    load();
+  };
+  const remove = async (p: SitePage) => {
+    if (!window.confirm(t('agent.pages.confirmDelete', { title: p.title }))) return;
+    await studioApi.deleteSitePage(p.id).catch(() => toast.error(t('common.error')));
+    load();
+  };
+
+  return (
+    <div className="ec-seo-custom-pages">
+      <h3>{t('agent.pages.title')}</h3>
+      {items && !items.length ? <p>{t('agent.pages.empty')}</p> : null}
+      <ul>
+        {(items || []).map((p) => (
+          <li key={p.id}>
+            <span>
+              <b dir="auto">{p.title}</b>
+              <small dir="ltr">/p/{p.slug} · {LANG_LABEL[toSiteLang(p.lang)]}</small>
+            </span>
+            <span className="ec-seo-custom-actions">
+              <button type="button" className={cn('ec-seo-custom-status', p.status === 'published' && 'is-live')} onClick={() => void toggle(p)}>
+                {t(p.status === 'published' ? 'agent.pages.live' : 'agent.pages.draft')}
+              </button>
+              <a href={`/p/${p.slug}?lang=${p.lang}${p.status === 'published' ? '' : '&preview=1'}`} target="_blank" rel="noopener" aria-label={t('agent.review.view')}>
+                <ExternalLink size={15} />
+              </a>
+              <button type="button" onClick={() => void remove(p)} aria-label={t('common.delete')}>
+                <Trash2 size={15} />
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <Button size="sm" variant="outline" onClick={() => askAgent(t('agent.pages.askPrompt'))}>
+        <Sparkles />
+        {t('agent.pages.ask')}
+      </Button>
     </div>
   );
 };

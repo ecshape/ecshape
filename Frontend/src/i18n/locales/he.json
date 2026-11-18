@@ -2317,7 +2317,9 @@
       "done": "בוצע",
       "cancelled": "בוטל",
       "failed": "נכשל",
-      "pending": ""
+      "pending": "",
+      "approved": "אושר",
+      "undone": "בוטל — האתר חזר למה שהיה"
     },
     "done": "בוצע: {{what}}.",
     "failed": "לא הצלחתי: {{reason}}.",
@@ -2342,7 +2344,42 @@
       "qaCreate": "פתיחת פניית QA „{{title}}” (עדיפות {{priority}}).",
       "qaUpdate": "עדכון הפנייה {{title}}: {{change}}.",
       "siteText": "שינוי טקסט באתר ({{lang}}, {{path}}) ל: „{{value}}”.",
-      "seoPage": "עדכון התצוגה בגוגל ({{lang}}): {{value}}."
+      "seoPage": "עדכון התצוגה בגוגל ({{lang}}): {{value}}.",
+      "articlePublish": "לפרסם את המאמר „{{title}}” ({{lang}}) בבלוג.",
+      "articleDraft": "לשמור את המאמר „{{title}}” ({{lang}}) כטיוטה.",
+      "pagePublish": "ליצור ולפרסם את הדף „{{title}}” ({{lang}}): ‎/p/{{slug}}.",
+      "pageDraft": "ליצור את הדף „{{title}}” ({{lang}}) כטיוטה: ‎/p/{{slug}}.",
+      "menu": "תפריט חדש ({{lang}}): {{items}}.",
+      "menuDefault": "להחזיר את תפריט ברירת המחדל ({{lang}}).",
+      "layoutOrder": "סדר האזורים: {{order}}.",
+      "layoutHidden": "אזורים מוסתרים: {{hidden}}.",
+      "layoutAllShown": "להציג את כל האזורים.",
+      "link": "הכפתור {{button}} יוביל אל {{target}}.",
+      "linkDefault": "הכפתור {{button}} יחזור לקישור ברירת המחדל."
+    },
+    "preview": "להצגת התוכן",
+    "askDo": "שאעשה את זה בשבילך?",
+    "doIt": "כן, תעשה",
+    "selfDo": "לא, אני אטפל",
+    "doAll": "לבצע הכול ({{count}})",
+    "review": {
+      "view": "לצפייה בתוצאה",
+      "question": "זה מה שרצית?",
+      "yes": "כן, מושלם",
+      "undo": "לא, לבטל",
+      "change": "לשנות משהו",
+      "undonePrompt": "ביטלתי את „{{what}}”. מה שרציתי במקום: ",
+      "changePrompt": "לגבי „{{what}}”, לשנות את זה: ",
+      "partlyUndone": "בוטל. {{count}} פריט(ים) ששונו מאז נשארו כמו שהם."
+    },
+    "pages": {
+      "title": "דפים שנוצרו",
+      "empty": "עדיין אין דפים. Agent EC יכול ליצור אחד בשבילך.",
+      "live": "באוויר",
+      "draft": "טיוטה",
+      "confirmDelete": "למחוק את הדף „{{title}}”?",
+      "ask": "ליצור דף עם Agent EC",
+      "askPrompt": "צור דף חדש באתר שלי: "
     }
   },
   "exerciseLibrary": {

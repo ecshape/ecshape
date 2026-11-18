@@ -2317,7 +2317,9 @@
       "done": "Done",
       "cancelled": "Cancelled",
       "failed": "Failed",
-      "pending": ""
+      "pending": "",
+      "approved": "Approved",
+      "undone": "Undone — the site is back as it was"
     },
     "done": "Done: {{what}}.",
     "failed": "I couldn't do it: {{reason}}.",
@@ -2342,7 +2344,42 @@
       "qaCreate": "Open the QA ticket “{{title}}” ({{priority}} priority).",
       "qaUpdate": "Update ticket {{title}}: {{change}}.",
       "siteText": "Change the site text ({{lang}}, {{path}}) to: “{{value}}”.",
-      "seoPage": "Set the Google listing ({{lang}}): {{value}}."
+      "seoPage": "Set the Google listing ({{lang}}): {{value}}.",
+      "articlePublish": "Publish the article “{{title}}” ({{lang}}) on the blog.",
+      "articleDraft": "Save the article “{{title}}” ({{lang}}) as a draft.",
+      "pagePublish": "Create and publish the page “{{title}}” ({{lang}}): /p/{{slug}}.",
+      "pageDraft": "Create the page “{{title}}” ({{lang}}) as a draft: /p/{{slug}}.",
+      "menu": "New menu ({{lang}}): {{items}}.",
+      "menuDefault": "Restore the default menu ({{lang}}).",
+      "layoutOrder": "Section order: {{order}}.",
+      "layoutHidden": "Hidden sections: {{hidden}}.",
+      "layoutAllShown": "Show every section.",
+      "link": "The {{button}} button leads to {{target}}.",
+      "linkDefault": "The {{button}} button gets its default link back."
+    },
+    "preview": "See the content",
+    "askDo": "Shall I do it for you?",
+    "doIt": "Yes, do it",
+    "selfDo": "No, I’ll do it",
+    "doAll": "Do everything ({{count}})",
+    "review": {
+      "view": "See the result",
+      "question": "Is this what you wanted?",
+      "yes": "Yes, perfect",
+      "undo": "No, undo it",
+      "change": "Change something",
+      "undonePrompt": "I undid “{{what}}”. What I wanted instead: ",
+      "changePrompt": "For “{{what}}”, change this: ",
+      "partlyUndone": "Undone. {{count}} part(s) changed since were kept as they are."
+    },
+    "pages": {
+      "title": "Created pages",
+      "empty": "No pages yet. Agent EC can create one for you.",
+      "live": "Live",
+      "draft": "Draft",
+      "confirmDelete": "Delete the page “{{title}}”?",
+      "ask": "Create a page with Agent EC",
+      "askPrompt": "Create a new page on my site: "
     }
   },
   "exerciseLibrary": {

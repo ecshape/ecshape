@@ -423,3 +423,17 @@
 @media (prefers-reduced-motion: reduce) {
   .ec-seo *, .ec-wp *, .ec-seo, .ec-wp { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
 }
+
+/* Pages created in Studio / by Agent EC (/p/<slug>) */
+.ec-seo-custom-pages { display: grid; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--sx-line, hsl(var(--border))); }
+.ec-seo-custom-pages h3 { margin: 0; font-size: 14px; font-weight: 700; }
+.ec-seo-custom-pages > p { margin: 0; font-size: 13px; color: var(--sx-muted); }
+.ec-seo-custom-pages li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 12px; background: hsl(var(--muted) / .35); }
+.ec-seo-custom-pages li > span:first-child { display: grid; min-width: 0; }
+.ec-seo-custom-pages li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.ec-seo-custom-pages li small { color: var(--sx-muted); font-size: 11px; }
+.ec-seo-custom-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ec-seo-page-list .ec-seo-custom-actions > a, .ec-seo-page-list .ec-seo-custom-actions > button { display: inline-grid; place-items: center; min-width: 28px; height: 28px; border-radius: 8px; color: var(--sx-muted); background: transparent; border: 0; cursor: pointer; }
+.ec-seo-page-list .ec-seo-custom-actions > a:hover, .ec-seo-page-list .ec-seo-custom-actions > button:hover { color: hsl(var(--foreground)); background: hsl(var(--muted) / .6); }
+.ec-seo-page-list .ec-seo-custom-actions .ec-seo-custom-status { padding: 0 9px; font-size: 11px; font-weight: 700; border-radius: 999px; border: 1px solid hsl(var(--border)); }
+.ec-seo-page-list .ec-seo-custom-actions .ec-seo-custom-status.is-live { color: hsl(142 60% 45%); border-color: hsl(142 60% 45% / .5); }

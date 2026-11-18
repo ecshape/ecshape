@@ -17,9 +17,38 @@ export type AgentOp =
   | { kind: 'qa.create'; ticket: { title: string; body?: string; page?: string; priority?: string } }
   | { kind: 'qa.update'; ticketId: number; title?: string; status?: string | null; priority?: string | null }
   | { kind: 'site.text'; lang: string; path: string; value: string }
-  | { kind: 'seo.page'; lang: string; title?: string; description?: string; keywords?: string };
+  | { kind: 'seo.page'; lang: string; title?: string; description?: string; keywords?: string }
+  | { kind: 'article.save'; article: { id?: string | null; lang: string; title: string; slug?: string; excerpt?: string; contentHtml: string;
+      focusKeyword?: string; seoTitle?: string; metaDescription?: string; category?: string; faq?: { q: string; a: string }[]; status: 'draft' | 'published' } }
+  | { kind: 'page.save'; page: { id?: string | null; lang: string; title: string; slug?: string; intro?: string; contentHtml: string; cta?: boolean;
+      seo?: { title?: string; description?: string }; status: 'draft' | 'published' } }
+  | { kind: 'site.menu'; lang: string; items: { label: string; href: string }[] }
+  | { kind: 'site.layout'; order?: string[]; hidden?: string[] }
+  | { kind: 'site.link'; path: string; target: string };
 
-export type OpState = 'pending' | 'running' | 'done' | 'cancelled' | 'failed';
+/** What the server returned after an action ran (address of the new page / article). */
+export type OpResult = { article?: { slug: string; lang: string; status: string }; page?: { slug: string; lang: string; status: string } };
+
+/** Site actions keep a snapshot first: the trainer can undo them if the result is not what they wanted. */
+export const opCanUndo = (op: AgentOp) =>
+  ['site.text', 'seo.page', 'article.save', 'page.save', 'site.menu', 'site.layout', 'site.link'].includes(op.kind);
+
+/** Public address where the trainer can look at the result. */
+export function opViewHref(op: AgentOp, result?: OpResult | null): string | null {
+  if (op.kind === 'article.save') {
+    const a = result?.article;
+    return a && a.status === 'published' ? `/blog/${a.slug}?lang=${a.lang}` : '/studio/seo';
+  }
+  if (op.kind === 'page.save') {
+    const p = result?.page;
+    return p ? `/p/${p.slug}?lang=${p.lang}${p.status === 'published' ? '' : '&preview=1'}` : null;
+  }
+  if (op.kind === 'site.menu') return `/home?lang=${op.lang}`;
+  if (op.kind === 'site.layout' || op.kind === 'site.link' || op.kind === 'site.text') return '/home';
+  return null;
+}
+
+export type OpState = 'pending' | 'running' | 'done' | 'cancelled' | 'failed' | 'approved' | 'undone';
 
 /** Open Agent EC with a pre-filled request (the trainer reads it, then sends). */
 export const AGENT_ASK_EVENT = 'ec-agent:ask';
@@ -36,7 +65,7 @@ export function askAgent(prompt?: string) {
 
 export const opNeedsConfirm = (op: AgentOp) => op.kind !== 'navigate' && op.kind !== 'ui.open-form';
 export const opAutoRun = (op: AgentOp) => op.kind === 'navigate' || op.kind === 'ui.open-form';
-export const opIsDanger = (op: AgentOp) => op.kind === 'lead.update' && op.status === 'lost';
+export const opIsDanger = (op: AgentOp) => (op.kind === 'lead.update' && op.status === 'lost') || (op.kind === 'site.layout' && (op.hidden?.length ?? 0) > 3);
 
 export function formHref(form: AgentForm) {
   if (form === 'article') return '/studio/seo';
@@ -57,7 +86,13 @@ export function opTarget(op: AgentOp): { path: string; selector: string } | null
     case 'site.text':
       return { path: '/studio/site', selector: '[data-ec-board="site"]' };
     case 'seo.page':
+    case 'article.save':
       return { path: '/studio/seo', selector: '[data-ec-board="seo"]' };
+    case 'page.save':
+    case 'site.menu':
+    case 'site.layout':
+    case 'site.link':
+      return { path: '/studio/site', selector: '[data-ec-board="site"]' };
     default:
       return null;
   }
@@ -90,6 +125,21 @@ export function opSummary(op: AgentOp, t: TFunction): string {
       return t('agent.op.siteText', { lang: langName(op.lang), path: op.path, value: op.value });
     case 'seo.page':
       return t('agent.op.seoPage', { lang: langName(op.lang), value: [op.title, op.description].filter(Boolean).join(' — ') });
+    case 'article.save':
+      return t(op.article.status === 'published' ? 'agent.op.articlePublish' : 'agent.op.articleDraft', { title: op.article.title, lang: langName(op.article.lang) });
+    case 'page.save':
+      return t(op.page.status === 'published' ? 'agent.op.pagePublish' : 'agent.op.pageDraft', { title: op.page.title, lang: langName(op.page.lang), slug: op.page.slug || '…' });
+    case 'site.menu':
+      return op.items.length
+        ? t('agent.op.menu', { lang: langName(op.lang), items: op.items.map((i) => i.label).join(' · ') })
+        : t('agent.op.menuDefault', { lang: langName(op.lang) });
+    case 'site.layout':
+      return [
+        op.order?.length ? t('agent.op.layoutOrder', { order: op.order.join(' → ') }) : '',
+        op.hidden ? (op.hidden.length ? t('agent.op.layoutHidden', { hidden: op.hidden.join(', ') }) : t('agent.op.layoutAllShown')) : '',
+      ].filter(Boolean).join(' ');
+    case 'site.link':
+      return op.target ? t('agent.op.link', { button: op.path, target: op.target }) : t('agent.op.linkDefault', { button: op.path });
   }
 }
 

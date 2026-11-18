@@ -48,8 +48,20 @@ How to work:
 - Look up real data with the read tools before answering questions about clients, prospects or tickets. Never invent \
 names, numbers or dates.
 - You never change data yourself. To act, call the matching proposal tool (update_prospect, create_prospect, \
-create_qa_ticket, update_qa_ticket, set_site_text, set_page_seo). Each one becomes a card the trainer confirms; it runs \
-on the right page while they watch. Say in one short sentence what you proposed.
+create_qa_ticket, update_qa_ticket, set_site_text, set_page_seo, create_article, save_site_page, set_site_menu, \
+set_site_layout, set_button_link). Each one becomes a card asking the trainer "Shall I do it for you?"; it runs only if \
+they say yes, on the right page while they watch, and afterwards they confirm it is what they wanted (or undo it).
+- You CAN build and change the public website yourself this way: write and publish blog articles (create_article), \
+create new pages of the site (save_site_page, served at /p/<slug>), change the menu (set_site_menu: add a page, the \
+blog, reorder, rename, remove), show / hide / reorder the home page sections (set_site_layout), point buttons \
+somewhere else (set_button_link) and change any text (set_site_text). Never answer that you cannot do it, and never \
+paste a whole article or page in the chat for the trainer to copy: put it in the proposal.
+- Site work, step by step: 1) read what exists first (get_site_menu, list_site_pages, list_articles, get_site_content); \
+2) if an essential is missing (topic, language, what goes on the page), ask in one short message; 3) otherwise propose \
+every action needed in the same answer (e.g. the page AND the menu link to it, in each language asked) and write \
+one or two sentences: what you prepared and "Shall I do it for you?". Write complete, final content (real HTML: \
+<h2>, <p>, <ul>, <strong>; no <h1>, no markdown), never placeholders.
+- When the trainer says the result is not what they wanted, ask what to change and propose the corrected version.
 - To take the trainer somewhere, call navigate (or open_form to open a "new …" form). These run immediately.
 - For communication work (Instagram captions, WhatsApp replies to prospects, SEO titles and descriptions, articles), \
 write ready-to-use text in the requested language. Brand voice: direct, warm, motivating, no medical claims, no emojis \
@@ -89,6 +101,12 @@ READ_TOOLS: List[Dict[str, Any]] = [
                                                   "equipment": {"type": "string", "description": "e.g. barbell, dumbbell, machine, cable, body only, kettlebells, bands"},
                                                   "level": {"type": "string", "enum": ["beginner", "intermediate", "expert"]}, "limit": {"type": "integer"}},
                 "additionalProperties": False}},
+    {"name": "list_articles", "description": "Blog articles (id, language, slug, title, status). Public address: /blog/<slug>.",
+     "schema": {"type": "object", "properties": {"lang": {"type": "string", "enum": ["he", "en", "fr"]}}, "additionalProperties": False}},
+    {"name": "list_site_pages", "description": "Extra pages of the site created in Studio (id, language, slug, title, status). Public address: /p/<slug>.",
+     "schema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "get_site_menu", "description": "The site menu per language (saved menu or default), the menu texts and the pages that can be linked.",
+     "schema": {"type": "object", "properties": {}, "additionalProperties": False}},
     {"name": "list_foods", "description": "Foods in the trainer's food bank with nutrition per 100 g or per portion (for menus).",
      "schema": {"type": "object", "properties": {"search": {"type": "string"}, "macro": {"type": "string", "enum": ["protein", "carb", "fat"]}}, "additionalProperties": False}},
 ]
@@ -120,6 +138,46 @@ PROPOSAL_TOOLS: List[Dict[str, Any]] = [
     {"name": "set_page_seo", "description": "Propose new Google title / description / keywords for the website in one language (trainer confirms).",
      "schema": {"type": "object", "properties": {"lang": {"type": "string", "enum": ["he", "en", "fr"]}, "title": {"type": "string"},
                                                   "description": {"type": "string"}, "keywords": {"type": "string"}}, "required": ["lang"], "additionalProperties": False}},
+    {"name": "create_article", "description": "Propose writing (or rewriting, with article_id) a full blog article on the site, ready to publish (trainer confirms). "
+                                        "One call per language. Public address: /blog/<slug>.",
+     "schema": {"type": "object", "properties": {
+         "article_id": {"type": "string", "description": "Only to replace an existing article."},
+         "lang": {"type": "string", "enum": ["he", "en", "fr"]}, "title": {"type": "string", "description": "H1 of the article."},
+         "slug": {"type": "string", "description": "Short URL words, e.g. perdre-du-ventre"},
+         "excerpt": {"type": "string", "description": "1-2 sentence summary shown on the blog."},
+         "content_html": {"type": "string", "description": "Full article body in HTML (h2, h3, p, ul, ol, strong, a). No h1."},
+         "focus_keyword": {"type": "string"}, "seo_title": {"type": "string", "description": "Google title, max 60 characters."},
+         "meta_description": {"type": "string", "description": "Google description, 140-160 characters."},
+         "category": {"type": "string"},
+         "faq": {"type": "array", "items": {"type": "object", "properties": {"q": {"type": "string"}, "a": {"type": "string"}}, "required": ["q", "a"]}},
+         "status": {"type": "string", "enum": ["draft", "published"], "description": "published = visible on the site right away."}},
+         "required": ["lang", "title", "content_html", "status"], "additionalProperties": False}},
+    {"name": "save_site_page", "description": "Propose creating (or replacing, with page_id) a page of the public site, e.g. 'About', 'Blog intro', "
+                                        "'Online coaching', 'Prices' (trainer confirms). One call per language. Public address: /p/<slug>. "
+                                        "To show it in the menu, also call set_site_menu.",
+     "schema": {"type": "object", "properties": {
+         "page_id": {"type": "string"}, "lang": {"type": "string", "enum": ["he", "en", "fr"]}, "title": {"type": "string"},
+         "slug": {"type": "string"}, "intro": {"type": "string", "description": "Short lead under the title."},
+         "content_html": {"type": "string", "description": "Page body in HTML (h2, h3, p, ul, ol, strong, a, img). No h1."},
+         "seo_title": {"type": "string"}, "meta_description": {"type": "string"},
+         "show_contact_box": {"type": "boolean", "description": "'Book an intro call' box at the end (default true)."},
+         "status": {"type": "string", "enum": ["draft", "published"]}},
+         "required": ["lang", "title", "content_html", "status"], "additionalProperties": False}},
+    {"name": "set_site_menu", "description": "Propose the complete new menu of the site for one language (trainer confirms). Items in order; "
+                                       "href: '#story' '#results' '#programs' '#app' '#voices' '#faq' '#contact' (home sections), '/blog', '/p/<slug>', "
+                                       "'/home' or https://…. Read get_site_menu first and keep the items that should stay. Empty items = default menu.",
+     "schema": {"type": "object", "properties": {
+         "lang": {"type": "string", "enum": ["he", "en", "fr"]},
+         "items": {"type": "array", "items": {"type": "object", "properties": {"label": {"type": "string"}, "href": {"type": "string"}}, "required": ["label", "href"]}}},
+         "required": ["lang", "items"], "additionalProperties": False}},
+    {"name": "set_site_layout", "description": "Propose the order of the home page sections and which ones are hidden (all languages; trainer confirms). "
+                                         "Sections: hero (always first), marquee, manifesto, story, results, shift, programs, app, process, voices, faq, cta, ig.",
+     "schema": {"type": "object", "properties": {"order": {"type": "array", "items": {"type": "string"}}, "hidden": {"type": "array", "items": {"type": "string"}}},
+                "additionalProperties": False}},
+    {"name": "set_button_link", "description": "Propose where a button of the site leads (all languages; trainer confirms). Buttons: nav.cta, nav.login, hero.ctaPrimary, "
+                                         "hero.ctaSecondary, results.ctaButton, programs.start, programs.more, app.already, faq.other, cta.form, cta.whatsapp, ig.button, "
+                                         "footer.instagram, footer.whatsapp, footer.contact. Target: 'form', 'whatsapp', 'instagram', '#section', '/p/<slug>', '/blog', https://…, or '' for default.",
+     "schema": {"type": "object", "properties": {"button": {"type": "string"}, "target": {"type": "string"}}, "required": ["button", "target"], "additionalProperties": False}},
 ]
 PROPOSAL_NAMES = {t["name"] for t in PROPOSAL_TOOLS}
 
@@ -145,6 +203,31 @@ def _tool_to_op(name: str, args: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return {"kind": "site.text", "lang": args.get("lang"), "path": args.get("path"), "value": args.get("value")}
     if name == "set_page_seo":
         return {"kind": "seo.page", "lang": args.get("lang"), **{k: args.get(k) for k in ("title", "description", "keywords") if args.get(k)}}
+    if name == "create_article":
+        return {"kind": "article.save", "article": {
+            "id": args.get("article_id"), "lang": args.get("lang"), "title": args.get("title"), "slug": args.get("slug"),
+            "excerpt": args.get("excerpt"), "contentHtml": args.get("content_html"), "focusKeyword": args.get("focus_keyword"),
+            "seoTitle": args.get("seo_title"), "metaDescription": args.get("meta_description"), "category": args.get("category"),
+            "faq": [f for f in (args.get("faq") or []) if isinstance(f, dict)][:12], "status": args.get("status") or "draft"}}
+    if name == "save_site_page":
+        return {"kind": "page.save", "page": {
+            "id": args.get("page_id"), "lang": args.get("lang"), "title": args.get("title"), "slug": args.get("slug"),
+            "intro": args.get("intro"), "contentHtml": args.get("content_html"), "cta": args.get("show_contact_box") is not False,
+            "seo": {"title": args.get("seo_title"), "description": args.get("meta_description")}, "status": args.get("status") or "draft"}}
+    if name == "set_site_menu":
+        from app.services.agent_site import clean_href
+        items = [{"label": str(i.get("label") or "")[:60], "href": clean_href(i.get("href"))} for i in (args.get("items") or []) if isinstance(i, dict)]
+        if any(not i["href"] or not i["label"] for i in items):
+            return None
+        return {"kind": "site.menu", "lang": args.get("lang"), "items": items[:12]}
+    if name == "set_site_layout":
+        return {"kind": "site.layout", **{k: args[k] for k in ("order", "hidden") if isinstance(args.get(k), list)}}
+    if name == "set_button_link":
+        from app.services.agent_site import LINK_PATHS, clean_href
+        target = str(args.get("target") or "")
+        if args.get("button") not in LINK_PATHS or (target and not clean_href(target)):
+            return None
+        return {"kind": "site.link", "path": args["button"], "target": clean_href(target) if target else ""}
     return None
 
 
@@ -208,6 +291,16 @@ def _run_read_tool(db: Session, user: UserResponse, name: str, args: Dict[str, A
         return get_setting(db, f"content:{args['lang']}")
     if name == "get_seo":
         return get_setting(db, "seo")
+    if name == "list_articles":
+        from app.services.seo_writer import list_articles
+        return [{k: a.get(k) for k in ("id", "lang", "slug", "title", "status", "publishedAt")} | {"href": f"/blog/{a.get('slug')}"}
+                for a in list_articles(db) if not args.get("lang") or a.get("lang") == args["lang"]]
+    if name == "list_site_pages":
+        from app.services.agent_site import list_pages
+        return [{k: p.get(k) for k in ("id", "lang", "slug", "title", "status", "intro")} | {"href": f"/p/{p.get('slug')}"} for p in list_pages(db)]
+    if name == "get_site_menu":
+        from app.services.agent_site import menu_view
+        return menu_view(db)
     if name == "load_skill":
         from app.services import agent_skills
 

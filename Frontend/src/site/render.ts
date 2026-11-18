@@ -5,7 +5,7 @@ import { legalNavFor } from '@/legal/i18n';
  */
 import type { SiteContent, SiteLang } from './content/types';
 import { hiddenSections, sectionOrder, type SectionKey } from './sections';
-import { isLinkPath } from './links';
+import { cleanTarget, isLinkPath } from './links';
 
 const P = '/site/photos/';
 const esc = (v: unknown) =>
@@ -111,6 +111,12 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
     ['story', '#story', 'about'], ['results', '#results', 'results'], ['programs', '#programs', 'programs'],
     ['app', '#app', 'app'], ['voices', '#voices', 'reviews'], ['faq', '#faq', 'faq'],
   ] as const).filter(([key]) => !hidden.has(key));
+  // Menu saved in Studio / by Agent EC (one per language); otherwise the default section links.
+  const customMenu = (c.menu?.items || []).map((m) => ({ label: String(m?.label || ''), href: cleanTarget(String(m?.href || '')) }))
+    .filter((m) => m.label && m.href && !['form', 'whatsapp', 'instagram'].includes(m.href));
+  const menuAttrs = (href: string) =>
+    href.startsWith('/') ? `href="${esc(href.includes('?') || href.startsWith('/legal') ? href : `${href}?lang=${lang}`)}" data-route`
+      : href.startsWith('#') ? `href="${esc(href)}"` : `href="${esc(href)}" target="_blank" rel="noopener"`;
   const langSwitch = `<div class="lang-switch" role="group" aria-label="Language">${LANGS.map(
     (l) => `<button type="button" data-lang="${l.code}" class="${l.code === lang ? 'is-on' : ''}" aria-pressed="${l.code === lang}">${l.label}</button>`
   ).join('')}</div>`;
@@ -394,7 +400,7 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
     <img src="/brand/ec-mark-trainer.svg" alt="" width="42" height="44"><b>ECSHAPE</b>
   </a>
   <nav class="nav__links" aria-label="Main">
-    ${navItems.map(([, h, k]) => `<a href="${h}" data-scramble${P_(`nav.${k}`)}>${esc(c.nav[k])}</a>`).join('')}
+    ${customMenu.length ? customMenu.map((m) => `<a ${menuAttrs(m.href)} data-scramble>${esc(m.label)}</a>`).join('') : navItems.map(([, h, k]) => `<a href="${h}" data-scramble${P_(`nav.${k}`)}>${esc(c.nav[k])}</a>`).join('')}
   </nav>
   <div class="nav__actions">
     ${langSwitch}
@@ -406,7 +412,7 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
 
 <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true" data-lenis-prevent>
   <nav aria-label="Mobile">
-    ${navItems.map(([, h, k]) => `<a href="${h}"><span>${esc(c.nav[k])}</span></a>`).join('')}
+    ${customMenu.length ? customMenu.map((m) => `<a ${menuAttrs(m.href)}><span>${esc(m.label)}</span></a>`).join('') : navItems.map(([, h, k]) => `<a href="${h}"><span>${esc(c.nav[k])}</span></a>`).join('')}
   </nav>
   ${langSwitch}
   <div class="menu__ctas">

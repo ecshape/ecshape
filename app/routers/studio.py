@@ -190,6 +190,16 @@ def public_article(slug: str, lang: Optional[str] = None, db: Session = Depends(
     return match
 
 
+@public_router.get("/pages/{slug}")
+def public_site_page(slug: str, lang: Optional[str] = None, db: Session = Depends(get_db)):
+    """A page of the site created in Studio (often by Agent EC), served at /p/<slug>."""
+    from app.services.agent_site import public_page
+    page = public_page(db, slug, lang)
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    return page
+
+
 @public_router.get("/redirects")
 def public_redirects(db: Session = Depends(get_db)):
     return get_setting(db, "seo").get("redirects") or []
@@ -597,7 +607,96 @@ def agent_execute(payload: AgentOpIn, user: UserResponse = Depends(require_studi
                 page[k] = str(op[k])[:400]
         put_setting(db, "seo", seo, user.id)
         return {"ok": True}
+    if kind in ("article.save", "page.save", "site.menu", "site.layout", "site.link"):
+        return _run_site_op(db, user, op)
     raise HTTPException(status_code=422, detail="Unknown action")
+
+
+def _run_site_op(db: Session, user: UserResponse, op: Dict[str, Any]) -> Dict[str, Any]:
+    """Site actions of Agent EC: new pages and articles, menu, section layout, button links."""
+    from app.services import agent_site
+    from app.services.seo_writer import save_article
+    kind = op.get("kind")
+    try:
+        if kind == "article.save":
+            a = op.get("article") or {}
+            article = save_article(db, {
+                "id": a.get("id"), "lang": a.get("lang"), "title": a.get("title"), "slug": a.get("slug"),
+                "excerpt": a.get("excerpt"), "contentHtml": a.get("contentHtml"), "category": a.get("category"),
+                "tags": a.get("tags") or [], "status": a.get("status"),
+                "seo": {"focusKeyword": a.get("focusKeyword"), "title": a.get("seoTitle"), "description": a.get("metaDescription"), "faq": a.get("faq") or []},
+            }, user.id, user.full_name or "ECshape")
+            return {"ok": True, "article": {k: article[k] for k in ("id", "slug", "lang", "status", "title")}}
+        if kind == "page.save":
+            page = agent_site.save_page(db, op.get("page") or {}, user.id)
+            return {"ok": True, "page": {k: page[k] for k in ("id", "slug", "lang", "status", "title")}}
+        if kind == "site.menu":
+            agent_site.set_menu(db, op.get("lang"), op.get("items") or [], user.id)
+            return {"ok": True}
+        if kind == "site.layout":
+            agent_site.set_layout(db, op.get("order"), op.get("hidden"), user.id)
+            return {"ok": True}
+        if kind == "site.link":
+            agent_site.set_link(db, str(op.get("path") or ""), str(op.get("target") or ""), user.id)
+            return {"ok": True}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    raise HTTPException(status_code=422, detail="Unknown action")
+
+
+class AgentSnapshotIn(BaseModel):
+    op: Dict[str, Any]
+    undo_id: Optional[str] = Field(None, max_length=64)
+
+
+@router.post("/agent/snapshot")
+def agent_snapshot(payload: AgentSnapshotIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """Before an action: saves what it is about to change. After it (with undo_id): saves the result, so the trainer
+    can undo exactly this action if it is not what they wanted, without losing later edits."""
+    from app.services.agent_site import snapshot
+    return {"undo_id": snapshot(db, payload.op or {}, user.id, payload.undo_id)}
+
+
+class AgentUndoIn(BaseModel):
+    undo_id: str = Field(..., min_length=8, max_length=64)
+
+
+@router.post("/agent/undo")
+def agent_undo(payload: AgentUndoIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.agent_site import undo
+    try:
+        return {"ok": True, **undo(db, payload.undo_id, user.id)}
+    except LookupError:
+        raise HTTPException(status_code=404, detail="Nothing to undo")
+
+
+# ---- Site pages (created in Studio or by Agent EC, served at /p/<slug>)
+class SitePageIn(BaseModel):
+    page: Dict[str, Any]
+
+
+@router.get("/pages")
+def get_site_pages(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.agent_site import list_pages
+    return list_pages(db)
+
+
+@router.put("/pages")
+def put_site_page(payload: SitePageIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.agent_site import save_page
+    try:
+        return save_page(db, payload.page, user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.delete("/pages/{page_id}", status_code=204)
+def remove_site_page(page_id: str, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services.agent_site import delete_page
+    try:
+        delete_page(db, page_id, user.id)
+    except LookupError:
+        raise HTTPException(status_code=404, detail="Page not found")
 
 
 @router.get("/agent/recommendations")

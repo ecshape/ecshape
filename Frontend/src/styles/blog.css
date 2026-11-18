@@ -107,3 +107,8 @@
 @media (prefers-reduced-motion: reduce) {
   .ec-blog *, .ec-blog-grain { animation: none !important; transition: none !important; }
 }
+
+/* Pages created in Studio / by Agent EC (/p/<slug>) */
+.ec-blog-navlinks { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: flex-end; }
+.ec-blog-navlink[aria-current="page"] { color: var(--ec-blog-accent, #ff6a1a); }
+.ec-blog-draft { margin: 0 0 18px; padding: 8px 14px; border-radius: 999px; width: fit-content; background: rgba(255, 106, 26, .14); color: #ff8a3d; font-size: 13px; font-weight: 700; }

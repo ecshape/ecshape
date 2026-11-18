@@ -181,6 +181,13 @@ export const publicApi = {
   articles: (lang?: string) => publicGet<ArticleSummary[]>(`/articles${lang ? `?lang=${lang}` : ''}`),
   article: (slug: string, lang?: string) => publicGet<Article>(`/articles/${encodeURIComponent(slug)}${lang ? `?lang=${lang}` : ''}`),
   redirects: () => publicGet<SeoRedirect[]>('/redirects'),
+  page: (slug: string, lang?: string) => publicGet<SitePage>(`/pages/${encodeURIComponent(slug)}${lang ? `?lang=${lang}` : ''}`),
+};
+
+/** A page of the site created in Studio or by Agent EC (served at /p/<slug>). */
+export type SitePage = {
+  id: string; lang: string; slug: string; title: string; intro: string; contentHtml: string; coverImage?: string; cta: boolean;
+  status: 'draft' | 'published'; seo: { title?: string; description?: string }; createdAt: string; updatedAt: string;
 };
 
 export const studioApi = {
@@ -234,7 +241,14 @@ export const studioApi = {
   agentStatus: () => request<{ configured: boolean; engine: string | null; source: string }>('/agent/status'),
   agentChat: (messages: AgentTurn[], lang: string, page: AgentPage, provider: string) =>
     request<AgentReply>('/agent/chat', { method: 'POST', body: JSON.stringify({ messages, lang, page, provider }) }),
-  agentExecute: (op: import('./agentOps').AgentOp) => request<{ ok: boolean }>('/agent/execute', { method: 'POST', body: JSON.stringify({ op }) }),
+  agentExecute: (op: import('./agentOps').AgentOp) =>
+    request<{ ok: boolean } & import('./agentOps').OpResult>('/agent/execute', { method: 'POST', body: JSON.stringify({ op }) }),
+  agentSnapshot: (op: import('./agentOps').AgentOp, undoId?: string) =>
+    request<{ undo_id: string | null }>('/agent/snapshot', { method: 'POST', body: JSON.stringify({ op, undo_id: undoId }) }),
+  agentUndo: (undoId: string) => request<{ ok: boolean; reverted?: number; kept?: number }>('/agent/undo', { method: 'POST', body: JSON.stringify({ undo_id: undoId }) }),
+  sitePages: () => request<SitePage[]>('/pages'),
+  saveSitePage: (page: Partial<SitePage>) => request<SitePage>('/pages', { method: 'PUT', body: JSON.stringify({ page }) }),
+  deleteSitePage: (id: string) => request<void>(`/pages/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   agentRecommendations: () => request<AgentRecommendation[]>('/agent/recommendations'),
 
   aiProviders: () => request<AiProvider[]>('/ai-providers'),

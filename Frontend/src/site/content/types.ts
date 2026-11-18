@@ -33,6 +33,8 @@ export interface SiteContent {
   layout?: SiteLayout;
   /** Custom targets of buttons / links, keyed by the label's content path (Studio -> My site, shared by every language). See site/links.ts. */
   links?: Record<string, string>;
+  /** Menu of this language when the trainer (or Agent EC) changed it: replaces the default section links. */
+  menu?: { items: { label: string; href: string }[] };
 }
 
 export interface SiteLayout { order?: string[]; hidden?: string[] }

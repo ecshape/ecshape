@@ -2317,7 +2317,9 @@
       "done": "Fait",
       "cancelled": "Annulé",
       "failed": "Échec",
-      "pending": ""
+      "pending": "",
+      "approved": "Validé",
+      "undone": "Annulé — le site est revenu comme avant"
     },
     "done": "Fait : {{what}}.",
     "failed": "Je n’ai pas pu le faire : {{reason}}.",
@@ -2342,7 +2344,42 @@
       "qaCreate": "Ouvrir le ticket QA « {{title}} » (priorité {{priority}}).",
       "qaUpdate": "Mettre à jour le ticket {{title}} : {{change}}.",
       "siteText": "Remplacer le texte du site ({{lang}}, {{path}}) par : « {{value}} ».",
-      "seoPage": "Définir la fiche Google ({{lang}}) : {{value}}."
+      "seoPage": "Définir la fiche Google ({{lang}}) : {{value}}.",
+      "articlePublish": "Publier l’article « {{title}} » ({{lang}}) sur le blog.",
+      "articleDraft": "Enregistrer l’article « {{title}} » ({{lang}}) en brouillon.",
+      "pagePublish": "Créer et publier la page « {{title}} » ({{lang}}) : /p/{{slug}}.",
+      "pageDraft": "Créer la page « {{title}} » ({{lang}}) en brouillon : /p/{{slug}}.",
+      "menu": "Nouveau menu ({{lang}}) : {{items}}.",
+      "menuDefault": "Remettre le menu par défaut ({{lang}}).",
+      "layoutOrder": "Ordre des sections : {{order}}.",
+      "layoutHidden": "Sections masquées : {{hidden}}.",
+      "layoutAllShown": "Afficher toutes les sections.",
+      "link": "Le bouton {{button}} mène vers {{target}}.",
+      "linkDefault": "Le bouton {{button}} reprend son lien par défaut."
+    },
+    "preview": "Voir le contenu",
+    "askDo": "Je le fais pour toi ?",
+    "doIt": "Oui, fais-le",
+    "selfDo": "Non, je m’en occupe",
+    "doAll": "Tout faire ({{count}})",
+    "review": {
+      "view": "Voir le résultat",
+      "question": "C’est bien ce que tu voulais ?",
+      "yes": "Oui, parfait",
+      "undo": "Non, annule",
+      "change": "À modifier",
+      "undonePrompt": "J’ai annulé « {{what}} ». Ce que je voulais plutôt : ",
+      "changePrompt": "Pour « {{what}} », change ceci : ",
+      "partlyUndone": "Annulé. {{count}} élément(s) modifié(s) depuis ont été gardés tels quels."
+    },
+    "pages": {
+      "title": "Pages créées",
+      "empty": "Aucune page pour l’instant. Agent EC peut en créer une pour toi.",
+      "live": "En ligne",
+      "draft": "Brouillon",
+      "confirmDelete": "Supprimer la page « {{title}} » ?",
+      "ask": "Créer une page avec Agent EC",
+      "askPrompt": "Crée une nouvelle page sur mon site : "
     }
   },
   "exerciseLibrary": {

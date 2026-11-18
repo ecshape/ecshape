@@ -58,6 +58,7 @@ import './styles/seo-studio.css';
 // Public site (gsap + lenis) is code-split so the portal bundle stays lean.
 const SitePage = lazy(() => import('./pages/SitePage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
+const CustomSitePage = lazy(() => import('./pages/CustomSitePage'));
 const SiteFallback = () => <div className="min-h-screen" style={{ background: '#0b0a08' }} />;
 
 /** "/" is the public site for visitors and the dashboard for signed-in users. */
@@ -361,6 +362,7 @@ const AppRoutes = () => {
 
       <Route path="/blog" element={<Suspense fallback={<SiteFallback />}><BlogPage /></Suspense>} />
       <Route path="/blog/:slug" element={<Suspense fallback={<SiteFallback />}><BlogPage /></Suspense>} />
+      <Route path="/p/:slug" element={<Suspense fallback={<SiteFallback />}><CustomSitePage /></Suspense>} />
 
       {/* Catch all: SEO redirects first, then 404 */}
       <Route path="*" element={<RedirectGate />} />

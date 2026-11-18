@@ -2,7 +2,7 @@ import { floatingToolProps, floatingTouchProps, installFloatingToolGuard } from 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, KeyRound, Plus, RotateCcw, X, Wand2, PenLine, Users2, HeartPulse, Bug, Search as SearchIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, ExternalLink, KeyRound, Undo2, ThumbsUp, MessageSquareText, Plus, RotateCcw, X, Wand2, PenLine, Users2, HeartPulse, Bug, Search as SearchIcon } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -11,7 +11,7 @@ import { useAgentSidekick } from '@/contexts/AgentSidekickContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { studioApi, type AgentRecommendation, type AiKey } from '@/lib/studioApi';
 import {
-  AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT, formHref, opAutoRun, opIsDanger, opNeedsConfirm, opSummary, opTarget,
+  AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT, formHref, opAutoRun, opCanUndo, opViewHref, type OpResult, opIsDanger, opNeedsConfirm, opSummary, opTarget,
   pageSnapshot, pageTitle, quickPromptKeys, useArticleBridge, spotlight, travel, type AgentOp, type OpState,
 } from '@/lib/agentOps';
 import { applySiteText } from '@/lib/siteContentOps';
@@ -19,9 +19,12 @@ import { toSiteLang } from '@/site/content';
 import { cn, isRtlLang } from '@/lib/utils';
 import '@/i18n/ticketsQa3';
 import { localizeAiError } from '@/lib/aiErrors';
+import { sanitizeArticleHtml } from '@/lib/seo/articles';
 
 type Fix = { label: string; href: string };
-type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; engine?: string; error?: boolean; fix?: Fix | null; fallbackFrom?: string };
+/** Per action: undo snapshot and what the server returned (address of a new page / article). */
+type OpMeta = { undoId?: string | null; result?: OpResult | null };
+type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; opMeta?: OpMeta[]; engine?: string; error?: boolean; fix?: Fix | null; fallbackFrom?: string };
 type Conversation = { id: string; title: string; updatedAt: string; turns: Turn[] };
 
 const MIN_W = 340;
@@ -63,6 +66,41 @@ function Rich({ text }: { text: string }) {
         return /^\s*[-•*]\s+/.test(line) ? <p key={i} className="ec-psk-li">{content}</p> : <p key={i}>{content}</p>;
       })}
     </>
+  );
+}
+
+/** Article / page content proposed by the agent, readable before the trainer says yes. */
+function OpPreview({ op }: { op: AgentOp }) {
+  const { t } = useTranslation();
+  const item = op.kind === 'article.save' ? op.article : op.kind === 'page.save' ? op.page : null;
+  if (op.kind === 'site.menu' && op.items.length) {
+    return (
+      <ol className="ec-psk-op-menu">
+        {op.items.map((it, k) => <li key={k}><b>{it.label}</b><span dir="ltr">{it.href}</span></li>)}
+      </ol>
+    );
+  }
+  if (!item) return null;
+  const intro = op.kind === 'article.save' ? op.article.excerpt : op.kind === 'page.save' ? op.page.intro : '';
+  const slug = item.slug ? `${op.kind === 'article.save' ? '/blog/' : '/p/'}${item.slug}` : '';
+  const seoTitle = op.kind === 'article.save' ? op.article.seoTitle : op.kind === 'page.save' ? op.page.seo?.title : '';
+  const seoDesc = op.kind === 'article.save' ? op.article.metaDescription : op.kind === 'page.save' ? op.page.seo?.description : '';
+  return (
+    <details className="ec-psk-op-preview">
+      <summary>{t('agent.preview')}</summary>
+      {slug ? <p className="ec-psk-op-slug" dir="ltr">{slug}</p> : null}
+      {seoTitle || seoDesc ? (
+        <div className="ec-psk-op-serp">
+          {seoTitle ? <b dir="auto">{seoTitle}</b> : null}
+          {seoDesc ? <span dir="auto">{seoDesc}</span> : null}
+        </div>
+      ) : null}
+      <div className="ec-psk-op-doc" dir="auto">
+        <h3>{item.title}</h3>
+        {intro ? <p><em>{intro}</em></p> : null}
+        <div dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(item.contentHtml || '') }} />
+      </div>
+    </details>
   );
 }
 
@@ -352,6 +390,50 @@ export function AgentEc() {
       prev.map((x, i) => (i === turnIndex ? { ...x, opStates: (x.opStates || (x.actions || []).map((): OpState => 'pending')).map((s, j) => (j === opIndex ? state : s)) } : x)),
     );
 
+  const setOpMeta = (turnIndex: number, opIndex: number, meta: OpMeta) =>
+    setTurns((prev) =>
+      prev.map((x, i) => {
+        if (i !== turnIndex) return x;
+        const metas = [...(x.opMeta || (x.actions || []).map(() => ({})))];
+        metas[opIndex] = { ...(metas[opIndex] || {}), ...meta };
+        return { ...x, opMeta: metas };
+      }),
+    );
+
+  /** Every pending action of an answer, one after the other (e.g. the page, then the menu link to it). */
+  async function runAll(turnIndex: number) {
+    const turn = turns[turnIndex];
+    for (const [j, op] of (turn?.actions || []).entries()) {
+      if (opNeedsConfirm(op) && (turn.opStates?.[j] || 'pending') === 'pending') await runAction(op, turnIndex, j);
+    }
+  }
+
+  /** "No, that's not what I wanted": the site goes back exactly as it was, then the trainer says what to change. */
+  async function undoAction(op: AgentOp, turnIndex: number, opIndex: number, undoId: string) {
+    setOpState(turnIndex, opIndex, 'running');
+    try {
+      const res = await studioApi.agentUndo(undoId);
+      setOpState(turnIndex, opIndex, 'undone');
+      if (res.kept) setTurns((prev) => [...prev, { role: 'assistant', text: t('agent.review.partlyUndone', { count: res.kept }) }]);
+      window.dispatchEvent(new CustomEvent(AGENT_CHANGED_EVENT));
+      askForChanges(op, true);
+    } catch (e) {
+      setOpState(turnIndex, opIndex, 'done');
+      setTurns((prev) => [...prev, { role: 'assistant', text: t('agent.failed', { reason: (e as Error).message }), error: true }]);
+    }
+  }
+
+  function askForChanges(op: AgentOp, undone: boolean) {
+    setInput(t(undone ? 'agent.review.undonePrompt' : 'agent.review.changePrompt', { what: opSummary(op, t).replace(/\.$/, '').slice(0, 140) }));
+    window.setTimeout(() => {
+      const el = inputRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
+    }, 60);
+  }
+
   /** Runs one action, live and in front of the trainer. */
   async function runAction(op: AgentOp, turnIndex: number, opIndex: number) {
     if (op.kind === 'navigate') {
@@ -379,10 +461,15 @@ export function AgentEc() {
       navigate(target.path);
     }
     try {
+      // Site actions: what they change is saved first, so the trainer can undo it after looking at the result.
+      const undoId = opCanUndo(op) ? (await studioApi.agentSnapshot(op).catch(() => ({ undo_id: null }))).undo_id : null;
+      let result: OpResult | null = null;
       if (op.kind === 'site.text') await applySiteText(toSiteLang(op.lang), op.path, op.value);
-      else await studioApi.agentExecute(op);
+      else result = await studioApi.agentExecute(op);
+      if (undoId) await studioApi.agentSnapshot(op, undoId).catch(() => null); // the result, so undo only reverts this action
+      setOpMeta(turnIndex, opIndex, { undoId, result });
       setOpState(turnIndex, opIndex, 'done');
-      setTurns((prev) => [...prev, { role: 'assistant', text: t('agent.done', { what: opSummary(op, t).replace(/\.$/, '') }) }]);
+      if (!opCanUndo(op)) setTurns((prev) => [...prev, { role: 'assistant', text: t('agent.done', { what: opSummary(op, t).replace(/\.$/, '') }) }]);
       window.dispatchEvent(new CustomEvent(AGENT_CHANGED_EVENT));
       if (target) window.setTimeout(() => spotlight(target.selector), 600);
     } catch (e) {
@@ -398,6 +485,13 @@ export function AgentEc() {
     void send(lastUser[0].text, turns.slice(0, lastUser[1]));
   }
 
+  /** The agent sees what became of its proposals (done, approved, undone, refused) in the next requests. */
+  function withActionStates(x: Turn) {
+    if (!x.actions?.length) return x.text;
+    const lines = x.actions.map((op, j) => `- ${op.kind}: ${opSummary(op, t).slice(0, 160)} → ${x.opStates?.[j] || 'pending'}`);
+    return `${x.text}\n\n[Proposed actions and what the trainer did with them (done = ran, approved = trainer confirmed the result, undone = trainer undid it, cancelled = trainer refused)]\n${lines.join('\n')}`.slice(0, 20000);
+  }
+
   async function send(text: string, history: Turn[] = turns) {
     const question = text.trim();
     if (!question || busy) return;
@@ -407,7 +501,7 @@ export function AgentEc() {
     setBusy(true);
     try {
       const res = await studioApi.agentChat(
-        next.filter((x) => !x.error).map(({ role, text: body }) => ({ role, content: body })).slice(-30),
+        next.filter((x) => !x.error).map((x) => ({ role: x.role, content: withActionStates(x) })).slice(-30),
         i18n.language,
         { path: pathname + location.search, title: pageTitle(), snapshot: articleBridge ? `${articleBridge.context}\n\n---\n${pageSnapshot()}`.slice(0, 12000) : pageSnapshot(), selection: window.getSelection()?.toString().slice(0, 2000) || '' },
         provider,
@@ -541,6 +635,12 @@ export function AgentEc() {
                 )}
                 {turn.actions?.length ? (
                   <div className="ec-psk-ops">
+                    {turn.actions.filter((op, j) => opNeedsConfirm(op) && (turn.opStates?.[j] || 'pending') === 'pending').length > 1 ? (
+                      <button type="button" className="ec-psk-op-all" onClick={() => void runAll(i)}>
+                        <Wand2 className="h-3.5 w-3.5" />
+                        {t('agent.doAll', { count: turn.actions.filter((op, j) => opNeedsConfirm(op) && (turn.opStates?.[j] || 'pending') === 'pending').length })}
+                      </button>
+                    ) : null}
                     {turn.actions.map((op, j) => {
                       const state = turn.opStates?.[j] || 'pending';
                       if (!opNeedsConfirm(op)) {
@@ -554,14 +654,42 @@ export function AgentEc() {
                       return (
                         <div key={j} className={cn('ec-psk-op-card', `is-${state}`, opIsDanger(op) && 'is-danger')}>
                           <p>{opSummary(op, t)}</p>
+                          {state === 'pending' ? <OpPreview op={op} /> : null}
                           {state === 'pending' ? (
-                            <div className="ec-psk-op-actions">
-                              <button type="button" className="ec-psk-op-confirm" onClick={() => void runAction(op, i, j)}>{t('agent.confirm')}</button>
-                              <button type="button" className="ec-psk-op-cancel" onClick={() => setOpState(i, j, 'cancelled')}>{t('common.cancel')}</button>
+                            <>
+                              <p className="ec-psk-op-ask">{t('agent.askDo')}</p>
+                              <div className="ec-psk-op-actions">
+                                <button type="button" className="ec-psk-op-confirm" onClick={() => void runAction(op, i, j)}>{t('agent.doIt')}</button>
+                                <button type="button" className="ec-psk-op-cancel" onClick={() => setOpState(i, j, 'cancelled')}>{t('agent.selfDo')}</button>
+                              </div>
+                            </>
+                          ) : state === 'done' && opCanUndo(op) ? (
+                            <div className="ec-psk-op-review">
+                              <span className="ec-psk-op-state"><Check className="h-3.5 w-3.5" />{t('agent.state.done')}</span>
+                              {opViewHref(op, turn.opMeta?.[j]?.result) ? (
+                                <a className="ec-psk-op-view" href={opViewHref(op, turn.opMeta?.[j]?.result)!} target="_blank" rel="noopener">
+                                  <ExternalLink className="h-3.5 w-3.5" />{t('agent.review.view')}
+                                </a>
+                              ) : null}
+                              <p className="ec-psk-op-ask">{t('agent.review.question')}</p>
+                              <div className="ec-psk-op-actions">
+                                <button type="button" className="ec-psk-op-confirm" onClick={() => setOpState(i, j, 'approved')}>
+                                  <ThumbsUp className="h-3.5 w-3.5" />{t('agent.review.yes')}
+                                </button>
+                                {turn.opMeta?.[j]?.undoId ? (
+                                  <button type="button" className="ec-psk-op-cancel" onClick={() => void undoAction(op, i, j, turn.opMeta![j].undoId!)}>
+                                    <Undo2 className="h-3.5 w-3.5" />{t('agent.review.undo')}
+                                  </button>
+                                ) : null}
+                                <button type="button" className="ec-psk-op-cancel" onClick={() => askForChanges(op, false)}>
+                                  <MessageSquareText className="h-3.5 w-3.5" />{t('agent.review.change')}
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <span className="ec-psk-op-state">
-                              {state === 'done' ? <Check className="h-3.5 w-3.5" /> : null}
+                              {state === 'done' || state === 'approved' ? <Check className="h-3.5 w-3.5" /> : null}
+                              {state === 'undone' ? <Undo2 className="h-3.5 w-3.5" /> : null}
                               {t(`agent.state.${state}`)}
                             </span>
                           )}

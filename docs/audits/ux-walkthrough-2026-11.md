@@ -30,6 +30,13 @@ Branch `claude/audit-ux-features-1bbe94`, fast-forwarded to `sam-dev-1` first (i
 | SEO / communication | pass | pass | pass | Clear empty states and connect actions. |
 | QA studio | fixed | pass | pass | Board and list views, filters, and the sheet work. Ticket delete moved from `confirm()` to the app dialog. |
 | Settings | pass | pass | pass | Profile photo, AI keys and one-click OpenRouter connection. Judged from content only, because the reveal animation stays frozen while the browser pane is hidden. |
+| Client: Today (375 px) | pass | pass | pass | Next workout hero, nutrition rings, check-in card, weight card, coach message. The weight card says "last weigh-in last week" right after a check-in logged today's weight: check-in weight and progress weigh-ins are separate sources. Its −2.2 kg also differs from the trainer's −6.5 kg (a different window, unlabelled). Proposal 10. |
+| Client: daily check-in (sleep and hunger sliders) | fixed | fixed | pass | Saving is instant, then the card turns into a "done" summary with a streak. Before the client answered, the thumb sat solidly on 7 h / hunger 6 and looked like a given answer; the unset thumb is now faint and dashed. |
+| Client: routines and session player | pass | pass | issue | Start, prefilled reps, set done, rest timer (±15 s, skip) and the finish confirmation sheet ("1 of 11 sets done") all work. At 375 px the header's "0/11 sets" label truncates. |
+| Client: nutrition and meal tracking | fixed | pass | fixed | Ticking a food is instant: totals, the 1/3 count and "I ate the rest" update at once. Food rows, the add-meal sheet and chat menu cards said "kcal" beside Hebrew; they now use the translated unit. Food placeholders use the Hebrew initial. The compact "P/C/F" notation remains (proposal 11). |
+| Client: progress | pass | pass | pass | Range tabs, fitted chart, measurements, milestones, photo empty state. |
+| Client: chat | pass | pass | pass | The unread badge clears once the conversation is read. |
+| Client: profile | fixed | pass | fixed | "With us since" read "נוב' 26" (looks like 26 November); it now shows 11.2026. |
 
 **Not yet audited:** meal plans and variants, nutrition table and food packs (details), meal tracking, daily check-in sliders, progress, chat, notifications, automations, Studio and QA, settings, the session player, the whole client app, English/LTR, 375px mobile, and light mode.
 
@@ -52,6 +59,8 @@ Before and after screenshots are in the session scratchpad, under `shots/`.
 6. Replace the browser's required-field bubbles app-wide with `noValidate` and inline translated errors.
 7. Show "Server error" banners as translated messages.
 8. Bring back a trainer notification inbox (a bell in the top bar, with the unread count the app already fetches), designed in the current system.
+10. One weight source: count today's check-in weight as a weigh-in (or say on the weight card which window the change covers).
+11. Macro shorthand in the client app ("P40 C30 F10"): use the Hebrew initials or small labelled chips, as in the food bank.
 9. Food photos in meal plans: plans store their own copy of each food without its photo; link to the food bank item instead, or copy the image when assigning.
 
 ## Motion notes (for the motion-uniformity session)

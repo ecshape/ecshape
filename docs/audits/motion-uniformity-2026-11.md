@@ -1,31 +1,86 @@
-# Motion uniformity audit — 2026-11 (INTERIM: session hit its usage limit)
+# Motion uniformity audit — 2026-11
 
-## Before
-- 6 parallel token namespaces for the same curve (`--ease-out`, `--tr-ease` (.2,.7,.3,1 — not in spec), `--sx-ease`, `--fb-ease-out`, blog `--ease`, `--ec-motion-spring` (.16,1,.3,1)); no portal duration tokens at all.
-- ~380 CSS transition/animation declarations using ~45 distinct literal durations (.06s–1.4s) and ~30 easing spellings.
-- Two motion tempos in the portal: trainer "calm" (QA #9 / #29, owner: "too exaggerated everywhere") vs trainee/studio/food bank/Agent EC (.45–.7s, 14–24px rises, spring on presses).
-- Route entrance animated twice (CSS `.tr-route` + GSAP `usePortalMotion` stagger + CSS on `.ec-stagger`); legacy `Layout` uses a third (`.ec-page-enter`).
-- Toasts: three systems; radix toast and `NotificationToast` slide in from the right even in RTL.
-- Press scale .90–.985 across 11 components; three press durations.
-- Global reduced-motion rule shortened loops to .001ms but kept them infinite (flicker).
+Scope: every animation in the portal (`Frontend/src`: trainer, trainee, studio, admin, chat, food bank, Agent EC) and
+the public site + blog (`Frontend/src/site`, `styles/blog.css`). Spec: `.claude/skills/ecshape-motion` and
+`.claude/skills/cinematic-web` (now extended with a **Motion tokens** section). Branch
+`claude/audit-motion-uniformity-904492`, not pushed.
 
-## Done (committed)
-- `src/styles/motion.css`: single token set (curves, `--dur-press/fast/med/slow/data/loop`, site `--t-*`, distances, press scales, `--ec-dir` with nearest-`dir` scoping), shared keyframes (`ec-fade/rise/pop/sheet-up/side-in/bump/spin`), calm `animate-in/out` curves, global reduced-motion (loops stop, delays and smooth scroll off).
-- `src/lib/motion.ts`: JS mirror + `prefersReducedMotion()` / `scrollBehavior()`.
-- `tailwind.config.ts`: `duration-*` / `ease-*` scale mapped onto the tokens (no .tsx edits, avoids conflicts with ux-walkthrough).
-- 225 portal declarations rewritten onto tokens across 15 CSS files (full before → after table below); RTL-variant keyframes replaced by direction-aware `ec-side-in`; alias tokens removed.
+## Verdict
 
-## Remaining
-- Delete orphaned keyframes and the redundant `.tr-root` "calm motion for the shared kit" override block in trainer.css; drop index.css duplicate ease tokens, the old reduced-motion rule and dead utilities (floating, bounceIn…); `.ec-btn--fill` should be `--dur-slow`.
-- One route transition: give `.tr-route` and `.ec-page-enter` the `.ec-route` primitive and remove the GSAP stagger in `lib/portalMotion.ts`.
-- ui primitives: dialog (`zoom-in-[.98]`, `duration-slow`), sheet, radix toast + `NotificationToast` (direction-neutral entrance, `end-4`), tabs, skeleton (use the shared shimmer).
-- Public site + blog: snap ~60 literal durations to `--t-fast/med/slow`.
-- Swap the 4 duplicated `matchMedia` reduced-motion checks for `lib/motion.ts`.
-- Live check in the browser (RTL/LTR, trainer/client, reduced motion) was not run.
-- Update the `ecshape-motion` skill with a "Motion tokens" section (portal calm vs site cinematic, exceptions: success bump spring, signature loops, AI write blur).
-- Layout properties still animated (sidebar width, panel margins, grid rows, studio device width) — tokenised, but should move to transforms.
+**Before: not uniform.** The site followed its own tokens. The portal had no duration tokens and ran on two
+competing tempos.
 
-## Inventory: before → after (portal CSS)
+| Measure (portal CSS, excluding loops) | Before | After |
+|---|---|---|
+| Distinct literal durations | 50 (.05s → 1.3s, in s and ms) | 0 outside stagger delays and 6 documented signature one-offs |
+| Easing spellings | 27 (6 aliases of one curve, `--tr-ease` (.2,.7,.3,1) not in spec, `--ec-motion-spring` (.16,1,.3,1)…) | 4 tokens: `--ease-out`, `--ease-in`, `--ease-in-out`, `--ease-spring` |
+| Keyframes | ~95, 47 of them near-duplicates (8 different "rise" distances: 4–30px) | shared `ec-fade/rise/pop/sheet-up/sheet-down/side-in/side-out/fade-out/bump/shimmer/pulse` + signature keyframes |
+| Route transitions | 3 (CSS `.tr-route` 4px .2s + GSAP stagger on cards **at the same time**, legacy `.ec-page-enter` 380ms fade) | 1 (`.ec-route`: `ec-rise` .22s, CSS only) |
+| Toast systems' entrance | 3 (radix: from top/bottom, out to the **right**; NotificationToast: from the **right** at `right-4`; sonner default) | radix + NotificationToast: from below, 4px, .22s, on the **end** edge (`end-4`). Sonner keeps its own (1 user) |
+| Skeletons | 6 looks/timings (tailwind pulse 2s, 4 shimmers at 1–1.4s, an opacity flicker) | `.ec-skel` shimmer, `--dur-loop` 1.4s everywhere |
+| Press scale | 8 values (.90–.985), 3 press durations | `--press-scale` .97 / `--press-scale-lg` .985, `--dur-press` .06s |
+| Sheet / drawer / modal exits | food-bank drawer only; others vanished | all: distinct exit keyframe, `--dur-fast` + `--ease-in` |
+| Live check: computed transitions on trainer dashboard, clients, client home, training, meals, chat, progress | n/a | **100%** on `--ease-out`; durations only .16 / .22 / .26 / .6s |
+
+**Tempo decision:** the owner asked for calmer motion twice. QA #9: "the animations when changing buttons everywhere
+is way too exaggerated". QA #29: the liquid effects should be there "but not exaggerated", in all portals. Only the
+trainer shell had been changed. The calm profile (.16 / .22 / .26s, 4px, no overshoot) is now the portal default, so
+the trainee portal, studio, food bank, chat and Agent EC lost their .45–.7s / 14–24px / spring motion. The public site
+keeps its cinematic tempo (`--t-fast/med/slow` .25/.5/.9s), as the cinematic-web skill asks.
+
+## What changed (commits)
+1. `acc287f`: `styles/motion.css` (tokens, shared keyframes, reduced motion), `lib/motion.ts`, Tailwind
+   `duration-*` / `ease-*` scale mapped onto the tokens (no `.tsx` class rewrites), and 225 portal declarations migrated.
+2. `c4f89be`: 47 orphaned keyframes and 6 alias token sets removed; trainer "calm kit" overrides folded into the base
+   rules (hover lift 1px, nudge 2px, stagger step); no hover lift on touch screens.
+3. `dc9a944`: one route transition; GSAP removed from the portal (`usePortalMotion` deleted).
+4. `742fa59`: dialog, sheet, select, tooltip and menus on the shared curves (`zoom-in-[.98]`, slow in / fast out);
+   toasts RTL-safe; `.ec-skel` everywhere; `animate-pulse` on tokens.
+5. `b4f7ecc`: JS smooth scrolls respect reduced motion.
+6. `f53ab90`: public site, site editor and blog on `--t-*` (stagger delays kept literal).
+7. `6f0cf7c`: exit keyframes. This fixed a real bug introduced in step 1: Radix only waits for an exit when the
+   keyframe **name** changes, so the reversed entrance made the food-bank drawer vanish. Site transitions also get an
+   explicit `--ease-out`.
+8. `fe767a2`: ecshape-motion skill gets the token table, primitives and rules 8–14.
+9. final: this report; SEO list stagger on `--stagger-step`.
+
+## RTL / LTR (live, built-in browser, demo trainer + client)
+- `--ec-dir` resolves to `-1` in Hebrew and `1` in English. `ec-side-in` starts at **+24px in LTR and −24px in RTL**,
+  and also −24px for a portaled panel with its own `dir="rtl"` inside an LTR page (nearest-`[dir]` scoping).
+  Replaced 5 pairs of hand-written `-rtl` keyframes.
+- Toast viewport and NotificationToast container moved from `right` to `end`; their entrance has no x-component.
+- `.ec-btn` arrow nudge now uses `--ec-dir` (was a separate `[dir=rtl]` override).
+- Route change, dialog open (scrim `ec-fade` .22s + panel .26s) and close (`ec-fade-out` .16s, unmounts after) were
+  checked in RTL. The same token surveys pass in LTR.
+
+## prefers-reduced-motion
+- Global rule (`motion.css`, confirmed loaded in the page's CSSOM): durations ~0, **iteration count 1** (before, loops
+  such as shimmers, pings and spinners restarted every 0.001ms, i.e. flickered), delays 0, smooth scroll off. 30
+  component rules still add `animation: none` where a final state matters.
+- JS: the site (`siteMotion.js`) already drops Lenis, pins, scrubs and the loader. The portal no longer runs GSAP. Chat
+  scroll, swipe-close and food bank already checked the setting. `agentOps` and `ExerciseBank` smooth scrolls now use
+  `scrollBehavior()`.
+- Limitation: the browser pane cannot emulate the OS setting, so this was verified from the loaded rules and code,
+  not by toggling it.
+
+## Remaining items
+- **Layout properties still animated** (tokenised, not yet transforms): trainer sidebar `width`, Agent EC
+  `[data-ec-shell]` margin, studio device `width`, `grid-template-rows` accordions, QA FAB `right`, `.tp-content`
+  `padding-inline-start`, bar `width` fills. Moving them to `transform` / `clip-path` is a layout refactor; best done
+  together with the ux-walkthrough session.
+- **Signature one-offs** with their own timing (documented in the skill, rule 14): Agent EC travel / spotlight / edge
+  peek, brand mark draw, rest-timer shrink, workout burst, AI "write" blur, site GSAP timelines.
+- **Sonner** toaster (1 user) keeps its library animation. Consider dropping it for the radix toast.
+- **Three toast APIs** (radix `use-toast` 19 files, NotificationContainer 26 calls, sonner) now *look* the same but
+  remain three systems. Merging them is functional work.
+- Nested rise: the route wrapper and the page's own `.tp-rise` items each rise 4px. It's subtle and acceptable, but a
+  page could opt out.
+- Focus rings: 2px `--ring` everywhere, but offsets vary (−2px to 3px) by component geometry, and `.ec-info-tip` uses
+  `--primary` instead of `--ring` (same colour today).
+- `src/App.css` (Vite starter, `logo-spin`) is not imported anywhere and can be deleted.
+- `.floating` / `.pulse-slow` ambient utilities in `index.css` keep 3s loops (stopped by reduced motion).
+
+## Inventory: portal, before → after (225 declarations)
 | File | Selector | Kind | Before | After |
 |---|---|---|---|---|
 | index.css | `.ec-stagger > *` | animation | `ecRise .7s var(--ease-out) both` | `ec-rise var(--dur-med) var(--ease-out) both` |
@@ -253,3 +308,94 @@
 | components/foodbank/foodbank.css | `.fb-lib-card` | transition | `border-color .3s var(--fb-ease-out), transform .3s var(--fb-ease-out), box-shadow .3s var(--fb-ease-out)` | `border-color var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)` |
 | components/foodbank/foodbank.css | `.fb-added` | animation | `fb-pop .45s var(--fb-ease-spring)` | `ec-bump var(--dur-slow) var(--ease-spring)` |
 | components/foodbank/foodbank.css | `.fb-chip:active` | :active | `transform: scale(.95);` | `transform: scale(var(--press-scale));` |
+
+## Inventory: public site, site editor and blog, before → after (71 declarations)
+| File | Selector | Kind | Before | After |
+|---|---|---|---|---|
+| site/site.css | `.ec-site .btn` | transition | `color var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out), box-shadow var(--t-med) var(--ease-out), translate .9s var(--ease-spring)` | `color var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out), box-shadow var(--t-med) var(--ease-out), translate var(--t-slow) var(--ease-spring)` |
+| site/site.css | `.ec-site .btn__fill` | transition | `transform .65s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .btn__label > span` | transition | `transform .55s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .btn__icon svg` | transition | `transform .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .btn--shine:hover::before` | transition | `transform .9s var(--ease-out)` | `transform var(--t-slow) var(--ease-out)` |
+| site/site.css | `.ec-site .btn.is-mag` | transition | `color var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out), box-shadow var(--t-med) var(--ease-out), translate .2s var(--ease-out)` | `color var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out), box-shadow var(--t-med) var(--ease-out), translate var(--t-fast) var(--ease-out)` |
+| site/site.css | `.ec-site .link-draw::after` | transition | `transform .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .cursor` | transition | `width .4s var(--ease-out), height .4s var(--ease-out), margin .4s var(--ease-out), background .3s` | `width var(--t-med) var(--ease-out), height var(--t-med) var(--ease-out), margin var(--t-med) var(--ease-out), background var(--t-fast)` |
+| site/site.css | `.ec-site .cursor span` | transition | `opacity .2s` | `opacity var(--t-fast)` |
+| site/site.css | `.ec-site .nav` | transition | `transform .6s var(--ease-out), background .4s, box-shadow .4s, backdrop-filter .4s` | `transform var(--t-med) var(--ease-out), background var(--t-med), box-shadow var(--t-med), backdrop-filter var(--t-med)` |
+| site/site.css | `.ec-site .nav__links a` | transition | `color .3s, background .3s` | `color var(--t-fast), background var(--t-fast)` |
+| site/site.css | `.ec-site .nav__menu-btn span` | transition | `transform .5s var(--ease-out), top .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out), top var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .menu` | transition | `clip-path .8s var(--ease-in-out), visibility 0s linear .8s` | `clip-path var(--t-slow) var(--ease-in-out), visibility 0s linear var(--t-slow)` |
+| site/site.css | `.ec-site .menu nav a span` | transition | `transform .8s var(--ease-out)` | `transform var(--t-slow) var(--ease-out)` |
+| site/site.css | `.ec-site .bento__cell` | transition | `transform .5s var(--ease-out), background .4s` | `transform var(--t-med) var(--ease-out), background var(--t-med)` |
+| site/site.css | `.ec-site .rcard__half img` | transition | `transform .9s var(--ease-out), filter .6s` | `transform var(--t-slow) var(--ease-out), filter var(--t-med)` |
+| site/site.css | `.ec-site .pill` | transition | `background .3s, color .3s, transform .4s var(--ease-spring)` | `background var(--t-fast), color var(--t-fast), transform var(--t-med) var(--ease-spring)` |
+| site/site.css | `.ec-site .prog` | transition | `transform .6s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .prog::before` | transition | `opacity .4s` | `opacity var(--t-med)` |
+| site/site.css | `.ec-site .prog__art--photo img` | transition | `transform .9s var(--ease-out)` | `transform var(--t-slow) var(--ease-out)` |
+| site/site.css | `.ec-site .prog__art--app img` | transition | `transform .7s var(--ease-spring)` | `transform var(--t-med) var(--ease-spring)` |
+| site/site.css | `.ec-site .app__item` | transition | `background .4s, opacity .4s` | `background var(--t-med), opacity var(--t-med)` |
+| site/site.css | `.ec-site .screen` | transition | `opacity .5s var(--ease-out), transform .6s var(--ease-out)` | `opacity var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .step__dot` | transition | `background .4s, box-shadow .4s, color .4s` | `background var(--t-med), box-shadow var(--t-med), color var(--t-med)` |
+| site/site.css | `.ec-site .step__ic` | transition | `color .4s, transform .5s var(--ease-spring)` | `color var(--t-med), transform var(--t-med) var(--ease-spring)` |
+| site/site.css | `.ec-site .quote` | transition | `transform .5s var(--ease-out), box-shadow .4s` | `transform var(--t-med) var(--ease-out), box-shadow var(--t-med)` |
+| site/site.css | `.ec-site .wall button` | transition | `transform .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .lightbox` | transition | `opacity .4s, visibility .4s` | `opacity var(--t-med), visibility var(--t-med)` |
+| site/site.css | `.ec-site .lightbox img` | transition | `transform .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .acc__q` | transition | `color .3s, padding .5s var(--ease-out)` | `color var(--t-fast), padding var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .acc__ic` | transition | `background .4s, transform .6s var(--ease-spring), box-shadow .4s` | `background var(--t-med), transform var(--t-med) var(--ease-spring), box-shadow var(--t-med)` |
+| site/site.css | `.ec-site .acc__ic::before, .ec-site .acc__ic::after` | transition | `transform .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .acc__a` | transition | `grid-template-rows .6s var(--ease-out)` | `grid-template-rows var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .wa-float` | transition | `transform .5s var(--ease-spring)` | `transform var(--t-med) var(--ease-spring)` |
+| site/site.css | `.ec-site .cookie.is-on` | animation | `rise .7s var(--ease-out)` | `rise var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .cookie__btns button` | transition | `background .3s, color .3s, transform .2s` | `background var(--t-fast), color var(--t-fast), transform var(--t-fast)` |
+| site/site.css | `.ec-site .lang-switch button` | transition | `background .35s var(--ease-out), color .35s` | `background var(--t-fast) var(--ease-out), color var(--t-fast)` |
+| site/site.css | `.ec-site .form-modal` | transition | `visibility 0s linear .6s` | `visibility 0s linear var(--t-med)` |
+| site/site.css | `.ec-site .form-modal__backdrop` | transition | `opacity .5s var(--ease-out)` | `opacity var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .form-modal__panel` | transition | `transform .7s var(--ease-out), opacity .5s var(--ease-out)` | `transform var(--t-med) var(--ease-out), opacity var(--t-med) var(--ease-out)` |
+| site/site.css | `.ec-site .form-modal__head` | transition | `border-color .3s, box-shadow .3s` | `border-color var(--t-fast), box-shadow var(--t-fast)` |
+| site/site.css | `.ec-site .form-modal__panel::after` | transition | `opacity .3s` | `opacity var(--t-fast)` |
+| site/site.css | `.ec-site .form-modal__close` | transition | `transform .5s var(--ease-spring), background .3s, color .3s` | `transform var(--t-med) var(--ease-spring), background var(--t-fast), color var(--t-fast)` |
+| site/site.css | `.ec-site .field input, .ec-site .field textarea` | transition | `box-shadow .3s, background .3s` | `box-shadow var(--t-fast), background var(--t-fast)` |
+| site/site.css | `.ec-site .choice span` | transition | `background .35s var(--ease-out), color .35s, box-shadow .35s, transform .4s var(--ease-spring)` | `background var(--t-fast) var(--ease-out), color var(--t-fast), box-shadow var(--t-fast), transform var(--t-med) var(--ease-spring)` |
+| site/site.css | `.ec-site .form-done__icon` | animation | `pop .7s var(--ease-spring)` | `pop var(--t-med) var(--ease-spring)` |
+| site/siteEdit.css | `html.ec-editing .ec-site [data-ec-path]` | transition | `outline-color .2s var(--ease-out), background-color .2s var(--ease-out)` | `outline-color var(--t-fast) var(--ease-out), background-color var(--t-fast) var(--ease-out)` |
+| site/siteEdit.css | `-site [data-ec-item], html.ec-editing .ec-site [data-ec-img]` | transition | `outline-color .2s var(--ease-out)` | `outline-color var(--t-fast) var(--ease-out)` |
+| site/siteEdit.css | `html.ec-editing .ec-site .ec-sec` | transition | `outline-color .25s var(--ease-out)` | `outline-color var(--t-fast) var(--ease-out)` |
+| site/siteEdit.css | `html.ec-editing .ec-site .ec-sec > :not(.ec-edit-bar)` | transition | `opacity .35s var(--ease-out), filter .35s var(--ease-out)` | `opacity var(--t-fast) var(--ease-out), filter var(--t-fast) var(--ease-out)` |
+| site/siteEdit.css | `.ec-site .ec-edit-bar` | transition | `opacity .25s var(--ease-out), transform .35s var(--ease-out)` | `opacity var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out)` |
+| site/siteEdit.css | `.ec-site .ec-edit-bar button` | transition | `background .2s, color .2s` | `background var(--t-fast), color var(--t-fast)` |
+| site/siteEdit.css | `.ec-site .ec-edit-imgbtn` | transition | `opacity .25s var(--ease-out), transform .35s var(--ease-out)` | `opacity var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out)` |
+| site/accountBubble.css | `.ec-site .ec-me` | transition | `transform .35s cubic-bezier(.22, 1, .36, 1), box-shadow .35s` | `transform var(--t-fast) cubic-bezier(.22, 1, .36, 1), box-shadow var(--t-fast)` |
+| styles/blog.css | `.ec-blog-navlink` | transition | `color 240ms` | `color var(--t-fast)` |
+| styles/blog.css | `.ec-blog-eyebrow` | animation | `ec-blog-up 800ms var(--ease) both` | `ec-blog-up var(--t-slow) var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-hero h1` | animation | `ec-blog-up 900ms 80ms var(--ease) both` | `ec-blog-up var(--t-slow) 80ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-hero p` | animation | `ec-blog-up 900ms 160ms var(--ease) both` | `ec-blog-up var(--t-slow) 160ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-lead` | animation | `ec-blog-up 900ms 220ms var(--ease) both` | `ec-blog-up var(--t-slow) 220ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-lead img, .ec-blog-lead .ec-blog-cover-empty` | transition | `transform 900ms var(--ease), border-radius 600ms var(--ease)` | `transform var(--t-slow) var(--ease-out), border-radius var(--t-med) var(--ease-out)` |
+| styles/blog.css | `.ec-blog-card` | animation | `ec-blog-up 800ms calc(300ms + var(--i, 0) * 70ms) var(--ease) both` | `ec-blog-up var(--t-slow) calc(300ms + var(--i, 0) * 70ms) var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-card img, .ec-blog-card .ec-blog-cover-empty` | transition | `transform 700ms var(--ease), border-radius 500ms var(--ease)` | `transform var(--t-med) var(--ease-out), border-radius var(--t-med) var(--ease-out)` |
+| styles/blog.css | `.ec-blog-card b` | transition | `color 240ms` | `color var(--t-fast)` |
+| styles/blog.css | `.ec-blog-back` | transition | `color 200ms, gap 300ms var(--spring)` | `color var(--t-fast), gap var(--t-fast) var(--ease-spring)` |
+| styles/blog.css | `.ec-blog-article-head h1` | animation | `ec-blog-up 900ms var(--ease) both` | `ec-blog-up var(--t-slow) var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-article-head p` | animation | `ec-blog-up 900ms 80ms var(--ease) both` | `ec-blog-up var(--t-slow) 80ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-meta` | animation | `ec-blog-up 900ms 140ms var(--ease) both` | `ec-blog-up var(--t-slow) 140ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-cover` | animation | `ec-blog-up 1000ms 200ms var(--ease) both` | `ec-blog-up var(--t-slow) 200ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog .ec-article-body` | animation | `ec-blog-up 1000ms 260ms var(--ease) both` | `ec-blog-up var(--t-slow) 260ms var(--ease-out) both` |
+| styles/blog.css | `.ec-blog-faq details` | transition | `border-color 240ms` | `border-color var(--t-fast)` |
+| styles/blog.css | `.ec-blog-cta-btn` | transition | `transform 400ms var(--spring), box-shadow 300ms` | `transform var(--t-med) var(--ease-spring), box-shadow var(--t-fast)` |
+
+## Inventory: primitives and components changed by hand
+| Component | Before | After |
+|---|---|---|
+| Route (trainer/trainee `.tr-route`) | `trRoute .2s (.2,.7,.3,1)` + GSAP `.24s power2.out y6 stagger .02` on cards | `ec-rise --dur-med --ease-out`, CSS only |
+| Route (legacy `Layout`) | `ecPortalFadeIn 380ms (.16,1,.3,1)`, not re-keyed per page | same `ec-rise`, keyed by page |
+| `ui/dialog` | 300ms `ease`, zoom .95, close 300ms | open `--dur-slow` `--ease-out` zoom .98, close `--dur-fast` `--ease-in` |
+| `ui/sheet` | open 500ms / close 300ms `ease-in-out` | open `--dur-slow`, close `--dur-fast` |
+| `ui/select, tooltip, popover, menus` | 150ms `ease`, zoom .95 / .90 | `--dur-fast` `--ease-out`, zoom .98 |
+| `ui/toast` | from top (mobile) / bottom-full, out to the right, viewport `right-0` | from 4px below, `--dur-med`, fade out; `end-0` |
+| `NotificationToast` | `slide-in-from-right-full` 300ms `ease-in-out` at `right-4` | from 4px below, `--dur-med`, at `end-4` |
+| `ui/skeleton` + 6 page placeholders | `animate-pulse` 2s | `.ec-skel` shimmer 1.4s |
+| `tp-sheet` / `tr-xs-panel` / food-bank drawer exit | none / none / reversed entrance (broken) | `ec-sheet-down` / `ec-side-out` / `ec-fade-out`, `--dur-fast` `--ease-in` |
+| Tabs content | `fade-in .3s ease-out` 10px | `ec-rise` `--dur-med` |
+| Accordion | .2s `ease-out` both ways | open `--dur-med`, close `--dur-fast` `--ease-in` |
+| `.card-hover` / `.card-3d` | lift 4px .5s (+ scale on mobile) | lift 1px `--dur-med`, none on touch |

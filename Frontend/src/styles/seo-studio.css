@@ -111,7 +111,7 @@
 .ec-seo-search > svg { position: absolute; inset-inline-start: 11px; top: 50%; transform: translateY(-50%); color: var(--sx-muted); pointer-events: none; }
 .ec-seo-search input { height: 36px; padding-inline-start: 34px; }
 .ec-seo-rows { display: grid; gap: 6px; }
-.ec-seo-rows li { position: relative; animation: ec-rise var(--dur-med) var(--ease-out) calc(var(--i, 0) * 40ms) both; }
+.ec-seo-rows li { position: relative; animation: ec-rise var(--dur-med) var(--ease-out) calc(min(var(--i, 0), 6) * var(--stagger-step)) both; }
 .ec-seo-rows li > button {
   display: grid; grid-template-columns: 52px minmax(0, 1fr) auto auto; align-items: center; gap: 14px;
   width: 100%; padding: 10px; padding-inline-end: 48px; border: 1px solid transparent; border-radius: 16px;
@@ -284,7 +284,7 @@
   position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding-inline: 12px; margin-inline-start: auto;
   border: 0; border-radius: 9px; background: var(--sx-accent-soft); color: var(--sx-accent); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
 }
-.ec-wp-ai::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, hsl(var(--primary) / 0.28) 50%, transparent 70%); transform: translateX(-100%); animation: ec-sx-shine 3.2s var(--sx-ease) infinite; }
+.ec-wp-ai::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, hsl(var(--primary) / 0.28) 50%, transparent 70%); transform: translateX(-100%); animation: ec-sx-shine 3.2s var(--ease-in-out) infinite; }
 @keyframes ec-sx-shine { 60%, 100% { transform: translateX(100%); } }
 .ec-wp-content { min-height: 420px; outline: none; }
 .ec-wp-content:empty::before { content: attr(data-placeholder); color: var(--sx-muted); }

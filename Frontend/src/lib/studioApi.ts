@@ -191,7 +191,7 @@ export type SitePage = {
 };
 
 export const studioApi = {
-  overview: () => request<{ clients: number; leads_new: number; leads_open: number; qa_open: number }>('/overview'),
+  overview: () => request<{ clients: number; leads_new: number; leads_open: number; qa_open: number; tasks_open?: number }>('/overview'),
 
   leads: (status?: string) => request<Lead[]>(`/leads${status ? `?status=${status}` : ''}`),
   createLead: (data: Partial<Lead>) => request<Lead>('/leads', { method: 'POST', body: JSON.stringify(data) }),
@@ -260,4 +260,64 @@ export const studioApi = {
   testAiKey: (id: number) => request<{ ok: boolean; engine?: string; error?: string }>(`/ai-keys/${id}/test`, { method: 'POST' }),
   preferAiKey: (id: number) => request<{ ok: boolean }>(`/ai-keys/${id}/prefer`, { method: 'POST' }),
   deleteAiKey: (id: number) => request<void>(`/ai-keys/${id}`, { method: 'DELETE' }),
+};
+
+/* ---------------------------------------------------------------- coach automations + task inbox */
+export type AutomationTrigger = 'no_workout' | 'no_app' | 'no_checkin' | 'new_client' | 'weight_change' | 'milestone' | 'unanswered_chat';
+export type AutomationActionType = 'task' | 'notify_coach' | 'notify_client' | 'chat' | 'webhook';
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
+export interface AutomationAction {
+  type: AutomationActionType;
+  title?: string;
+  text?: string;
+  body?: string;
+  priority?: TaskPriority;
+  url?: string;
+}
+export interface Automation {
+  id: number;
+  name: string;
+  template?: string | null;
+  trigger: AutomationTrigger;
+  config: { days?: number; hours?: number; kg?: number; direction?: 'any' | 'up' | 'down' };
+  actions: AutomationAction[];
+  enabled: boolean;
+  runs: number;
+  last_run_at?: string | null;
+}
+export interface AutomationTest {
+  matches: number;
+  preview: { client_id: number; name: string; vars: Record<string, number>; actions: { type: AutomationActionType; text: string }[] }[];
+}
+export interface CoachTask {
+  id: number;
+  title: string;
+  body?: string | null;
+  kind: string;
+  priority: TaskPriority;
+  status: 'open' | 'done' | 'dismissed';
+  client_id?: number | null;
+  client_name?: string | null;
+  client_avatar?: string | null;
+  automation_id?: number | null;
+  due_at?: string | null;
+  created_at?: string | null;
+  done_at?: string | null;
+}
+
+export const automationsApi = {
+  list: () => request<Automation[]>('/automations'),
+  create: (data: Omit<Automation, 'id' | 'runs' | 'last_run_at'>) => request<Automation>('/automations', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<Pick<Automation, 'name' | 'config' | 'actions' | 'enabled'>>) =>
+    request<Automation>(`/automations/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: number) => request<void>(`/automations/${id}`, { method: 'DELETE' }),
+  test: (id: number) => request<AutomationTest>(`/automations/${id}/test`, { method: 'POST' }),
+  run: (id: number) => request<{ fired: number }>(`/automations/${id}/run`, { method: 'POST' }),
+
+  tasks: (status: 'open' | 'done' | 'all' = 'open') => request<CoachTask[]>(`/tasks?status=${status}`),
+  createTask: (data: { title: string; body?: string; client_id?: number | null; priority?: TaskPriority }) =>
+    request<CoachTask>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
+  updateTask: (id: number, data: Partial<Pick<CoachTask, 'title' | 'body' | 'priority' | 'status'>>) =>
+    request<CoachTask>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
 };

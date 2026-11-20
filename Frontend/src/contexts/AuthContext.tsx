@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
 import { requestNotificationPermission } from '../lib/notifications';
 import { forgetLastUser, rememberLastUser } from '../lib/avatar';
+import { useQueryClient } from '@tanstack/react-query';
+import { clearPersistedQueries } from '../lib/optimistic';
 
 export type UserRole = 'ADMIN' | 'TRAINER' | 'CLIENT';
 
@@ -35,6 +37,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -232,6 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     removeToken();
+    clearPersistedQueries(queryClient); // the next account never sees this one's cached screens
     forgetLastUser();
   };
 

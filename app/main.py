@@ -175,6 +175,7 @@ except Exception as e:
 try:
     logger.info("Importing model modules...")
     from app.models import user as user_models, workout as workout_models, nutrition as nutrition_models, progress as progress_models, progress_photo as progress_photo_models
+    from app.models import automation as automation_models  # coach automations + task inbox
     logger.info("✅ Model modules imported successfully")
     logger.info("📋 Available models: user, workout, nutrition, progress, progress_photo, notification")
 except Exception as e:
@@ -311,6 +312,11 @@ async def lifespan(app: FastAPI):
     pool_stats = get_db_pool_stats()
     logger.info(f"📊 Database pool initialized: {pool_stats}")
     
+    # Coach automations: one light loop every 15 min (AUTOMATIONS_ENABLED=0 turns it off)
+    import asyncio as _asyncio
+    from app.services.automation_engine import automation_loop
+    _automation_task = _asyncio.create_task(automation_loop())
+
     # REMOVED: Notification scheduler for minimal resource usage
     # logger.info("Starting notification scheduler...")
     # try:
@@ -325,7 +331,8 @@ async def lifespan(app: FastAPI):
     logger.info("✅ APPLICATION STARTUP COMPLETED SUCCESSFULLY")
     logger.info("=" * 40)
     yield
-    
+    _automation_task.cancel()
+
     # Shutdown
     logger.info("=" * 40)
     logger.info("APPLICATION SHUTDOWN INITIATED")
@@ -842,6 +849,8 @@ try:
     from app.routers import i18n_bundle  # QA #85: Russian / Arabic interface texts
     app.include_router(i18n_bundle.router, prefix="/api/public", tags=["Interface languages"])
     app.include_router(studio.router, prefix="/api/studio", tags=["Trainer studio"])
+    from app.routers import automations as automations_router
+    app.include_router(automations_router.router, prefix="/api/studio", tags=["Coach automations"])
     logger.info("✅ Studio routers included")
     
     logger.info("=" * 40)

@@ -27,6 +27,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.auth.utils import get_current_user
 from app.database import get_db
 from app.models.studio import Lead, QaComment, QaTicket, SiteSetting
+from app.models.automation import CoachTask
 from app.models.user import User
 from app.schemas.auth import UserResponse, UserRole
 
@@ -216,6 +217,7 @@ def studio_overview(user: UserResponse = Depends(require_studio), db: Session = 
         "leads_new": db.query(Lead).filter(Lead.status == "new").count(),
         "leads_open": db.query(Lead).filter(Lead.status.in_(("new", "contacted", "qualified"))).count(),
         "qa_open": db.query(QaTicket).filter(QaTicket.status.in_(("new", "in_progress"))).count(),
+        "tasks_open": db.query(CoachTask).filter(CoachTask.trainer_id == user.id, CoachTask.status == "open").count(),
     }
 
 

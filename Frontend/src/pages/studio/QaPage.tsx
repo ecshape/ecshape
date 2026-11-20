@@ -17,6 +17,8 @@ import { InfoTip } from '@/components/ui/info-tip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { optimisticList } from '@/lib/optimistic';
+import { useToast } from '@/hooks/use-toast';
 import { studioApi, type QaPriority, type QaStatus, type QaTicket } from '@/lib/studioApi';
 import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT } from '@/lib/agentOps';
 import { QA_SPOTLIGHT_KEY } from '@/components/studio/QaCaptureWidget';
@@ -91,6 +93,7 @@ function readView(): 'board' | 'list' {
 
 const QaPage = () => {
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tickets, setTickets] = useState<QaTicket[]>([]);
@@ -173,10 +176,11 @@ const QaPage = () => {
     }
   };
   const patch = async (id: number, data: Partial<QaTicket>) => {
-    setTickets((ts) => ts.map((x) => (x.id === id ? { ...x, ...data } : x)));
-    const t2 = await studioApi.updateTicket(id, data);
-    setTickets((ts) => ts.map((x) => (x.id === t2.id ? { ...x, ...t2 } : x)));
-    setSelected((s) => (s && s.id === id ? { ...s, ...t2 } : s));
+    setSelected((s) => (s && s.id === id ? { ...s, ...data } : s));
+    const t2 = await optimisticList(setTickets, (ts) => ts.map((x) => (x.id === id ? { ...x, ...data } : x)), () => studioApi.updateTicket(id, data),
+      () => { load(); toast({ title: t('common.error'), variant: 'destructive' }); },
+      (ts, r) => ts.map((x) => (x.id === r.id ? { ...x, ...r } : x)));
+    if (t2) setSelected((s) => (s && s.id === id ? { ...s, ...t2 } : s));
   };
   const bulk = async (status: QaStatus) => {
     const ids = [...picked];
@@ -624,9 +628,10 @@ const QaPage = () => {
                     className="ms-auto text-destructive"
                     onClick={async () => {
                       if (!window.confirm(t('studio.qa.deleteConfirm'))) return;
-                      await studioApi.deleteTicket(selected.id);
+                      const id = selected.id;
                       closeSheet();
-                      load();
+                      await optimisticList(setTickets, (ts) => ts.filter((x) => x.id !== id), () => studioApi.deleteTicket(id),
+                        () => toast({ title: t('common.error'), variant: 'destructive' }));
                     }}
                   >
                     <Trash2 />{t('studio.qa.delete')}

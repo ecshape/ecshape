@@ -14,6 +14,7 @@ import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { optimisticList, tempId } from '@/lib/optimistic';
 import { studioApi, type Lead, type LeadStatus } from '@/lib/studioApi';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -84,12 +85,17 @@ const ProspectsPage = () => {
 
   const create = async () => {
     if (!draft.name.trim()) return;
-    const lead = await studioApi.createLead({ ...draft, source: 'studio' });
-    setLeads((ls) => [lead, ...ls]);
-    setSelectedId(lead.id);
+    // Optimistic: the new lead is in the list and open at once; the server id replaces the temporary one.
+    const tid = tempId();
+    const now = new Date().toISOString();
+    const local = { ...draft, id: tid, source: 'studio', status: 'new', created_at: now, updated_at: now } as unknown as Lead;
+    setSelectedId(tid);
     setCreating(false);
     setDraft({ name: '', phone: '', email: '', message: '' });
-    toast({ title: t('studio.prospects.saved') });
+    const lead = await optimisticList(setLeads, (ls) => [local, ...ls], () => studioApi.createLead({ ...draft, source: 'studio' }),
+      () => toast({ title: t('common.error'), variant: 'destructive' }),
+      (ls, created) => ls.map((l) => (l.id === tid ? created : l)));
+    if (lead) { setSelectedId((cur) => (cur === tid ? lead.id : cur)); toast({ title: t('studio.prospects.saved') }); }
   };
 
   const counts = useMemo(() => {
@@ -113,16 +119,17 @@ const ProspectsPage = () => {
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = async (id: number, data: Partial<Lead>, quiet = false) => {
-    const updated = await studioApi.updateLead(id, data);
-    setLeads((ls) => ls.map((l) => (l.id === id ? updated : l)));
-    if (!quiet) toast({ title: t('studio.prospects.saved') });
+    const ok = await optimisticList(setLeads, (ls) => ls.map((l) => (l.id === id ? { ...l, ...data } : l)), () => studioApi.updateLead(id, data),
+      () => toast({ title: t('common.error'), variant: 'destructive' }),
+      (ls, updated) => ls.map((l) => (l.id === id ? updated : l)));
+    if (ok && !quiet) toast({ title: t('studio.prospects.saved') });
   };
 
   const remove = async (id: number) => {
     if (!window.confirm(t('studio.prospects.deleteConfirm'))) return;
-    await studioApi.deleteLead(id);
-    setLeads((ls) => ls.filter((l) => l.id !== id));
     setSelectedId(null);
+    await optimisticList(setLeads, (ls) => ls.filter((l) => l.id !== id), () => studioApi.deleteLead(id),
+      () => toast({ title: t('common.error'), variant: 'destructive' }));
   };
 
   // Goal / program labels come from the site form, in the current language

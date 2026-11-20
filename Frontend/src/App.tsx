@@ -3,7 +3,8 @@ import { isRtlLang } from '@/lib/utils';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { makeQueryClient, persistQueries } from "@/lib/optimistic";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { publicApi } from "@/lib/studioApi";
 import { useTranslation } from 'react-i18next';
@@ -40,6 +41,8 @@ import TrainerWeeklyMealsPlannerV3 from './pages/TrainerWeeklyMealsPlannerV3';
 import ClientFavoritesPage from './pages/ClientFavoritesPage';
 import TraineeProfilePage from './features/trainee/ProfilePage';
 import ProspectsPage from './pages/studio/ProspectsPage';
+import AutomationsPage from './pages/studio/AutomationsPage';
+import TasksPage from './pages/studio/TasksPage';
 import MySitePage from './pages/studio/MySitePage';
 import SeoPage from './pages/studio/SeoPage';
 import QaPage from './pages/studio/QaPage';
@@ -115,11 +118,9 @@ const RedirectGate = () => {
   return <NotFound />;
 };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 },
-  },
-});
+// Optimistic loading (lib/optimistic.ts): last known data paints instantly, then refreshes in the background.
+const queryClient = makeQueryClient();
+persistQueries(queryClient);
 
 /** Agent EC lives at app level so it stays open from page to page (trainer studio only). */
 const AgentHost = () => {
@@ -277,6 +278,8 @@ const AppRoutes = () => {
       {/* Trainer studio */}
       <Route path="/studio" element={<Navigate to="/studio/prospects" replace />} />
       <Route path="/studio/prospects" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><ProspectsPage /></ProtectedRoute>} />
+      <Route path="/studio/automations" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><AutomationsPage /></ProtectedRoute>} />
+      <Route path="/studio/tasks" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><TasksPage /></ProtectedRoute>} />
       <Route path="/studio/agent" element={<Navigate to="/trainer-dashboard" replace />} />
       <Route path="/studio/site" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><MySitePage /></ProtectedRoute>} />
       <Route path="/studio/seo" element={<ProtectedRoute requiredRole={["TRAINER", "ADMIN"]}><SeoPage /></ProtectedRoute>} />

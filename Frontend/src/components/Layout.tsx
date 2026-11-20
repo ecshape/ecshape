@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Dumbbell, Home, Utensils, Target, TrendingUp, LogOut, User, Settings, MessageSquare, ChevronDown,
-  Users2, Globe2, Megaphone, Bug, ExternalLink, SlidersHorizontal, UserRound,
+  Users2, Globe2, Megaphone, Bug, ExternalLink, SlidersHorizontal, UserRound, ListChecks, Zap,
 } from 'lucide-react';
+import '@/i18n/automations';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -123,6 +124,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
     refetchInterval: 90_000,
   });
   const newLeads = overview?.leads_new ?? 0;
+  const openTasks = overview?.tasks_open ?? 0;
   // Unread chat messages from clients (A2A cross M5): same conversations endpoint as the trainee app
   const { data: convs } = useQuery({
     queryKey: ['chat', 'conversations'],
@@ -174,7 +176,9 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
     {
       title: t('studio.groupBusiness'),
       items: [
+        { id: 'tasks', label: t('tasks.nav'), icon: ListChecks, href: '/studio/tasks', badge: openTasks },
         { id: 'prospects', label: t('studio.nav.prospects'), icon: Users2, href: '/studio/prospects', badge: newLeads },
+        { id: 'automations', label: t('auto.nav'), icon: Zap, href: '/studio/automations' },
       ],
     },
     {

@@ -78,3 +78,6 @@ docs/env.production.example
 
 # local agent worktrees
 .claude/worktrees/
+
+# QA agent key (tools/qa.py)
+.qa-agent-key

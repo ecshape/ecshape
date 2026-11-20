@@ -15,7 +15,7 @@ import re
 import copy
 import time
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -24,7 +24,7 @@ from pydantic import BaseModel, field_validator, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.auth.utils import get_current_user
+from app.auth.utils import create_access_token, get_current_user
 from app.database import get_db
 from app.models.studio import Lead, QaComment, QaTicket, SiteSetting
 from app.models.automation import CoachTask
@@ -399,8 +399,77 @@ class CommentIn(BaseModel):
     body: str = Field(..., min_length=1, max_length=4000)
 
 
+# ---- QA agent key: lets a coding agent read / comment / close QA tickets without a browser sign-in.
+# Created from Studio -> QA ("Agent access"); only its SHA-256 is stored. Header: X-QA-Agent-Key. QA endpoints only.
+import hashlib as _hashlib  # noqa: E402
+import secrets as _secrets  # noqa: E402
+from fastapi import Header  # noqa: E402
+
+QA_AGENT_SETTING = "qa_agent_key"
+
+
+def _qa_key_hash(raw: str) -> str:
+    return _hashlib.sha256(raw.encode()).hexdigest()
+
+
+async def require_qa_access(
+    x_qa_agent_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    """Studio sign-in (Bearer) or the QA agent key — the agent acts as the coach who created the key."""
+    if x_qa_agent_key:
+        row = db.query(SiteSetting).get(QA_AGENT_SETTING)
+        val = dict((row.value if row else None) or {})
+        if val.get("hash") and _secrets.compare_digest(val["hash"], _qa_key_hash(x_qa_agent_key)) and val.get("created_by"):
+            val["last_used_at"] = datetime.utcnow().isoformat()
+            row.value = val
+            flag_modified(row, "value")
+            db.commit()
+            owner = await get_current_user(token=create_access_token({"sub": str(val["created_by"])}, timedelta(minutes=1)), db=db)
+            return require_studio(owner)
+        raise HTTPException(status_code=401, detail="Invalid QA agent key")
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return require_studio(await get_current_user(token=authorization.split(" ", 1)[1], db=db))
+
+
+def _qa_key_status(db: Session) -> Dict[str, Any]:
+    val = get_setting(db, QA_AGENT_SETTING)
+    return {"exists": bool(val.get("hash")), "last4": val.get("last4"), "created_at": val.get("created_at"),
+            "last_used_at": val.get("last_used_at")}
+
+
+@router.get("/qa/agent-key")
+def qa_agent_key_status(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    return _qa_key_status(db)
+
+
+@router.post("/qa/agent-key", status_code=201)
+def qa_agent_key_create(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    """New key (replaces the previous one). The full key is returned once and never stored."""
+    raw = "ecqa_" + _secrets.token_urlsafe(32)
+    row = db.query(SiteSetting).get(QA_AGENT_SETTING)
+    val = {"hash": _qa_key_hash(raw), "last4": raw[-4:], "created_at": datetime.utcnow().isoformat(), "created_by": user.id}
+    if row:
+        row.value = val
+        flag_modified(row, "value")
+    else:
+        db.add(SiteSetting(key=QA_AGENT_SETTING, value=val, updated_by=user.id))
+    db.commit()
+    return {"key": raw, **_qa_key_status(db)}
+
+
+@router.delete("/qa/agent-key", status_code=204)
+def qa_agent_key_revoke(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    row = db.query(SiteSetting).get(QA_AGENT_SETTING)
+    if row:
+        db.delete(row)
+        db.commit()
+
+
 @router.get("/qa")
-def list_tickets(status: Optional[str] = None, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+def list_tickets(status: Optional[str] = None, user: UserResponse = Depends(require_qa_access), db: Session = Depends(get_db)):
     q = db.query(QaTicket)
     if status:
         q = q.filter(QaTicket.status == status)
@@ -417,7 +486,7 @@ def create_ticket(payload: TicketIn, user: UserResponse = Depends(get_current_us
 
 
 @router.get("/qa/{ticket_id}")
-def get_ticket(ticket_id: int, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+def get_ticket(ticket_id: int, user: UserResponse = Depends(require_qa_access), db: Session = Depends(get_db)):
     t = db.query(QaTicket).get(ticket_id)
     if not t:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -425,7 +494,7 @@ def get_ticket(ticket_id: int, user: UserResponse = Depends(require_studio), db:
 
 
 @router.patch("/qa/{ticket_id}")
-def update_ticket(ticket_id: int, payload: TicketUpdate, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+def update_ticket(ticket_id: int, payload: TicketUpdate, user: UserResponse = Depends(require_qa_access), db: Session = Depends(get_db)):
     t = db.query(QaTicket).get(ticket_id)
     if not t:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -436,7 +505,7 @@ def update_ticket(ticket_id: int, payload: TicketUpdate, user: UserResponse = De
 
 
 @router.post("/qa/{ticket_id}/comments", status_code=201)
-def add_comment(ticket_id: int, payload: CommentIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+def add_comment(ticket_id: int, payload: CommentIn, user: UserResponse = Depends(require_qa_access), db: Session = Depends(get_db)):
     t = db.query(QaTicket).get(ticket_id)
     if not t:
         raise HTTPException(status_code=404, detail="Ticket not found")

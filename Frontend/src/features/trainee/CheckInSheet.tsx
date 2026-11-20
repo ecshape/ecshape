@@ -9,25 +9,54 @@ import type { CheckIn } from './types';
 import '@/i18n/ticketsStudio';
 import { haptic } from './format';
 
-const Scale: React.FC<{ value: number | null; onChange: (v: number) => void; from: number; to: number; label: string }> = ({ value, onChange, from, to, label }) => (
-  <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-label={label}>
-    {Array.from({ length: to - from + 1 }, (_, i) => from + i).map((n) => (
-      <button
-        key={n}
-        type="button"
-        role="radio"
-        aria-checked={value === n}
-        onClick={() => {
-          haptic();
-          onChange(n);
+/**
+ * QA #114 / #115: a slider instead of a row of numbers. Big thumb, the chosen value shown large above it, the whole
+ * range under it, and an optional label under each end. Starts empty (nothing saved) until the trainee touches it.
+ * Follows the page direction (in Hebrew the low end is on the right, like the labels).
+ */
+const SliderScale: React.FC<{
+  value: number | null; onChange: (v: number) => void; from: number; to: number; label: string;
+  low?: string; high?: string; unit?: string;
+}> = ({ value, onChange, from, to, label, low, high, unit }) => {
+  const shown = value ?? Math.round((from + to) / 2);
+  const pct = ((shown - from) / (to - from)) * 100;
+  return (
+    <div className="tp-slider" data-empty={value == null || undefined}>
+      <div className="mb-1 flex items-baseline justify-center gap-1.5" aria-hidden="true">
+        <span className="tp-num text-3xl font-bold leading-none">{value ?? '–'}</span>
+        {unit && value != null && <span className="text-sm text-muted-foreground">{unit}</span>}
+      </div>
+      <input
+        type="range"
+        min={from}
+        max={to}
+        step={1}
+        value={shown}
+        aria-label={label}
+        aria-valuetext={value == null ? '–' : `${value}${unit ? ` ${unit}` : ''}`}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (v !== value) haptic();
+          onChange(v);
         }}
-        className={cn('tp-press tp-num h-12 rounded-2xl text-lg', value === n ? 'bg-primary text-primary-foreground shadow-[0_10px_20px_-12px_hsl(var(--primary))]' : 'bg-foreground/[.06] text-foreground/80')}
-      >
-        {n}
-      </button>
-    ))}
-  </div>
-);
+        onPointerDown={() => { if (value == null) onChange(shown); }}
+        className="tp-range"
+        style={{ '--p': `${pct}%` } as React.CSSProperties}
+      />
+      <div className="mt-1 flex justify-between px-[6px] text-[11px] tabular-nums text-muted-foreground" aria-hidden="true">
+        {Array.from({ length: to - from + 1 }, (_, i) => from + i).map((n) => (
+          <span key={n} className={cn('w-4 text-center', n === value && 'font-bold text-foreground')}>{n}</span>
+        ))}
+      </div>
+      {(low || high) && (
+        <div className="mt-1.5 flex justify-between gap-4 text-xs text-muted-foreground">
+          <span>{low}</span>
+          <span className="text-end">{high}</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Toggle: React.FC<{ on: boolean | null; onChange: (v: boolean) => void; icon: React.ElementType; label: string }> = ({ on, onChange, icon: Icon, label }) => (
   <button
@@ -131,16 +160,12 @@ const CheckInSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void
         </div>
         <div>
           <span className="tp-label mb-2 block">{t('trainee.checkin.sleep')}</span>
-          <Scale value={sleep} onChange={setSleep} from={4} to={13} label={t('trainee.checkin.sleep')} />
+          <SliderScale value={sleep} onChange={setSleep} from={3} to={11} label={t('trainee.checkin.sleep')} unit={t('trainee.checkin.sleepUnit')} />
           <p className="mt-1.5 text-xs text-muted-foreground">{t('trainee.checkin.sleepHint')}</p>
         </div>
         <div>
           <span className="tp-label mb-2 block">{t('trainee.checkin.hunger')}</span>
-          <Scale value={hunger} onChange={setHunger} from={1} to={10} label={t('trainee.checkin.hunger')} />
-          <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
-            <span>{t('trainee.checkin.hungerLow')}</span>
-            <span>{t('trainee.checkin.hungerHigh')}</span>
-          </div>
+          <SliderScale value={hunger} onChange={setHunger} from={1} to={10} label={t('trainee.checkin.hunger')} low={t('trainee.checkin.hungerLow')} high={t('trainee.checkin.hungerHigh')} />
         </div>
         <div className="grid gap-2 min-[420px]:grid-cols-2">
           <Toggle on={steps.trim() && Number.isFinite(sNum) ? sNum >= 10000 : walked} onChange={setWalked} icon={Footprints} label={t('trainee.checkin.walked')} />

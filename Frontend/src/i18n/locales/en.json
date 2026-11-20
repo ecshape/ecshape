@@ -2894,6 +2894,18 @@
         "plant_based": {
           "title": "Plant-based",
           "description": "Legumes, tofu, whole grains, nuts and seeds"
+        },
+        "all_protein": {
+          "title": "All protein foods",
+          "description": "Every protein food in the library — basics and products sold in Israel, with photos."
+        },
+        "all_carb": {
+          "title": "All carb foods",
+          "description": "Every carb food in the library — basics and products sold in Israel, with photos."
+        },
+        "all_fat": {
+          "title": "All fat foods",
+          "description": "Every fat food in the library — basics and products sold in Israel, with photos."
         }
       },
       "favorite": "Favourite",
@@ -3008,15 +3020,16 @@
       "stepsShort": "Steps",
       "sleep": "Hours of sleep",
       "sleepShort": "Sleep",
-      "sleepHint": "Pick the closest number.",
+      "sleepHint": "Slide to the hours you slept.",
       "hunger": "Hunger level",
-      "hungerLow": "Full",
-      "hungerHigh": "Very hungry",
+      "hungerLow": "I wasn't hungry",
+      "hungerHigh": "I was really hungry",
       "walked": "I walked 10,000 steps",
       "sun": "10 minutes in the sun",
       "submit": "Save check-in",
       "saved": "Check-in saved",
-      "saveError": "Check-in wasn't saved. Try again."
+      "saveError": "Check-in wasn't saved. Try again.",
+      "sleepUnit": "h"
     },
     "training": {
       "eyebrow": "Your program",

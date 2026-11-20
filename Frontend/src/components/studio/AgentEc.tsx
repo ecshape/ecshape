@@ -541,6 +541,21 @@ export function AgentEc() {
     wasOpen.current = open;
   }, [open, t]);
 
+  const [modelOpen, setModelOpen] = useState(false);
+  const modelTrigger = useRef<HTMLButtonElement>(null);
+  const modelMenu = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!modelOpen) return undefined;
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as Node;
+      if (modelMenu.current?.contains(el) || modelTrigger.current?.contains(el)) return;
+      setModelOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setModelOpen(false); };
+    window.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('keydown', onKey, true);
+    return () => { window.removeEventListener('pointerdown', onDown, true); window.removeEventListener('keydown', onKey, true); };
+  }, [modelOpen]);
   const modelLabel = provider === 'auto' ? t('agent.auto') : keys?.find((k) => String(k.id) === provider)?.product || t('agent.auto');
   const suggestions = [
     ...((t(`agent.prompts.${quickPromptKeys(pathname)}`, { returnObjects: true }) as string[]) || []),
@@ -737,13 +752,14 @@ export function AgentEc() {
               }}
             />
             <div className="ec-psk-input-bar">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="ec-psk-model">
+              {/* QA #112: controlled + non-modal, closed by any press outside it (capture phase: nothing can swallow it) */}
+              <DropdownMenu open={modelOpen} onOpenChange={setModelOpen} modal={false}>
+                <DropdownMenuTrigger ref={modelTrigger} className="ec-psk-model">
                   <Wand2 className="h-3.5 w-3.5 flex-none" />
                   <span className="truncate">{modelLabel}</span>
                   <ChevronDown className="h-3.5 w-3.5 flex-none opacity-60" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" side="top" className="w-72">
+                <DropdownMenuContent ref={modelMenu} align="start" side="top" className="w-72">
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('agent.model')}</DropdownMenuLabel>
                   {[{ id: 'auto', product: t('agent.auto'), model: t('agent.autoHint') }, ...(keys || []).map((k) => ({ id: String(k.id), product: k.product, model: k.model }))].map((m) => (
                     <DropdownMenuItem

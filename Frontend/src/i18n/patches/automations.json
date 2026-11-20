@@ -30,7 +30,11 @@
       "hours": "שעות",
       "kg": "ק״ג",
       "within": "בתוך",
-      "direction": { "any": "עלייה או ירידה", "up": "עלייה", "down": "ירידה" },
+      "direction": {
+        "any": "עלייה או ירידה",
+        "up": "עלייה",
+        "down": "ירידה"
+      },
       "triggers": {
         "no_workout": "מתאמן לא התאמן",
         "no_app": "מתאמן לא נכנס לאפליקציה",
@@ -63,7 +67,12 @@
         "chat": "נשלחת מהחשבון שלך",
         "webhook": "שליחת הנתונים למערכת חיצונית — WhatsApp, CRM, Sheets"
       },
-      "f": { "title": "כותרת", "text": "תוכן ההודעה", "priority": "דחיפות", "url": "כתובת Webhook (https)" },
+      "f": {
+        "title": "כותרת",
+        "text": "תוכן ההודעה",
+        "priority": "דחיפות",
+        "url": "כתובת Webhook (https)"
+      },
       "templateNames": {
         "no_workout_4": "לא התאמן 4 ימים",
         "no_app_5": "לא נכנס לאפליקציה 5 ימים",
@@ -96,7 +105,25 @@
       "fromAutomation": "מאוטומציה",
       "manual": "ידנית",
       "delete": "מחיקה",
-      "priority": { "urgent": "דחוף", "high": "גבוה", "normal": "רגיל", "low": "נמוך" }
+      "priority": {
+        "urgent": "דחוף",
+        "high": "גבוה",
+        "normal": "רגיל",
+        "low": "נמוך"
+      }
+    },
+    "qaKey": {
+      "button": "גישת סוכן",
+      "title": "גישת סוכן לטיקטים",
+      "lead": "מפתח אחד שמאפשר לסוכן הקוד לקרוא, להגיב ולסגור טיקטים של QA בלי להתחבר בדפדפן. רק טיקטי QA — שום דבר אחר.",
+      "once": "העתיקו עכשיו — המפתח לא יוצג שוב.",
+      "key": "מפתח",
+      "created": "נוצר",
+      "used": "שימוש אחרון",
+      "none": "עדיין אין מפתח.",
+      "create": "יצירת מפתח",
+      "rotate": "מפתח חדש",
+      "revoke": "ביטול"
     }
   },
   "en": {
@@ -130,7 +157,11 @@
       "hours": "hours",
       "kg": "kg",
       "within": "within",
-      "direction": { "any": "up or down", "up": "gain", "down": "loss" },
+      "direction": {
+        "any": "up or down",
+        "up": "gain",
+        "down": "loss"
+      },
       "triggers": {
         "no_workout": "Trainee hasn't trained",
         "no_app": "Trainee hasn't opened the app",
@@ -163,7 +194,12 @@
         "chat": "Sent from your account",
         "webhook": "Send the data to another system — WhatsApp, CRM, Sheets"
       },
-      "f": { "title": "Title", "text": "Message", "priority": "Priority", "url": "Webhook URL (https)" },
+      "f": {
+        "title": "Title",
+        "text": "Message",
+        "priority": "Priority",
+        "url": "Webhook URL (https)"
+      },
       "templateNames": {
         "no_workout_4": "No workout for 4 days",
         "no_app_5": "No app visit for 5 days",
@@ -196,7 +232,25 @@
       "fromAutomation": "From automation",
       "manual": "Manual",
       "delete": "Delete",
-      "priority": { "urgent": "Urgent", "high": "High", "normal": "Normal", "low": "Low" }
+      "priority": {
+        "urgent": "Urgent",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      }
+    },
+    "qaKey": {
+      "button": "Agent access",
+      "title": "Agent access to tickets",
+      "lead": "One key that lets the coding agent read, comment on and close QA tickets without a browser sign-in. QA tickets only — nothing else.",
+      "once": "Copy it now — it won't be shown again.",
+      "key": "Key",
+      "created": "Created",
+      "used": "Last used",
+      "none": "No key yet.",
+      "create": "Create key",
+      "rotate": "New key",
+      "revoke": "Revoke"
     }
   },
   "fr": {
@@ -230,7 +284,11 @@
       "hours": "heures",
       "kg": "kg",
       "within": "en",
-      "direction": { "any": "hausse ou baisse", "up": "hausse", "down": "baisse" },
+      "direction": {
+        "any": "hausse ou baisse",
+        "up": "hausse",
+        "down": "baisse"
+      },
       "triggers": {
         "no_workout": "L'élève ne s'est pas entraîné",
         "no_app": "L'élève n'a pas ouvert l'app",
@@ -263,7 +321,12 @@
         "chat": "Envoyé depuis votre compte",
         "webhook": "Envoyer les données à un autre système — WhatsApp, CRM, Sheets"
       },
-      "f": { "title": "Titre", "text": "Message", "priority": "Priorité", "url": "URL du webhook (https)" },
+      "f": {
+        "title": "Titre",
+        "text": "Message",
+        "priority": "Priorité",
+        "url": "URL du webhook (https)"
+      },
       "templateNames": {
         "no_workout_4": "Pas de séance depuis 4 jours",
         "no_app_5": "Pas d'app depuis 5 jours",
@@ -296,7 +359,25 @@
       "fromAutomation": "Automatisation",
       "manual": "Manuelle",
       "delete": "Supprimer",
-      "priority": { "urgent": "Urgent", "high": "Haute", "normal": "Normale", "low": "Basse" }
+      "priority": {
+        "urgent": "Urgent",
+        "high": "Haute",
+        "normal": "Normale",
+        "low": "Basse"
+      }
+    },
+    "qaKey": {
+      "button": "Accès agent",
+      "title": "Accès agent aux tickets",
+      "lead": "Une clé qui permet à l'agent de code de lire, commenter et fermer les tickets QA sans connexion dans le navigateur. Tickets QA uniquement — rien d'autre.",
+      "once": "Copiez-la maintenant — elle ne sera plus affichée.",
+      "key": "Clé",
+      "created": "Créée",
+      "used": "Dernière utilisation",
+      "none": "Pas encore de clé.",
+      "create": "Créer une clé",
+      "rotate": "Nouvelle clé",
+      "revoke": "Révoquer"
     }
   }
 }

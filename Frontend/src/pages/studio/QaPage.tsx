@@ -18,6 +18,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { optimisticList } from '@/lib/optimistic';
+import { QaAgentKey } from '@/components/studio/QaAgentKey';
 import { useToast } from '@/hooks/use-toast';
 import { studioApi, type QaPriority, type QaStatus, type QaTicket } from '@/lib/studioApi';
 import { AGENT_CHANGED_EVENT, AGENT_OPEN_FORM_EVENT } from '@/lib/agentOps';
@@ -286,7 +287,7 @@ const QaPage = () => {
           eyebrow={t('studio.groupStudio')}
           title={t('studio.qa.title')}
           lead={t('studio.qa.subtitle')}
-          actions={<Button onClick={() => setCreating(true)}><Plus />{t('studio.qa.new')}</Button>}
+          actions={<><QaAgentKey /><Button onClick={() => setCreating(true)}><Plus />{t('studio.qa.new')}</Button></>}
         />
 
         {/* How to report: the floating button + tester guide */}

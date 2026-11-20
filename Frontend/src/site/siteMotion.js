@@ -7,7 +7,6 @@ import Lenis from 'lenis';
 import { renderSite, waLink, WA_SVG } from './render';
 import { applyLinkTargets } from './links';
 import { API_BASE_URL } from '../config/api';
-import { createHeroSequence } from './heroSequence';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -643,91 +642,16 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     gsap.from($$('.footer__mark span'), { yPercent: 100, duration: 1.2, stagger: 0.05, ease: EASE, scrollTrigger: { trigger: $('.footer__mark'), start: 'top 95%' } });
   });
 
-  /* ---------------------------------------------------- hero scroll sequence
-     Arms down -> arms crossed, scrubbed frame by frame (heroSequence.js). Loads in the background; until it is
-     ready (or when no clip is published) the hero runs exactly as before with the still photo. */
-  let heroSeq = null;
-  const seqUrl = heroMedia && heroPic && heroMedia.getAttribute('data-seq');
-  const heroSeqReady = seqUrl
-    ? createHeroSequence({ media: heroMedia, pic: heroPic, url: seqUrl, small: !mqDesktop.matches || (navigator.connection && navigator.connection.saveData), signal: ac.signal })
-      .then((s) => {
-        if (!s) return null;
-        if (!alive) { s.destroy(); return null; }
-        heroSeq = s;
-        // The poster is now frame 0 (its own size and ratio): frame it again, then let the pins re-measure.
-        return new Promise((res) => {
-          const reframe = () => {
-            if (alive && (!mqDesktop.matches || window.scrollY < 4)) gsap.set(heroPic, heroFit());
-            res(s);
-          };
-          if (heroPic.complete && heroPic.naturalWidth) reframe(); else heroPic.addEventListener('load', reframe, { once: true });
-        });
-      })
-    : Promise.resolve(null);
-
   // Breakpoint-specific pins
   mm.add('(min-width: 901px)', () => {
     heroReady(() => { gsap.set(heroPic, heroFit()); ScrollTrigger.refresh(); });
-    let heroTl = null;
-    const buildHero = (seq) => {
-      if (heroTl) { heroTl.scrollTrigger && heroTl.scrollTrigger.kill(true); heroTl.kill(); }
-      // With the clip the scene gets room to breathe: the frame opens, the arms cross, a beat, then the caption.
-      heroTl = gsap.timeline({ scrollTrigger: { trigger: $('.hero'), start: 'top top', end: seq ? '+=260%' : '+=120%', pin: true, scrub: seq ? 1 : 0.8, anticipatePin: 1, invalidateOnRefresh: true } })
-        .fromTo($('.hero__media'), { clipPath: CLIP_START }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'power2.inOut', immediateRender: false, duration: seq ? 0.42 : 1 }, 0)
-        .fromTo($('.hero__media img'), { scale: () => heroFit().scale, x: () => heroFit().x, y: () => heroFit().y }, { scale: 1, x: () => heroCover().x, y: () => heroCover().y, ease: 'power2.inOut', immediateRender: false, duration: seq ? 0.42 : 1 }, 0)
-        .to($('.hero__media'), { '--shade': seq ? 0.55 : 1, ease: 'none', duration: seq ? 0.4 : 0.8 }, 0.2)
-        .to($('.hero__content'), { yPercent: -18, autoAlpha: 0, ease: 'power2.in', duration: seq ? 0.3 : 1 }, 0)
-        .to([$('.hero__stats'), $('.hero__scroll')], { autoAlpha: 0, y: 20, ease: 'power1.in', duration: seq ? 0.2 : 1 }, 0);
-      if (!seq) {
-        heroTl.fromTo($('.hero__caption'), { autoAlpha: 0, y: 60 }, { autoAlpha: 1, y: 0, ease: 'power2.out' }, 0.55);
-        return;
-      }
-      // Arms: frames 0..N between 8% and 78% of the scene. Linear on purpose — the footage carries its own easing.
-      const A0 = 0.08, A1 = 0.78;
-      const lockAt = A0 + (A1 - A0) * seq.lock;
-      const play = { p: 0 };
-      heroTl
-        .to(play, { p: 1, ease: 'none', duration: A1 - A0, onUpdate: () => seq.set(play.p) }, A0)
-        // slow camera drift toward the chest while the arms come up
-        .fromTo($('.hero__media'), { scale: 1 }, { scale: 1.06, ease: 'sine.inOut', duration: lockAt - 0.3, transformOrigin: '50% 38%' }, 0.3)
-        // studio light: a soft specular band crosses the body
-        .fromTo($('.hero__sweep'), { xPercent: rtl ? 130 : -130, autoAlpha: 0 }, { xPercent: rtl ? -130 : 130, autoAlpha: 1, ease: 'power1.inOut', duration: lockAt - 0.2 }, 0.2)
-        .to($('.hero__sweep'), { autoAlpha: 0, duration: 0.06 }, lockAt)
-        // impact: the arms lock — a short camera punch, a warm rim flash, the grain breathes
-        .to($('.hero__media'), { scale: 1.1, ease: 'power4.out', duration: 0.035 }, lockAt)
-        .to($('.hero__media'), { scale: 1.075, ease: 'elastic.out(1, .45)', duration: 0.12 }, lockAt + 0.035)
-        .fromTo($('.hero__flare'), { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1.15, ease: 'power3.out', duration: 0.04 }, lockAt)
-        .to($('.hero__flare'), { autoAlpha: 0, scale: 1.4, ease: 'power2.in', duration: 0.14 }, lockAt + 0.04)
-        .fromTo($('.hero__grain'), { '--g': 0.08 }, { '--g': 0.22, duration: 0.04, yoyo: true, repeat: 1 }, lockAt)
-        .to($('.hero__media'), { '--shade': 1, ease: 'none', duration: 0.2 }, lockAt + 0.02)
-        // the caption lands on the beat, letters closing in
-        .fromTo($('.hero__caption'), { autoAlpha: 0, y: 70 }, { autoAlpha: 1, y: 0, ease: 'expo.out', duration: 0.16 }, lockAt + 0.01)
-        .fromTo($('.hero__caption .display'), { letterSpacing: '0.08em', filter: 'blur(8px)' }, { letterSpacing: '0em', filter: 'blur(0px)', ease: 'expo.out', duration: 0.18 }, lockAt + 0.01)
-        .to({}, { duration: 0.1 }); // a held beat on the crossed arms before the pin releases
-    };
-    buildHero(null);
-    let dead = false;
-    heroSeqReady.then((seq) => { if (seq && alive && !dead) { buildHero(seq); ScrollTrigger.refresh(); } });
-    return () => { dead = true; if (heroTl) { heroTl.scrollTrigger && heroTl.scrollTrigger.kill(true); heroTl.kill(); } };
-  });
-  // Phones and tablets: no pin — the arms cross while the photo card travels up the screen.
-  mm.add('(max-width: 900px)', () => {
-    let st = null;
-    let dead = false;
-    heroSeqReady.then((seq) => {
-      if (!seq || !alive || dead) return;
-      st = ScrollTrigger.create({
-        trigger: heroMedia, start: 'top 75%', end: 'bottom 40%', scrub: 0.4,
-        onUpdate: (self) => {
-          seq.set(self.progress);
-          const lk = self.progress >= seq.lock;
-          if (lk !== heroMedia.classList.contains('is-locked')) heroMedia.classList.toggle('is-locked', lk);
-        },
-      });
-    });
-    return () => { dead = true; if (st) st.kill(); heroMedia && heroMedia.classList.remove('is-locked'); };
-  });
-  mm.add('(min-width: 901px)', () => {
+    gsap.timeline({ scrollTrigger: { trigger: $('.hero'), start: 'top top', end: '+=120%', pin: true, scrub: 0.8, anticipatePin: 1, invalidateOnRefresh: true } })
+      .fromTo($('.hero__media'), { clipPath: CLIP_START }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'power2.inOut', immediateRender: false }, 0)
+      .fromTo($('.hero__media img'), { scale: () => heroFit().scale, x: () => heroFit().x, y: () => heroFit().y }, { scale: 1, x: () => heroCover().x, y: () => heroCover().y, ease: 'power2.inOut', immediateRender: false }, 0)
+      .to($('.hero__media'), { '--shade': 1, ease: 'none' }, 0.2)
+      .to($('.hero__content'), { yPercent: -18, autoAlpha: 0, ease: 'power2.in' }, 0)
+      .to([$('.hero__stats'), $('.hero__scroll')], { autoAlpha: 0, y: 20, ease: 'power1.in' }, 0)
+      .fromTo($('.hero__caption'), { autoAlpha: 0, y: 60 }, { autoAlpha: 1, y: 0, ease: 'power2.out' }, 0.55);
 
     const track = $('.results__track');
     const dist = () => (track ? Math.max(0, track.scrollWidth - innerWidth) : 0);
@@ -781,7 +705,6 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     timers.forEach(clearTimeout);
     mm.revert();
     ctx.revert();
-    if (heroSeq) { heroSeq.destroy(); heroSeq = null; }
     ScrollTrigger.getAll().forEach((t) => t.kill());
     gsap.ticker.remove(raf);
     lenis.destroy();

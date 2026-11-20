@@ -2902,6 +2902,18 @@
         "plant_based": {
           "title": "Végétal",
           "description": "Légumineuses, tofu, céréales complètes, noix et graines"
+        },
+        "all_protein": {
+          "title": "Tous les aliments protéines",
+          "description": "Toutes les protéines de la bibliothèque — aliments de base et produits vendus en Israël, avec photos."
+        },
+        "all_carb": {
+          "title": "Tous les aliments glucides",
+          "description": "Tous les glucides de la bibliothèque — aliments de base et produits vendus en Israël, avec photos."
+        },
+        "all_fat": {
+          "title": "Tous les aliments lipides",
+          "description": "Tous les lipides de la bibliothèque — aliments de base et produits vendus en Israël, avec photos."
         }
       },
       "favorite": "Favori",
@@ -3021,15 +3033,16 @@
       "stepsShort": "Pas",
       "sleep": "Heures de sommeil",
       "sleepShort": "Sommeil",
-      "sleepHint": "Choisissez le chiffre le plus proche.",
+      "sleepHint": "Glissez jusqu’au nombre d’heures dormies.",
       "hunger": "Niveau de faim",
-      "hungerLow": "Rassasié",
-      "hungerHigh": "Très faim",
+      "hungerLow": "Je n'avais pas faim",
+      "hungerHigh": "J'avais très faim",
       "walked": "J'ai marché 10 000 pas",
       "sun": "10 minutes au soleil",
       "submit": "Enregistrer le bilan",
       "saved": "Bilan enregistré",
-      "saveError": "Le bilan n'a pas été enregistré. Réessayez."
+      "saveError": "Le bilan n'a pas été enregistré. Réessayez.",
+      "sleepUnit": "h"
     },
     "training": {
       "eyebrow": "Votre programme",

@@ -234,6 +234,10 @@ export const studioApi = {
   updateTicket: (id: number, data: Partial<QaTicket>) => request<QaTicket>(`/qa/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   commentTicket: (id: number, body: string) => request<QaTicket>(`/qa/${id}/comments`, { method: 'POST', body: JSON.stringify({ body }) }),
   deleteTicket: (id: number) => request<void>(`/qa/${id}`, { method: 'DELETE' }),
+  /** QA agent key (tools/qa.py): status, create / rotate (the full key comes back once), revoke. */
+  qaAgentKey: () => request<{ exists: boolean; last4?: string; created_at?: string; last_used_at?: string | null }>('/qa/agent-key'),
+  createQaAgentKey: () => request<{ key: string; exists: boolean; last4?: string; created_at?: string; last_used_at?: string | null }>('/qa/agent-key', { method: 'POST' }),
+  revokeQaAgentKey: () => request<void>('/qa/agent-key', { method: 'DELETE' }),
 
   /** Inline Agent EC draft for one text box (the server picks the model for the task). */
   agentDraft: (data: { kind: AgentDraftKind; field: string; context_id?: string; lang?: string; current?: string; extra?: Record<string, string | number | boolean> }) =>

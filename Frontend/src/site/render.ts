@@ -106,8 +106,6 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
   const ig = `https://www.instagram.com/${encodeURIComponent(c.contact.instagram)}`;
   const name = lang === 'he' ? 'אליאור קרמיזי' : 'Elior Cremisi';
   const heroImg = c.hero.image || `${P}opt/trainer.jpg`;
-  // Scroll sequence (arms down -> arms crossed): only over the default trainer photo; false turns it off.
-  const heroSeq = c.hero.sequence === false ? '' : (c.hero.sequence || (!c.hero.image || /opt\/trainer\.jpg$/.test(c.hero.image) ? '/site/seq/hero/manifest.json' : ''));
   const storyImg = c.story.image || `${P}opt/trainer_story.jpg`;
   const navItems = ([
     ['story', '#story', 'about'], ['results', '#results', 'results'], ['programs', '#programs', 'programs'],
@@ -127,9 +125,8 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
     hero: () => `
 <section class="hero" id="hero">
   <div class="hero__bg" aria-hidden="true"></div>
-  <figure class="hero__media" data-cursor="ECshape"${heroSeq ? ` data-seq="${esc(heroSeq)}"` : ''}${!c.hero.image || /opt\/trainer\.jpg$/.test(c.hero.image) ? ' data-focus=".40,.23,.76,.95"' : ''}${IMG('hero.image')}>
+  <figure class="hero__media" data-cursor="ECshape"${!c.hero.image || /opt\/trainer\.jpg$/.test(c.hero.image) ? ' data-focus=".40,.23,.76,.95"' : ''}${IMG('hero.image')}>
     <img src="${esc(heroImg)}" alt="${esc(name)}" fetchpriority="high">
-    <i class="hero__sweep" aria-hidden="true"></i><i class="hero__flare" aria-hidden="true"></i><i class="hero__grain" aria-hidden="true"></i>
   </figure>
   <div class="hero__content">
     <span class="eyebrow" data-reveal${P_('hero.eyebrow')}>${esc(c.hero.eyebrow)}</span>

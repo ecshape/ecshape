@@ -410,7 +410,7 @@ def import_starter_pack(
             source="staple",
             source_id=staple["key"],
             tags=json.dumps(item["tags"]),
-            nova_group=1,
+            nova_group=item.get("nova_group"),
         )
         db.add(row)
         created.append(row)

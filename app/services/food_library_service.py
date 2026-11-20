@@ -254,6 +254,34 @@ def _load_extra_staples() -> None:
 
 
 _load_extra_staples()
+
+
+def _load_israeli_products() -> None:
+    """QA #113: real products sold in Israel (app/data/foods_israel.json), taken from Open Food Facts — values from the
+    product label per 100 g, kept only when the label adds up (4/4/9 kcal within 20 %), Hebrew name, brand, barcode and
+    the package photo (CC BY-SA, credited). Rebuild with tools/build_israeli_foods.py."""
+    path = Path(__file__).resolve().parents[1] / "data" / "foods_israel.json"
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    known = {s["key"] for s in STAPLES}
+    for r in rows:
+        key = f"il_{r['code']}"
+        if key in known:
+            continue
+        he = r["he"]
+        label = f"{he} ({r['brand']})" if r.get("brand") and r["brand"] not in he else he
+        en = r.get("en") or label
+        staple = _staple(key, en, label, en, r["macro"], r["kcal"], r["protein"], r["carbs"], r["fat"], r.get("fiber") or 0.0,
+                         r.get("tags") or (), None, ())
+        staple.update(category=r.get("category"), brand=r.get("brand"), barcode=r["code"], quantity=r.get("qty"),
+                      image=r.get("img"), thumb=r.get("thumb") or r.get("img"))
+        STAPLES.append(staple)
+        known.add(key)
+
+
+_load_israeli_products()
 STAPLES_BY_KEY = {s["key"]: s for s in STAPLES}
 
 
@@ -273,8 +301,15 @@ def _load_picked_photos() -> None:
 _load_picked_photos()
 
 
+def _product_credit(staple: Dict[str, Any]) -> Dict[str, Any]:
+    return {"provider": "Open Food Facts", "author": "Open Food Facts contributors", "license": "CC BY-SA 3.0",
+            "url": OFF_PRODUCT_PAGE.format(code=staple["barcode"])}
+
+
 def staple_photo(staple: Dict[str, Any]) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
     """(image url, credit) of a staple's photo, as stored on bank items."""
+    if staple.get("image"):
+        return staple["image"], _product_credit(staple)
     photo = staple.get("photo")
     if not photo:
         return None, None
@@ -335,6 +370,11 @@ STARTER_PACKS: Dict[str, List[str]] = {
         "cashews", "chia_seeds", "flaxseed", "pumpkin_seeds", "hummus", "tahini", "avocado", "spinach", "broccoli",
     ],
 }
+
+
+# QA #113: one pack per food group with the whole library (generic foods + Israeli products), 100+ foods each.
+for _macro in ("protein", "carb", "fat"):
+    STARTER_PACKS[f"all_{_macro}"] = [s["key"] for s in STAPLES if s["macro_type"] == _macro]
 
 
 def starter_packs() -> List[Dict[str, Any]]:
@@ -435,6 +475,8 @@ def credit_string(credit: Optional[Dict[str, Any]]) -> Optional[str]:
 # --------------------------------------------------------------------------- #
 
 def _staple_image(staple: Dict[str, Any], width: int) -> Optional[str]:
+    if staple.get("image"):
+        return staple["thumb"] if width <= 400 else staple["image"]
     photo = staple.get("photo")
     if not photo:
         return None
@@ -444,8 +486,8 @@ def _staple_image(staple: Dict[str, Any], width: int) -> Optional[str]:
 def normalize_staple(staple: Dict[str, Any], lang: str = "he") -> Dict[str, Any]:
     names = staple["names"]
     photo = staple.get("photo")
-    credit = None
-    if photo:
+    credit = _product_credit(staple) if staple.get("image") else None
+    if photo and not credit:
         credit = {
             "provider": "Wikimedia Commons",
             "author": photo[2],
@@ -461,7 +503,7 @@ def normalize_staple(staple: Dict[str, Any], lang: str = "he") -> Dict[str, Any]
         "name_he": names["he"],
         "name_en": names["en"],
         "name_fr": names["fr"],
-        "brand": None,
+        "brand": staple.get("brand"),
         "image_url": _staple_image(staple, 800),
         "image_thumb_url": _staple_image(staple, 400),
         "image_credit": credit,
@@ -471,12 +513,12 @@ def normalize_staple(staple: Dict[str, Any], lang: str = "he") -> Dict[str, Any]
         "fat": f,
         "fiber": fib,
         "per": "100g",
-        "barcode": None,
+        "barcode": staple.get("barcode"),
         "tags": _merge_tags(staple["tags"], compute_macro_tags(kcal, p, c, f, fib)),
         "nutriscore": None,
-        "nova_group": 1,
+        "nova_group": None if staple.get("barcode") else 1,
         "macro_type": staple["macro_type"],
-        "quantity": None,
+        "quantity": staple.get("quantity"),
         "category": staple.get("category"),
     }
 

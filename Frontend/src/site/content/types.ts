@@ -2,7 +2,7 @@
 export interface SiteContent {
   meta: { title: string; description: string };
   nav: { about: string; results: string; programs: string; app: string; reviews: string; faq: string; login: string; cta: string };
-  hero: { image?: string; /** scroll-sequence manifest URL; false = off */ sequence?: string | false; eyebrow: string; title1: string; title2: string; sub: string; ctaPrimary: string; ctaSecondary: string; scroll: string; caption: string; captionAccent: string;
+  hero: { image?: string; eyebrow: string; title1: string; title2: string; sub: string; ctaPrimary: string; ctaSecondary: string; scroll: string; caption: string; captionAccent: string;
     stats: { value: number; suffix: string; label: string }[] };
   marquee: { row1: string[]; row2: string[] };
   manifesto: { image?: string; eyebrow: string; text: string; highlight: string; role: string };

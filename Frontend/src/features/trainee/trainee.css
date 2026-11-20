@@ -237,3 +237,31 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 /* QA #59: the eaten check pops in */
 .tp-pop-in { animation: tpPop .45s var(--ease-spring) both; }
 @media (prefers-reduced-motion: reduce) { .tp-pop-in { animation: none; } }
+
+/* QA #114 / #115: check-in sliders (sleep hours, hunger) — big thumb, filled track up to the value */
+.tp-range {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; cursor: pointer; touch-action: pan-y;
+  --track: hsl(var(--foreground) / .1); --fill: hsl(var(--primary));
+}
+.tp-range:focus-visible { outline: none; }
+.tp-range::-webkit-slider-runnable-track {
+  height: 10px; border-radius: 999px;
+  background: linear-gradient(to right, var(--fill) var(--p), var(--track) var(--p));
+}
+[dir="rtl"] .tp-range::-webkit-slider-runnable-track { background: linear-gradient(to left, var(--fill) var(--p), var(--track) var(--p)); }
+.tp-range::-moz-range-track { height: 10px; border-radius: 999px; background: var(--track); }
+.tp-range::-moz-range-progress { height: 10px; border-radius: 999px; background: var(--fill); }
+.tp-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 28px; height: 28px; margin-top: -9px; border-radius: 50%;
+  background: hsl(var(--background)); border: 3px solid var(--fill);
+  box-shadow: 0 6px 16px -6px hsl(var(--primary) / .7); transition: transform .2s var(--ease-spring, ease);
+}
+.tp-range::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%; background: hsl(var(--background)); border: 3px solid var(--fill);
+  box-shadow: 0 6px 16px -6px hsl(var(--primary) / .7);
+}
+.tp-range:active::-webkit-slider-thumb { transform: scale(1.15); }
+.tp-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px hsl(var(--ring) / .45); }
+/* nothing chosen yet: muted track and thumb, the number shows a dash */
+.tp-slider[data-empty] .tp-range { --fill: hsl(var(--muted-foreground) / .55); }
+.tp-slider[data-empty] .tp-range::-webkit-slider-runnable-track { background: var(--track); }

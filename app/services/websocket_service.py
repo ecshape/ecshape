@@ -27,9 +27,9 @@ class WebSocketService:
         # Store trainer-client relationships for notifications
         self.trainer_clients: Dict[int, Set[int]] = {}
     
-    async def connect(self, websocket: WebSocket, user_id: int):
+    async def connect(self, websocket: WebSocket, user_id: int, subprotocol: Optional[str] = None):
         """Connect a user to WebSocket service."""
-        await websocket.accept()
+        await websocket.accept(subprotocol=subprotocol)
         
         if user_id not in self.active_connections:
             self.active_connections[user_id] = set()

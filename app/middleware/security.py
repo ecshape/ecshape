@@ -94,7 +94,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 )
         
         # 3. Rate limiting
-        client_ip = request.client.host if request.client else "unknown"
+        from app.auth.throttle import client_ip as _client_ip
+        client_ip = _client_ip(request)
         rate_limit_key = f"{client_ip}:{request.url.path}"
         
         now = time.time()
@@ -125,7 +126,20 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response.headers["X-XSS-Protection"] = "1; mode=block"
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             
-            if ENVIRONMENT == "production":
+            response.headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=()"
+            ctype = response.headers.get("content-type", "")
+            if "text/html" in ctype:
+                # SPA shell: no framing (clickjacking on the sign-in page), no plugins, no <base> hijack
+                response.headers.setdefault(
+                    "Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'")
+            elif request.url.path.startswith("/api/"):
+                response.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+            if request.url.path.startswith("/api/auth/"):
+                # Tokens and account data must never sit in a shared or browser cache (ASVS 8.2.1)
+                response.headers["Cache-Control"] = "no-store"
+                response.headers["Pragma"] = "no-cache"
+            from app.auth.config import is_deployed as _is_deployed
+            if ENVIRONMENT == "production" or _is_deployed():
                 response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
         return response

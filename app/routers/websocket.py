@@ -14,7 +14,6 @@ router = APIRouter()
 async def websocket_endpoint(
     websocket: WebSocket,
     user_id: int,
-    token: Optional[str] = Query(None)
 ):
     """
     WebSocket endpoint for real-time notifications.
@@ -25,6 +24,10 @@ async def websocket_endpoint(
         token: JWT token for authentication
     """
     
+    # The token travels as a WebSocket subprotocol ("ecshape.bearer", <jwt>) so it never lands in URLs, proxy
+    # and access logs (auth audit M8). The ?token= query form is no longer accepted.
+    offered = [p.strip() for p in (websocket.headers.get("sec-websocket-protocol") or "").split(",") if p.strip()]
+    token = offered[1] if len(offered) >= 2 and offered[0] == "ecshape.bearer" else None
     try:
         # Authenticate user
         if not token:
@@ -44,7 +47,7 @@ async def websocket_endpoint(
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"WebSocket: HTTPException during auth: {e.detail}")
-            await websocket.close(code=4002, reason=f"Authentication failed: {e.detail}")
+            await websocket.close(code=4002, reason="Authentication failed")
             return
         except Exception as e:
             import logging
@@ -56,7 +59,7 @@ async def websocket_endpoint(
             return
         
         # Connect to WebSocket service
-        await websocket_service.connect(websocket, user_id)
+        await websocket_service.connect(websocket, user_id, subprotocol="ecshape.bearer")
         
         # Send welcome message
         welcome_message = {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { socketUrl } from './api';
+import { socketUrl, socketProtocols } from './api';
 
 export const useMediaQuery = (query: string) => {
   const get = () => (typeof window !== 'undefined' ? window.matchMedia(query).matches : false);
@@ -103,9 +103,10 @@ export const useChatSocket = (userId: number | undefined, onEvent: (e: SocketEve
     const connect = () => {
       if (disposed) return;
       const url = socketUrl(userId);
-      if (!url) return;
+      const protocols = socketProtocols();
+      if (!url || !protocols) return;
       try {
-        ws = new WebSocket(url);
+        ws = new WebSocket(url, protocols);
       } catch {
         schedule();
         return;

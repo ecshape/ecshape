@@ -125,7 +125,13 @@ export const socketUrl = (userId: number) => {
   }
   const proto = base.protocol === 'https:' ? 'wss:' : 'ws:';
   const path = base.pathname.replace(/\/api\/?$/, '').replace(/\/$/, '');
-  return `${proto}//${base.host}${path}/api/ws/${userId}?token=${encodeURIComponent(t)}`;
+  return `${proto}//${base.host}${path}/api/ws/${userId}`;
+};
+
+/** The token rides in Sec-WebSocket-Protocol, never in the URL (it would end up in proxy / access logs). */
+export const socketProtocols = (): string[] | null => {
+  const t = token();
+  return t ? ['ecshape.bearer', t] : null;
 };
 
 /** Authenticated media URL for a progress photo filename. */

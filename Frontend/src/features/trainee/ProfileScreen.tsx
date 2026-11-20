@@ -46,7 +46,7 @@ const ProfileScreen: React.FC = () => {
           <div className="mt-6 grid grid-cols-3 gap-2.5">
             <Stat icon={Dumbbell} label={t('trainee.profile.workouts')} value={fmtNum(workouts)} />
             <Stat icon={ClipboardCheck} label={t('trainee.profile.checkins')} value={fmtNum(summary.data?.total_check_ins ?? 0)} />
-            <Stat icon={CalendarDays} label={t('trainee.profile.since')} value={user?.created_at ? fmtDate(user.created_at, { month: 'short', year: '2-digit' }) : '–'} />
+            <Stat icon={CalendarDays} label={t('trainee.profile.since')} value={user?.created_at ? fmtDate(user.created_at, { month: 'numeric', year: 'numeric' }) : '–'} />
           </div>
         </section>
 

@@ -166,12 +166,12 @@ const AddMealSheet: React.FC<Props> = ({ open, slot, date, onClose, onManual }) 
           <button type="button" onClick={confirm} disabled={pending} className="tp-btn tp-btn--primary tp-press w-full">
             {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
             {source === 'create' ? t('trainee.meals.customSave') : t('trainee.mealTools.confirm')}
-            <span className="opacity-80" dir="ltr">· {fmtNum(total)} kcal</span>
+            <span className="opacity-80" dir="ltr">· {fmtNum(total)} {t('foodBankPro.kcal')}</span>
           </button>
         ) : mode === 'home' && items.length ? (
           <button type="button" onClick={() => setMode('review')} className="tp-btn tp-btn--primary tp-press w-full" data-testid="meal-basket">
             {t('trainee.mealTools.basket', { count: items.length })}
-            <span className="opacity-80" dir="ltr">· {fmtNum(total)} kcal</span>
+            <span className="opacity-80" dir="ltr">· {fmtNum(total)} {t('foodBankPro.kcal')}</span>
             <span className="ms-auto flex items-center gap-1">{t('trainee.mealTools.reviewBasket')}<ChevronRight className="h-4 w-4 rtl:rotate-180" /></span>
           </button>
         ) : undefined
@@ -357,7 +357,7 @@ export const HitRow: React.FC<{ hit: FoodHit; aiImages: boolean; onPick: () => v
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold" dir="auto">{hit.display_name || hit.name}</span>
           <span className="block truncate text-xs text-muted-foreground" dir="auto">
-            {hit.brand ? `${hit.brand} · ` : ''}<span dir="ltr">{fmtNum(hit.calories)} kcal</span> {per}
+            {hit.brand ? `${hit.brand} · ` : ''}<span dir="ltr">{fmtNum(hit.calories)} {t('foodBankPro.kcal')}</span> {per}
           </span>
           <span className="block truncate text-[11px] text-muted-foreground/80" dir="ltr" style={{ textAlign: 'inherit' }}>P {fmtNum(hit.protein)} · C {fmtNum(hit.carbs)} · F {fmtNum(hit.fat)}</span>
         </span>

@@ -201,6 +201,17 @@ PYSEC-2026-1325). That is the JWT library, so it is handed to the auth audit: mo
   answers 500 (its response model types `exercise` as a dict); `POST /api/studio/leads` returns 500 (duplicate
   `source` argument); several date query parameters return 500 instead of 400 on bad input.
 
+## Routers added on `sam-dev-1` (reviewed after the rebase)
+
+- `automations` (`/api/studio/automations`, `/api/studio/tasks`): every query is scoped to `trainer_id == user.id`.
+  Task creation checks that the client belongs to the trainer. The engine only targets `clients_of(trainer)`.
+  The webhook action already refused private addresses and does not follow redirects. Hardened: it now refuses
+  every non-global range (CGNAT `100.64/10` was accepted).
+- QA agent key (`/api/studio/qa/agent-key`): 256-bit random, stored as a SHA-256 hash, constant-time compare. It
+  only unlocks the QA routes and acts as the coach who created it. OK.
+- Site pages, agent snapshot/undo: studio-only (`require_studio`). Public `/pages/{slug}` HTML is rendered
+  through the hardened `sanitizeArticleHtml` (as is Agent EC's preview). OK.
+
 ## OWASP API Security Top 10 (2023)
 
 | # | Risk | Status | Evidence |

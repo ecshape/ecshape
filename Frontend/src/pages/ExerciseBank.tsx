@@ -986,11 +986,11 @@ const ExerciseBank = () => {
                   : t('exerciseBank.createDescription')}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={editingExercise ? handleUpdateExercise : handleCreateExercise}
+            <form noValidate onSubmit={editingExercise ? handleUpdateExercise : handleCreateExercise}
                   className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-sm">{t('exerciseBank.exerciseName')}</Label>
+                  <Label htmlFor="name" className="text-sm">{t('exerciseBank.exerciseName')} <span className="text-primary" aria-hidden>*</span></Label>
                   <Input
                     id="name"
                     value={exerciseForm.name}
@@ -1010,7 +1010,7 @@ const ExerciseBank = () => {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="muscle_group" className="text-sm">{t('exerciseBank.muscleGroup')}</Label>
+                  <Label htmlFor="muscle_group" className="text-sm">{t('exerciseBank.muscleGroup')} <span className="text-primary" aria-hidden>*</span></Label>
                   <Select
                     value={exerciseForm.muscle_group}
                     onValueChange={(value) => {
@@ -1050,7 +1050,6 @@ const ExerciseBank = () => {
                   placeholder={t('exerciseBank.descriptionPlaceholder')}
                   rows={2}
                   className="text-sm resize-none"
-                  required
                 />
               </div>
 

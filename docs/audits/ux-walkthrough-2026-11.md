@@ -21,6 +21,15 @@ Branch `claude/audit-ux-features-1bbe94`, fast-forwarded to `sam-dev-1` first (i
 | Food packs (ready menus) | fixed | pass | fixed | Cards and the detail view used Latin "P / C / F" and "kcal"; they now use the Hebrew macro names and the food cards' macro layout. Assigning to a client works. The confirmation toast ran the Hebrew prefix into the name ("לNoa"); it now reads "ל-Noa". |
 | Client meal plan (profile tab) | fixed | pass | fixed | Food placeholders showed the English initial ("W" next to דג לבן); they now use the letter of the name shown. Plan foods have no photos even where the food bank has one (the plan stores its own copy of each food). |
 | Meal plan editor (weekly, variants) | fixed | issue | fixed | Saving finished with no feedback (fixed: toast). The per-meal targets packed 4 unlabeled inputs into each row, clipping the values (fixed: column headers, tighter inputs, no spinner arrows). "Drift" showed English "kcal" (fixed). The client comes from `location.state`, so a reload loses it (same as the workout builder). |
+| Chat (trainer) | pass | pass | fixed | Sending is instant (optimistic) and the conversation list updates. At 1280 px the list, thread and client profile sat side by side and squeezed the thread to ~180 px. The profile now opens as a sheet below 1536 px. |
+| Notifications | issue | issue | — | The trainer has no notification inbox: `NotificationBell` was dropped in the Nov 13 redesign (e8c18f4) and is mounted nowhere. Only live toasts remain, though the count and list are still fetched. Per-client notification settings (profile tab) work. Proposal 8. |
+| Automations | fixed | pass | pass | Toggling is instant. The dry run lists matching clients with the exact message each would get. Delete and "run now" used the browser's `confirm()`; they now use the shared app dialog (`useConfirm`). |
+| Tasks | pass | pass | pass | Good empty state. Done, reopen and delete are optimistic. Delete has no confirmation or undo (acceptable for tasks). |
+| Leads | fixed | pass | pass | List, detail, status chips, call and WhatsApp all work. Delete moved from `confirm()` to the app dialog. |
+| My site | pass | pass | pass | Section list plus a live preview of the site. |
+| SEO / communication | pass | pass | pass | Clear empty states and connect actions. |
+| QA studio | fixed | pass | pass | Board and list views, filters, and the sheet work. Ticket delete moved from `confirm()` to the app dialog. |
+| Settings | pass | pass | pass | Profile photo, AI keys and one-click OpenRouter connection. Judged from content only, because the reveal animation stays frozen while the browser pane is hidden. |
 
 **Not yet audited:** meal plans and variants, nutrition table and food packs (details), meal tracking, daily check-in sliders, progress, chat, notifications, automations, Studio and QA, settings, the session player, the whole client app, English/LTR, 375px mobile, and light mode.
 
@@ -42,6 +51,8 @@ Before and after screenshots are in the session scratchpad, under `shots/`.
 5. One dialog size scale, so the exercise, add-client and alert dialogs share input and button heights.
 6. Replace the browser's required-field bubbles app-wide with `noValidate` and inline translated errors.
 7. Show "Server error" banners as translated messages.
+8. Bring back a trainer notification inbox (a bell in the top bar, with the unread count the app already fetches), designed in the current system.
+9. Food photos in meal plans: plans store their own copy of each food without its photo; link to the food bank item instead, or copy the image when assigning.
 
 ## Motion notes (for the motion-uniformity session)
 - On first load, page headers and content stay hidden or dim for about 1 s on Exercises and Client profile, and for several seconds on Food bank.

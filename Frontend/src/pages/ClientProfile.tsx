@@ -3,7 +3,11 @@ import '@/i18n/ticketsStudio';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HealthDeclarationChip from '@/components/legal/HealthDeclarationChip';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import '@/i18n/uxAudit';
+import { optimisticQuery } from '@/lib/optimistic';
+import { tk } from '@/features/trainer/hooks';
 import {
   Activity, AlertTriangle, Bell, BellRing, CalendarDays, ClipboardCheck, Clock, Dumbbell, Flame, Heart, History,
   LayoutDashboard, Mail, MapPin, MessageCircle, Pencil, Phone, Plus, Ruler, Scale, Target, Trash2, TrendingUp,
@@ -149,6 +153,8 @@ const ClientProfile = () => {
   const [loading, setLoading] = useState(true);
   const [mealPlanToDelete, setMealPlanToDelete] = useState<MealPlan | null>(null);
   const [workoutPlanToDelete, setWorkoutPlanToDelete] = useState<WorkoutPlan | null>(null);
+  const [confirmDeleteClient, setConfirmDeleteClient] = useState(false);
+  const queryClient = useQueryClient();
   const [actionError, setActionError] = useState('');
   const [checkInSummary, setCheckInSummary] = useState<CheckInSummary | null>(null);
   const [notificationMode, setNotificationMode] = useState<'EVERYTHING' | 'WEEKLY_DIGEST'>('WEEKLY_DIGEST');
@@ -387,6 +393,24 @@ const ClientProfile = () => {
     }
   };
 
+  // Optimistic: the client leaves the trainer's list and the page at once; restored with a message if the server refuses.
+  const handleDeleteClient = () => {
+    if (!client) return;
+    const id = client.id;
+    setConfirmDeleteClient(false);
+    navigate('/clients', { replace: true });
+    void optimisticQuery<{ id: number }[]>(
+      queryClient,
+      tk.clients,
+      (prev) => prev?.filter((c) => c.id !== id),
+      async () => {
+        const res = await fetch(`${API_BASE_URL}/users/${id}`, { method: 'DELETE', headers: authHeaders() });
+        if (!res.ok) throw new Error(`delete client ${res.status}`);
+      },
+      () => toast.error(t('clientProfile.deleteClientError')),
+    ).finally(() => queryClient.invalidateQueries({ queryKey: ['trainer', 'overview'] }));
+  };
+
   const handleDeleteWorkoutPlan = async () => {
     if (!workoutPlanToDelete) return;
     try {
@@ -461,6 +485,7 @@ const ClientProfile = () => {
                 {activeWorkoutPlan ? <Dumbbell className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {activeWorkoutPlan ? t('clientProfile.updateWorkoutPlan') : t('clientProfile.createWorkout')}
               </button>
+              {isStaff && <ActionBtn icon={Trash2} label={t('clientProfile.deleteClient')} onClick={() => setConfirmDeleteClient(true)} className="text-destructive hover:text-destructive" />}
             </div>
           </div>
 
@@ -794,6 +819,19 @@ const ClientProfile = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('meals.cancel', 'Cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteMealPlan} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('meals.delete', 'Delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDeleteClient} onOpenChange={setConfirmDeleteClient}>
+        <AlertDialogContent className="rounded-[1.5rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('clientProfile.deleteClientTitle', { name: client.full_name || client.username })}</AlertDialogTitle>
+            <AlertDialogDescription>{t('clientProfile.deleteClientBody')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('meals.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteClient} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('clientProfile.deleteClientConfirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

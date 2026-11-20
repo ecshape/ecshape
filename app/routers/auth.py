@@ -260,11 +260,16 @@ async def reset_password_by_trainer(password_data: PasswordResetByTrainer, curre
 
 # ---- Dev-only demo shortcuts (ecshape-dev). Off unless DEV_DEMO_SEED=1, and refused outright when
 # ENVIRONMENT=production, so a stray DEV_DEMO_SEED on the live service can't open a password-less sign-in.
+# The one exception is the Railway dev preview project: Railway names its default environment "production",
+# so that service carries ENVIRONMENT=production too, yet it holds only fictional demo data.
 _DEMO_USERS = {"trainer": "trainer1", "client": "client1"}
+_DEV_PREVIEW_PROJECT = "ecshape-dev"
 
 
 def _demo_enabled() -> bool:
-    return _os.getenv("DEV_DEMO_SEED") == "1" and not is_production()
+    if _os.getenv("DEV_DEMO_SEED") != "1":
+        return False
+    return not is_production() or _os.getenv("RAILWAY_PROJECT_NAME") == _DEV_PREVIEW_PROJECT
 
 
 @router.get("/demo-accounts")

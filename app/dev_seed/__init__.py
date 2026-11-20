@@ -2,7 +2,8 @@
 
 Runs only when DEV_DEMO_SEED=1 (never set on the production service) and only into an
 empty database (no trainer yet). Demo passwords come from DEV_TRAINER_PASSWORD /
-DEV_CLIENT_PASSWORD so the dev site never uses a password published in the repo.
+DEV_CLIENT_PASSWORD so the dev site never uses a password published in the repo; when they are unset the demo
+accounts get a random password and are reachable only through the one-click demo buttons.
 """
 import json
 import logging
@@ -18,11 +19,15 @@ DATA_FILE = Path(__file__).with_name("demo_data.json")
 
 
 def _password_for(role: str):
+    """Hash of the configured demo password. Without one, a random password nobody knows: the account then
+    exists for the one-click demo buttons but can't be signed into with a password."""
+    import secrets
+
     from app.auth.utils import get_password_hash
 
     env = "DEV_TRAINER_PASSWORD" if role.upper() == "TRAINER" else "DEV_CLIENT_PASSWORD"
-    raw = os.getenv(env)
-    return get_password_hash(raw) if raw else None
+    raw = os.getenv(env) or secrets.token_urlsafe(32)
+    return get_password_hash(raw)
 
 
 DEMO_LIBRARY_LINKS = {
@@ -108,8 +113,6 @@ def _run_seed(engine) -> None:
                             r[k] = date.fromisoformat(r[k][:10])
                     if table.name == "users":
                         r["hashed_password"] = _password_for(str(r.get("role", "")))
-                        if not r["hashed_password"]:
-                            continue  # no password configured: don't create a login nobody can use safely
                     clean.append(r)
                 if clean:
                     conn.execute(table.insert(), clean)

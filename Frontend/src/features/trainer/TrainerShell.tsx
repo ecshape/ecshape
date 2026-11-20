@@ -6,7 +6,6 @@ import { cn, isRtlLang } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
-import { usePortalMotion } from '@/lib/portalMotion';
 import { useLiquid } from './ui';
 
 export type TrainerNavEntry = { id: string; label: string; icon: React.ElementType; href: string; badge?: number };
@@ -55,7 +54,6 @@ const TrainerShell: React.FC<{
   const barRef = useRef<HTMLDivElement>(null);
   const sideRef = useRef<HTMLElement>(null);
 
-  usePortalMotion(mainRef);
 
   // QA #92: the collapsed rail is as wide as its longest section title (never narrower than the default), so no title is cut off
   useEffect(() => {

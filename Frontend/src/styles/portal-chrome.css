@@ -1,9 +1,6 @@
 /* Portal chrome: motion + docked Agent EC + My Site studio */
 
-.ec-page-enter {
-  animation: ec-fade var(--dur-med) var(--ease-out) both;
-}
-
+/* .ec-page-enter: the shared route transition, see styles/motion.css */
 
 /* Docked Agent EC: the shell offset lives in agent-ec.css ([data-ec-shell]) */
 

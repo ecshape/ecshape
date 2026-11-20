@@ -1,20 +1,5 @@
+/** Portal chrome hooks. Route entrance is pure CSS (.ec-route / .tr-route / .ec-page-enter in styles/motion.css). */
 import { useEffect, useLayoutEffect, type RefObject } from 'react';
-import { useLocation } from 'react-router-dom';
-import gsap from 'gsap';
-
-/** Enter selectors inspired by LaveriExpert / codeandchill-style dashboards. */
-const ENTER = [
-  '.ec-page-title',
-  '.ec-page-header',
-  '[data-ec-enter]',
-  '.ec-card',
-  '.ec-kpi',
-  '.ec-stagger > *',
-].join(',');
-
-function reduced() {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** Flag the document while any portal shell is mounted. */
 export function usePortalRoot(enabled = true) {
@@ -24,41 +9,6 @@ export function usePortalRoot(enabled = true) {
     html.classList.add('ec-portal-on');
     return () => html.classList.remove('ec-portal-on');
   }, [enabled]);
-}
-
-/** Short stagger entrance on every route change inside the portal. */
-export function usePortalMotion(scope: RefObject<HTMLElement | null>) {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    const root = scope.current;
-    if (!root || reduced()) return;
-    let ctx: gsap.Context | null = null;
-    const t = window.setTimeout(() => {
-      ctx = gsap.context(() => {
-        const items = gsap.utils
-          .toArray<HTMLElement>(ENTER, root)
-          .filter((el) => el.getBoundingClientRect().top < window.innerHeight * 1.45);
-        if (!items.length) return;
-        gsap.fromTo(
-          items.slice(0, 24),
-          { y: 6, autoAlpha: 0 },
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.24,
-            ease: 'power2.out',
-            stagger: 0.02,
-            clearProps: 'transform,opacity,visibility',
-          },
-        );
-      }, root);
-    }, 30);
-    return () => {
-      window.clearTimeout(t);
-      ctx?.revert();
-    };
-  }, [pathname, scope]);
 }
 
 /** Sliding active pill for vertical trainer nav. */

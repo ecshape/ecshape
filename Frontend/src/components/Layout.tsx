@@ -12,7 +12,7 @@ import { EcMark } from '@/components/brand/EcMark';
 import LanguageSelector from './LanguageSelector';
 import ThemeToggle from './ThemeToggle';
 import LiquidNav, { type LiquidItem } from './LiquidNav';
-import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
+import { usePortalRoot } from '@/lib/portalMotion';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -114,7 +114,6 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
   const isAdmin = user?.role === 'ADMIN';
 
   usePortalRoot(true);
-  usePortalMotion(mainRef);
 
   const { data: overview } = useQuery({
     queryKey: ['trainer', 'overview'],
@@ -226,7 +225,7 @@ const LayoutInner = ({ children, currentPage = 'dashboard' }: LayoutProps) => {
       </header>
 
       <main ref={mainRef} className="ec-portal-body flex-1 overflow-y-auto overflow-x-hidden pb-28 lg:pb-0" data-ec-main>
-        <div className="ec-page-enter">{children}</div>
+        <div className="ec-page-enter" key={currentPage}>{children}</div>
       </main>
 
       <nav className="fixed inset-x-3 z-50 lg:hidden" style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }} aria-label={t('navigation.menu')}>

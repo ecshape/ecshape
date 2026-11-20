@@ -6,7 +6,7 @@ import { Dumbbell, House, MessageCircle, PanelLeftClose, PanelLeftOpen, Trending
 import { cn, isRtlLang } from '@/lib/utils';
 import { EcMark } from '@/components/brand/EcMark';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePortalMotion, usePortalRoot } from '@/lib/portalMotion';
+import { usePortalRoot } from '@/lib/portalMotion';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import './qa2I18n';
@@ -52,7 +52,6 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
   const toggleRail = () => setCollapsed((c) => { try { localStorage.setItem(RAIL_KEY, c ? '0' : '1'); } catch { /* private mode */ } return !c; });
 
   usePortalRoot(true);
-  usePortalMotion(mainRef);
   useEffect(() => {
     // Same frosted top bar as the trainer app once the page scrolls.
     const onScroll = () => setScrolled(window.scrollY > 8);

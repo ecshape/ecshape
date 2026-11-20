@@ -59,7 +59,8 @@
 @keyframes ec-spin { to { transform: rotate(360deg); } }
 
 /* ------------------------------------------------------------- shared utilities */
-.ec-route { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
+/* The one route transition for every shell (trainer .tr-route, trainee .tr-route, legacy Layout .ec-page-enter) */
+.ec-route, .tr-route, .ec-page-enter { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
 .ec-enter { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
 .ec-enter-pop { animation: ec-pop var(--dur-med) var(--ease-out) backwards; }
 .ec-bump { animation: ec-bump var(--dur-slow) var(--ease-spring) both; }

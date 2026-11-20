@@ -107,7 +107,6 @@
 }
 @media (min-width: 1024px) { .tr-body { padding-bottom: 0; } }
 
-.tr-route { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
 
 /* Phone bottom bar */
 .tr-tabbar { position: fixed; z-index: 50; inset-inline: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom, 0px)); }

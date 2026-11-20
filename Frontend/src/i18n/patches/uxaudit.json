@@ -4,7 +4,9 @@
       "discardTitle": "לצאת בלי לשמור?",
       "discardBody": "השינויים שעשית כאן עוד לא נשמרו ויאבדו.",
       "discardKeep": "המשך לערוך",
-      "discardLeave": "צא בלי לשמור"
+      "discardLeave": "צא בלי לשמור",
+      "deleteMuscleGroup": "למחוק את קבוצת השריר? אי אפשר לבטל את הפעולה.",
+      "runNow": "הפעלה עכשיו"
     }
   },
   "en": {
@@ -12,7 +14,9 @@
       "discardTitle": "Leave without saving?",
       "discardBody": "The changes you made here are not saved yet and will be lost.",
       "discardKeep": "Keep editing",
-      "discardLeave": "Leave without saving"
+      "discardLeave": "Leave without saving",
+      "deleteMuscleGroup": "Delete this muscle group? This cannot be undone.",
+      "runNow": "Run now"
     }
   },
   "fr": {
@@ -20,7 +24,9 @@
       "discardTitle": "Quitter sans enregistrer ?",
       "discardBody": "Les modifications faites ici ne sont pas encore enregistrées et seront perdues.",
       "discardKeep": "Continuer à modifier",
-      "discardLeave": "Quitter sans enregistrer"
+      "discardLeave": "Quitter sans enregistrer",
+      "deleteMuscleGroup": "Supprimer ce groupe musculaire ? Cette action est irréversible.",
+      "runNow": "Lancer maintenant"
     }
   }
 }

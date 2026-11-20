@@ -26,6 +26,7 @@ import { QA_SPOTLIGHT_KEY } from '@/components/studio/QaCaptureWidget';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import '@/i18n/ticketsStudio';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const STATUSES: QaStatus[] = ['new', 'in_progress', 'done', 'cancelled'];
 const PRIORITIES: QaPriority[] = ['low', 'normal', 'high'];
@@ -95,6 +96,7 @@ function readView(): 'board' | 'list' {
 const QaPage = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
+  const [askConfirm, confirmDialog] = useConfirm();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tickets, setTickets] = useState<QaTicket[]>([]);
@@ -628,7 +630,7 @@ const QaPage = () => {
                     size="sm"
                     className="ms-auto text-destructive"
                     onClick={async () => {
-                      if (!window.confirm(t('studio.qa.deleteConfirm'))) return;
+                      if (!(await askConfirm({ body: t('studio.qa.deleteConfirm') }))) return;
                       const id = selected.id;
                       closeSheet();
                       await optimisticList(setTickets, (ts) => ts.filter((x) => x.id !== id), () => studioApi.deleteTicket(id),
@@ -643,6 +645,7 @@ const QaPage = () => {
           </div>,
           document.body,
         )}
+      {confirmDialog}
     </Layout>
   );
 };

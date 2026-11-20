@@ -14,6 +14,8 @@ import { ArrowLeft, Save, Plus, X, Upload, Image as ImageIcon, Settings, Edit, T
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
+import { useConfirm } from '@/components/ConfirmDialog';
+import '@/i18n/uxAudit';
 
 const MUSCLE_GROUPS = [
   { value: 'chest', label: 'Chest' },
@@ -39,6 +41,7 @@ const EQUIPMENT_OPTIONS = [
 const CreateExercise = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const [askConfirm, confirmDialog] = useConfirm();
   const { user } = useAuth();
 
   const getMuscleGroupDisplayLabel = (value: string, label: string): string => {
@@ -336,7 +339,7 @@ const CreateExercise = () => {
   };
 
   const handleDeleteMuscleGroup = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this muscle group? This action cannot be undone.')) {
+    if (!(await askConfirm({ body: t('ux.deleteMuscleGroup') }))) {
       return;
     }
 
@@ -820,6 +823,7 @@ const CreateExercise = () => {
           </div>
         </form>
       </div>
+      {confirmDialog}
     </Layout>
   );
 };

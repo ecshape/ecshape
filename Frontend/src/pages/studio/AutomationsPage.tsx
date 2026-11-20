@@ -25,6 +25,7 @@ import {
 } from '@/lib/studioApi';
 import { cn } from '@/lib/utils';
 import '@/i18n/automations';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const AUTOMATIONS_KEY = ['studio', 'automations'] as const;
 
@@ -50,6 +51,7 @@ const DEFAULT_CONFIG: Record<AutomationTrigger, Automation['config']> = {
 const AutomationsPage = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [askConfirm, confirmDialog] = useConfirm();
   const qc = useQueryClient();
   const { data: autos = [], isPending } = useQuery({ queryKey: AUTOMATIONS_KEY, queryFn: automationsApi.list });
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -98,8 +100,8 @@ const AutomationsPage = () => {
     }
   };
 
-  const remove = (a: Automation) => {
-    if (!window.confirm(t('auto.deleteConfirm'))) return;
+  const remove = async (a: Automation) => {
+    if (!(await askConfirm({ body: t('auto.deleteConfirm') }))) return;
     setSelectedId(null);
     void optimisticQuery<Automation[], void>(qc, AUTOMATIONS_KEY, (ls) => ls?.filter((x) => x.id !== a.id), () => automationsApi.remove(a.id), fail);
   };
@@ -109,7 +111,7 @@ const AutomationsPage = () => {
     try { setTest({ id: a.id, data: await automationsApi.test(a.id) }); } catch { fail(); } finally { setTesting(false); }
   };
   const runNow = async (a: Automation) => {
-    if (!window.confirm(t('auto.runNowConfirm'))) return;
+    if (!(await askConfirm({ body: t('auto.runNowConfirm'), title: t('auto.runNow'), confirmLabel: t('auto.runNow'), destructive: false }))) return;
     try {
       const r = await automationsApi.run(a.id);
       toast({ title: r.fired ? t('auto.fired', { count: r.fired }) : t('auto.noMatches') });
@@ -235,6 +237,7 @@ const AutomationsPage = () => {
           </div>
         )}
       </div>
+      {confirmDialog}
     </Layout>
   );
 };

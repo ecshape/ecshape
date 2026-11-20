@@ -43,6 +43,11 @@ interface ConsentCopy {
   cancel: string;
   staffDelete: string;
   policies: string;
+  // trainer view of a trainee
+  declNone: string;
+  declOk: string;
+  declClearance: string;
+  declAt: string;
 }
 
 export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
@@ -82,6 +87,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     deleteConfirm: 'מחיקה לצמיתות', deleteError: 'המחיקה נכשלה. נסו שוב או פנו אלינו.', cancel: 'ביטול',
     staffDelete: 'למחיקת חשבון מאמן יש לפנות אלינו: החשבון כולל מידע של מתאמנים.',
     policies: 'מדיניות הפרטיות ותנאי השימוש',
+    declNone: 'טרם מולאה הצהרת בריאות', declOk: 'הצהרת בריאות: תקינה', declClearance: 'הצהרת בריאות: נדרש אישור רופא', declAt: 'מולאה ב-',
   },
   en: {
     title: 'Before you start',
@@ -119,6 +125,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     deleteConfirm: 'Delete permanently', deleteError: 'Deletion failed. Try again or contact us.', cancel: 'Cancel',
     staffDelete: 'To delete a coach account, contact us: it holds other people’s data.',
     policies: 'Privacy policy and terms',
+    declNone: 'No health declaration yet', declOk: 'Health declaration: all clear', declClearance: 'Health declaration: doctor’s approval needed', declAt: 'Filled in on ',
   },
   fr: {
     title: 'Avant de commencer',
@@ -156,6 +163,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     deleteConfirm: 'Supprimer définitivement', deleteError: 'La suppression a échoué. Réessayez ou contactez-nous.', cancel: 'Annuler',
     staffDelete: 'Pour supprimer un compte coach, contactez-nous : il contient les données d’autres personnes.',
     policies: 'Politique de confidentialité et conditions',
+    declNone: 'Pas encore de déclaration de santé', declOk: 'Déclaration de santé : RAS', declClearance: 'Déclaration de santé : accord médical requis', declAt: 'Remplie le ',
   },
 };
 

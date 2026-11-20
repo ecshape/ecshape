@@ -3,9 +3,10 @@ import { isRtlLang } from '@/lib/utils';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { legalNavFor, legalPageFor, type LegalDoc } from '@/legal/i18n';
+import { legalNavFor, legalPageFor } from '@/legal/i18n';
+import { LEGAL_DOCS, type LegalDoc } from '@/legal/content';
 
-const DOCS: LegalDoc[] = ['privacy', 'terms', 'accessibility', 'credits'];
+const DOCS: LegalDoc[] = LEGAL_DOCS;
 
 /** QA #84: privacy policy, terms of use, accessibility statement and credits & licences, in the site language. */
 const LegalPage: React.FC = () => {
@@ -21,7 +22,9 @@ const LegalPage: React.FC = () => {
   useEffect(() => {
     const prev = document.title;
     document.title = `${page.title} · ECshape`;
-    window.scrollTo(0, 0);
+    const hash = window.location.hash.slice(1);
+    const target = hash ? document.getElementById(hash) : null;
+    if (target) target.scrollIntoView(); else window.scrollTo(0, 0);
     return () => { document.title = prev; };
   }, [page.title]);
 
@@ -48,7 +51,7 @@ const LegalPage: React.FC = () => {
         <p className="mt-2 text-sm text-muted-foreground">{nav.updatedLabel}: <time dateTime={page.updated}>{new Date(page.updated).toLocaleDateString({ he: 'he-IL', fr: 'fr-FR', ru: 'ru-RU', ar: 'ar' }[lang] ?? 'en-GB')}</time></p>
         <p dir="auto" className="mt-6 text-base leading-relaxed">{page.intro}</p>
         {page.sections.map((s) => (
-          <section key={s.h} className="mt-8">
+          <section key={s.h} id={s.id} className="mt-8 scroll-mt-28">
             <h2 dir="auto" className="text-xl font-bold">{s.h}</h2>
             {s.p.length > 1 ? (
               <ul className="mt-3 list-disc space-y-2 ps-5 leading-relaxed text-foreground/90">{s.p.map((x) => <li key={x} dir="auto">{x}</li>)}</ul>

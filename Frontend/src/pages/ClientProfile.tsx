@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '@/i18n/ticketsStudio';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import HealthDeclarationChip from '@/components/legal/HealthDeclarationChip';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -447,6 +448,7 @@ const ClientProfile = () => {
                   )}
                   <span className="tp-chip"><Clock className="h-3.5 w-3.5" />{lastLogin ? t('trainer.client.lastSeen', { when: fmtRelative(lastLogin) }) : t('clientProfile.never')}</span>
                   <span className="tp-chip"><CalendarDays className="h-3.5 w-3.5" />{t('trainer.client.since', { date: memberSince })}</span>
+                  {isStaff && <HealthDeclarationChip clientId={client.id} />}
                 </div>
               </div>
             </div>

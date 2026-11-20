@@ -355,7 +355,7 @@ const SessionPlayer: React.FC<{ dayId: number }> = ({ dayId }) => {
                   aria-label={tt('player.hrConnect')} title={tt('player.hrConnect')}
                 >
                   <Heart className={cn('h-4 w-4', hr.status === 'live' && 'animate-pulse', shownBpm && 'fill-current')} />
-                  {shownBpm ? <span className="tp-num text-sm" dir="ltr">{shownBpm}</span> : <span className="max-[359px]:sr-only">{tt('player.hrConnect')}</span>}
+                  {shownBpm ? <span className="tp-num text-sm" dir="ltr">{shownBpm}</span> : <span className="max-[399px]:sr-only">{tt('player.hrConnect')}</span>}
                 </button>
                 <button type="button" onClick={() => setConfirmEnd(true)} className="tp-btn tp-btn--ghost tp-btn--sm tp-press !min-h-[2.4rem] !px-3.5" aria-label={tt('player.end')}>
                   <Flag className="h-4 w-4" /><span className="max-[359px]:sr-only">{tt('player.endShort')}</span>

@@ -63,7 +63,9 @@ const Chat: React.FC<ChatProps> = ({ selectedClientId, progressEntryId }) => {
   const dir = i18n.dir();
 
   const isDesktop = useMediaQuery('(min-width: 1024px)');
-  const isWide = useMediaQuery('(min-width: 1280px)');
+  // Three columns (list, thread, profile) only when there is room for them beside the portal sidebar; below that the
+  // profile opens as a sheet (at 1280px the thread was squeezed to ~180px).
+  const isWide = useMediaQuery('(min-width: 1536px)');
   const finePointer = useMediaQuery('(pointer: fine)');
   const visible = usePageVisible();
 

@@ -160,9 +160,10 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
 
   // Calculate statistics
   const latestEntry = sortedEntries[0];
-  const previousEntry = sortedEntries[1];
-  const weightChange = latestEntry?.weight && previousEntry?.weight 
-    ? latestEntry.weight - previousEntry.weight 
+  // Change since the first weigh-in, matching the profile header (the last step alone read as a contradiction)
+  const firstEntry = sortedEntries[sortedEntries.length - 1];
+  const weightChange = latestEntry?.weight && firstEntry?.weight && sortedEntries.length > 1
+    ? latestEntry.weight - firstEntry.weight
     : 0;
 
   const startEdit = (entry: ProgressEntry) => {
@@ -491,15 +492,22 @@ const ClientWeightProgress: React.FC<ClientWeightProgressProps> = ({
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 12 }}
-                    className="text-muted-foreground"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    tickMargin={8}
+                    minTickGap={16}
+                    padding={{ left: 12, right: 12 }}
                   />
                   <YAxis
-                    tick={{ fontSize: 12 }}
-                    className="text-muted-foreground"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    domain={[(min: number) => Math.floor(min - 2), (max: number) => Math.ceil(max + 2)]}
+                    allowDecimals={false}
+                    width={64}
                     tickFormatter={(v) => `${v} ${t('weightProgress.kg')}`}
                   />
                   <Tooltip
+                    contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 14, color: 'hsl(var(--foreground))' }}
+                    labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                    cursor={{ stroke: 'hsl(var(--border))' }}
                     formatter={(value: number) => [`${value} ${t('weightProgress.kg')}`, t('weightProgress.weight')]}
                     labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate ? new Date(payload[0].payload.fullDate).toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', { dateStyle: 'medium' }) : ''}
                   />

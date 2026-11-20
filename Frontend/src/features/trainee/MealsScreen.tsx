@@ -358,7 +358,7 @@ const MealsScreen: React.FC = () => {
                               <li key={f.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
                                 <span className="min-w-0 truncate font-medium" dir="auto">{foodName(f)}</span>
                                 <span className="flex-none text-sm text-muted-foreground" dir="ltr">
-                                  {f.measurement_type === 'per_portion' ? `×${f.quantity_label}` : f.quantity_label} · {fmtNum(f.calories)} kcal
+                                  {f.measurement_type === 'per_portion' ? `×${f.quantity_label}` : f.quantity_label} · {fmtNum(f.calories)} {t('foodBankPro.kcal')}
                                 </span>
                               </li>
                             ))}
@@ -412,7 +412,7 @@ const MealsScreen: React.FC = () => {
                                   className="flex min-w-0 flex-1 items-center gap-3 text-start disabled:cursor-default"
                                 >
                                   <span className="relative flex-none">
-                                    <FoodThumb name={r.food.name} src={r.food.image_url} needsImage={!r.food.image_url} className="h-12 w-12 rounded-xl" />
+                                    <FoodThumb name={r.food.name} label={foodName(r.food)} src={r.food.image_url} needsImage={!r.food.image_url} className="h-12 w-12 rounded-xl" />
                                     {alts.length > 0 && !done && (
                                       <span className="absolute -bottom-1 -end-1 flex items-center gap-0.5 rounded-full bg-card px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground shadow ring-1 ring-border/60" aria-label={t('trainee.meals.orInstead')}>
                                         <ArrowLeftRight className="h-3 w-3" />{alts.length}
@@ -423,7 +423,7 @@ const MealsScreen: React.FC = () => {
                                     <span className={cn('block truncate font-semibold', eaten && 'text-[hsl(var(--tp-ok))]')} dir="auto">{r.swap ? r.swap.displayName : foodName(r.food)}</span>
                                     <span className="block truncate text-xs text-muted-foreground">
                                       <span className="me-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: MACRO_COLOR[r.macro] }} aria-hidden />
-                                      {t(`trainee.macros.${macroKey(r.macro)}`)} · <bdi dir="ltr">{fmtNum(m.calories)} kcal</bdi> · <bdi><QtyText q={r.qty} /></bdi>
+                                      {t(`trainee.macros.${macroKey(r.macro)}`)} · <bdi dir="ltr">{fmtNum(m.calories)} {t('foodBankPro.kcal')}</bdi> · <bdi><QtyText q={r.qty} /></bdi>
                                       {r.swap && <> · {t('trainee.meals.swapped')}</>}
                                     </span>
                                   </span>
@@ -452,7 +452,7 @@ const MealsScreen: React.FC = () => {
                                     const am = rowMacros(alt);
                                     return (
                                       <button key={alt.food.id} type="button" role="option" aria-selected={false} onClick={() => choose(alt)} className="tp-press relative w-[6.5rem] flex-none overflow-hidden rounded-xl bg-card text-start ring-1 ring-border/60 hover:z-10 hover:ring-2 hover:ring-primary/70 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                                        <FoodThumb name={alt.food.name} src={alt.food.image_url} needsImage={!alt.food.image_url} className="aspect-[4/3] w-full rounded-none" />
+                                        <FoodThumb name={alt.food.name} label={foodName(alt.food)} src={alt.food.image_url} needsImage={!alt.food.image_url} className="aspect-[4/3] w-full rounded-none" />
                                         <span className="block p-1.5">
                                           <span className="line-clamp-2 block text-[11px] font-bold leading-tight" dir="auto">{foodName(alt.food)}</span>
                                           <span className="block text-[10px] text-muted-foreground" dir="ltr"><QtyText q={alt.qty} /> · {fmtNum(am.calories)}</span>
@@ -478,7 +478,7 @@ const MealsScreen: React.FC = () => {
                       <div key={c.id} className="flex items-center gap-3 rounded-2xl bg-foreground/[.04] p-1.5 ps-3.5">
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium" dir="auto">{c.custom_food_name}</p>
-                          <p className="text-xs text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{c.quantity ? `${c.quantity} · ` : ''}{fmtNum(c.custom_calories)} kcal</p>
+                          <p className="text-xs text-muted-foreground" dir="ltr" style={{ textAlign: 'inherit' }}>{c.quantity ? `${c.quantity} · ` : ''}{fmtNum(c.custom_calories)} {t('foodBankPro.kcal')}</p>
                         </div>
                         <button type="button" disabled={done} onClick={() => write.mutate({ kind: 'delete', id: c.id }, { onError: onWriteError })} className="tp-icon-btn tp-press bg-transparent text-muted-foreground" aria-label={t('trainee.common.delete')}>
                           <Trash2 className="h-4 w-4" />
@@ -805,7 +805,7 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
           <button type="button" onClick={addChosen} className="tp-btn tp-btn--primary tp-press w-full">
             <Plus className="h-5 w-5" />
             {t('trainee.meals.customSave')}
-            <span className="opacity-80" dir="ltr">· {fmtNum(preview.calories)} kcal</span>
+            <span className="opacity-80" dir="ltr">· {fmtNum(preview.calories)} {t('foodBankPro.kcal')}</span>
           </button>
         ) : undefined
       }
@@ -935,7 +935,7 @@ const CustomFoodForm: React.FC<{ slot: V3MealSlotView | null; date: string; onDo
       <button type="button" onClick={save} disabled={!valid} className="tp-btn tp-btn--primary tp-press w-full">
         <Plus className="h-5 w-5" />
         {t('trainee.meals.customSave')}
-        {valid && <span className="opacity-80" dir="ltr">· {fmtNum(num(f.kcal) * scale)} kcal</span>}
+        {valid && <span className="opacity-80" dir="ltr">· {fmtNum(num(f.kcal) * scale)} {t('foodBankPro.kcal')}</span>}
       </button>
     </div>
   );

@@ -133,6 +133,8 @@ const ClientProfile = () => {
   const [params, setParams] = useSearchParams();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  // Food names follow the portal language (the Hebrew name showed in English too)
+  const foodName = (f: { name: string; name_hebrew?: string }) => (i18n.language?.startsWith('he') && f.name_hebrew ? f.name_hebrew : f.name);
   const isStaff = user?.role === 'TRAINER' || user?.role === 'ADMIN';
 
   const initialTab = (params.get('tab') as TabId) || 'overview';
@@ -304,7 +306,7 @@ const ClientProfile = () => {
 
   if (loading) {
     return (
-      <Layout currentPage="dashboard">
+      <Layout currentPage="clients">
         <div className="tr-page" aria-busy="true" aria-label={t('common.loading')}>
           <Skel className="mb-5 h-10 w-28 rounded-full" />
           <Skel className="mb-5 h-64 rounded-[1.5rem]" />
@@ -317,7 +319,7 @@ const ClientProfile = () => {
 
   if (!client) {
     return (
-      <Layout currentPage="dashboard">
+      <Layout currentPage="clients">
         <div className="tr-page tr-page--narrow">
           <EmptyState
             icon={User}
@@ -428,7 +430,7 @@ const ClientProfile = () => {
   const tab = visibleTabs.some((x) => x.id === activeTab) ? activeTab : 'overview';
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="clients">
       <div className="tr-page">
         <BackLink to="/trainer-dashboard" className="mb-4" />
 
@@ -692,8 +694,8 @@ const ClientProfile = () => {
                                   <div className="mt-1.5 space-y-1">
                                     {macro.food_options.map((f, fi) => (
                                       <button key={fi} type="button" onClick={() => setFoodDetail(f)} className="tp-press flex w-full items-center gap-2.5 rounded-xl bg-background/60 p-1.5 text-start">
-                                        <FoodThumb name={f.name} src={f.image_url} needsImage={!f.image_url} className="h-10 w-10 rounded-lg" />
-                                        <span className="min-w-0 flex-1 truncate text-xs font-semibold" dir="auto">{f.name_hebrew || f.name}</span>
+                                        <FoodThumb name={f.name} label={foodName(f)} src={f.image_url} needsImage={!f.image_url} className="h-10 w-10 rounded-lg" />
+                                        <span className="min-w-0 flex-1 truncate text-xs font-semibold" dir="auto">{foodName(f)}</span>
                                       </button>
                                     ))}
                                   </div>
@@ -811,15 +813,15 @@ const ClientProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <BankExerciseSheet exercise={exerciseDetail} onClose={() => setExerciseDetail(null)} muscleLabel={(m) => t(`exerciseLibrary.muscle.${m}`, { defaultValue: m })} />
+      <BankExerciseSheet exercise={exerciseDetail} onClose={() => setExerciseDetail(null)} muscleLabel={(m) => t(`exerciseBank.muscleGroups.${m}`, { defaultValue: t(`exerciseLibrary.muscle.${m}`, { defaultValue: m }) })} />
       <Sheet
         open={!!foodDetail} onOpenChange={(o) => !o && setFoodDetail(null)}
-        title={foodDetail ? (foodDetail.name_hebrew || foodDetail.name) : ''}
+        title={foodDetail ? foodName(foodDetail) : ''}
         description={foodDetail?.serving_size || undefined}
       >
         {foodDetail && (
           <div className="space-y-4 px-5 pb-6 sm:px-6">
-            <FoodThumb name={foodDetail.name} src={foodDetail.image_url} needsImage={!foodDetail.image_url} className="aspect-[4/3] w-full rounded-2xl" />
+            <FoodThumb name={foodDetail.name} label={foodName(foodDetail)} src={foodDetail.image_url} needsImage={!foodDetail.image_url} className="aspect-[4/3] w-full rounded-2xl" />
             <div className="flex flex-wrap gap-2">
               {foodDetail.calories != null && <span className="tp-chip tp-chip--primary"><Flame className="h-3.5 w-3.5" />{fmtNum(foodDetail.calories)} {t('meals.calories')}</span>}
               {foodDetail.protein != null && <span className="tp-chip">{fmtNum(foodDetail.protein, 1)}g {t('meals.protein')}</span>}
@@ -868,9 +870,13 @@ const Overview: React.FC<{
       }
     }
     for (const p of progress) {
+      // created_at gives the real time, not the day's midnight (r3), but only when it was logged on the day it
+      // describes; a back-dated weigh-in keeps its own day.
+      const created = parseDate(p.created_at);
+      const recorded = parseDate(p.recorded_at);
+      const at = created && (!recorded || created.toDateString() === recorded.toDateString()) ? created : recorded || created;
       items.push({
-        // created_at: the real time, not the day's midnight (r3)
-        id: `p${p.id}`, at: parseDate(p.created_at || p.recorded_at)?.getTime() ?? 0,
+        id: `p${p.id}`, at: at?.getTime() ?? 0,
         icon: p.photo_path || p.photos?.length ? Activity : Scale, tone: 'text-[hsl(var(--tr-ok))]',
         title: p.weight ? t('trainer.client.tl.weight', { kg: fmtNum(p.weight, 1) }) : t('trainer.client.tl.progress'), detail: p.notes || undefined,
       });

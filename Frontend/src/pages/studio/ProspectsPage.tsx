@@ -19,6 +19,7 @@ import { studioApi, type Lead, type LeadStatus } from '@/lib/studioApi';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { DEFAULT_CONTENT, toSiteLang } from '@/site/content';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const STATUSES: LeadStatus[] = ['new', 'contacted', 'qualified', 'converted', 'lost'];
 const STATUS_TONE: Record<LeadStatus, string> = {
@@ -40,6 +41,7 @@ const ProspectsPage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [askConfirm, confirmDialog] = useConfirm();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<LeadStatus | 'all'>('all');
@@ -126,7 +128,7 @@ const ProspectsPage = () => {
   };
 
   const remove = async (id: number) => {
-    if (!window.confirm(t('studio.prospects.deleteConfirm'))) return;
+    if (!(await askConfirm({ body: t('studio.prospects.deleteConfirm') }))) return;
     setSelectedId(null);
     await optimisticList(setLeads, (ls) => ls.filter((l) => l.id !== id), () => studioApi.deleteLead(id),
       () => toast({ title: t('common.error'), variant: 'destructive' }));
@@ -320,6 +322,7 @@ const ProspectsPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </Layout>
   );
 };

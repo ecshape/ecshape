@@ -28,7 +28,7 @@ const MacroChips: React.FC<{ m: MenuSummary; own?: boolean }> = ({ m, own }) => 
   const { t } = useTranslation();
   return (
     <span className="mt-1.5 flex flex-wrap gap-1 text-[11px] font-semibold" dir="ltr">
-      {m.kcal ? <span className={cn('rounded-full px-2 py-0.5', own ? 'bg-white/20' : 'bg-foreground/[.07]')}>{m.kcal} kcal</span> : null}
+      {m.kcal ? <span className={cn('rounded-full px-2 py-0.5', own ? 'bg-white/20' : 'bg-foreground/[.07]')}>{m.kcal} {t('foodBankPro.kcal')}</span> : null}
       {([['p', 'protein'], ['c', 'carb'], ['f', 'fat']] as const).map(([k, macro]) => m[k] ? (
         <span key={k} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: own ? 'rgba(255,255,255,.2)' : `hsl(var(${MACRO_VAR[macro]}) / .15)`, color: own ? undefined : `hsl(var(${MACRO_VAR[macro]}))` }}>
           {t(`trainee.macros.${macroKey(macro)}`)} {m[k]}g
@@ -156,7 +156,7 @@ const MenuReviewSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => v
             <h3 className="tp-title text-[2rem] leading-none" dir="auto">{slot.name}</h3>
             <span className="flex flex-none items-center gap-2 text-xs text-muted-foreground">
               {slot.time_suggestion && <span className="tp-chip"><Clock className="h-3 w-3" /><span dir="ltr">{slot.time_suggestion}</span></span>}
-              {slot.target_calories ? <span dir="ltr">{slot.target_calories} kcal</span> : null}
+              {slot.target_calories ? <span dir="ltr">{slot.target_calories} {t('foodBankPro.kcal')}</span> : null}
             </span>
           </div>
           <div className="space-y-3">

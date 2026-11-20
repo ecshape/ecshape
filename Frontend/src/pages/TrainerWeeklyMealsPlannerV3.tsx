@@ -26,6 +26,7 @@ import { FoodLibraryDrawer, libraryKey } from '@/components/foodbank/FoodLibrary
 import type { MealBankItem } from '@/components/foodbank/foodbankModel';
 import { SearchAllSources } from '@/components/foodbank/SearchAllSources';
 import { toast as sonner } from 'sonner';
+import '@/i18n/ticketsStudio';
 import '@/i18n/foodTable';
 
 type QuantityMode = "per_100g" | "per_portion";
@@ -844,7 +845,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
       const payload: V3CompleteMealPlanCreate = {
         client_id: clientId,
-        name: t("meals.weeklyMeals.planName", "Client meal plan"),
+        // keep the plan's own name; the generic one only names a first plan (saving used to rename every plan)
+        name: dayView?.meal_plan_name?.trim() || t("meals.weeklyMeals.planName", "Client meal plan"),
         description: null,
         number_of_meals: slotsForEditor.length,
         total_calories: Math.round(targetsState?.daily.calories ?? daySummary?.targets.calories ?? 0),
@@ -877,6 +879,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
       // Refresh day view so UI reflects the published plan structure.
       await fetchDayForWeek();
+      // The save used to finish silently; confirm it like the workout builder does.
+      sonner.success(t('trainer.builder.planSaved', { defaultValue: 'Plan saved' }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to publish week plan");
     } finally {
@@ -897,12 +901,13 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     catalogByMacro,
     useV3MockBackend,
     planLoadDate,
+    dayView,
   ]);
 
   const isMobileBlockerText = t("meals.weeklyMeals.mobileBlocker", "This page must be accessed via computer due to complexity.");
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="clients">
       {/* Mobile-first: hard block editing on phone */}
       <div className="lg:hidden p-4">
         <Card className="rounded-xl border-border/60 bg-muted/30">

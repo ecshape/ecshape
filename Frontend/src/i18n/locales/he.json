@@ -2339,7 +2339,7 @@
         "client": "פתיחת טופס מתאמן חדש."
       },
       "leadStatus": "העברת הליד {{name}} לסטטוס „{{status}}”.",
-      "leadNote": "הוספת הערה ל{{name}}: „{{note}}”.",
+      "leadNote": "הוספת הערה ל-{{name}}: „{{note}}”.",
       "leadCreate": "יצירת הליד {{name}}. לא נשלחת אליו שום הודעה.",
       "qaCreate": "פתיחת פניית QA „{{title}}” (עדיפות {{priority}}).",
       "qaUpdate": "עדכון הפנייה {{title}}: {{change}}.",

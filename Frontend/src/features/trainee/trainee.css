@@ -265,3 +265,6 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 /* nothing chosen yet: muted track and thumb, the number shows a dash */
 .tp-slider[data-empty] .tp-range { --fill: hsl(var(--muted-foreground) / .55); }
 .tp-slider[data-empty] .tp-range::-webkit-slider-runnable-track { background: var(--track); }
+/* …and a faint, hollow thumb, so the middle of the scale never reads as an answer the trainee already gave */
+.tp-slider[data-empty] .tp-range::-webkit-slider-thumb { opacity: .45; box-shadow: none; border-style: dashed; }
+.tp-slider[data-empty] .tp-range::-moz-range-thumb { opacity: .45; box-shadow: none; border-style: dashed; }

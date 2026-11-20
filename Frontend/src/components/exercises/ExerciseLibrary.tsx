@@ -110,8 +110,8 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="ec-exlib !flex h-[100dvh] !max-h-[100dvh] !w-screen !max-w-[1400px] flex-col !gap-0 !overflow-hidden !rounded-none !p-0 sm:h-[92vh] sm:!max-h-[92vh] sm:!w-[96vw] sm:!rounded-2xl sm:!p-0 !mx-0">
         {/* Header */}
-        {/* pr-16: the shared dialog close button sits physically on the right in both directions */}
-        <div className="ec-exlib-head relative border-b border-border/60 pb-4 pl-5 pr-16 pt-5 sm:pl-7">
+        {/* pe-16: the shared dialog close button sits at inline-end (left in RTL), keep the search clear of it */}
+        <div className="ec-exlib-head relative border-b border-border/60 pb-4 ps-5 pe-16 pt-5 sm:ps-7">
           <div className="flex flex-wrap items-center gap-4">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/12 text-primary">
               <Library className="h-5 w-5" />

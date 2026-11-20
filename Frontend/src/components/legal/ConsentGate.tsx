@@ -79,10 +79,25 @@ const GateDialog: React.FC<{
     (!needs('age_18') || age) &&
     (!needs('health_declaration') || declDone);
 
+  const boxRef = React.useRef<HTMLDivElement>(null);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    // Modal for keyboard and screen-reader users too: focus starts inside and Tab stays inside (IS 5568 / WCAG 2.4.3).
+    const box = boxRef.current;
+    box?.querySelector<HTMLElement>('h1')?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !box) return;
+      const items = Array.from(box.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, textarea')).filter((el) => el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!items.includes(document.activeElement as HTMLElement)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => { document.body.style.overflow = prev; document.removeEventListener('keydown', onKey, true); };
   }, []);
 
   const submit = async (e: React.FormEvent) => {
@@ -109,10 +124,10 @@ const GateDialog: React.FC<{
   );
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto bg-background/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="ec-consent-title" dir={rtl ? 'rtl' : 'ltr'} lang={lang}>
+    <div ref={boxRef} className="fixed inset-0 z-[200] overflow-y-auto bg-background/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="ec-consent-title" dir={rtl ? 'rtl' : 'ltr'} lang={lang}>
       <form onSubmit={submit} className="mx-auto max-w-2xl px-4 py-8 sm:py-12" noValidate>
         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/12 text-primary"><ShieldCheck className="h-6 w-6" /></span>
-        <h1 id="ec-consent-title" className="tp-title mt-4 text-[2.6rem] leading-none">{c.title}</h1>
+        <h1 id="ec-consent-title" tabIndex={-1} className="focus:outline-none tp-title mt-4 text-[2.6rem] leading-none">{c.title}</h1>
         <p className="mt-3 leading-relaxed text-muted-foreground">{status.role === 'CLIENT' ? c.intro : c.staffIntro}</p>
 
         <div className="mt-6 space-y-3">

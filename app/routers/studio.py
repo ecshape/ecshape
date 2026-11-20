@@ -44,6 +44,13 @@ QA_PRIORITIES = ("low", "normal", "high")
 def require_studio(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
     if current_user.role not in (UserRole.TRAINER, UserRole.ADMIN):
         raise HTTPException(status_code=403, detail="Trainer access only")
+    # The studio is the business's public site + its leads (names, phones). When STUDIO_OWNER_IDS is set
+    # (comma-separated user ids), only admins and those trainers may use it; other trainers coach clients only
+    # (audit 2026-11, F-14). Unset = every trainer, as before.
+    import os as _os
+    owners = {x.strip() for x in (_os.getenv("STUDIO_OWNER_IDS") or "").split(",") if x.strip()}
+    if owners and current_user.role != UserRole.ADMIN and str(current_user.id) not in owners:
+        raise HTTPException(status_code=403, detail="Studio access only")
     return current_user
 
 

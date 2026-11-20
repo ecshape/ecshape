@@ -6,7 +6,8 @@ from datetime import datetime
 
 from app.auth.utils import get_current_user_websocket
 from app.services.websocket_service import websocket_service, NotificationType
-from app.schemas.auth import UserRole
+from app.schemas.auth import UserRole, UserResponse
+from app.auth.utils import get_current_user
 
 router = APIRouter()
 
@@ -75,7 +76,7 @@ async def websocket_endpoint(
                 message = json.loads(data)
                 
                 # Handle different message types
-                await handle_websocket_message(user_id, message, websocket)
+                await handle_websocket_message(user_id, message, websocket, user)
                 
         except WebSocketDisconnect:
             websocket_service.disconnect(websocket, user_id)
@@ -90,7 +91,26 @@ async def websocket_endpoint(
         except:
             pass
 
-async def handle_websocket_message(user_id: int, message: dict, websocket: WebSocket):
+def _may_message(sender, to_user_id) -> bool:
+    """Direct socket messages stay inside a tenant: a client and their trainer (audit 2026-11, F-12)."""
+    from app.database import SessionLocal
+    from app.models.user import User
+    from app.auth.access import is_admin
+    if is_admin(sender):
+        return True
+    db = SessionLocal()
+    try:
+        target = db.query(User).filter(User.id == int(to_user_id)).first()
+        if not target:
+            return False
+        return target.id == getattr(sender, "trainer_id", None) or target.trainer_id == sender.id
+    except (TypeError, ValueError):
+        return False
+    finally:
+        db.close()
+
+
+async def handle_websocket_message(user_id: int, message: dict, websocket: WebSocket, user=None):
     """Handle incoming WebSocket messages."""
     
     message_type = message.get("type")
@@ -149,10 +169,16 @@ async def handle_websocket_message(user_id: int, message: dict, websocket: WebSo
             await websocket.send_text(json.dumps(error_message))
             return
         
-        await websocket_service.send_message(user_id, to_user_id, message_text)
+        if user is None or not _may_message(user, to_user_id):
+            await websocket.send_text(json.dumps({"type": "error", "message": "Recipient not allowed",
+                                                  "timestamp": datetime.utcnow().isoformat()}))
+            return
+        await websocket_service.send_message(user_id, to_user_id, str(message_text)[:2000])
     
     elif message_type == "get_stats":
-        # Get connection statistics (admin/trainer only)
+        # Connection statistics: admins only (audit 2026-11)
+        if user is None or getattr(user, "role", None) != UserRole.ADMIN:
+            return
         stats = websocket_service.get_connection_stats()
         stats_message = {
             "type": "connection_stats",
@@ -171,8 +197,10 @@ async def handle_websocket_message(user_id: int, message: dict, websocket: WebSo
         await websocket.send_text(json.dumps(error_message))
 
 @router.get("/ws/stats")
-async def get_websocket_stats():
-    """Get WebSocket connection statistics (for monitoring)."""
+async def get_websocket_stats(current_user: UserResponse = Depends(get_current_user)):
+    """WebSocket connection statistics (admins; was public, audit 2026-11)."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access only")
     return websocket_service.get_connection_stats()
 
 @router.post("/ws/test-notification/{user_id}")
@@ -180,9 +208,14 @@ async def send_test_notification(
     user_id: int,
     notification_type: str = "system",
     title: str = "Test Notification",
-    message: str = "This is a test notification"
+    message: str = "This is a test notification",
+    current_user: UserResponse = Depends(get_current_user),
 ):
-    """Send a test notification to a user (for testing purposes)."""
+    """Send a test notification. Was unauthenticated: anyone could push a fake "system" message to any user
+    (audit 2026-11, F-12). Now admins only, and never in production."""
+    import os as _os
+    if current_user.role != UserRole.ADMIN or _os.getenv("ENVIRONMENT", "development") == "production":
+        raise HTTPException(status_code=404, detail="Not Found")
     
     if notification_type == "system":
         await websocket_service.send_system_notification(user_id, title, message)

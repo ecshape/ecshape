@@ -86,6 +86,9 @@ def add_key(db: Session, user_id: int, api_key: str, label: Optional[str] = None
     info = provider_info(provider) or provider_info(detect_provider(plain)) or provider_info("custom")
     if info.get("needs_base_url") and not (base_url or "").strip():
         raise ValueError("This provider needs an API address (base URL)")
+    if (base_url or "").strip():
+        from app.services.url_safety import assert_public_url
+        assert_public_url(base_url)
     existing = db.query(TrainerAiKey).filter(TrainerAiKey.user_id == user_id).count()
     row = TrainerAiKey(
         user_id=user_id,
@@ -116,6 +119,9 @@ def update_key(db: Session, user_id: int, key_id: int, api_key: Optional[str] = 
     if model is not None:
         row.model = model.strip()[:120] or None
     if base_url is not None:
+        if base_url.strip():
+            from app.services.url_safety import assert_public_url
+            assert_public_url(base_url)
         row.base_url = base_url.strip()[:300] or None
     if label is not None and label.strip():
         row.label = label.strip()[:80]
@@ -160,6 +166,12 @@ class Engine:
         return f"{info['product']} · {self.model}"
 
 
+def _unsafe(url: str) -> bool:
+    """Keys saved before the SSRF check are re-checked every time they are used (audit 2026-11, F-13)."""
+    from app.services.url_safety import unsafe_reason
+    return unsafe_reason(url) is not None
+
+
 def resolve_engine(db: Session, user_id: int, choice: Optional[str] = None) -> Optional[Engine]:
     """Pick the engine for a request. choice = "auto" (preferred key, else server key) or a key id."""
     q = db.query(TrainerAiKey).filter(TrainerAiKey.user_id == user_id)
@@ -177,6 +189,8 @@ def resolve_engine(db: Session, user_id: int, choice: Optional[str] = None) -> O
         except InvalidToken:
             continue
         info = provider_info(r.provider) or provider_info("custom")
+        if r.base_url and _unsafe(r.base_url):
+            continue
         return Engine(info["id"], plain, r.model or info["default_model"], r.base_url or info.get("base_url"), "user")
     env = (os.getenv("ANTHROPIC_API_KEY") or "").strip()
     if env:
@@ -217,6 +231,8 @@ def all_engines(db: Session, user_ids, prefer: Optional[str] = None) -> List[Eng
                 continue
             seen.add(plain)
             info = provider_info(r.provider) or provider_info("custom")
+            if r.base_url and _unsafe(r.base_url):
+                continue
             out.append(Engine(info["id"], plain, r.model or info["default_model"], r.base_url or info.get("base_url"), "user"))
     server = [
         ("google", (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip()),

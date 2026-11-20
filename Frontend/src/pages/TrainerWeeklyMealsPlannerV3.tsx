@@ -845,7 +845,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
       const payload: V3CompleteMealPlanCreate = {
         client_id: clientId,
-        name: t("meals.weeklyMeals.planName", "Client meal plan"),
+        // keep the plan's own name; the generic one only names a first plan (saving used to rename every plan)
+        name: dayView?.meal_plan_name?.trim() || t("meals.weeklyMeals.planName", "Client meal plan"),
         description: null,
         number_of_meals: slotsForEditor.length,
         total_calories: Math.round(targetsState?.daily.calories ?? daySummary?.targets.calories ?? 0),
@@ -900,6 +901,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     catalogByMacro,
     useV3MockBackend,
     planLoadDate,
+    dayView,
   ]);
 
   const isMobileBlockerText = t("meals.weeklyMeals.mobileBlocker", "This page must be accessed via computer due to complexity.");

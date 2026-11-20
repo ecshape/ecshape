@@ -4,10 +4,6 @@
   animation: ec-fade var(--dur-med) var(--ease-out) both;
 }
 
-@keyframes ecPortalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 /* Docked Agent EC: the shell offset lives in agent-ec.css ([data-ec-shell]) */
 

@@ -250,33 +250,12 @@
 }
 
 /* ---------- Keyframes ---------- */
-@keyframes fb-rise {
-  from { opacity: 0; transform: translateY(16px) scale(.985); }
-  to { opacity: 1; transform: none; }
-}
 @keyframes fb-grow {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
-@keyframes fb-pop {
-  0% { transform: scale(.6); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-@keyframes fb-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 @keyframes fb-shimmer {
   to { transform: translateX(100%); }
-}
-@keyframes fb-drawer-in {
-  from { transform: translateX(calc(var(--fb-dir) * 100%)); opacity: .4; }
-  to { transform: none; opacity: 1; }
-}
-@keyframes fb-drawer-out {
-  from { transform: none; opacity: 1; }
-  to { transform: translateX(calc(var(--fb-dir) * 100%)); opacity: .4; }
 }
 
 /* ---------- Reduced motion ---------- */

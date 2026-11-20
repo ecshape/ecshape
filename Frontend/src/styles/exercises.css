@@ -10,15 +10,11 @@
 
 .ec-excard { animation: ec-rise var(--dur-med) var(--ease-out) both; }
 .ec-excard:hover { transform: translateY(-4px); box-shadow: 0 22px 44px -26px hsl(var(--primary) / .55); }
-@keyframes ec-excard-in { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
 
 .ec-exlib-chips { scrollbar-width: none; mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent); }
 .ec-exlib-chips::-webkit-scrollbar { display: none; }
 .ec-exlib-detail { animation: ec-fade var(--dur-med) var(--ease-out) both; }
 .ec-exlib-sheet { animation: ec-side-in var(--dur-slow) var(--ease-out) both; }
-@keyframes ec-sheet-in { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ec-sheet-in-rtl { from { transform: translateX(-40px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ec-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   .ec-exdemo-b.is-playing, .ec-exdemo-live.is-on, .ec-excard, .ec-exlib-sheet, .ec-exlib-detail { animation: none; }

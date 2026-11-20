@@ -254,10 +254,6 @@ html.ec-psk-open:not([dir="rtl"]) .ec-qa-fab-stack:not(.is-moved) {
   }
   .ec-qa-sheet-grip { display: block; width: 44px; height: 5px; margin: 8px auto 0; border-radius: 99px; background: hsl(var(--muted-foreground) / .35); }
 }
-@keyframes ec-qa-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes ec-qa-sheet-in { from { transform: translateX(48px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ec-qa-sheet-in-rtl { from { transform: translateX(-48px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ec-qa-sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* Bulk actions (list view) */
 .ec-qa-bulk {

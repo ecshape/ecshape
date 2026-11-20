@@ -41,7 +41,6 @@ html:not([dir='rtl']) .ec-draft > .ec-draft-input { padding-right: 2.75rem; }
   background: hsl(var(--background)); color: hsl(var(--foreground)); font-weight: 700; cursor: pointer;
 }
 .ec-draft-x { padding: 4px; }
-@keyframes ec-draft-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .ec-draft-shimmer { animation: none; background: hsl(var(--primary) / .08); }

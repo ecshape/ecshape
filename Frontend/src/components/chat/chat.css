@@ -28,7 +28,6 @@
 .ec-chat-screen { animation: ecChatScreen var(--dur-med) var(--ease-out) both; }
 [dir="rtl"] .ec-chat-screen { --ec-chat-sx: -24px; }
 
-@keyframes ecChatFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .ec-chat-fade { animation: ec-rise var(--dur-med) var(--ease-out) both; }
 .ec-chat-list > * { animation: ec-rise var(--dur-med) var(--ease-out) both; }
 .ec-chat-list > *:nth-child(2) { animation-delay: .03s; }
@@ -37,7 +36,6 @@
 .ec-chat-list > *:nth-child(5) { animation-delay: .12s; }
 .ec-chat-list > *:nth-child(n+6) { animation-delay: .15s; }
 
-@keyframes ecChatPop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 .ec-chat-pop { animation: ec-pop var(--dur-med) var(--ease-out) both; }
 
 @keyframes ecChatShimmer { from { opacity: .45; } to { opacity: .9; } }

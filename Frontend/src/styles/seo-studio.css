@@ -49,8 +49,6 @@
 
 .ec-seo-loading { display: grid; place-items: center; min-height: 320px; color: var(--sx-muted); }
 .ec-seo-panel { animation: ec-rise var(--dur-med) var(--ease-out) both; }
-@keyframes ec-sx-swap { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
-@keyframes ec-sx-rise { from { opacity: 0; transform: translateY(16px); } }
 
 .ec-seo-card {
   position: relative; padding: 20px; border: 1px solid var(--sx-line); border-radius: var(--sx-r-lg);
@@ -297,8 +295,6 @@
   border-inline-start: 1px solid var(--sx-line); background: hsl(var(--card) / 0.4);
   animation: ec-side-in var(--dur-slow) var(--ease-out) 80ms both;
 }
-@keyframes ec-sx-side { from { opacity: 0; transform: translateX(24px); } }
-@keyframes ec-sx-side-rtl { from { opacity: 0; transform: translateX(-24px); } }
 .ec-wp-card { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--sx-line); border-radius: 18px; background: var(--sx-panel); }
 .ec-wp-card.is-flush { padding: 0; overflow: hidden; }
 .ec-wp-card h3 { font-size: 14px; font-weight: 700; }
@@ -339,7 +335,6 @@
   animation: ec-pop var(--dur-med) var(--ease-out) both;
 }
 .ec-ai-brief::before { content: ""; position: absolute; inset: -40% -20% auto auto; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, hsl(var(--primary) / 0.22), transparent 65%); filter: blur(20px); animation: ec-sx-blob 12s ease-in-out infinite alternate; pointer-events: none; }
-@keyframes ec-sx-pop { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
 @keyframes ec-sx-blob { to { transform: translate(-60px, 40px) scale(1.15); } }
 .ec-ai-brief-head { position: relative; display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
 .ec-ai-brief-head h2 { font-size: 22px; font-weight: 800; }

@@ -108,7 +108,6 @@
 @media (min-width: 1024px) { .tr-body { padding-bottom: 0; } }
 
 .tr-route { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
-@keyframes trRoute { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Phone bottom bar */
 .tr-tabbar { position: fixed; z-index: 50; inset-inline: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom, 0px)); }
@@ -132,7 +131,6 @@
 }
 .tr-more[data-open="true"] .tr-more-panel { transform: none; }
 .tr-more[data-open="true"] .tr-more-item { animation: ec-rise var(--dur-med) var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 12ms + 60ms); }
-@keyframes trSoftIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .tr-more-item {
   display: flex; flex-direction: column; align-items: center; gap: .45rem; min-height: 5rem; padding: .8rem .4rem; border-radius: 1.2rem;
   font-size: .75rem; font-weight: 700; text-align: center;
@@ -328,7 +326,6 @@
 .tr-ex-params { display: grid; gap: .6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @container trmain (min-width: 760px) { .tr-ex-params { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .tr-ex-enter { animation: ec-rise var(--dur-med) var(--ease-out) both; }
-@keyframes trExIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .tr-handle { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .7rem; color: hsl(var(--muted-foreground)); }
 .tr-handle:hover:not(:disabled) { background: hsl(var(--foreground) / .07); color: hsl(var(--foreground)); }
 .tr-handle:disabled { opacity: .3; }
@@ -347,7 +344,6 @@
 @media (min-width: 768px) {
   .tr-picker-panel { width: min(72rem, 100%); height: min(54rem, 88dvh); border-radius: 1.75rem; animation: ec-pop var(--dur-med) var(--ease-out) both; }
 }
-@keyframes trPop { from { opacity: 0; transform: translateY(6px) scale(.99); } to { opacity: 1; transform: none; } }
 .tr-picker-grid { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 640px) { .tr-picker-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1024px) { .tr-picker-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -435,20 +431,8 @@
 .tr-ci-yesno { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .9rem; border-radius: 1rem; background: hsl(var(--foreground) / .04); }
 body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
 
-/* ------------------------------------------------------------------ calm motion for the shared kit (#9) */
-/* The trainee kit (tp-*) and portal buttons are springy by default; inside the trainer shell they stay subtle. */
-.tr-root .tp-press { transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
-.tr-root .tp-press:active { transform: scale(var(--press-scale-lg)); transition-duration: var(--dur-press); }
-.tr-root .tp-rise { animation: ec-rise var(--dur-med) var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 25ms); }
-.tr-root .tp-pop { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
-.tr-root .tp-screen { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
-.tr-root .ec-stagger > * { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
-.tr-root .ec-btn--fill::before { transition: transform var(--dur-med) var(--ease-out); }
-.tr-root .ec-btn:hover > svg:last-child:not(:first-child) { transform: translateX(calc(var(--ec-nudge, 3px) * .66)); }
-.tr-root .card-hover { transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
-.tr-root .card-hover:hover { transform: translateY(-1px); }
-.tr-root .ec-card { transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out); }
-.tr-root .liquid-blob { transition: transform var(--dur-med) var(--ease-out), width var(--dur-med) var(--ease-out), height var(--dur-med) var(--ease-out); }
+/* Calm motion (#9) is now the portal default for the shared kit (styles/motion.css tokens). Only the trainer's own
+   two-phase nav indicator replaces the legacy liquid stretch. */
 .tr-root .liquid-blob[data-stretch] { animation: none; }
 
 /* ------------------------------------------------------------------ icon centring in buttons (#8) */
@@ -458,8 +442,6 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
 .tp-btn, .tr-seg-btn, .tr-back { line-height: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tr-root .tp-rise, .tr-root .tp-pop, .tr-root .tp-screen, .tr-root .ec-stagger > * { animation: none !important; }
-  .tr-root .tp-press, .tr-root .ec-btn--fill::before { transition: none !important; }
 }
 
 /* ------------------------------------------------------------------ page actions: icon-only on phones (#23) */
@@ -525,12 +507,9 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .tr-xs-panel[data-state="open"] { animation: ec-sheet-up var(--dur-slow) var(--ease-out) both; }
-@keyframes trXsUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (min-width: 768px) {
   .tr-xs-panel { inset-block: 0; inset-inline: auto 0; width: min(36rem, 100vw); max-height: none; border-radius: 0; }
   .tr-xs-panel[data-state="open"] { animation-name: ec-side-in; }
-  @keyframes trXsSide { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-  @keyframes trXsSideRtl { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
 }
 .tr-xs-close { position: absolute; inset-inline-end: .75rem; top: .75rem; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 9999px; line-height: 0; background: rgba(255, 255, 255, .92); color: #262626; box-shadow: 0 4px 14px -6px rgba(0, 0, 0, .5); }
 

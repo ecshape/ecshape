@@ -232,8 +232,6 @@ html[dir='rtl'] { --ec-travel-origin: right; }
   .ec-agent-spotlight { outline: 3px solid hsl(var(--primary)); }
 }
 
-@keyframes ec-psk-in { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * 36px)); } to { opacity: 1; transform: none; } }
-@keyframes ec-psk-up { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes ec-psk-msg { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes ec-agent-spot {
   0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); background-color: transparent; }
@@ -276,7 +274,6 @@ html[dir='rtl'] { --ec-travel-origin: right; }
   border: 1px dashed hsl(var(--border));
   animation: ec-rise var(--dur-med) var(--ease-out) both;
 }
-@keyframes ec-key-form-in { from { opacity: 0; transform: translateY(10px) scale(.985); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 .ec-chip.is-active { background: var(--ec-grad, hsl(var(--primary))); color: hsl(var(--primary-foreground)); box-shadow: 0 8px 22px -10px hsl(var(--primary) / .7); }
 .ec-pmark { transition: transform var(--dur-med) var(--ease-out); }
 .ec-key-row:hover .ec-pmark { transform: rotate(-6deg) scale(1.06); }

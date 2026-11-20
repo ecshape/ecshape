@@ -276,10 +276,6 @@
   .ec-ms-tip { flex-wrap: wrap; justify-content: center; text-align: center; }
 }
 
-@keyframes ecMsIn { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes ecMsSide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes ecMsRise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes ecMsFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ecMsPulse { 0%, 100% { box-shadow: 0 0 0 0 currentColor; } 60% { box-shadow: 0 0 0 5px transparent; } }
 
 @media (prefers-reduced-motion: reduce) {

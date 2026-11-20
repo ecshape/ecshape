@@ -31,7 +31,7 @@ const pad = (n, w) => String(n).padStart(w, '0');
 export async function createHeroSequence({ media, pic, url, small, signal }) {
   let m;
   try {
-    const r = await fetch(url, { signal, cache: 'force-cache' });
+    const r = await fetch(url, { signal });
     if (!r.ok) return null;
     m = await r.json();
   } catch (e) {

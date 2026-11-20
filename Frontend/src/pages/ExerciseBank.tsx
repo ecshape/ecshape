@@ -37,6 +37,11 @@ import {
   type ExerciseImportDecision,
 } from '../components/ExerciseImportReviewDialog';
 import { PortalSelect } from '@/components/ui/portal-select';
+import { optimisticList } from '@/lib/optimistic';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { LibText, matchesQuery, useQueryInEnglish } from '@/features/trainee/libText';
 interface Exercise {
   id: number;
@@ -511,56 +516,33 @@ const ExerciseBank = () => {
     }
   };
 
-  const handleDeleteExercise = async (exerciseId: number) => {
-    if (!confirm(t('exerciseBank.deleteConfirm'))) return;
-
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_BASE_URL}/exercises/${exerciseId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        setExercises(exercises.filter(ex => ex.id !== exerciseId));
-        toast({
-          title: t('common.success'),
-          description: t('exerciseBank.successDeleted')
+  // Delete: asks in the app's own dialog (was a native confirm), then removes the card at once and rolls back
+  // with the server's reason if it refuses (optimistic rule).
+  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
+  const handleDeleteExercise = (exerciseId: number) => {
+    setExerciseToDelete(exercises.find((ex) => ex.id === exerciseId) ?? null);
+  };
+  const confirmDeleteExercise = async () => {
+    const target = exerciseToDelete;
+    setExerciseToDelete(null);
+    if (!target) return;
+    await optimisticList<Exercise[], void>(
+      setExercises,
+      (list) => list.filter((ex) => ex.id !== target.id),
+      async () => {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/exercises/${target.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-      } else {
-        // Try to parse error message from response
-        let errorMessage = t('exerciseBank.errorDelete');
-        try {
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorData = await response.json();
-            if (errorData.detail) {
-              errorMessage = errorData.detail;
-            }
-          } else {
-            const text = await response.text();
-            if (text) {
-              errorMessage = text;
-            }
-          }
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError);
+        if (!response.ok) {
+          let detail = '';
+          try { detail = (await response.json())?.detail || ''; } catch { /* not JSON */ }
+          throw new Error(typeof detail === 'string' && detail ? detail : t('exerciseBank.errorDelete'));
         }
-
-        toast({
-          title: t('common.error'),
-          description: errorMessage,
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting exercise:', error);
-      toast({
-        title: t('common.error'),
-        description: t('exerciseBank.errorDelete'),
-        variant: "destructive"
-      });
-    }
+      },
+      (error) => toast({ title: t('common.error'), description: (error as Error)?.message || t('exerciseBank.errorDelete'), variant: "destructive" }),
+    );
   };
 
   const resetForm = () => {
@@ -1209,6 +1191,21 @@ const ExerciseBank = () => {
           />
         )}
       </div>
+      <AlertDialog open={!!exerciseToDelete} onOpenChange={(o) => !o && setExerciseToDelete(null)}>
+        <AlertDialogContent className="rounded-[1.5rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('exerciseBank.deleteConfirm')}
+              {exerciseToDelete && <span className="mt-2 block font-semibold text-foreground">{exerciseToDelete.name}</span>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteExercise} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('common.delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

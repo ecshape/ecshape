@@ -809,7 +809,7 @@ const ClientProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <BankExerciseSheet exercise={exerciseDetail} onClose={() => setExerciseDetail(null)} muscleLabel={(m) => t(`exerciseLibrary.muscle.${m}`, { defaultValue: m })} />
+      <BankExerciseSheet exercise={exerciseDetail} onClose={() => setExerciseDetail(null)} muscleLabel={(m) => t(`exerciseBank.muscleGroups.${m}`, { defaultValue: t(`exerciseLibrary.muscle.${m}`, { defaultValue: m }) })} />
       <Sheet
         open={!!foodDetail} onOpenChange={(o) => !o && setFoodDetail(null)}
         title={foodDetail ? (foodDetail.name_hebrew || foodDetail.name) : ''}

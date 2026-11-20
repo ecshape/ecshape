@@ -93,7 +93,7 @@ const TasksPage = () => {
         </div>
 
         {isPending && !tasks.length ? (
-          <div className="space-y-2">{[0, 1, 2, 3].map((i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-card" />)}</div>
+          <div className="space-y-2">{[0, 1, 2, 3].map((i) => <div key={i} className="h-20 ec-skel rounded-2xl bg-card" />)}</div>
         ) : !visible.length ? (
           <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-dashed border-border py-20 text-center text-muted-foreground">
             <Inbox className="h-10 w-10" /><p>{t('tasks.empty')}</p>

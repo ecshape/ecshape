@@ -70,8 +70,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
     <div
       className={cn(
         'flex items-start gap-3 p-4 rounded-lg border shadow-lg max-w-sm w-full',
-        'transform transition-all duration-300 ease-in-out',
-        'animate-in slide-in-from-right-full',
+        'animate-in fade-in-0 slide-in-from-bottom-1 duration-med',
         styles.container
       )}
     >

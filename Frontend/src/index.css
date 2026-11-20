@@ -66,8 +66,7 @@
     --sidebar-border: 40 10% 17%;
     --sidebar-ring: 21 87% 53%;
 
-    --ease-out: cubic-bezier(.22, 1, .36, 1);
-    --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+    /* motion tokens (--ease-*, --dur-*): src/styles/motion.css */
   }
 
   .light {
@@ -190,12 +189,12 @@
   }
 
   /* Page entrance: children rise in sequence */
-  .ec-stagger > * { animation: ecRise .7s var(--ease-out) both; }
-  .ec-stagger > *:nth-child(2) { animation-delay: .06s; }
-  .ec-stagger > *:nth-child(3) { animation-delay: .12s; }
-  .ec-stagger > *:nth-child(4) { animation-delay: .18s; }
-  .ec-stagger > *:nth-child(5) { animation-delay: .24s; }
-  .ec-stagger > *:nth-child(n+6) { animation-delay: .3s; }
+  .ec-stagger > * { animation: ec-rise var(--dur-med) var(--ease-out) both; }
+  .ec-stagger > *:nth-child(2) { animation-delay: calc(1 * var(--stagger-step)); }
+  .ec-stagger > *:nth-child(3) { animation-delay: calc(2 * var(--stagger-step)); }
+  .ec-stagger > *:nth-child(4) { animation-delay: calc(3 * var(--stagger-step)); }
+  .ec-stagger > *:nth-child(5) { animation-delay: calc(4 * var(--stagger-step)); }
+  .ec-stagger > *:nth-child(n+6) { animation-delay: calc(5 * var(--stagger-step)); }
 
   .mobile-safe {
     @apply pb-safe-area-inset-bottom;
@@ -204,11 +203,11 @@
   /* 3D Effects */
   .card-3d {
     transform-style: preserve-3d;
-    transition: transform 0.3s ease;
+    transition: transform var(--dur-med) var(--ease-out);
   }
 
   .card-3d:hover {
-    transform: translateY(-4px);
+    transform: translateY(-1px);
   }
 
   .floating {
@@ -233,17 +232,7 @@
   }
 
   .animate-fade-in-up {
-    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  @keyframes fadeInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(24px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    animation: ec-rise var(--dur-med) var(--ease-out);
   }
 }
 
@@ -257,34 +246,7 @@
   }
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 
 @keyframes shimmer {
   0% {
@@ -297,11 +259,11 @@
 
 /* Card hover effects */
 .card-hover {
-  transition: transform .5s var(--ease-out), box-shadow .5s var(--ease-out), border-color .3s;
+  transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
+  transform: translateY(-1px); /* calm lift (QA #9), same in every portal */
   border-color: hsl(var(--primary) / .35);
   box-shadow: 0 24px 50px -24px rgba(0, 0, 0, .55);
 }
@@ -310,7 +272,7 @@
 .btn-3d {
   position: relative;
   transform-style: preserve-3d;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--dur-fast) var(--ease-out);
 }
 
 .btn-3d:hover {
@@ -348,15 +310,9 @@
   display: none;  /* Chrome, Safari and Opera */
 }
 
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .card-3d:hover {
-    transform: translateY(-2px) scale(1.02);
-  }
-  
-  .card-hover:hover {
-    transform: translateY(-4px) scale(1.01);
-  }
+/* Touch screens: no hover lift (it sticks after a tap) */
+@media (hover: none) {
+  .card-3d:hover, .card-hover:hover { transform: none; }
 }
 
 /* Loading spinner */
@@ -383,16 +339,15 @@
   left: var(--x, 50%); top: var(--y, 50%); width: 160%; aspect-ratio: 1; border-radius: 9999px;
   background: hsl(var(--foreground));
   transform: translate(-50%, -50%) scale(0);
-  transition: transform .6s var(--ease-out);
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 .ec-btn--fill:hover::before { transform: translate(-50%, -50%) scale(2.2); }
-.ec-btn:hover > svg:last-child:not(:first-child) { transform: translateX(var(--ec-nudge, 3px)); }
-[dir="rtl"] .ec-btn { --ec-nudge: -3px; }
+.ec-btn:hover > svg:last-child:not(:first-child) { transform: translateX(calc(var(--ec-dir) * 2px)); }
 
 /* Cards: hairline top highlight + soft depth */
 .ec-card {
   box-shadow: inset 0 1px 0 hsl(var(--foreground) / .04), 0 1px 2px rgba(0, 0, 0, .2);
-  transition: border-color .3s, box-shadow .5s var(--ease-out), transform .5s var(--ease-out);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .light .ec-card { box-shadow: 0 1px 2px rgba(60, 40, 20, .06), 0 12px 30px -20px rgba(60, 40, 20, .25); }
 
@@ -405,23 +360,17 @@
 }
 .ec-stat .font-num { font-size: 2.4rem; line-height: 1; }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
-}
+/* reduced motion: global rule in styles/motion.css */
 
-@keyframes ecRise {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: none; }
-}
 
 /* Liquid nav highlight (see components/LiquidNav.tsx) */
 .liquid-blob {
   box-shadow: 0 10px 24px -10px hsl(var(--primary) / .9), inset 0 1px 0 rgba(255, 255, 255, .25);
-  transition: transform .38s cubic-bezier(.2, .7, .3, 1), width .32s cubic-bezier(.2, .7, .3, 1), height .32s cubic-bezier(.2, .7, .3, 1);
+  transition: transform var(--dur-med) var(--ease-out), width var(--dur-med) var(--ease-out), height var(--dur-med) var(--ease-out);
 }
 /* Calm liquid: a light stretch while it travels, no wobble (QA #29) */
-.liquid-blob[data-stretch="x"] { animation: liquidX .38s cubic-bezier(.2, .7, .3, 1); }
-.liquid-blob[data-stretch="y"] { animation: liquidY .38s cubic-bezier(.2, .7, .3, 1); }
+.liquid-blob[data-stretch="x"] { animation: liquidX var(--dur-med) var(--ease-out); }
+.liquid-blob[data-stretch="y"] { animation: liquidY var(--dur-med) var(--ease-out); }
 @keyframes liquidX { 0% { scale: 1 1; } 40% { scale: 1.08 .94; } 100% { scale: 1 1; } }
 @keyframes liquidY { 0% { scale: 1 1; } 40% { scale: .96 1.08; } 100% { scale: 1 1; } }
 @media (prefers-reduced-motion: reduce) { .liquid-blob { transition: none; animation: none !important; } }

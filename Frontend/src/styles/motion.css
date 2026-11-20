@@ -1,0 +1,98 @@
+/* =====================================================================
+   ECshape motion tokens & primitives — the single source of truth.
+   Spec: .claude/skills/ecshape-motion/SKILL.md ("Motion tokens").
+   JS mirror: src/lib/motion.ts (keep the numbers in sync).
+
+   Two tempos, one vocabulary:
+   - Portal (trainer, trainee, studio, admin): CALM — short, small, no overshoot (QA #9, #29).
+     --dur-* tokens below.
+   - Public site + blog: CINEMATIC — --t-fast / --t-med / --t-slow (+ GSAP timelines in siteMotion.js).
+   Both use the same curves: --ease-out for almost everything, --ease-in-out for wipes,
+   --ease-in for exits, --ease-spring only for a success "bump" (check done, favourite, added).
+   ===================================================================== */
+
+:root {
+  /* Curves */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);      /* GSAP: expo.out */
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);   /* wipes, loops */
+  --ease-in: cubic-bezier(.4, 0, 1, 1);          /* exits only */
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);/* success bump only — never navigation */
+
+  /* Portal durations (calm) */
+  --dur-press: .06s;  /* :active press-in */
+  --dur-fast: .16s;   /* hover / colour / focus, exits, tooltips, menus */
+  --dur-med: .22s;    /* route + content enter, tabs, pills, list items, popovers, toasts */
+  --dur-slow: .26s;   /* sheets, drawers, modals, side panels, panel resize */
+  --dur-data: .6s;    /* chart / ring / bar fills, line draw */
+  --dur-loop: 1.4s;   /* skeleton shimmer and other ambient loops */
+
+  /* Site durations (cinematic) */
+  --t-fast: .25s;
+  --t-med: .5s;
+  --t-slow: .9s;
+
+  /* Distances */
+  --rise: 4px;          /* content enter */
+  --shift-panel: 24px;  /* side panels / drawers travel (signed with --ec-dir) */
+  --pop-scale: .98;     /* modal / popover enter scale */
+  --press-scale: .97;   /* buttons, chips, icon buttons */
+  --press-scale-lg: .985; /* cards, rows, large tiles */
+  --stagger-step: 30ms; /* list stagger (cap at 6 steps) */
+
+  /* Direction: 1 = end edge is on the right (LTR), -1 in RTL. Multiply x translations by it. */
+  --ec-dir: 1;
+}
+/* nearest dir wins, so a portaled panel with its own dir="rtl" slides from the right edge too */
+[dir='rtl'] { --ec-dir: -1; }
+[dir='ltr'] { --ec-dir: 1; }
+
+/* ------------------------------------------------------------- shared keyframes */
+@keyframes ec-fade { from { opacity: 0; } }
+@keyframes ec-rise { from { opacity: 0; transform: translateY(var(--rise)); } }
+@keyframes ec-pop { from { opacity: 0; transform: translateY(var(--rise)) scale(var(--pop-scale)); } }
+@keyframes ec-sheet-up { from { transform: translateY(100%); } }
+/* Panel anchored to the inline END edge (right in LTR, left in RTL) */
+@keyframes ec-side-in { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * var(--shift-panel))); } }
+/* Panel anchored to the inline START edge */
+@keyframes ec-side-in-start { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * -1 * var(--shift-panel))); } }
+/* Exits: always a DIFFERENT keyframe name than the entrance (Radix Presence only waits for an exit animation
+   when the name changes), --dur-fast + --ease-in. */
+@keyframes ec-fade-out { to { opacity: 0; } }
+@keyframes ec-sheet-down { to { transform: translateY(100%); } }
+@keyframes ec-side-out { to { opacity: 0; transform: translateX(calc(var(--ec-dir) * var(--shift-panel))); } }
+@keyframes ec-bump { 0% { transform: scale(.6); } 60% { transform: scale(1.12); } 100% { transform: none; } }
+@keyframes ec-spin { to { transform: rotate(360deg); } }
+@keyframes ec-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes ec-pulse { 50% { opacity: .5; } }
+
+/* ------------------------------------------------------------- shared utilities */
+/* The one route transition for every shell (trainer .tr-route, trainee .tr-route, legacy Layout .ec-page-enter) */
+.ec-route, .tr-route, .ec-page-enter { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
+.ec-enter { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
+.ec-enter-pop { animation: ec-pop var(--dur-med) var(--ease-out) backwards; }
+.ec-bump { animation: ec-bump var(--dur-slow) var(--ease-spring) both; }
+
+/* The one loading skeleton: a soft shimmer sweep (ui/skeleton, .tp-skel and page placeholders all use it) */
+.ec-skel {
+  background-image: linear-gradient(100deg, hsl(var(--foreground) / .05) 30%, hsl(var(--foreground) / .1) 50%, hsl(var(--foreground) / .05) 70%);
+  background-size: 300% 100%;
+  animation: ec-shimmer var(--dur-loop) var(--ease-in-out) infinite;
+}
+
+/* tailwindcss-animate overlays (dialog, select, tooltip, toast …): calm curve. Durations come from
+   tailwind.config.ts (DEFAULT = --dur-fast); exits are always fast and ease in. */
+.animate-in { animation-timing-function: var(--ease-out); }
+.animate-out { animation-timing-function: var(--ease-in); animation-duration: var(--dur-fast); }
+
+/* ------------------------------------------------------------- reduced motion (global) */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important; /* loops (shimmer, pings, spinners) stop instead of flickering */
+    animation-delay: 0s !important;
+    transition-duration: .001ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}

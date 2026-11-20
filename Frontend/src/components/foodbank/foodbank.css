@@ -6,8 +6,6 @@
 .fb-root,
 .fb-drawer,
 .tp-sheet {
-  --fb-ease-out: cubic-bezier(.22, 1, .36, 1);
-  --fb-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   --fb-protein: var(--macro-protein);
   --fb-carb: var(--macro-carbs);
   --fb-fat: var(--macro-fat);
@@ -30,7 +28,7 @@
     hsl(var(--card));
 }
 .fb-reveal {
-  animation: fb-rise .7s var(--fb-ease-out) both;
+  animation: ec-rise var(--dur-med) var(--ease-out) both;
   animation-delay: calc(var(--d, 0) * 80ms);
 }
 
@@ -47,10 +45,10 @@
   border-radius: calc(var(--radius) - 2px);
   background: hsl(var(--primary));
   box-shadow: 0 6px 20px -6px hsl(var(--primary) / .6);
-  transition: transform .45s var(--fb-ease-out), width .45s var(--fb-ease-out);
+  transition: transform var(--dur-med) var(--ease-out), width var(--dur-med) var(--ease-out);
 }
 .fb-seg__btn {
-  transition: color .25s var(--fb-ease-out);
+  transition: color var(--dur-fast) var(--ease-out);
 }
 .fb-seg__btn[aria-pressed='true'] {
   color: hsl(var(--primary-foreground));
@@ -59,13 +57,10 @@
 /* ---------- Chips ---------- */
 .fb-chip {
   transition:
-    background-color .25s var(--fb-ease-out),
-    color .25s var(--fb-ease-out),
-    border-color .25s var(--fb-ease-out),
-    transform .25s var(--fb-ease-out);
+    background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .fb-chip:active {
-  transform: scale(.95);
+  transform: scale(var(--press-scale));
 }
 .fb-chip[aria-pressed='true'] {
   background: hsl(var(--primary) / .16);
@@ -73,7 +68,7 @@
   color: hsl(var(--primary));
 }
 .fb-chip[aria-pressed='true'] .fb-chip__icon {
-  animation: fb-pop .35s var(--fb-ease-spring);
+  animation: ec-bump var(--dur-slow) var(--ease-spring);
 }
 
 /* ---------- Food card ---------- */
@@ -84,12 +79,10 @@
 }
 .fb-card {
   position: relative;
-  animation: fb-rise .6s var(--fb-ease-out) both;
+  animation: ec-rise var(--dur-med) var(--ease-out) both;
   animation-delay: calc(min(var(--i, 0), 14) * 45ms);
   transition:
-    transform .45s var(--fb-ease-out),
-    box-shadow .45s var(--fb-ease-out),
-    border-color .45s var(--fb-ease-out);
+    transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med) var(--ease-out), border-color var(--dur-med) var(--ease-out);
   will-change: transform;
 }
 .fb-card:hover,
@@ -110,7 +103,7 @@
   object-fit: cover;
   opacity: 0;
   transform: scale(1.04);
-  transition: opacity .6s var(--fb-ease-out), transform .9s var(--fb-ease-out);
+  transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .fb-photo img[data-loaded='true'] {
   opacity: 1;
@@ -142,7 +135,7 @@
     hsl(var(--muted));
 }
 .fb-photo__fallback svg {
-  transition: transform .6s var(--fb-ease-out);
+  transition: transform var(--dur-med) var(--ease-out);
 }
 .fb-card:hover .fb-photo__fallback svg {
   transform: scale(1.1) rotate(-6deg);
@@ -164,7 +157,7 @@
 .fb-actions {
   opacity: 0;
   transform: translateY(-6px);
-  transition: opacity .3s var(--fb-ease-out), transform .3s var(--fb-ease-out);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .fb-card:hover .fb-actions,
 .fb-card:focus-within .fb-actions {
@@ -192,7 +185,7 @@
   height: 100%;
   border-radius: 999px;
   transform-origin: var(--fb-origin, left);
-  animation: fb-grow .9s var(--fb-ease-out) both;
+  animation: fb-grow var(--dur-data) var(--ease-out) both;
   animation-delay: calc(min(var(--i, 0), 14) * 45ms + 200ms);
 }
 [dir='rtl'] .fb-split > span {
@@ -226,23 +219,23 @@
   inset: 0;
   transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, hsl(var(--foreground) / .07), transparent);
-  animation: fb-shimmer 1.4s ease-in-out infinite;
+  animation: fb-shimmer var(--dur-loop) var(--ease-in-out) infinite;
 }
 
 /* ---------- Library drawer ---------- */
-.fb-overlay[data-state='open'] { animation: fb-fade .3s var(--fb-ease-out) both; }
-.fb-overlay[data-state='closed'] { animation: fb-fade .2s ease-in reverse both; }
+.fb-overlay[data-state='open'] { animation: ec-fade var(--dur-med) var(--ease-out) both; }
+.fb-overlay[data-state='closed'] { animation: ec-fade-out var(--dur-fast) var(--ease-in) both; }
 .fb-drawer {
   inset-block: 0;
   inset-inline-end: 0;
 }
-.fb-drawer[data-state='open'] { animation: fb-drawer-in .55s var(--fb-ease-out) both; }
-.fb-drawer[data-state='closed'] { animation: fb-drawer-out .3s cubic-bezier(.4, 0, 1, 1) both; }
+.fb-drawer[data-state='open'] { animation: ec-side-in var(--dur-slow) var(--ease-out) both; }
+.fb-drawer[data-state='closed'] { animation: ec-side-out var(--dur-fast) var(--ease-in) both; }
 
 .fb-lib-card {
-  animation: fb-rise .5s var(--fb-ease-out) both;
+  animation: ec-rise var(--dur-med) var(--ease-out) both;
   animation-delay: calc(min(var(--i, 0), 12) * 35ms);
-  transition: border-color .3s var(--fb-ease-out), transform .3s var(--fb-ease-out), box-shadow .3s var(--fb-ease-out);
+  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 .fb-lib-card:hover {
   transform: translateY(-2px);
@@ -253,37 +246,16 @@
   transform: scale(1.06);
 }
 .fb-added {
-  animation: fb-pop .45s var(--fb-ease-spring);
+  animation: ec-bump var(--dur-slow) var(--ease-spring);
 }
 
 /* ---------- Keyframes ---------- */
-@keyframes fb-rise {
-  from { opacity: 0; transform: translateY(16px) scale(.985); }
-  to { opacity: 1; transform: none; }
-}
 @keyframes fb-grow {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
-@keyframes fb-pop {
-  0% { transform: scale(.6); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-@keyframes fb-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 @keyframes fb-shimmer {
   to { transform: translateX(100%); }
-}
-@keyframes fb-drawer-in {
-  from { transform: translateX(calc(var(--fb-dir) * 100%)); opacity: .4; }
-  to { transform: none; opacity: 1; }
-}
-@keyframes fb-drawer-out {
-  from { transform: none; opacity: 1; }
-  to { transform: translateX(calc(var(--fb-dir) * 100%)); opacity: .4; }
 }
 
 /* ---------- Reduced motion ---------- */

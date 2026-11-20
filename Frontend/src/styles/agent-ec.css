@@ -3,15 +3,14 @@
 :root {
   --ec-grad: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(18 88% 48%) 55%, hsl(var(--gold)) 120%);
   --ec-z-agent: 80;
-  --ec-dir: 1; /* 1 = panel on the right, -1 = on the left */
+  /* --ec-dir (1 = end edge on the right) lives in styles/motion.css */
 }
-html[dir='rtl'] { --ec-dir: -1; }
 
 /* ---------- Page pushed aside while the panel is open (wide screens) ---------- */
 @media (min-width: 1180px) {
-  html.ec-psk-open [data-ec-shell] { margin-inline-end: min(var(--ec-psk-w, 420px), 100vw); transition: margin .45s cubic-bezier(.22,1,.36,1); }
+  html.ec-psk-open [data-ec-shell] { margin-inline-end: min(var(--ec-psk-w, 420px), 100vw); transition: margin var(--dur-slow) var(--ease-out); }
 }
-[data-ec-shell] { transition: margin .45s cubic-bezier(.22,1,.36,1); }
+[data-ec-shell] { transition: margin var(--dur-slow) var(--ease-out); }
 
 /* ---------- Icon ---------- */
 .ec-agent-icon {
@@ -48,7 +47,7 @@ html[dir='rtl'] { --ec-dir: -1; }
   background: var(--ec-grad); color: #fff; font: inherit; font-weight: 700; cursor: grab;
   box-shadow: calc(-6px * var(--ec-dir)) 10px 30px -10px hsl(var(--primary) / .7);
   transform: translate(calc(var(--ec-dir) * (var(--ec-edge-rest) - var(--ec-edge-pull, 0px))), -50%);
-  transition: transform 420ms cubic-bezier(.22,1,.36,1), box-shadow 420ms cubic-bezier(.22,1,.36,1);
+  transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med) var(--ease-out);
   touch-action: none; overflow: hidden; isolation: isolate;
 }
 .ec-psk-edge:hover, .ec-psk-edge:focus-visible, .ec-psk-edge.is-peek {
@@ -67,7 +66,7 @@ html[dir='rtl'] { --ec-dir: -1; }
 /* Pull-out ghost panel (follows the finger / pointer) */
 .ec-psk-swipe { position: fixed; inset: 0; z-index: var(--ec-z-agent); pointer-events: none; visibility: hidden; }
 .ec-psk-swipe.is-on { visibility: visible; }
-.ec-psk-swipe.is-on ~ .ec-psk-edge { opacity: 0; transition: opacity 120ms ease; }
+.ec-psk-swipe.is-on ~ .ec-psk-edge { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
 .ec-psk-swipe-dim { position: absolute; inset: 0; background: rgba(5, 4, 3, .42); opacity: var(--psk-progress, 0); }
 .ec-psk-swipe-panel {
   position: absolute; top: 0; bottom: 0; inset-inline-end: 0; width: min(420px, 100vw);
@@ -78,8 +77,8 @@ html[dir='rtl'] { --ec-dir: -1; }
 }
 .ec-psk-swipe-head { display: flex; align-items: center; gap: 10px; font-size: 18px; }
 .ec-psk-swipe-panel .ec-psk-muted { opacity: calc(var(--psk-progress, 0) * 1.6); margin: 0; }
-.ec-psk-swipe.is-settling .ec-psk-swipe-panel { transition: transform 220ms cubic-bezier(.22,1,.36,1); }
-.ec-psk-swipe.is-settling .ec-psk-swipe-dim { transition: opacity 220ms ease-out; }
+.ec-psk-swipe.is-settling .ec-psk-swipe-panel { transition: transform var(--dur-med) var(--ease-out); }
+.ec-psk-swipe.is-settling .ec-psk-swipe-dim { transition: opacity var(--dur-fast) var(--ease-out); }
 
 /* ---------- Docked panel ---------- */
 .ec-psk {
@@ -89,13 +88,13 @@ html[dir='rtl'] { --ec-dir: -1; }
   backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
   border-inline-start: 1px solid hsl(var(--border));
   box-shadow: calc(-12px * var(--ec-dir)) 0 48px rgba(0,0,0,.28);
-  animation: ec-psk-in .55s cubic-bezier(.22,1,.36,1) both;
+  animation: ec-side-in var(--dur-slow) var(--ease-out) both;
 }
 html.ec-psk-swiped .ec-psk { animation: none !important; }
 .ec-psk-resize { position: absolute; top: 0; bottom: 0; inset-inline-start: -4px; z-index: 2; width: 8px; cursor: col-resize; }
 .ec-psk-resize::after {
   content: ''; position: absolute; top: 50%; inset-inline-start: 2px; width: 4px; height: 44px; border-radius: 99px;
-  background: hsl(var(--border)); transform: translateY(-50%); opacity: 0; transition: opacity .3s;
+  background: hsl(var(--border)); transform: translateY(-50%); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out);
 }
 .ec-psk:hover .ec-psk-resize::after, .ec-psk-resize:active::after { opacity: 1; }
 .ec-psk-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; border-bottom: 1px solid hsl(var(--border)); }
@@ -109,13 +108,13 @@ html.ec-psk-swiped .ec-psk { animation: none !important; }
 .ec-psk-conv:hover { color: hsl(var(--foreground)); }
 .ec-psk-iconbtn {
   display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 0; border-radius: 50%;
-  background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer; transition: background .25s, color .25s, transform .35s cubic-bezier(.34,1.56,.64,1);
+  background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .ec-psk-iconbtn:hover { background: hsl(var(--foreground) / .07); color: hsl(var(--foreground)); transform: scale(1.06); }
 
 .ec-psk-log { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 10px; padding: 14px; }
 .ec-psk-log:has(.ec-psk-welcome) { display: flex; flex-direction: column; }
-.ec-psk-msg { padding: 10px 13px; border-radius: 16px; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; animation: ec-psk-msg .45s cubic-bezier(.22,1,.36,1) both; }
+.ec-psk-msg { padding: 10px 13px; border-radius: 16px; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; animation: ec-pop var(--dur-med) var(--ease-out) both; }
 .ec-psk-msg p { margin: 0 0 6px; }
 .ec-psk-msg p:last-child { margin-bottom: 0; }
 .ec-psk-msg.is-user { justify-self: end; max-width: 90%; background: var(--ec-grad); color: #fff; border-end-end-radius: 6px; }
@@ -132,14 +131,14 @@ html.ec-psk-swiped .ec-psk { animation: none !important; }
 .ec-psk-rec {
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid hsl(var(--border));
   border-radius: 14px; background: hsl(var(--foreground) / .03); color: inherit; font: inherit; font-size: 13px; text-align: start; cursor: pointer;
-  transition: border-color .3s, background .3s, transform .4s cubic-bezier(.22,1,.36,1);
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .ec-psk-rec:hover { border-color: hsl(var(--primary) / .6); background: hsl(var(--primary) / .08); transform: translateY(-1px); }
 .ec-psk-rec-ico { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 10px; background: hsl(var(--primary) / .14); color: hsl(var(--primary)); }
 .ec-psk-suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
 .ec-psk-suggest button {
   padding: 8px 12px; border: 1px solid hsl(var(--border)); border-radius: 999px; background: hsl(var(--foreground) / .03);
-  color: inherit; font: inherit; font-size: 13px; cursor: pointer; transition: border-color .3s, background .3s, transform .4s cubic-bezier(.22,1,.36,1);
+  color: inherit; font: inherit; font-size: 13px; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .ec-psk-suggest button:hover { border-color: hsl(var(--primary)); background: hsl(var(--primary) / .1); transform: translateY(-1px); }
 
@@ -147,16 +146,16 @@ html.ec-psk-swiped .ec-psk { animation: none !important; }
 .ec-psk-op-btn {
   display: inline-flex; justify-self: start; align-items: center; gap: 8px; max-width: 100%; padding: 8px 14px;
   border: 0; border-radius: 999px; background: var(--ec-grad); color: #fff; font: inherit; font-size: 13px; font-weight: 700; text-align: start; cursor: pointer;
-  box-shadow: 0 6px 16px -8px hsl(var(--primary) / .8); transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s;
+  box-shadow: 0 6px 16px -8px hsl(var(--primary) / .8); transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 .ec-psk-op-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 22px -10px hsl(var(--primary) / .9); }
 .ec-psk-op-btn:disabled { opacity: .6; cursor: default; }
-.ec-psk-op-card { display: grid; gap: 8px; padding: 11px 13px; border: 1px solid hsl(var(--primary) / .35); border-radius: 14px; background: hsl(var(--primary) / .08); animation: ec-psk-msg .45s cubic-bezier(.22,1,.36,1) both; }
+.ec-psk-op-card { display: grid; gap: 8px; padding: 11px 13px; border: 1px solid hsl(var(--primary) / .35); border-radius: 14px; background: hsl(var(--primary) / .08); animation: ec-pop var(--dur-med) var(--ease-out) both; }
 .ec-psk-op-card.is-danger { border-color: hsl(var(--destructive) / .7); background: hsl(var(--destructive) / .08); }
 .ec-psk-op-card p { margin: 0; font-size: 13px; }
 .ec-psk-op-actions { display: flex; gap: 8px; }
-.ec-psk-op-confirm, .ec-psk-op-cancel { padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform .2s; }
-.ec-psk-op-confirm:active, .ec-psk-op-cancel:active { transform: scale(.96); }
+.ec-psk-op-confirm, .ec-psk-op-cancel { padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform var(--dur-fast) var(--ease-out); }
+.ec-psk-op-confirm:active, .ec-psk-op-cancel:active { transform: scale(var(--press-scale)); }
 .ec-psk-op-confirm { border: 0; background: hsl(var(--primary)); color: #fff; }
 .ec-psk-op-card.is-danger .ec-psk-op-confirm { background: hsl(var(--destructive)); }
 .ec-psk-op-cancel { border: 1px solid hsl(var(--border)); background: transparent; color: inherit; }
@@ -198,7 +197,7 @@ html.ec-psk-swiped .ec-psk { animation: none !important; }
 .ec-psk-input textarea {
   width: 100%; min-height: 64px; max-height: 180px; resize: vertical; padding: 12px 14px; border-radius: 16px;
   border: 1px solid hsl(var(--border)); background: hsl(var(--background) / .6); color: inherit; font: inherit; font-size: 14px;
-  transition: border-color .3s, box-shadow .3s;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 .ec-psk-input textarea:focus { outline: none; border-color: hsl(var(--primary) / .7); box-shadow: 0 0 0 4px hsl(var(--primary) / .15); }
 .ec-psk-input-bar { display: flex; align-items: center; gap: 6px; }
@@ -209,7 +208,7 @@ html.ec-psk-swiped .ec-psk { animation: none !important; }
 .ec-psk-model:hover { border-color: hsl(var(--primary) / .6); }
 .ec-psk-send {
   display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--ec-grad); color: #fff; cursor: pointer;
-  box-shadow: 0 8px 20px -10px hsl(var(--primary) / .9); transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+  box-shadow: 0 8px 20px -10px hsl(var(--primary) / .9); transition: transform var(--dur-med) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
 }
 .ec-psk-send:hover:not(:disabled) { transform: scale(1.08) rotate(-6deg); }
 .ec-psk-send:disabled { opacity: .4; cursor: default; }
@@ -223,7 +222,7 @@ html[dir='rtl'] { --ec-travel-origin: right; }
 .ec-agent-spotlight { position: relative; border-radius: 16px; animation: ec-agent-spot 2.6s cubic-bezier(.22,1,.36,1) both; }
 
 @media (max-width: 767px) {
-  .ec-psk { top: auto; height: 88dvh; width: 100vw !important; border-inline-start: 0; border-radius: 26px 26px 0 0; animation-name: ec-psk-up; }
+  .ec-psk { top: auto; height: 88dvh; width: 100vw !important; border-inline-start: 0; border-radius: 26px 26px 0 0; animation-name: ec-sheet-up; }
   .ec-psk-resize { display: none; }
   .ec-psk-edge { top: 58%; padding-inline: 7px 14px; }
 }
@@ -233,8 +232,6 @@ html[dir='rtl'] { --ec-travel-origin: right; }
   .ec-agent-spotlight { outline: 3px solid hsl(var(--primary)); }
 }
 
-@keyframes ec-psk-in { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * 36px)); } to { opacity: 1; transform: none; } }
-@keyframes ec-psk-up { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes ec-psk-msg { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes ec-agent-spot {
   0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); background-color: transparent; }
@@ -268,18 +265,17 @@ html[dir='rtl'] { --ec-travel-origin: right; }
 .ec-engine-dot { width: .6rem; height: .6rem; border-radius: 999px; flex: none; background: hsl(var(--muted-foreground)); }
 .ec-engine-line.is-on .ec-engine-dot { background: hsl(var(--success)); box-shadow: 0 0 0 0 hsl(var(--success) / .5); animation: ec-engine-pulse 2.4s ease-out infinite; }
 @keyframes ec-engine-pulse { 0% { box-shadow: 0 0 0 0 hsl(var(--success) / .5); } 70%, 100% { box-shadow: 0 0 0 .55rem hsl(var(--success) / 0); } }
-.ec-key-row { background: hsl(var(--background) / .35); transition: transform .45s cubic-bezier(.22,1,.36,1), border-color .3s, background .3s; }
+.ec-key-row { background: hsl(var(--background) / .35); transition: transform var(--dur-med) var(--ease-out), border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
 .ec-key-row:hover { transform: translateY(-2px); background: hsl(var(--background) / .6); }
 .ec-key-row.is-preferred { background: linear-gradient(90deg, hsl(var(--primary) / .09), transparent 70%); }
 .ec-key-pill { background: var(--ec-grad, hsl(var(--primary))); color: hsl(var(--primary-foreground)); }
 .ec-key-form {
   background: hsl(var(--muted) / .3);
   border: 1px dashed hsl(var(--border));
-  animation: ec-key-form-in .55s cubic-bezier(.22,1,.36,1) both;
+  animation: ec-rise var(--dur-med) var(--ease-out) both;
 }
-@keyframes ec-key-form-in { from { opacity: 0; transform: translateY(10px) scale(.985); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 .ec-chip.is-active { background: var(--ec-grad, hsl(var(--primary))); color: hsl(var(--primary-foreground)); box-shadow: 0 8px 22px -10px hsl(var(--primary) / .7); }
-.ec-pmark { transition: transform .5s cubic-bezier(.22,1,.36,1); }
+.ec-pmark { transition: transform var(--dur-med) var(--ease-out); }
 .ec-key-row:hover .ec-pmark { transform: rotate(-6deg) scale(1.06); }
 @media (prefers-reduced-motion: reduce) {
   .ec-engine-line.is-on .ec-engine-dot, .ec-key-form { animation: none; }

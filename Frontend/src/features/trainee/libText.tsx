@@ -119,7 +119,7 @@ export const LibSteps: React.FC<{ steps: string[]; src?: Src; className?: string
           <li key={i} className="flex gap-3 text-sm leading-relaxed">
             <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-primary/12 font-num text-xs text-primary">{i + 1}</span>
             {pending ? (
-              <span className="flex-1 space-y-1.5 pt-1"><span className="block h-3 w-full animate-pulse rounded-full bg-foreground/10" /><span className="block h-3 w-2/3 animate-pulse rounded-full bg-foreground/10" /></span>
+              <span className="flex-1 space-y-1.5 pt-1"><span className="block h-3 w-full ec-skel rounded-full" /><span className="block h-3 w-2/3 ec-skel rounded-full" /></span>
             ) : (
               <span className="min-w-0 flex-1" style={{ textAlign: 'start' }} dir={inAppLang ? undefined : 'auto'}>{shown}</span>
             )}
@@ -145,7 +145,7 @@ export const LibText: React.FC<{ text: string | null | undefined; src?: Src; laz
   }, [seen]);
   const { text: out, pending } = useLibTextState(text, { src, enabled: seen });
   // QA #81: a title shown at once (not lazy) waits for its translation instead of flashing the original.
-  if (!lazy && pending) return <span ref={ref} className={className} aria-busy><span className="inline-block h-[.75em] w-[min(12rem,60%)] animate-pulse rounded-full bg-foreground/10 align-middle" /></span>;
+  if (!lazy && pending) return <span ref={ref} className={className} aria-busy><span className="inline-block h-[.75em] w-[min(12rem,60%)] ec-skel rounded-full align-middle" /></span>;
   return <span ref={ref} className={className} dir="auto">{out}</span>;
 };
 

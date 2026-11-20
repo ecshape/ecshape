@@ -179,7 +179,7 @@ const ProspectsPage = () => {
         </div>
 
         {loading ? (
-          <div className="h-64 animate-pulse rounded-[1.5rem] bg-card" />
+          <div className="h-64 ec-skel rounded-[1.5rem] bg-card" />
         ) : leads.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-dashed border-border py-20 text-center text-muted-foreground">
             <Inbox className="h-10 w-10" />

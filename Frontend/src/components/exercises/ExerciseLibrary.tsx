@@ -187,7 +187,7 @@ export function ExerciseLibrary({ open, onOpenChange, onImported }: { open: bool
           {items.length === 0 && loading ? (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-64 animate-pulse rounded-[1.25rem] bg-muted/50" />
+                <div key={i} className="h-64 ec-skel rounded-[1.25rem] bg-muted/50" />
               ))}
             </div>
           ) : error && items.length === 0 ? (

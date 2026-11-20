@@ -867,6 +867,9 @@ try:
     from app.routers import automations as automations_router
     app.include_router(automations_router.router, prefix="/api/studio", tags=["Coach automations"])
     logger.info("✅ Studio routers included")
+    # Legal audit 2026-11: consent records, data export and self-service erasure (models/privacy.py)
+    from app.routers import privacy as privacy_router
+    app.include_router(privacy_router.router, prefix="/api/privacy", tags=["Privacy"])
     
     logger.info("=" * 40)
     logger.info("✅ ALL ROUTERS INCLUDED SUCCESSFULLY")

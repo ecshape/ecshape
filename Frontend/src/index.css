@@ -176,7 +176,7 @@
   }
 
   /* Page entrance: children rise in sequence */
-  .ec-stagger > * { animation: ecRise .7s var(--ease-out) both; }
+  .ec-stagger > * { animation: ec-rise var(--dur-med) var(--ease-out) both; }
   .ec-stagger > *:nth-child(2) { animation-delay: .06s; }
   .ec-stagger > *:nth-child(3) { animation-delay: .12s; }
   .ec-stagger > *:nth-child(4) { animation-delay: .18s; }
@@ -190,7 +190,7 @@
   /* 3D Effects */
   .card-3d {
     transform-style: preserve-3d;
-    transition: transform 0.3s ease;
+    transition: transform var(--dur-med) var(--ease-out);
   }
 
   .card-3d:hover {
@@ -219,7 +219,7 @@
   }
 
   .animate-fade-in-up {
-    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    animation: ec-rise var(--dur-med) var(--ease-out);
   }
   @keyframes fadeInUp {
     0% {
@@ -283,7 +283,7 @@
 
 /* Card hover effects */
 .card-hover {
-  transition: transform .5s var(--ease-out), box-shadow .5s var(--ease-out), border-color .3s;
+  transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 
 .card-hover:hover {
@@ -296,7 +296,7 @@
 .btn-3d {
   position: relative;
   transform-style: preserve-3d;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--dur-fast) var(--ease-out);
 }
 
 .btn-3d:hover {
@@ -369,7 +369,7 @@
   left: var(--x, 50%); top: var(--y, 50%); width: 160%; aspect-ratio: 1; border-radius: 9999px;
   background: hsl(var(--foreground));
   transform: translate(-50%, -50%) scale(0);
-  transition: transform .6s var(--ease-out);
+  transition: transform var(--dur-med) var(--ease-out);
 }
 .ec-btn--fill:hover::before { transform: translate(-50%, -50%) scale(2.2); }
 .ec-btn:hover > svg:last-child:not(:first-child) { transform: translateX(var(--ec-nudge, 3px)); }
@@ -378,7 +378,7 @@
 /* Cards: hairline top highlight + soft depth */
 .ec-card {
   box-shadow: inset 0 1px 0 hsl(var(--foreground) / .04), 0 1px 2px rgba(0, 0, 0, .2);
-  transition: border-color .3s, box-shadow .5s var(--ease-out), transform .5s var(--ease-out);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
 }
 .light .ec-card { box-shadow: 0 1px 2px rgba(60, 40, 20, .06), 0 12px 30px -20px rgba(60, 40, 20, .25); }
 
@@ -403,11 +403,11 @@
 /* Liquid nav highlight (see components/LiquidNav.tsx) */
 .liquid-blob {
   box-shadow: 0 10px 24px -10px hsl(var(--primary) / .9), inset 0 1px 0 rgba(255, 255, 255, .25);
-  transition: transform .38s cubic-bezier(.2, .7, .3, 1), width .32s cubic-bezier(.2, .7, .3, 1), height .32s cubic-bezier(.2, .7, .3, 1);
+  transition: transform var(--dur-med) var(--ease-out), width var(--dur-med) var(--ease-out), height var(--dur-med) var(--ease-out);
 }
 /* Calm liquid: a light stretch while it travels, no wobble (QA #29) */
-.liquid-blob[data-stretch="x"] { animation: liquidX .38s cubic-bezier(.2, .7, .3, 1); }
-.liquid-blob[data-stretch="y"] { animation: liquidY .38s cubic-bezier(.2, .7, .3, 1); }
+.liquid-blob[data-stretch="x"] { animation: liquidX var(--dur-med) var(--ease-out); }
+.liquid-blob[data-stretch="y"] { animation: liquidY var(--dur-med) var(--ease-out); }
 @keyframes liquidX { 0% { scale: 1 1; } 40% { scale: 1.08 .94; } 100% { scale: 1 1; } }
 @keyframes liquidY { 0% { scale: 1 1; } 40% { scale: .96 1.08; } 100% { scale: 1 1; } }
 @media (prefers-reduced-motion: reduce) { .liquid-blob { transition: none; animation: none !important; } }

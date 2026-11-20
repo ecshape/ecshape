@@ -376,7 +376,17 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     else if (consent !== 'denied') timers.push(setTimeout(() => banner.classList.add('is-on'), 2200));
     const set = (v) => { try { localStorage.setItem('cookie_consent', v); } catch (e) { /* ignore */ } banner.classList.remove('is-on'); };
     on($('#cbAccept'), 'click', () => { set('granted'); loadGoogleAnalytics(); });
-    on($('#cbDecline'), 'click', () => set('denied'));
+    on($('#cbDecline'), 'click', () => {
+      // Legal audit 2026-11: declining after an earlier "accept" must really withdraw consent: stop GA for this page
+      // and delete its cookies (_ga, _ga_<id>) on this host and its parent domains.
+      set('denied');
+      window[`ga-disable-${GA_ID}`] = true;
+      const parts = location.hostname.split('.');
+      const domains = ['', ...parts.map((_, i) => '.' + parts.slice(i).join('.')).filter((d) => d.split('.').length > 2 || d === '.' + location.hostname)];
+      document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((n) => /^_ga(_|$)/.test(n)).forEach((n) => {
+        domains.forEach((d) => { document.cookie = `${n}=; Max-Age=0; path=/${d ? `; domain=${d}` : ''}`; });
+      });
+    });
     on($('#cookieSettings'), 'click', (e) => { e.preventDefault(); banner.classList.add('is-on'); });
   }
 

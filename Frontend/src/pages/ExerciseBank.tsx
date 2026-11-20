@@ -38,6 +38,7 @@ import {
 } from '../components/ExerciseImportReviewDialog';
 import { PortalSelect } from '@/components/ui/portal-select';
 import { LibText, matchesQuery, useQueryInEnglish } from '@/features/trainee/libText';
+import { scrollBehavior } from '@/lib/motion';
 interface Exercise {
   id: number;
   name: string;
@@ -277,7 +278,7 @@ const ExerciseBank = () => {
         setTimeout(() => {
           const errorElement = document.getElementById(firstErrorField);
           if (errorElement) {
-            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            errorElement.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
             errorElement.focus();
           }
         }, 100);
@@ -411,7 +412,7 @@ const ExerciseBank = () => {
         setTimeout(() => {
           const errorElement = document.getElementById(firstErrorField);
           if (errorElement) {
-            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            errorElement.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
             errorElement.focus();
           }
         }, 100);

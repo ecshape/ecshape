@@ -90,8 +90,8 @@ export const fmtClock = (totalSeconds: number) => {
   return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 };
 
-export const prefersReducedMotion = () =>
-  typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+import { prefersReducedMotion } from '@/lib/motion';
+export { prefersReducedMotion };
 
 /** Light haptic tick on supporting phones. */
 export const haptic = (pattern: number | number[] = 8) => {

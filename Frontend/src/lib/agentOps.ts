@@ -6,6 +6,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { TFunction } from 'i18next';
+import { scrollBehavior } from '@/lib/motion';
 
 export type AgentForm = 'prospect' | 'qa_ticket' | 'client' | 'article';
 
@@ -152,7 +153,7 @@ export function spotlight(selector: string, timeoutMs = 10000) {
       if (Date.now() - started < timeoutMs) window.setTimeout(tick, 150);
       return;
     }
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
     el.classList.remove('ec-agent-spotlight');
     void el.offsetWidth;
     el.classList.add('ec-agent-spotlight');

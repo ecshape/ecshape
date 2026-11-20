@@ -180,12 +180,17 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
                 <button key={m.id} type="button" className="tp-card tr-tpl-card tr-lift text-start" onClick={() => setSelected(m.id)}>
                   <span className="flex items-start justify-between gap-2">
                     <span className="tr-kpi-ico !h-9 !w-9"><Salad className="h-[18px] w-[18px]" /></span>
-                    <span className="tp-num text-lg" dir="ltr">{m.kcal}<span className="ms-0.5 text-xs text-muted-foreground">kcal</span></span>
+                    <span className="tp-num text-lg">{m.kcal}<span className="ms-1 text-xs text-muted-foreground">{t('foodBankPro.kcal')}</span></span>
                   </span>
                   <span className="mt-3 block font-bold leading-snug">{pick(m.name, lang)}</span>
                   <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">{pick(m.goal, lang)}</span>
-                  <span className="mt-3 flex flex-wrap gap-1.5" dir="ltr">
-                    <span className="tp-chip">P {m.p}g</span><span className="tp-chip">C {m.c}g</span><span className="tp-chip">F {m.f}g</span>
+                  <span className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+                    {([['protein', m.p], ['carb', m.c], ['fat', m.f]] as const).map(([k, v]) => (
+                      <span key={k} className="rounded-lg bg-muted/60 px-1 py-1.5">
+                        <span className="block text-[10px] text-muted-foreground">{t(`foodBankPro.macro.${k}`)}</span>
+                        <span className="block text-sm font-semibold tabular-nums">{v}<span className="ms-0.5 text-[10px] font-normal text-muted-foreground">{t('foodBankPro.g')}</span></span>
+                      </span>
+                    ))}
                   </span>
                 </button>
               ))}
@@ -228,8 +233,8 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
           {meal && (
             <>
               <div className="grid grid-cols-4 gap-2 text-center" dir="ltr">
-                {([['kcal', meal.kcal], ['P', meal.p], ['C', meal.c], ['F', meal.f]] as const).map(([k, v]) => (
-                  <div key={String(k)} className="tr-stat !p-2.5"><p className="tp-label">{String(k)}</p><p className="tp-num mt-0.5 text-lg">{String(v)}{k === 'kcal' ? '' : 'g'}</p></div>
+                {([['kcal', meal.kcal], ['protein', meal.p], ['carb', meal.c], ['fat', meal.f]] as const).map(([k, v]) => (
+                  <div key={String(k)} className="tr-stat !p-2.5"><p className="tp-label">{k === 'kcal' ? t('foodBankPro.kcal') : t(`foodBankPro.macro.${k}`)}</p><p className="tp-num mt-0.5 text-lg">{String(v)}{k === 'kcal' ? '' : t('foodBankPro.g')}</p></div>
                 ))}
               </div>
               <div className="tr-tpl-days">
@@ -237,7 +242,7 @@ export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
                   <section key={i} className="tp-card p-4">
                     <div className="mb-2 flex items-baseline justify-between gap-2">
                       <h3 className="text-sm font-bold">{pick(s.name, lang)}</h3>
-                      <span className="text-xs tabular-nums text-muted-foreground" dir="ltr">{s.time} · {s.kcal} kcal</span>
+                      <span className="text-xs tabular-nums text-muted-foreground" dir="ltr">{s.time} · {s.kcal} {t('foodBankPro.kcal')}</span>
                     </div>
                     <ul className="space-y-1.5 text-sm">
                       {s.cats.map((cat, j) => (

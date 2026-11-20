@@ -224,13 +224,13 @@
 
 /* ---------- Library drawer ---------- */
 .fb-overlay[data-state='open'] { animation: ec-fade var(--dur-med) var(--ease-out) both; }
-.fb-overlay[data-state='closed'] { animation: ec-fade var(--dur-fast) var(--ease-in) reverse both; }
+.fb-overlay[data-state='closed'] { animation: ec-fade-out var(--dur-fast) var(--ease-in) both; }
 .fb-drawer {
   inset-block: 0;
   inset-inline-end: 0;
 }
 .fb-drawer[data-state='open'] { animation: ec-side-in var(--dur-slow) var(--ease-out) both; }
-.fb-drawer[data-state='closed'] { animation: ec-side-in var(--dur-fast) var(--ease-in) reverse both; }
+.fb-drawer[data-state='closed'] { animation: ec-side-out var(--dur-fast) var(--ease-in) both; }
 
 .fb-lib-card {
   animation: ec-rise var(--dur-med) var(--ease-out) both;

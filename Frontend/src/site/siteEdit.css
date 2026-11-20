@@ -65,7 +65,7 @@ html.ec-mode-edit .ec-site .ec-sec.is-ec-hidden > .ec-edit-bar { opacity: 1; tra
 .ec-site .ec-edit-bar__label em { font-style: normal; color: var(--gold); }
 .ec-site .ec-edit-bar button {
   display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; color: var(--ink-2);
-  transition: background var(--t-fast), color var(--t-fast);
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
 }
 .ec-site .ec-edit-bar button:hover { background: var(--accent); color: #fff; }
 .ec-site .ec-edit-bar svg { width: 15px; height: 15px; }

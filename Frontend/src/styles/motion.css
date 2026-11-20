@@ -55,6 +55,11 @@
 @keyframes ec-side-in { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * var(--shift-panel))); } }
 /* Panel anchored to the inline START edge */
 @keyframes ec-side-in-start { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * -1 * var(--shift-panel))); } }
+/* Exits: always a DIFFERENT keyframe name than the entrance (Radix Presence only waits for an exit animation
+   when the name changes), --dur-fast + --ease-in. */
+@keyframes ec-fade-out { to { opacity: 0; } }
+@keyframes ec-sheet-down { to { transform: translateY(100%); } }
+@keyframes ec-side-out { to { opacity: 0; transform: translateX(calc(var(--ec-dir) * var(--shift-panel))); } }
 @keyframes ec-bump { 0% { transform: scale(.6); } 60% { transform: scale(1.12); } 100% { transform: none; } }
 @keyframes ec-spin { to { transform: rotate(360deg); } }
 @keyframes ec-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }

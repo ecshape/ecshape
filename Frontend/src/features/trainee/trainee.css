@@ -171,6 +171,7 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 /* Sheet */
 .tp-sheet-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .6); backdrop-filter: blur(4px); }
 .tp-sheet-overlay[data-state="open"] { animation: ec-fade var(--dur-med) var(--ease-out) both; }
+.tp-sheet-overlay[data-state="closed"] { animation: ec-fade-out var(--dur-fast) var(--ease-in) both; }
 .tp-sheet {
   position: fixed; z-index: 61; inset-inline: 0; bottom: 0; max-height: 92dvh; display: flex; flex-direction: column;
   border-radius: 1.75rem 1.75rem 0 0; background: hsl(var(--card));
@@ -178,6 +179,7 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
   padding-bottom: var(--tp-safe-b);
 }
 .tp-sheet[data-state="open"] { animation: ec-sheet-up var(--dur-slow) var(--ease-out) both; }
+.tp-sheet[data-state="closed"] { animation: ec-sheet-down var(--dur-fast) var(--ease-in) both; }
 /* QA #61: search sheets keep their height, so "no results" never shrinks the sheet out of sight behind the keyboard. */
 .tp-sheet--tall { height: min(88dvh, 46rem); }
 /* QA #35: a slim floating scrollbar that stays inside the rounded corners (track inset top and bottom). */
@@ -191,7 +193,8 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 @media (min-width: 640px) {
   .tp-sheet { inset-inline: 0; margin-inline: auto; bottom: auto; top: 50%; width: min(34rem, calc(100vw - 2rem)); max-height: 88dvh; border-radius: 1.75rem; transform: translateY(-50%); }
   .tp-sheet[data-state="open"] { animation: tpSheetIn var(--dur-slow) var(--ease-out) both; }
-  @keyframes tpSheetIn { from { opacity: 0; transform: translateY(calc(-50% + 16px)) scale(.98); } to { opacity: 1; transform: translateY(-50%); } }
+  .tp-sheet[data-state="closed"] { animation-name: ec-fade-out; }
+  @keyframes tpSheetIn { from { opacity: 0; transform: translateY(calc(-50% + var(--rise))) scale(var(--pop-scale)); } to { opacity: 1; transform: translateY(-50%); } }
 }
 
 .tp-scroll-x { display: flex; gap: .75rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: .25rem; }

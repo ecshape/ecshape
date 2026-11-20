@@ -428,7 +428,6 @@
 .tr-ci-mini { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .35rem .2rem; border-radius: .6rem; background: hsl(var(--foreground) / .045); color: hsl(var(--muted-foreground)); font-size: .7rem; min-width: 0; }
 .tr-ci-mini b { color: hsl(var(--foreground)); font-size: .8rem; font-variant-numeric: tabular-nums; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .tr-ci-yesno { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .9rem; border-radius: 1rem; background: hsl(var(--foreground) / .04); }
-body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration: .26s; }
 
 /* Calm motion (#9) is now the portal default for the shared kit (styles/motion.css tokens). Only the trainer's own
    two-phase nav indicator replaces the legacy liquid stretch. */
@@ -500,15 +499,18 @@ body:has(.tr-shell, .tp-shell) .tp-sheet[data-state="open"] { animation-duration
 /* Exercise detail panel: bottom sheet on phones, side panel at the inline end on wide screens (#16) */
 .tr-xs-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); }
 .tr-xs-overlay[data-state="open"] { animation: ec-fade var(--dur-med) var(--ease-out) both; }
+.tr-xs-overlay[data-state="closed"] { animation: ec-fade-out var(--dur-fast) var(--ease-in) both; }
 .tr-xs-panel {
   position: fixed; z-index: 61; inset-inline: 0; bottom: 0; max-height: 92dvh; display: flex; flex-direction: column; overflow: hidden;
   border-radius: 1.5rem 1.5rem 0 0; background: hsl(var(--card)); box-shadow: 0 -30px 60px -30px rgba(0, 0, 0, .7);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .tr-xs-panel[data-state="open"] { animation: ec-sheet-up var(--dur-slow) var(--ease-out) both; }
+.tr-xs-panel[data-state="closed"] { animation: ec-sheet-down var(--dur-fast) var(--ease-in) both; }
 @media (min-width: 768px) {
   .tr-xs-panel { inset-block: 0; inset-inline: auto 0; width: min(36rem, 100vw); max-height: none; border-radius: 0; }
   .tr-xs-panel[data-state="open"] { animation-name: ec-side-in; }
+  .tr-xs-panel[data-state="closed"] { animation-name: ec-side-out; }
 }
 .tr-xs-close { position: absolute; inset-inline-end: .75rem; top: .75rem; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 9999px; line-height: 0; background: rgba(255, 255, 255, .92); color: #262626; box-shadow: 0 4px 14px -6px rgba(0, 0, 0, .5); }
 

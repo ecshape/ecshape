@@ -109,4 +109,5 @@ tokens in `tailwind.config.ts` (200→fast, 300→med, 500→slow, 700/1000→da
     `scrollBehavior()` from `lib/motion.ts`; JS animations check `prefersReducedMotion()`.
 13. Hover lifts are 1px (`.card-hover`), and none on `(hover: none)` touch screens.
 14. Signature one-offs keep their own timing and must be listed in the audit doc: Agent EC travel/spotlight/edge
-    peek, brand mark draw, rest-timer shrink, workout burst, AI "write" blur (`ec-sx-write`), site hero/pins (GSAP).
+    peek, brand mark draw, rest-timer shrink, workout burst, AI "write" blur (`ec-sx-write`), site hero/pins (GSAP),
+    automations flow wire / live dot / spark burst (`src/styles/automations.css`, `<Burst>`).

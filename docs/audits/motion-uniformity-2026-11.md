@@ -70,6 +70,9 @@ keeps its cinematic tempo (`--t-fast/med/slow` .25/.5/.9s), as the cinematic-web
   together with the ux-walkthrough session.
 - **Signature one-offs** with their own timing (documented in the skill, rule 14): Agent EC travel / spotlight / edge
   peek, brand mark draw, rest-timer shrink, workout burst, AI "write" blur, site GSAP timelines.
+  QA #122/#123 added: automation flow wire (`.au-wire--live`, 1.8s travel loop), live dot ring (`.au-live`,
+  `--dur-loop`), spark burst on run / task done (`.au-burst`, .55s), stat bars grow (`.au-bars`, `--dur-data`) —
+  all in `src/styles/automations.css`, off under reduced motion.
 - **Sonner** toaster (1 user) keeps its library animation. Consider dropping it for the radix toast.
 - **Three toast APIs** (radix `use-toast` 19 files, NotificationContainer 26 calls, sonner) now *look* the same but
   remain three systems. Merging them is functional work.

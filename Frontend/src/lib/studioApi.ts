@@ -268,7 +268,7 @@ export const studioApi = {
 
 /* ---------------------------------------------------------------- coach automations + task inbox */
 export type AutomationTrigger = 'no_workout' | 'no_app' | 'no_checkin' | 'new_client' | 'weight_change' | 'milestone' | 'unanswered_chat';
-export type AutomationActionType = 'task' | 'notify_coach' | 'notify_client' | 'chat' | 'webhook';
+export type AutomationActionType = 'task' | 'notify_coach' | 'notify_client' | 'chat' | 'email' | 'whatsapp' | 'webhook';
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 export interface AutomationAction {
   type: AutomationActionType;
@@ -283,7 +283,8 @@ export interface Automation {
   name: string;
   template?: string | null;
   trigger: AutomationTrigger;
-  config: { days?: number; hours?: number; kg?: number; direction?: 'any' | 'up' | 'down' };
+  /** client_ids: only these trainees (QA #123); empty = everyone */
+  config: { days?: number; hours?: number; kg?: number; direction?: 'any' | 'up' | 'down'; client_ids?: number[] };
   actions: AutomationAction[];
   enabled: boolean;
   runs: number;
@@ -309,7 +310,27 @@ export interface CoachTask {
   done_at?: string | null;
 }
 
+export interface ActionResult { type: AutomationActionType; ok: boolean; mode?: string; error?: string }
+export interface AutomationFire {
+  id: number; automation_id: number; automation: string; template?: string | null; trigger: AutomationTrigger;
+  client_id: number; client_name?: string | null; result: ActionResult[]; fired_at?: string | null;
+}
+export interface AutomationStats { active: number; total: number; fired_week: number; fired_14d: number[]; messages_14d: number; open_tasks: number }
+export interface Integrations {
+  whatsapp: { connected: boolean; phone_number_id: string; display_phone: string; verified_name: string; template: string; lang: string; country_code: string; last4?: string | null };
+  email: { mode: '' | 'own' | 'platform'; sender_name: string; reply_to: string; host: string; port: number; username: string; from_email: string; has_password: boolean };
+  webhook: { count: number };
+}
+
 export const automationsApi = {
+  activity: (limit = 40) => request<AutomationFire[]>(`/automations/activity?limit=${limit}`),
+  stats: () => request<AutomationStats>('/automations/stats'),
+  integrations: () => request<Integrations>('/automations/integrations'),
+  connectWhatsapp: (data: { phone_number_id: string; token?: string; template?: string; lang?: string; country_code?: string }) =>
+    request<Integrations>('/automations/integrations/whatsapp', { method: 'PUT', body: JSON.stringify(data) }),
+  saveEmail: (data: Partial<Omit<Integrations['email'], 'mode' | 'has_password'>> & { password?: string }) =>
+    request<Integrations>('/automations/integrations/email', { method: 'PUT', body: JSON.stringify(data) }),
+  disconnect: (kind: 'whatsapp' | 'email') => request<void>(`/automations/integrations/${kind}`, { method: 'DELETE' }),
   list: () => request<Automation[]>('/automations'),
   create: (data: Omit<Automation, 'id' | 'runs' | 'last_run_at'>) => request<Automation>('/automations', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: Partial<Pick<Automation, 'name' | 'config' | 'actions' | 'enabled'>>) =>
@@ -319,9 +340,9 @@ export const automationsApi = {
   run: (id: number) => request<{ fired: number }>(`/automations/${id}/run`, { method: 'POST' }),
 
   tasks: (status: 'open' | 'done' | 'all' = 'open') => request<CoachTask[]>(`/tasks?status=${status}`),
-  createTask: (data: { title: string; body?: string; client_id?: number | null; priority?: TaskPriority }) =>
+  createTask: (data: { title: string; body?: string; client_id?: number | null; priority?: TaskPriority; due_at?: string | null }) =>
     request<CoachTask>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
-  updateTask: (id: number, data: Partial<Pick<CoachTask, 'title' | 'body' | 'priority' | 'status'>>) =>
+  updateTask: (id: number, data: Partial<Pick<CoachTask, 'title' | 'body' | 'priority' | 'status' | 'due_at'>>) =>
     request<CoachTask>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
 };

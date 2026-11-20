@@ -176,6 +176,7 @@ try:
     logger.info("Importing model modules...")
     from app.models import user as user_models, workout as workout_models, nutrition as nutrition_models, progress as progress_models, progress_photo as progress_photo_models
     from app.models import automation as automation_models  # coach automations + task inbox
+    from app.models import coach_menu as coach_menu_models  # QA #121: coach's ready-made menus
     logger.info("✅ Model modules imported successfully")
     logger.info("📋 Available models: user, workout, nutrition, progress, progress_photo, notification")
 except Exception as e:
@@ -799,6 +800,8 @@ try:
     logger.info("✅ Meal system V2 router included")
 
     logger.info("Including meal_tracking_v3 router (v3)...")
+    from app.routers import coach_menus as coach_menus_router  # before v3 so /menus is never read as a plan id
+    app.include_router(coach_menus_router.router, prefix="/api/v3/meals", tags=["Coach menus"])
     app.include_router(meal_tracking_v3.router, prefix="/api/v3/meals", tags=["Meal Tracking V3"])
     logger.info("✅ Meal Tracking V3 router included")
 

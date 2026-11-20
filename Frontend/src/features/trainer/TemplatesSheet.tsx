@@ -12,29 +12,13 @@ import { Sheet } from './ui';
 import { useTrainerClients } from './hooks';
 import {
   FOODS, MEAL_TEMPLATES, WORKOUT_TEMPLATES, libName, pick,
-  type MealTemplate, type RefFood, type WorkoutTemplate,
+  type MealTemplate, type WorkoutTemplate,
 } from './planTemplates';
 import { PortalSelect } from '@/components/ui/portal-select';
+import { buildMealPlanBody } from './menus';
 
 type Kind = 'workout' | 'meal';
 interface BankExercise { id: number; library_id?: string | null }
-interface BankFood { name: string; name_hebrew?: string | null; calories?: number | null; protein?: number | null; carbs?: number | null; fat?: number | null; measurement_type?: string | null; serving_size?: string | null }
-
-/** Food option payload for a template food: the trainer's own bank item when the name matches, else the reference values. */
-function foodOption(ref: RefFood, bank: BankFood[]) {
-  const hit = bank.find((b) => {
-    const hay = `${b.name ?? ''} ${b.name_hebrew ?? ''}`.toLowerCase();
-    return ref.match.some((m) => hay.includes(m));
-  });
-  if (hit) {
-    return {
-      name: hit.name, name_hebrew: hit.name_hebrew ?? null, calories: hit.calories ?? null, protein: hit.protein ?? null,
-      carbs: hit.carbs ?? null, fat: hit.fat ?? null, serving_size: hit.serving_size ?? null,
-      measurement_type: hit.measurement_type === 'per_portion' ? 'per_portion' : 'per_100g',
-    };
-  }
-  return { name: ref.name, name_hebrew: ref.he, calories: ref.kcal, protein: ref.p, carbs: ref.c, fat: ref.f, serving_size: ref.serving ?? null, measurement_type: ref.per };
-}
 
 async function assignWorkout(tpl: WorkoutTemplate, clientId: number, lang: string) {
   const ids = [...new Set(tpl.days.flatMap((d) => d.ex.map((e) => e.lib)))];
@@ -61,30 +45,8 @@ async function assignWorkout(tpl: WorkoutTemplate, clientId: number, lang: strin
   });
 }
 
-/** The complete meal-plan body for a template (without client_id); also sent inside a chat menu card (QA #54). */
-export async function buildMealPlanBody(tpl: MealTemplate, lang: string) {
-  const bank = await api<BankFood[]>('/v2/meals/meal-bank?include_public=true').catch(() => [] as BankFood[]);
-  return {
-    name: pick(tpl.name, lang),
-    description: pick(tpl.goal, lang),
-    number_of_meals: tpl.slots.length,
-    total_calories: tpl.kcal,
-    protein_target: tpl.p,
-    carb_target: tpl.c,
-    fat_target: tpl.f,
-    start_date: new Date().toISOString(),
-    meal_slots: tpl.slots.map((s) => ({
-      name: pick(s.name, lang),
-      time_suggestion: s.time,
-      target_calories: s.kcal,
-      macro_categories: s.cats.map((cat) => ({
-        macro_type: cat.macro,
-        quantity_instruction: pick(cat.qty, lang),
-        food_options: cat.foods.map((k, i) => ({ ...foodOption(FOODS[k], bank), order_index: i })),
-      })),
-    })),
-  };
-}
+// QA #120: menus are built only from the coach's bank (missing foods are added to it) — see ./menus.
+export { buildMealPlanBody };
 
 async function assignMeal(tpl: MealTemplate, clientId: number, lang: string) {
   return api('/v3/meals/plans', { method: 'POST', body: { client_id: clientId, ...(await buildMealPlanBody(tpl, lang)) } });

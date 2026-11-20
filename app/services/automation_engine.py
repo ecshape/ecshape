@@ -26,9 +26,10 @@ from app.models.automation import Automation, AutomationFire, CoachTask
 from app.models.chat import ChatMessage
 from app.models.check_in import DailyCheckIn
 from app.models.notification import Notification
-from app.models.user import User
+from app.models.user import ClientProfile, User
 from app.models.workout_system import WorkoutSessionV2
 from app.schemas.auth import UserRole
+from app.services import coach_channels as channels
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,7 @@ TRIGGERS: Dict[str, Callable[..., List[Hit]]] = {
 # Ready-made automations (names are i18n keys on the client; defaults here are Hebrew-first like the product).
 TEMPLATES: List[Dict[str, Any]] = [
     {'id': 'no_workout_4', 'trigger': 'no_workout', 'config': {'days': 4},
-     'actions': [{'type': 'chat', 'text': 'היי {first_name}, שמתי לב שלא התאמנת {days} ימים 💪 הכל בסדר? בוא נחזור לקצב היום.'},
+     'actions': [{'type': 'chat', 'text': 'היי {first_name}, שמתי לב שלא התאמנת {days} ימים. הכל בסדר? בוא נחזור לקצב היום.'},
                  {'type': 'task', 'title': 'לא התאמן/ה {days} ימים', 'priority': 'high'}]},
     {'id': 'no_app_5', 'trigger': 'no_app', 'config': {'days': 5},
      'actions': [{'type': 'notify_client', 'title': 'מתגעגעים אליך', 'text': '{first_name}, התוכנית שלך מחכה לך באפליקציה.'},
@@ -170,17 +171,17 @@ TEMPLATES: List[Dict[str, Any]] = [
     {'id': 'no_checkin_3', 'trigger': 'no_checkin', 'config': {'days': 3},
      'actions': [{'type': 'notify_client', 'title': 'צ׳ק-אין יומי', 'text': 'דקה אחת: משקל, צעדים ושינה — כדי שאוכל לכוון אותך.'}]},
     {'id': 'new_client', 'trigger': 'new_client', 'config': {'hours': 48},
-     'actions': [{'type': 'chat', 'text': 'ברוך הבא {first_name}! 🎉 התוכנית שלך מוכנה באפליקציה. כל שאלה — אני כאן.'},
+     'actions': [{'type': 'chat', 'text': 'ברוך הבא {first_name}! התוכנית שלך מוכנה באפליקציה. כל שאלה — אני כאן.'},
                  {'type': 'task', 'title': 'שיחת היכרות עם {name}', 'priority': 'high'}]},
     {'id': 'weight_drop', 'trigger': 'weight_change', 'config': {'kg': 2, 'days': 7, 'direction': 'down'},
      'actions': [{'type': 'task', 'title': 'ירידה חדה במשקל ({kg} ק״ג ב-{days} ימים) — לבדוק', 'priority': 'urgent'}]},
     {'id': 'milestone', 'trigger': 'milestone', 'config': {},
-     'actions': [{'type': 'chat', 'text': '{count} אימונים! 🔥 {first_name}, זה בדיוק מה שבונה תוצאות. גאה בך.'}]},
+     'actions': [{'type': 'chat', 'text': '{count} אימונים! {first_name}, זה בדיוק מה שבונה תוצאות. גאה בך.'}]},
     {'id': 'unanswered', 'trigger': 'unanswered_chat', 'config': {'hours': 12},
      'actions': [{'type': 'task', 'title': 'הודעה של {name} מחכה {hours} שעות', 'priority': 'high'}]},
 ]
 
-ACTION_TYPES = ('task', 'notify_coach', 'notify_client', 'chat', 'webhook')
+ACTION_TYPES = ('task', 'notify_coach', 'notify_client', 'chat', 'email', 'whatsapp', 'webhook')
 
 
 def _fill(text: str, client: User, coach: Optional[User], v: Dict[str, Any]) -> str:
@@ -216,7 +217,17 @@ def evaluate(db: Session, auto: Automation, now: Optional[datetime] = None) -> L
     fn = TRIGGERS.get(auto.trigger)
     if not fn:
         return []
-    return fn(db, clients_of(db, auto.trainer_id), auto.config or {}, now or datetime.utcnow())
+    clients = clients_of(db, auto.trainer_id)
+    # QA #123: an automation can target only some trainees (config.client_ids); empty / missing = everyone.
+    only = {int(x) for x in ((auto.config or {}).get('client_ids') or []) if str(x).isdigit()}
+    if only:
+        clients = [c for c in clients if c.id in only]
+    return fn(db, clients, auto.config or {}, now or datetime.utcnow())
+
+
+def _phone(db: Session, client: User) -> Optional[str]:
+    row = db.query(ClientProfile.phone).filter(ClientProfile.user_id == client.id).first()
+    return row[0] if row else None
 
 
 def run_actions(db: Session, auto: Automation, hit: Hit) -> List[Dict[str, Any]]:
@@ -240,6 +251,32 @@ def run_actions(db: Session, auto: Automation, hit: Hit) -> List[Dict[str, Any]]
                 text = _fill(a.get('text') or '', hit.client, coach, hit.vars).strip()
                 if text:
                     db.add(ChatMessage(trainer_id=auto.trainer_id, client_id=hit.client.id, sender_id=auto.trainer_id, message=text))
+            elif t == 'email':
+                subject = _fill(a.get('title') or auto.name, hit.client, coach, hit.vars)[:200]
+                text = _fill(a.get('text') or '', hit.client, coach, hit.vars).strip()
+                if not text:
+                    raise ValueError('empty email')
+                mode = channels.send_email(db, auto.trainer_id, coach.full_name if coach else '', coach.email if coach else '',
+                                           hit.client.email or '', subject, text)
+                results.append({'type': t, 'ok': True, 'mode': mode})
+                continue
+            elif t == 'whatsapp':
+                text = _fill(a.get('text') or '', hit.client, coach, hit.vars).strip()
+                if not text:
+                    raise ValueError('empty message')
+                row = channels.wa_connected(db, auto.trainer_id)
+                if row:
+                    channels.send_whatsapp(row, _phone(db, hit.client), text)
+                    results.append({'type': t, 'ok': True, 'mode': 'api'})
+                else:
+                    # Not connected: a task with a link that opens WhatsApp with the message ready (one tap to send).
+                    name = hit.client.full_name or hit.client.username
+                    db.add(CoachTask(trainer_id=auto.trainer_id, client_id=hit.client.id, automation_id=auto.id,
+                                     kind='whatsapp', title=f'WhatsApp: {name}'[:200],
+                                     body=f'{text}\n\n{channels.wa_link(_phone(db, hit.client), text)}',
+                                     priority=a.get('priority') if a.get('priority') in ('low', 'normal', 'high', 'urgent') else 'normal'))
+                    results.append({'type': t, 'ok': True, 'mode': 'manual'})
+                continue
             elif t == 'webhook':
                 url = a.get('url') or ''
                 if _safe_webhook(url):

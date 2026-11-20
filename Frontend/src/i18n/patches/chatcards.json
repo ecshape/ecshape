@@ -23,7 +23,7 @@
         "alternative": "Try this instead"
       },
       "msg": {
-        "accept": "Done! I added {{name}} to {{day}} 💪",
+        "accept": "Done! I added {{name}} to {{day}}",
         "decline": "Let's keep {{name}} for later — your current plan already covers it.",
         "alternative": "Good idea! Let's do {{name}} instead — I added it to {{day}}."
       },
@@ -43,12 +43,12 @@
         "step": "Meal {{n}} of {{total}}",
         "coachPick": "Coach's pick",
         "portion": "portion",
-        "acceptMsg": "I approved the menu “{{name}}” ✅",
+        "acceptMsg": "I approved the menu “{{name}}”",
         "sendButton": "Send a weekly menu",
         "sendTitle": "Send a weekly menu",
         "sendHelp": "{{name}} reviews it meal by meal in the chat and picks alternatives; once approved it becomes their meal plan.",
         "sendTo": "Send to {{name}}",
-        "sendMsg": "Here is your weekly menu “{{name}}”. Go through each meal, pick what you prefer and approve 🙌"
+        "sendMsg": "Here is your weekly menu “{{name}}”. Go through each meal, pick what you prefer and approve"
       },
       "details": "Exercise details",
       "noDetails": "No more details for this exercise."
@@ -78,7 +78,7 @@
         "alternative": "נסה את זה במקום"
       },
       "msg": {
-        "accept": "בוצע! הוספתי את {{name}} ל{{day}} 💪",
+        "accept": "בוצע! הוספתי את {{name}} ל{{day}}",
         "decline": "נשאיר את {{name}} להמשך — התוכנית הנוכחית כבר מכסה את זה.",
         "alternative": "רעיון טוב! נעשה במקום זה {{name}} — הוספתי ל{{day}}."
       },
@@ -98,12 +98,12 @@
         "step": "ארוחה {{n}} מתוך {{total}}",
         "coachPick": "בחירת המאמן",
         "portion": "מנה",
-        "acceptMsg": "אישרתי את התפריט “{{name}}” ✅",
+        "acceptMsg": "אישרתי את התפריט “{{name}}”",
         "sendButton": "שליחת תפריט שבועי",
         "sendTitle": "שליחת תפריט שבועי",
         "sendHelp": "{{name}} יעבור עליו ארוחה אחר ארוחה בצ׳אט ויבחר חלופות; אחרי האישור הוא יהפוך לתפריט שלו.",
         "sendTo": "שליחה ל-{{name}}",
-        "sendMsg": "הנה התפריט השבועי שלך “{{name}}”. עבור על כל ארוחה, בחר מה שאתה מעדיף ואשר 🙌"
+        "sendMsg": "הנה התפריט השבועי שלך “{{name}}”. עבור על כל ארוחה, בחר מה שאתה מעדיף ואשר"
       },
       "details": "פרטי התרגיל",
       "noDetails": "אין פרטים נוספים על התרגיל הזה."
@@ -133,7 +133,7 @@
         "alternative": "Essayez plutôt ceci"
       },
       "msg": {
-        "accept": "C'est fait ! J'ai ajouté {{name}} à {{day}} 💪",
+        "accept": "C'est fait ! J'ai ajouté {{name}} à {{day}}",
         "decline": "Gardons {{name}} pour plus tard — votre plan actuel le couvre déjà.",
         "alternative": "Bonne idée ! Faisons plutôt {{name}} — je l'ai ajouté à {{day}}."
       },
@@ -153,12 +153,12 @@
         "step": "Repas {{n}} sur {{total}}",
         "coachPick": "Choix du coach",
         "portion": "portion",
-        "acceptMsg": "J'ai validé le menu « {{name}} » ✅",
+        "acceptMsg": "J'ai validé le menu « {{name}} »",
         "sendButton": "Envoyer un menu de la semaine",
         "sendTitle": "Envoyer un menu de la semaine",
         "sendHelp": "{{name}} le parcourt repas par repas dans le chat et choisit des alternatives ; une fois validé, il devient son plan alimentaire.",
         "sendTo": "Envoyer à {{name}}",
-        "sendMsg": "Voici votre menu de la semaine « {{name}} ». Parcourez chaque repas, choisissez ce que vous préférez et validez 🙌"
+        "sendMsg": "Voici votre menu de la semaine « {{name}} ». Parcourez chaque repas, choisissez ce que vous préférez et validez"
       },
       "details": "Détails de l’exercice",
       "noDetails": "Pas d’autres détails pour cet exercice."

@@ -42,10 +42,10 @@ export const isAttachmentCard = (c: unknown): c is AttachmentCard => !!c && type
 /** One-line preview for the conversation list. */
 export const attachmentPreview = (c: unknown, t: (k: string) => string) => {
   if (!isAttachmentCard(c)) return null;
-  if (c.kind === 'photo') return `📷 ${t('chatAtt.photoMsg')}`;
-  if (c.kind === 'voice') return `🎤 ${t('chatAtt.voiceMsg')}`;
-  if (c.kind === 'exercise_share') return `🏋️ ${c.exercise.name}`;
-  return `🍽️ ${c.food.name_hebrew || c.food.name}`;
+  if (c.kind === 'photo') return `${t('chatAtt.photoMsg')}`;
+  if (c.kind === 'voice') return `${t('chatAtt.voiceMsg')}`;
+  if (c.kind === 'exercise_share') return `${c.exercise.name}`;
+  return `${c.food.name_hebrew || c.food.name}`;
 };
 
 const token = () => localStorage.getItem('access_token');

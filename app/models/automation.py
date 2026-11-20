@@ -55,3 +55,23 @@ class CoachTask(Base):
     due_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=func.now(), index=True)
     done_at = Column(DateTime, nullable=True)
+
+
+class CoachIntegration(Base):
+    """A coach's connection to an outside channel used by automations (QA #123): WhatsApp Cloud API or his own SMTP.
+
+    ``config`` holds the non-secret settings (phone number id, template, sender name, SMTP host...). The token or
+    password is encrypted at rest in ``secret_enc`` (same Fernet key as the AI keys) and never sent back to the client.
+    """
+    __tablename__ = "coach_integrations"
+    __table_args__ = (UniqueConstraint("trainer_id", "kind", name="uq_coach_integration"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    trainer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    kind = Column(String(20), nullable=False)          # whatsapp | email
+    config = Column(JSON, nullable=False, default=dict)
+    secret_enc = Column(Text, nullable=True)
+    secret_last4 = Column(String(8), nullable=True)
+    enabled = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

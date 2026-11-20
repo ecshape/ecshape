@@ -1326,7 +1326,7 @@ def create_meal_bank_item(
         measurement_type=item_data.measurement_type if hasattr(item_data, 'measurement_type') and item_data.measurement_type else MeasurementType.PER_100G,
         serving_size=item_data.serving_size if hasattr(item_data, 'serving_size') else None,
         created_by=current_user.id,
-        is_public=item_data.is_public,
+        is_public=False,  # QA #119: a coach's foods are never shared with other coaches
         **_meal_bank_library_fields(item_data.model_dump(exclude_unset=True)),
     )
     
@@ -1435,6 +1435,7 @@ def update_meal_bank_item(
     
     # Update fields
     update_data = item_data.dict(exclude_unset=True)
+    update_data.pop("is_public", None)  # QA #119: sharing with other coaches is gone
 
     if "name" in update_data or "name_hebrew" in update_data:
         english_name = update_data.get("name", meal_bank_item.name or "")

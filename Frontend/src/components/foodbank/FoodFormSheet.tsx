@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { api } from '@/features/trainee/api';
 import { Seg, Sheet } from '@/features/trainer/ui';
 import { InfoTip } from '@/components/ui/info-tip';
-import { Switch } from '@/components/ui/switch';
 import { IconOf, MACRO_ICON } from './FoodIcons';
 import { FoodPhoto, PropertyChip } from './FoodParts';
 import { MANUAL_TAGS, type MacroType, type MealBankItem, type PropertyTag } from './foodbankModel';
@@ -277,18 +276,14 @@ export const FoodFormSheet: React.FC<{
           </div>
         </section>
 
-        {/* Visibility */}
-        <section className="fb-section">
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="fb-is-public" className="flex cursor-pointer items-center gap-1 text-sm font-semibold">{t('foodBankPro.form.isPublic')}<InfoTip>{t('tt.food.publicInfo')}</InfoTip></label>
-            <Switch id="fb-is-public" checked={form.is_public} onCheckedChange={(c) => set('is_public', c)} />
-          </div>
-          {editing?.source && (
-            <p className="mt-2 text-xs text-muted-foreground">
+        {/* QA #119: no sharing with other coaches; only where the food came from */}
+        {editing?.source && (
+          <section className="fb-section">
+            <p className="text-xs text-muted-foreground">
               {t('foodBankPro.form.source', { source: editing.source === 'openfoodfacts' ? 'Open Food Facts' : t('foodBankPro.library.staples') })}
             </p>
-          )}
-        </section>
+          </section>
+        )}
       </form>
     </Sheet>
   );

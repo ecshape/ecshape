@@ -7,7 +7,7 @@ import { api } from '@/features/trainee/api';
 import { Sheet } from '@/features/trainee/ui';
 import { FoodThumb } from '@/features/trainee/AddMealSheet';
 import { MEAL_TEMPLATES, pick } from '@/features/trainer/planTemplates';
-import { buildMealPlanBody } from '@/features/trainer/TemplatesSheet';
+import { buildMealPlanBody, fetchBank, menuPlanBody, useMenus } from '@/features/trainer/menus';
 import type { ChatMessage } from './api';
 import './chatCardsI18n';
 
@@ -208,18 +208,29 @@ export const MenuSendButton: React.FC<{ clientId: number; clientName: string; on
   const { t, i18n } = useTranslation();
   const lang = i18n.language || 'he';
   const [open, setOpen] = useState(false);
-  const [sel, setSel] = useState<string>(MEAL_TEMPLATES[0]?.id ?? '');
+  // QA #121: the coach's own menus first, then the ECShape menus. Keys: "m:<id>" / "b:<template id>".
+  const { data: mine = [] } = useMenus(open);
+  const options = useMemo(() => [
+    ...mine.map((m) => ({ key: `m:${m.id}`, name: m.name, goal: m.goal, kcal: m.kcal, p: m.p, c: m.c, f: m.f, slots: m.slots.map((s) => s.name) })),
+    ...MEAL_TEMPLATES.map((x) => ({ key: `b:${x.id}`, name: pick(x.name, lang), goal: pick(x.goal, lang), kcal: x.kcal, p: x.p, c: x.c, f: x.f, slots: x.slots.map((s) => pick(s.name, lang)) })),
+  ], [mine, lang]);
+  const [picked, setSel] = useState<string>('');
+  const sel = picked || options[0]?.key || '';
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const tpl = useMemo(() => MEAL_TEMPLATES.find((x) => x.id === sel), [sel]);
+  const opt = options.find((o) => o.key === sel);
 
   const send = async () => {
-    if (!tpl) return;
+    if (!opt) return;
     setBusy(true);
     setError(null);
     try {
-      const plan = await buildMealPlanBody(tpl, lang);
-      const menu: MenuSummary = { template_id: tpl.id, name: pick(tpl.name, lang), goal: pick(tpl.goal, lang), kcal: tpl.kcal, p: tpl.p, c: tpl.c, f: tpl.f, meals: tpl.slots.length };
+      const [kind, id] = [sel.slice(0, 1), sel.slice(2)];
+      const own = kind === 'm' ? mine.find((m) => String(m.id) === id) : undefined;
+      const tpl = kind === 'b' ? MEAL_TEMPLATES.find((x) => x.id === id) : undefined;
+      const plan = own ? menuPlanBody(own, await fetchBank()) : tpl ? await buildMealPlanBody(tpl, lang) : null;
+      if (!plan) return;
+      const menu: MenuSummary = { template_id: own ? `menu-${own.id}` : tpl!.id, name: opt.name, goal: opt.goal, kcal: opt.kcal, p: opt.p, c: opt.c, f: opt.f, meals: opt.slots.length };
       const msg = await api<ChatMessage>('/v2/chat/menu-proposal', { method: 'POST', body: { client_id: clientId, message: t('chatCards.menu.sendMsg', { name: menu.name }), menu, plan } });
       onSent(msg);
       setOpen(false);
@@ -245,25 +256,25 @@ export const MenuSendButton: React.FC<{ clientId: number; clientName: string; on
         title={t('chatCards.menu.sendTitle')}
         description={t('chatCards.menu.sendHelp', { name: clientName })}
         footer={
-          <button type="button" onClick={send} disabled={busy || !tpl} className="tp-btn tp-btn--primary tp-press w-full" data-testid="menu-send">
+          <button type="button" onClick={send} disabled={busy || !opt} className="tp-btn tp-btn--primary tp-press w-full" data-testid="menu-send">
             {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}{t('chatCards.menu.sendTo', { name: clientName })}
           </button>
         }
       >
         <div className="space-y-2 pb-2" role="radiogroup" aria-label={t('chatCards.menu.sendTitle')}>
-          {MEAL_TEMPLATES.map((x) => {
-            const on = x.id === sel;
+          {options.map((x) => {
+            const on = x.key === sel;
             return (
               <button
-                key={x.id} type="button" role="radio" aria-checked={on} onClick={() => setSel(x.id)}
+                key={x.key} type="button" role="radio" aria-checked={on} onClick={() => setSel(x.key)}
                 className={cn('tp-press flex w-full items-start gap-3 rounded-2xl p-3 text-start ring-1 transition-shadow', on ? 'bg-primary/[.07] ring-2 ring-primary' : 'bg-foreground/[.035] ring-transparent hover:ring-border')}
               >
                 <span className={cn('grid h-11 w-11 flex-none place-items-center rounded-2xl', on ? 'bg-primary text-primary-foreground' : 'bg-foreground/[.07]')}><Salad className="h-5 w-5" /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-bold" dir="auto">{pick(x.name, lang)}</span>
-                  <span className="block text-xs leading-relaxed text-muted-foreground" dir="auto">{pick(x.goal, lang)}</span>
+                  <span className="block font-bold" dir="auto">{x.name}</span>
+                  {x.goal && <span className="block text-xs leading-relaxed text-muted-foreground" dir="auto">{x.goal}</span>}
                   <MacroChips m={{ name: '', kcal: x.kcal, p: x.p, c: x.c, f: x.f }} />
-                  <span className="mt-1.5 block truncate text-[11px] text-muted-foreground" dir="auto">{x.slots.map((s) => pick(s.name, lang)).join(' · ')}</span>
+                  <span className="mt-1.5 block truncate text-[11px] text-muted-foreground" dir="auto">{x.slots.join(' · ')}</span>
                 </span>
                 {on && <Check className="mt-1 h-5 w-5 flex-none text-primary" />}
               </button>

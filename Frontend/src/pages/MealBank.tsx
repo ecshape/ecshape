@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowUpDown, Download, LayoutTemplate, Library, Plus, Search, Upload, X } from 'lucide-react';
 import { ActionBtn, PageTitle } from '@/features/trainer/ui';
 import { InfoTip } from '@/components/ui/info-tip';
-import { TemplatesSheet } from '@/features/trainer/TemplatesSheet';
+import { MenusSheet } from '@/features/trainer/MenusSheet';
 import { FoodFormSheet, isStorablePhoto } from '../components/foodbank/FoodFormSheet';
 import { FoodDetailSheet } from '../components/foodbank/FoodDetailSheet';
 import { useAuth } from '../contexts/AuthContext';
@@ -772,7 +772,7 @@ const MealBank = () => {
         onDelete={(item) => { setDetailItem(null); setPendingDelete(item); }}
       />
 
-      <TemplatesSheet open={templatesOpen} onOpenChange={setTemplatesOpen} initialKind="meal" />
+      <MenusSheet open={templatesOpen} onOpenChange={setTemplatesOpen} onBankChanged={fetchItems} />
       {/* Delete confirmation */}
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>

@@ -87,11 +87,17 @@ class WorkoutService:
         return self._exercise_to_response(exercise)
 
     def update_exercise(self, exercise_id: int, exercise_data: ExerciseUpdate, trainer_id: int) -> Optional[ExerciseResponse]:
-        """Update an exercise. Any trainer can edit any exercise."""
+        """Update an exercise: the trainer who created it, or an admin (audit 2026-11: was any trainer)."""
         exercise = self.db.query(Exercise).filter(Exercise.id == exercise_id).first()
         
         if not exercise:
             return None
+        if exercise.created_by is not None and exercise.created_by != trainer_id:
+            from app.models.user import User as _U
+            editor = self.db.query(_U).filter(_U.id == trainer_id).first()
+            role = getattr(getattr(editor, "role", None), "value", getattr(editor, "role", None))
+            if role != "ADMIN":
+                return None
         
         # Update fields
         for field, value in exercise_data.dict(exclude_unset=True).items():
@@ -488,6 +494,8 @@ class WorkoutService:
         # Apply filters
         if filter_params.client_id:
             query = query.filter(ExerciseCompletion.client_id == filter_params.client_id)
+        if filter_params.client_ids is not None:
+            query = query.filter(ExerciseCompletion.client_id.in_(filter_params.client_ids))
         
         if filter_params.workout_exercise_id:
             query = query.filter(ExerciseCompletion.workout_exercise_id == filter_params.workout_exercise_id)

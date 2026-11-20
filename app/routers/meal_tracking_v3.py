@@ -17,6 +17,7 @@ from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
+from app.auth.access import require_trainer_of, can_access_client
 from app.auth.utils import get_current_user
 from app.schemas.auth import UserResponse, UserRole
 from app.models.user import User
@@ -170,6 +171,7 @@ def create_or_update_complete_plan(
 
     Backed by V2 tables using the existing V2 complete-plan creation semantics.
     """
+    require_trainer_of(db, current_user, plan_data.client_id)  # audit 2026-11, F-04
     if current_user.role not in {UserRole.TRAINER, UserRole.ADMIN}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only trainers can create meal plans")
 
@@ -789,6 +791,9 @@ def update_v3_log(
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _c = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
+    if _c and not can_access_client(db, current_user, _c.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     if current_user.role == UserRole.CLIENT:
         choice = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
         if not choice:
@@ -827,6 +832,9 @@ def delete_v3_log(
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _c = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
+    if _c and not can_access_client(db, current_user, _c.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     choice = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
     if not choice:
         raise HTTPException(status_code=404, detail="Meal choice not found")

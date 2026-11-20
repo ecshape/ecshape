@@ -44,6 +44,13 @@ QA_PRIORITIES = ("low", "normal", "high")
 def require_studio(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
     if current_user.role not in (UserRole.TRAINER, UserRole.ADMIN):
         raise HTTPException(status_code=403, detail="Trainer access only")
+    # The studio is the business's public site + its leads (names, phones). When STUDIO_OWNER_IDS is set
+    # (comma-separated user ids), only admins and those trainers may use it; other trainers coach clients only
+    # (audit 2026-11, F-14). Unset = every trainer, as before.
+    import os as _os
+    owners = {x.strip() for x in (_os.getenv("STUDIO_OWNER_IDS") or "").split(",") if x.strip()}
+    if owners and current_user.role != UserRole.ADMIN and str(current_user.id) not in owners:
+        raise HTTPException(status_code=403, detail="Studio access only")
     return current_user
 
 
@@ -551,6 +558,8 @@ class AgentChatIn(BaseModel):
 
 @router.post("/agent/chat")
 def agent_chat(payload: AgentChatIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.agent_ec import AgentUnavailable, run_agent
     try:
         return {"ok": True, **run_agent(db, user, [t.model_dump() for t in payload.messages], lang=payload.lang or "he",
@@ -571,6 +580,8 @@ class AgentDraftIn(BaseModel):
 @router.post("/agent/draft")
 def agent_draft(payload: AgentDraftIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
     """Inline Agent EC draft for one text box (prospect reply / notes, QA ticket, SEO fields, site texts)."""
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.agent_draft import draft_text
     from app.services.agent_ec import AgentUnavailable
     # Small flat context only (field values shown next to the box)
@@ -862,6 +873,8 @@ def prefer_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db:
 
 @router.post("/ai-keys/{key_id}/test")
 def test_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.agent_ec import AgentUnavailable, test_engine
     try:
         return {"ok": True, "engine": test_engine(db, user, key_id)}
@@ -919,6 +932,8 @@ class ArticleBriefIn(BaseModel):
 
 @router.post("/seo/generate")
 def generate_article(payload: ArticleBriefIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.seo_writer import generate_article as run
     lang = payload.lang if payload.lang in LANGS else "he"
     brief = payload.model_dump(exclude={"statuses", "lang"})

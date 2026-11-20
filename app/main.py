@@ -467,12 +467,9 @@ logger.info("CORS middleware configured with frontend integration support")
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(PERSISTENT_PATH, "uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Mount static files for uploads with optimized settings
-try:
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-    logger.info(f"Static files mounted successfully from {UPLOAD_DIR}")
-except Exception as e:
-    logger.warning(f"Could not mount uploads directory: {e}")
+# The uploads directory is NOT mounted as static files any more (audit 2026-11, F-10): it served every tenant's
+# progress photos, chat photos and voice messages without authentication, and any stored .html as text/html.
+# Files are served by /api/files/* and /api/v2/chat/media/*, which check the owner.
 
 # Mount frontend static files with performance optimizations
 try:
@@ -789,9 +786,9 @@ try:
     app.include_router(workouts.router, prefix="/api/workouts", tags=["Workouts"])
     logger.info("✅ Workouts router included")
     
-    logger.info("Including nutrition router...")
-    app.include_router(nutrition.router, prefix="/api/nutrition", tags=["Nutrition"])
-    logger.info("✅ Nutrition router included")
+    # The legacy /api/nutrition router is no longer mounted (audit 2026-11, F-05): the portal never calls it and its
+    # 32 endpoints checked the role only, so any trainer or client could read and change every other tenant's
+    # nutrition plans, recipes, weigh-ins and goals. Meals live in /api/v2/meals and /api/v3/meals.
     
     logger.info("Including meal_plans router...")
     app.include_router(meal_plans.router, prefix="/api/meal-plans", tags=["Meal Plans"])
@@ -805,9 +802,10 @@ try:
     app.include_router(meal_tracking_v3.router, prefix="/api/v3/meals", tags=["Meal Tracking V3"])
     logger.info("✅ Meal Tracking V3 router included")
 
-    logger.info("Including meal_tracking_v3_mock router (v3 mock)...")
-    app.include_router(meal_tracking_v3_mock.router, prefix="/api/v3/meals-mock", tags=["Meal Tracking V3 Mock"])
-    logger.info("✅ Meal Tracking V3 Mock router included")
+    # UI-testing mock: static data only, never mounted in production (audit 2026-11, L-03)
+    if ENVIRONMENT != "production":
+        app.include_router(meal_tracking_v3_mock.router, prefix="/api/v3/meals-mock", tags=["Meal Tracking V3 Mock"])
+        logger.info("✅ Meal Tracking V3 Mock router included")
 
     logger.info("Including meal_variants_v3 router (variants)...")
     app.include_router(meal_variants_v3.router, prefix="/api/v3/meals", tags=["Meal Variants V3"])

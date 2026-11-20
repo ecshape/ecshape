@@ -85,3 +85,10 @@ docs/env.production.example
 # Secrets (auth audit 2026-11)
 .cursor/railwaytoken.txt
 .dev-jwt-secret
+
+# Never commit real data (audit 2026-11, F-16)
+data/*.db*
+*.db-wal
+*.db-shm
+uploads/**
+!uploads/.gitkeep

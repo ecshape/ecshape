@@ -19,6 +19,58 @@ from app.schemas.workout import (
     BulkWorkoutExerciseCreate, BulkExerciseCompletionCreate
 )
 from app.models.workout import MuscleGroup, WorkoutPlan
+from app.auth.access import (
+    require_trainer_of, require_plan_access, require_client_access, visible_client_ids, is_client, is_trainer, not_found,
+)
+from app.models.workout import WorkoutSession as _WSession, WorkoutExercise as _WExercise, ExerciseCompletion as _WCompletion
+
+
+# ---- tenant guards (audit 2026-11, F-04): every id is checked against the caller's trainer / client
+def _plan_guard(db, user, plan_id, write=False):
+    plan = db.query(WorkoutPlan).filter(WorkoutPlan.id == plan_id).first()
+    if not plan:
+        raise not_found("Workout plan not found")
+    require_plan_access(db, user, plan.trainer_id, plan.client_id, write=write, detail="Workout plan not found")
+    return plan
+
+
+def _session_guard(db, user, session_id, write=False):
+    s = db.query(_WSession).filter(_WSession.id == session_id).first()
+    if not s:
+        raise not_found("Workout session not found")
+    _plan_guard(db, user, s.workout_plan_id, write)
+    return s
+
+
+def _wexercise_guard(db, user, workout_exercise_id, write=False):
+    w = db.query(_WExercise).filter(_WExercise.id == workout_exercise_id).first()
+    if not w:
+        raise not_found("Workout exercise not found")
+    _session_guard(db, user, w.workout_session_id, write)
+    return w
+
+
+def _completion_guard(db, user, completion_id, write=False):
+    c = db.query(_WCompletion).filter(_WCompletion.id == completion_id).first()
+    if not c:
+        raise not_found("Exercise completion not found")
+    if write and not is_client(user):
+        require_trainer_of(db, user, c.client_id, detail="Exercise completion not found")
+    else:
+        require_client_access(db, user, c.client_id, detail="Exercise completion not found")
+    return c
+
+
+def _own_exercise_slot(db, user, workout_exercise_id):
+    """A client logs completions only against exercises of their own plan."""
+    w = db.query(_WExercise).filter(_WExercise.id == workout_exercise_id).first()
+    if not w:
+        raise not_found("Workout exercise not found")
+    s = db.query(_WSession).filter(_WSession.id == w.workout_session_id).first()
+    plan = db.query(WorkoutPlan).filter(WorkoutPlan.id == s.workout_plan_id).first() if s else None
+    if not plan or plan.client_id != user.id:
+        raise not_found("Workout exercise not found")
+
 
 router = APIRouter(tags=["workouts"])
 
@@ -146,6 +198,7 @@ def create_workout_plan(
     db: Session = Depends(get_db)
 ):
     """Create a new workout plan for a client."""
+    require_trainer_of(db, current_user, workout_plan_data.client_id)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -194,6 +247,10 @@ def get_workout_plans(
     db: Session = Depends(get_db)
 ):
     """Get workout plans with filtering and pagination."""
+    if is_trainer(current_user):
+        trainer_id = current_user.id
+        if client_id is not None:
+            require_trainer_of(db, current_user, client_id)
     workout_service = WorkoutService(db)
     
     # If user is a client, only show their plans
@@ -226,6 +283,7 @@ def get_workout_plan(
     db: Session = Depends(get_db)
 ):
     """Get a specific workout plan by ID."""
+    _plan_guard(db, current_user, workout_plan_id)
     workout_service = WorkoutService(db)
     workout_plan = workout_service.get_workout_plan(workout_plan_id)
     
@@ -251,6 +309,7 @@ def get_complete_workout_plan(
     db: Session = Depends(get_db)
 ):
     """Get a complete workout plan with all sessions and exercises."""
+    _plan_guard(db, current_user, workout_plan_id)
     workout_service = WorkoutService(db)
     workout_plan = workout_service.get_complete_workout_plan(workout_plan_id)
     
@@ -277,6 +336,7 @@ def update_workout_plan(
     db: Session = Depends(get_db)
 ):
     """Update a workout plan."""
+    _plan_guard(db, current_user, workout_plan_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -301,6 +361,7 @@ def delete_workout_plan(
     db: Session = Depends(get_db)
 ):
     """Delete a workout plan."""
+    _plan_guard(db, current_user, workout_plan_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -325,6 +386,7 @@ def create_workout_session(
     db: Session = Depends(get_db)
 ):
     """Create a new workout session for a workout plan."""
+    _plan_guard(db, current_user, workout_plan_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -341,6 +403,7 @@ def get_workout_session(
     db: Session = Depends(get_db)
 ):
     """Get a specific workout session by ID."""
+    _session_guard(db, current_user, workout_session_id)
     workout_service = WorkoutService(db)
     workout_session = workout_service.get_workout_session(workout_session_id)
     
@@ -359,6 +422,7 @@ def get_complete_workout_session(
     db: Session = Depends(get_db)
 ):
     """Get a complete workout session with all exercises."""
+    _session_guard(db, current_user, workout_session_id)
     workout_service = WorkoutService(db)
     workout_session = workout_service.get_complete_workout_session(workout_session_id)
     
@@ -378,6 +442,7 @@ def update_workout_session(
     db: Session = Depends(get_db)
 ):
     """Update a workout session."""
+    _session_guard(db, current_user, workout_session_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -402,6 +467,7 @@ def delete_workout_session(
     db: Session = Depends(get_db)
 ):
     """Delete a workout session."""
+    _session_guard(db, current_user, workout_session_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -426,6 +492,7 @@ def create_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Add an exercise to a workout session."""
+    _session_guard(db, current_user, workout_session_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -443,6 +510,7 @@ def create_bulk_workout_exercises(
     db: Session = Depends(get_db)
 ):
     """Add multiple exercises to a workout session at once."""
+    _session_guard(db, current_user, workout_session_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -459,6 +527,7 @@ def get_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Get a specific workout exercise by ID."""
+    _wexercise_guard(db, current_user, workout_exercise_id)
     workout_service = WorkoutService(db)
     workout_exercise = workout_service.get_workout_exercise(workout_exercise_id)
     
@@ -478,6 +547,7 @@ def update_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Update a workout exercise."""
+    _wexercise_guard(db, current_user, workout_exercise_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -502,6 +572,7 @@ def delete_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Delete a workout exercise."""
+    _wexercise_guard(db, current_user, workout_exercise_id, write=True)
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -526,6 +597,9 @@ def create_exercise_completion(
     db: Session = Depends(get_db)
 ):
     """Log completion of an exercise with optional form photo."""
+    if not is_client(current_user):
+        raise HTTPException(status_code=403, detail="Only clients can log completions")
+    _own_exercise_slot(db, current_user, completion_data.workout_exercise_id)
     workout_service = WorkoutService(db)
     return workout_service.create_exercise_completion(completion_data, current_user.id, form_photo)
 
@@ -536,6 +610,10 @@ def create_bulk_exercise_completions(
     db: Session = Depends(get_db)
 ):
     """Log completion of multiple exercises at once."""
+    if not is_client(current_user):
+        raise HTTPException(status_code=403, detail="Only clients can log completions")
+    for _c in bulk_data.completions:
+        _own_exercise_slot(db, current_user, _c.workout_exercise_id)
     workout_service = WorkoutService(db)
     return workout_service.create_bulk_exercise_completions(bulk_data, current_user.id)
 
@@ -580,7 +658,14 @@ def get_exercise_completions(
                 detail="Invalid end_date format. Use YYYY-MM-DD"
             )
     
+    scope = None
+    if client_id is not None and not is_client(current_user):
+        require_client_access(db, current_user, client_id)
+    elif client_id is None:
+        scope = visible_client_ids(db, current_user)
+        scope = list(scope) if scope is not None else None
     filter_params = ExerciseCompletionFilter(
+        client_ids=scope,
         client_id=client_id,
         workout_exercise_id=workout_exercise_id,
         start_date=parsed_start_date,
@@ -607,6 +692,7 @@ def get_exercise_completion(
     db: Session = Depends(get_db)
 ):
     """Get a specific exercise completion by ID."""
+    _completion_guard(db, current_user, completion_id)
     workout_service = WorkoutService(db)
     completion = workout_service.get_exercise_completion(completion_id)
     
@@ -633,6 +719,7 @@ def update_exercise_completion(
     db: Session = Depends(get_db)
 ):
     """Update an exercise completion."""
+    _completion_guard(db, current_user, completion_id, write=True)
     workout_service = WorkoutService(db)
     completion = workout_service.get_exercise_completion(completion_id)
     
@@ -659,6 +746,7 @@ def delete_exercise_completion(
     db: Session = Depends(get_db)
 ):
     """Delete an exercise completion."""
+    _completion_guard(db, current_user, completion_id, write=True)
     workout_service = WorkoutService(db)
     completion = workout_service.get_exercise_completion(completion_id)
     
@@ -691,6 +779,7 @@ def get_workout_summary(
     db: Session = Depends(get_db)
 ):
     """Get summary statistics for a workout plan."""
+    _plan_guard(db, current_user, workout_plan_id)
     workout_service = WorkoutService(db)
     summary = workout_service.get_workout_summary(workout_plan_id)
     
@@ -710,6 +799,8 @@ def get_exercise_progress(
     db: Session = Depends(get_db)
 ):
     """Get progress statistics for a specific exercise."""
+    if client_id is not None and not is_client(current_user):
+        require_client_access(db, current_user, client_id)
     workout_service = WorkoutService(db)
     
     # If user is not a trainer, use their ID

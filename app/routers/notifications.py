@@ -67,6 +67,13 @@ async def create_notification(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Create a new notification (admin/trainer only)"""
+    from app.auth.access import is_trainer, can_access_client, not_found
+    if is_trainer(current_user):
+        # a trainer notifies themself or their own clients only (audit 2026-11, F-11)
+        if notification.recipient_id != current_user.id and not can_access_client(db, current_user, notification.recipient_id):
+            raise not_found("Recipient not found")
+        if notification.client_id is not None and not can_access_client(db, current_user, notification.client_id):
+            raise not_found("Client not found")
     if current_user.role not in ["ADMIN", "TRAINER"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -256,6 +263,9 @@ async def trigger_goal_check(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Manually trigger goal check for a specific client (admin/trainer only)"""
+    from app.auth.access import is_trainer, require_trainer_of
+    if is_trainer(current_user):
+        require_trainer_of(db, current_user, client_id)
     if current_user.role not in ["ADMIN", "TRAINER"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

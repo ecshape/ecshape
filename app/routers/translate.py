@@ -22,5 +22,7 @@ class TranslateIn(BaseModel):
 
 @router.post("/translate")
 def translate_texts(body: TranslateIn, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("translate", current_user.id)
     texts = [t[:2000] for t in body.texts]
     return svc.translate(db, current_user.id, texts, body.lang, body.src_lang)

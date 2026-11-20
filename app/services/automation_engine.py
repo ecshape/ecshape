@@ -200,7 +200,7 @@ def _safe_webhook(url: str) -> bool:
             return False
         for info in socket.getaddrinfo(u.hostname, None):
             ip = ipaddress.ip_address(info[4][0])
-            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+            if not ip.is_global or ip.is_multicast:  # also CGNAT / benchmark / reserved ranges (audit 2026-11)
                 return False
         return True
     except Exception:

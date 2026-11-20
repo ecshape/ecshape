@@ -477,12 +477,9 @@ logger.info("CORS middleware configured with frontend integration support")
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(PERSISTENT_PATH, "uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Mount static files for uploads with optimized settings
-try:
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-    logger.info(f"Static files mounted successfully from {UPLOAD_DIR}")
-except Exception as e:
-    logger.warning(f"Could not mount uploads directory: {e}")
+# The uploads directory is NOT mounted as static files any more (audit 2026-11, F-10): it served every tenant's
+# progress photos, chat photos and voice messages without authentication, and any stored .html as text/html.
+# Files are served by /api/files/* and /api/v2/chat/media/*, which check the owner.
 
 # Mount frontend static files with performance optimizations
 try:

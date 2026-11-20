@@ -1,5 +1,6 @@
 import { legalNavFor } from '@/legal/i18n';
 import { LEGAL_DOCS } from '@/legal/content';
+import { siteNotices } from '@/legal/siteNotices';
 /**
  * Builds the public site's HTML from editable content. Class names match site.css / siteMotion.js.
  * All text is escaped; only icons and structure are raw HTML.
@@ -236,6 +237,7 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
     </div>
     <div class="results__progress" aria-hidden="true"><i></i></div>
   </div>
+  <p class="wrap legal-note">${esc(siteNotices(lang).results)}</p>
 </section>`,
 
     shift: () => `
@@ -439,7 +441,7 @@ ${page}
     </nav>
   </div>
   <div class="footer__mark" aria-hidden="true">${'ECSHAPE'.split('').map((l) => `<span>${l}</span>`).join('')}</div>
-  <div class="footer__bottom"><span${P_('footer.rights')}>${esc(c.footer.rights)}</span><a href="#site-top" class="link-draw"${P_('footer.back')}>${esc(c.footer.back)}</a></div>
+  <div class="footer__bottom"><span><span${P_('footer.rights')}>${esc(c.footer.rights)}</span><br><small class="footer__biz">${esc(siteNotices(lang).business)}</small></span><a href="#site-top" class="link-draw"${P_('footer.back')}>${esc(c.footer.back)}</a></div>
 </footer>
 
 <a class="wa-float" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${WA_SVG}</a>
@@ -468,7 +470,7 @@ ${page}
         <label class="field"><span>${esc(c.form.message)}</span><textarea name="message" rows="3" maxlength="2000" placeholder="${esc(c.form.messagePh)}"></textarea></label>
         <p class="form-msg" role="status" aria-live="polite"></p>
         <button type="submit" class="btn btn--primary btn--block" data-icon="arrow" data-sending="${esc(c.form.sending)}" data-error="${esc(c.form.error)}" data-required="${esc(c.form.required)}" data-invalid-email="${esc(c.form.invalidEmail || ({ he: 'כתובת האימייל לא נראית תקינה.', en: 'That email address doesn’t look right.', fr: 'Cette adresse e-mail ne semble pas valide.' } as Record<string, string>)[lang] || '')}">${esc(c.form.submit)}</button>
-        <p class="form-privacy">${esc(c.form.privacy)}</p>
+        <p class="form-privacy">${esc(c.form.privacy)} ${esc(siteNotices(lang).form)} <a href="/legal/privacy" target="_blank" rel="noopener">${esc(siteNotices(lang).policy)}</a></p>
       </form>
       <div class="form-done" hidden>
         <div class="form-done__icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
@@ -482,7 +484,7 @@ ${page}
 </div>
 
 <div class="cookie" id="cookieBanner" role="dialog" aria-label="Cookies">
-  <p>${esc(c.cookie.text)}</p>
+  <p>${esc(c.cookie.text)} <a href="/legal/privacy" target="_blank" rel="noopener">${esc(siteNotices(lang).cookiePolicy)}</a></p>
   <div class="cookie__btns">
     <button type="button" class="cb-accept" id="cbAccept">${esc(c.cookie.accept)}</button>
     <button type="button" class="cb-decline" id="cbDecline">${esc(c.cookie.decline)}</button>

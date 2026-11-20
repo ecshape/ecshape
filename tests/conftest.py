@@ -41,11 +41,26 @@ def world(client):
     w = World()
     w.h = {}
     w.id = {}
-    for name, role in [("adm", "ADMIN"), ("trA", "TRAINER"), ("trB", "TRAINER"), ("clA", "CLIENT"), ("clB", "CLIENT")]:
-        r = client.post("/api/auth/register/test", json={
-            "username": name, "email": f"{name}@example.com", "full_name": name, "role": role, "password": PASSWORD})
-        assert r.status_code == 201, r.text
-        w.id[name] = r.json()["id"]
+    # Users go straight into the DB (not through /auth/register/test), so this suite doesn't depend on that
+    # test-only endpoint being switched on, and can share a pytest run with tests/security.
+    from app.database import SessionLocal
+    from app.models.user import User
+    from app.schemas.auth import UserRole
+    from app.auth.utils import get_password_hash
+    db = SessionLocal()
+    try:
+        for name, role in [("adm", "ADMIN"), ("trA", "TRAINER"), ("trB", "TRAINER"), ("clA", "CLIENT"),
+                           ("clB", "CLIENT")]:
+            u = db.query(User).filter(User.username == name).first()
+            if not u:
+                u = User(username=name, email=f"{name}@example.com", full_name=name, role=UserRole[role],
+                         hashed_password=get_password_hash(PASSWORD), is_active=True)
+                db.add(u)
+                db.commit()
+            w.id[name] = u.id
+    finally:
+        db.close()
+    for name in w.id:
         tok = client.post("/api/auth/login", json={"username": name, "password": PASSWORD}).json()["access_token"]
         w.h[name] = {"Authorization": f"Bearer {tok}"}
     for trainer, cl in (("trA", "clA"), ("trB", "clB")):

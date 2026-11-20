@@ -16,15 +16,13 @@ router = APIRouter()
 def _guard_privileged_fields(current_user: UserResponse, target, user_update: UserUpdate) -> None:
     """Mass-assignment guard (auth audit C2 + API audit F-01, merged).
 
-    role: only an admin may change it. is_active: an admin, or a trainer for their own client (never themselves).
-    Sending a field with its current value is a no-op and allowed.
+    role: only an admin may send it. is_active: only an admin, or a trainer for their own client (never
+    themselves). Any attempt by anyone else is refused, even with the current value, so probing gets a 403.
     """
     sent = user_update.model_fields_set
-    if "role" in sent and user_update.role is not None:
-        current_role = target.role.value if hasattr(target.role, "value") else str(target.role)
-        if user_update.role.value != current_role and not is_admin(current_user):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can change roles")
-    if "is_active" in sent and user_update.is_active is not None and user_update.is_active != target.is_active:
+    if "role" in sent and not is_admin(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can change roles")
+    if "is_active" in sent:
         own_client = (is_trainer(current_user) and target.trainer_id == current_user.id
                       and target.id != current_user.id)
         if not (is_admin(current_user) or own_client):

@@ -213,7 +213,7 @@ const EditClient: React.FC = () => {
 
   if (!client) {
     return (
-      <Layout currentPage="dashboard">
+      <Layout currentPage="clients">
         <div className="tr-page tr-page--narrow">
           {fetching ? (
             <div aria-busy="true" aria-label={t('common.loading')}>
@@ -236,7 +236,7 @@ const EditClient: React.FC = () => {
   }
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="clients">
       <div className="tr-page tr-page--narrow">
         <BackLink to={`/client/${clientId}`} className="mb-4" />
         <PageTitle

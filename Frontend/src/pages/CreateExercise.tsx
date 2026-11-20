@@ -378,7 +378,7 @@ const CreateExercise = () => {
   };
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="exercises">
       <div className="container mx-auto p-4 md:p-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

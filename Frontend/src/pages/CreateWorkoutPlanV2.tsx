@@ -419,7 +419,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
   const totalExercises = formData.workout_days.reduce((s, d) => s + d.exercises.length, 0);
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="clients">
       <div className="tr-page">
         <BackLink className="mb-4" />
         <PageTitle

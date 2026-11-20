@@ -303,7 +303,7 @@ const ClientProfile = () => {
 
   if (loading) {
     return (
-      <Layout currentPage="dashboard">
+      <Layout currentPage="clients">
         <div className="tr-page" aria-busy="true" aria-label={t('common.loading')}>
           <Skel className="mb-5 h-10 w-28 rounded-full" />
           <Skel className="mb-5 h-64 rounded-[1.5rem]" />
@@ -316,7 +316,7 @@ const ClientProfile = () => {
 
   if (!client) {
     return (
-      <Layout currentPage="dashboard">
+      <Layout currentPage="clients">
         <div className="tr-page tr-page--narrow">
           <EmptyState
             icon={User}
@@ -427,7 +427,7 @@ const ClientProfile = () => {
   const tab = visibleTabs.some((x) => x.id === activeTab) ? activeTab : 'overview';
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="clients">
       <div className="tr-page">
         <BackLink to="/trainer-dashboard" className="mb-4" />
 
@@ -866,9 +866,13 @@ const Overview: React.FC<{
       }
     }
     for (const p of progress) {
+      // created_at gives the real time, not the day's midnight (r3), but only when it was logged on the day it
+      // describes; a back-dated weigh-in keeps its own day.
+      const created = parseDate(p.created_at);
+      const recorded = parseDate(p.recorded_at);
+      const at = created && (!recorded || created.toDateString() === recorded.toDateString()) ? created : recorded || created;
       items.push({
-        // created_at: the real time, not the day's midnight (r3)
-        id: `p${p.id}`, at: parseDate(p.created_at || p.recorded_at)?.getTime() ?? 0,
+        id: `p${p.id}`, at: at?.getTime() ?? 0,
         icon: p.photo_path || p.photos?.length ? Activity : Scale, tone: 'text-[hsl(var(--tr-ok))]',
         title: p.weight ? t('trainer.client.tl.weight', { kg: fmtNum(p.weight, 1) }) : t('trainer.client.tl.progress'), detail: p.notes || undefined,
       });

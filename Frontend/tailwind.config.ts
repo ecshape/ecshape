@@ -129,7 +129,8 @@ export default {
 				'accordion-down': 'accordion-down var(--dur-med) var(--ease-out)',
 				'accordion-up': 'accordion-up var(--dur-fast) var(--ease-in)',
 				'fade-in': 'ec-rise var(--dur-med) var(--ease-out) backwards',
-				'slide-up': 'ec-rise var(--dur-med) var(--ease-out) backwards'
+				'slide-up': 'ec-rise var(--dur-med) var(--ease-out) backwards',
+				pulse: 'ec-pulse var(--dur-loop) var(--ease-in-out) infinite'
 			}
 		}
 	},

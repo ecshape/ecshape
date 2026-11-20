@@ -57,6 +57,8 @@
 @keyframes ec-side-in-start { from { opacity: 0; transform: translateX(calc(var(--ec-dir) * -1 * var(--shift-panel))); } }
 @keyframes ec-bump { 0% { transform: scale(.6); } 60% { transform: scale(1.12); } 100% { transform: none; } }
 @keyframes ec-spin { to { transform: rotate(360deg); } }
+@keyframes ec-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes ec-pulse { 50% { opacity: .5; } }
 
 /* ------------------------------------------------------------- shared utilities */
 /* The one route transition for every shell (trainer .tr-route, trainee .tr-route, legacy Layout .ec-page-enter) */
@@ -64,6 +66,13 @@
 .ec-enter { animation: ec-rise var(--dur-med) var(--ease-out) backwards; }
 .ec-enter-pop { animation: ec-pop var(--dur-med) var(--ease-out) backwards; }
 .ec-bump { animation: ec-bump var(--dur-slow) var(--ease-spring) both; }
+
+/* The one loading skeleton: a soft shimmer sweep (ui/skeleton, .tp-skel and page placeholders all use it) */
+.ec-skel {
+  background-image: linear-gradient(100deg, hsl(var(--foreground) / .05) 30%, hsl(var(--foreground) / .1) 50%, hsl(var(--foreground) / .05) 70%);
+  background-size: 300% 100%;
+  animation: ec-shimmer var(--dur-loop) var(--ease-in-out) infinite;
+}
 
 /* tailwindcss-animate overlays (dialog, select, tooltip, toast …): calm curve. Durations come from
    tailwind.config.ts (DEFAULT = --dur-fast); exits are always fast and ease in. */

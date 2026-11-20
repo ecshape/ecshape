@@ -100,9 +100,8 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
   border-radius: .9rem;
   background: linear-gradient(100deg, hsl(var(--foreground) / .05) 30%, hsl(var(--foreground) / .1) 50%, hsl(var(--foreground) / .05) 70%);
   background-size: 300% 100%;
-  animation: tpShimmer var(--dur-loop) var(--ease-in-out) infinite;
+  animation: ec-shimmer var(--dur-loop) var(--ease-in-out) infinite; /* same as .ec-skel */
 }
-@keyframes tpShimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 /* Entrances */
 .tp-rise { animation: ec-rise var(--dur-med) var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 6) * var(--stagger-step)); }

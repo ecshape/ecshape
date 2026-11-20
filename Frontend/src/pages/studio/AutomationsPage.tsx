@@ -139,8 +139,8 @@ const AutomationsPage = () => {
 
         {isPending && !autos.length ? (
           <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
-            <div className="h-[28rem] animate-pulse rounded-[1.5rem] bg-card" />
-            <div className="h-[28rem] animate-pulse rounded-[1.5rem] bg-card" />
+            <div className="h-[28rem] ec-skel rounded-[1.5rem] bg-card" />
+            <div className="h-[28rem] ec-skel rounded-[1.5rem] bg-card" />
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">

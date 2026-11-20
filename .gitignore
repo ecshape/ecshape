@@ -81,3 +81,10 @@ docs/env.production.example
 
 # QA agent key (tools/qa.py)
 .qa-agent-key
+
+# Never commit real data (audit 2026-11, F-16)
+data/*.db
+*.db-wal
+*.db-shm
+uploads/**
+!uploads/.gitkeep

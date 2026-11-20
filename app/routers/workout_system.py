@@ -47,6 +47,29 @@ from app.models.workout_system import (
 from app.services.trainer_notification_helper import notify_trainer_immediate
 from app.services.websocket_service import websocket_service
 from app.models.workout import Exercise
+from app.auth.access import (
+    require_trainer_of, require_plan_access, require_client_access, can_access_client, visible_client_ids,
+    is_admin, is_client, not_found,
+)
+
+
+# ---- tenant guards (audit 2026-11, F-04)
+def _day_guard(db, user, day_id, write=True):
+    day = db.query(WorkoutDay).filter(WorkoutDay.id == day_id).first()
+    plan = db.query(NewWorkoutPlan).filter(NewWorkoutPlan.id == day.workout_plan_id).first() if day else None
+    if not plan:
+        raise not_found("Workout day not found")
+    require_plan_access(db, user, plan.trainer_id, plan.client_id, write=write, detail="Workout day not found")
+    return day
+
+
+def _wexercise_guard(db, user, workout_exercise_id, write=True):
+    we = db.query(NewWorkoutExercise).filter(NewWorkoutExercise.id == workout_exercise_id).first()
+    if not we:
+        raise not_found("Workout exercise not found")
+    _day_guard(db, user, we.workout_day_id, write)
+    return we
+
 
 router = APIRouter()
 
@@ -913,6 +936,7 @@ def update_workout_day(
     db: Session = Depends(get_db)
 ):
     """Update a workout day (trainer only)"""
+    _day_guard(db, current_user, day_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can update workout days")
     
@@ -939,6 +963,7 @@ def add_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Add an exercise to a workout day (trainer only)"""
+    _day_guard(db, current_user, day_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can add exercises")
     
@@ -975,6 +1000,7 @@ def update_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Update a workout exercise (trainer only)"""
+    _wexercise_guard(db, current_user, exercise_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can update exercises")
     
@@ -1004,6 +1030,7 @@ def delete_workout_exercise(
     db: Session = Depends(get_db)
 ):
     """Delete a workout exercise (trainer only)"""
+    _wexercise_guard(db, current_user, exercise_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can delete exercises")
     
@@ -1026,6 +1053,8 @@ def start_workout_session(
     db: Session = Depends(get_db)
 ):
     """Start a new workout session (client only)"""
+    if is_client(current_user) and session_data.workout_day_id is not None:
+        _day_guard(db, current_user, session_data.workout_day_id, write=False)
     if current_user.role != UserRole.CLIENT:
         raise HTTPException(status_code=403, detail="Only clients can start workout sessions")
     
@@ -1049,6 +1078,9 @@ def update_workout_session(
     db: Session = Depends(get_db),
 ):
     """Update a workout session (client only)"""
+    _s = db.query(NewWorkoutSession).filter(NewWorkoutSession.id == session_id).first()
+    if _s and not can_access_client(db, current_user, _s.client_id):
+        raise not_found("Workout session not found")
     session = db.query(NewWorkoutSession).filter(NewWorkoutSession.id == session_id).first()
     
     if not session:
@@ -1127,6 +1159,8 @@ def record_set_completion(
     db: Session = Depends(get_db)
 ):
     """Record a completed set (client only)"""
+    if is_client(current_user):
+        _wexercise_guard(db, current_user, set_data.workout_exercise_id, write=False)
     if current_user.role != UserRole.CLIENT:
         raise HTTPException(status_code=403, detail="Only clients can record set completions")
     owned = db.query(NewWorkoutSession).filter(NewWorkoutSession.id == session_id, NewWorkoutSession.client_id == current_user.id).first()
@@ -1163,6 +1197,9 @@ def create_set_completion_direct(
     db: Session = Depends(get_db)
 ):
     """Create a set completion directly (simplified endpoint for clients)"""
+    if not is_client(current_user):
+        raise HTTPException(status_code=403, detail="Only clients can record set completions")
+    _wexercise_guard(db, current_user, set_data.workout_exercise_id, write=False)
     # Create or get today's workout session
     from datetime import datetime, timezone
     today = datetime.now().date()
@@ -1257,6 +1294,9 @@ def delete_set_completion(
     db: Session = Depends(get_db)
 ):
     """Delete a set completion"""
+    _sc = db.query(SetCompletion).filter(SetCompletion.id == completion_id).first()
+    if _sc and not can_access_client(db, current_user, _sc.client_id):
+        raise not_found("Set completion not found")
     set_completion = db.query(SetCompletion).filter(SetCompletion.id == completion_id).first()
     
     if not set_completion:
@@ -1284,6 +1324,8 @@ def record_personal_record(
     db: Session = Depends(get_db)
 ):
     """Record a personal record (client or trainer on behalf of client)"""
+    if not is_client(current_user):
+        require_trainer_of(db, current_user, getattr(pr_data, "client_id", None))
     pr = ExercisePersonalRecord(
         client_id=current_user.id if current_user.role == UserRole.CLIENT else pr_data.client_id,
         exercise_id=pr_data.exercise_id,
@@ -1309,6 +1351,11 @@ def get_personal_records(
     db: Session = Depends(get_db)
 ):
     """Get personal records"""
+    if client_id is not None and not is_client(current_user):
+        require_client_access(db, current_user, client_id)
+    if client_id is None and not is_client(current_user) and not is_admin(current_user):
+        return db.query(ExercisePersonalRecord).filter(
+            ExercisePersonalRecord.client_id.in_(list(visible_client_ids(db, current_user)))).all()
     query = db.query(ExercisePersonalRecord)
     
     if current_user.role == UserRole.CLIENT:

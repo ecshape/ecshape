@@ -44,6 +44,37 @@ from app.schemas.meal_system import (
 from app.models.user import User
 from app.services.trainer_notification_helper import notify_trainer_immediate
 from app.services.websocket_service import websocket_service
+from app.auth.access import (
+    require_trainer_of, require_plan_access, require_client_access, can_access_client, visible_client_ids,
+    is_admin, is_client, is_trainer, not_found,
+)
+
+
+# ---- tenant guards (audit 2026-11, F-04)
+def _plan_of_macro(db, user, macro_id, write=True):
+    mc = db.query(MacroCategory).filter(MacroCategory.id == macro_id).first()
+    slot = db.query(MealSlot).filter(MealSlot.id == mc.meal_slot_id).first() if mc else None
+    plan = db.query(NewMealPlan).filter(NewMealPlan.id == slot.meal_plan_id).first() if slot else None
+    if not plan:
+        raise not_found("Macro category not found")
+    require_plan_access(db, user, plan.trainer_id, plan.client_id, write=write, detail="Macro category not found")
+    return plan
+
+
+def _food_option_guard(db, user, food_id, write=True):
+    fo = db.query(FoodOption).filter(FoodOption.id == food_id).first()
+    if not fo:
+        raise not_found("Food option not found")
+    _plan_of_macro(db, user, fo.macro_category_id, write)
+    return fo
+
+
+def _bank_visible(query, user):
+    """Meal bank rows a caller may see: their own + public ones (admins: all)."""
+    if is_admin(user):
+        return query
+    return query.filter((MealBank.created_by == user.id) | (MealBank.is_public == True))
+
 from app.models.meal_system import (
     MealPlanV2 as NewMealPlan,
     MealSlot,
@@ -73,6 +104,7 @@ def create_meal_plan(
     db: Session = Depends(get_db)
 ):
     """Create a new meal plan (trainer only)"""
+    require_trainer_of(db, current_user, plan_data.client_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -143,6 +175,7 @@ def create_complete_meal_plan(
     db: Session = Depends(get_db)
 ):
     """Create a complete meal plan with all meals and food options at once (trainer only)"""
+    require_trainer_of(db, current_user, plan_data.client_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -385,6 +418,7 @@ def add_food_option(
     db: Session = Depends(get_db)
 ):
     """Add a food option to a macro category (trainer only)"""
+    _plan_of_macro(db, current_user, macro_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can add food options")
     
@@ -417,6 +451,7 @@ def update_food_option(
     db: Session = Depends(get_db)
 ):
     """Update a food option (trainer only)"""
+    _food_option_guard(db, current_user, food_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can update food options")
     
@@ -440,6 +475,7 @@ def delete_food_option(
     db: Session = Depends(get_db)
 ):
     """Delete a food option (trainer only)"""
+    _food_option_guard(db, current_user, food_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can delete food options")
     
@@ -500,16 +536,18 @@ def get_meal_choices(
     db: Session = Depends(get_db)
 ):
     """Get meal choices (trainers see their clients, clients see their own)"""
+    if client_id is not None and not is_client(current_user):
+        require_client_access(db, current_user, client_id)
     from datetime import datetime, timedelta, timezone
 
     query = db.query(ClientMealChoice)
     
     if current_user.role == "CLIENT":
         query = query.filter(ClientMealChoice.client_id == current_user.id)
-    elif current_user.role == UserRole.TRAINER and client_id:
-        query = query.filter(ClientMealChoice.client_id == client_id)
     elif client_id:
         query = query.filter(ClientMealChoice.client_id == client_id)
+    elif not is_admin(current_user):
+        query = query.filter(ClientMealChoice.client_id.in_(list(visible_client_ids(db, current_user))))
     
     if date:
         try:
@@ -543,6 +581,8 @@ def update_meal_choice(
     # Clients can only update their own choices
     if current_user.role == UserRole.CLIENT and choice.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if not can_access_client(db, current_user, choice.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     
     for field, value in choice_data.dict(exclude_unset=True).items():
         setattr(choice, field, value)
@@ -566,6 +606,8 @@ def delete_meal_choice(
     
     if current_user.role == UserRole.CLIENT and choice.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if not can_access_client(db, current_user, choice.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     
     db.delete(choice)
     db.commit()
@@ -580,6 +622,8 @@ def get_daily_macros(
     db: Session = Depends(get_db)
 ):
     """Calculate daily macro consumption for a client on a specific date"""
+    if client_id is not None:
+        require_client_access(db, current_user, client_id)
     from datetime import datetime, timedelta, timezone
     
     # Determine which client to query
@@ -716,6 +760,8 @@ def save_daily_meal_history(
     db: Session = Depends(get_db)
 ):
     """Save or update daily meal history"""
+    if history_data.client_id and not is_client(current_user):
+        require_client_access(db, current_user, history_data.client_id)
     from datetime import datetime
     
     # Ensure clients can only save their own history
@@ -1014,6 +1060,8 @@ def get_average_calories(
     db: Session = Depends(get_db)
 ):
     """Calculate average calories per day over specified period"""
+    if client_id is not None:
+        require_client_access(db, current_user, client_id)
     from datetime import datetime, timedelta
     from sqlalchemy import func
     
@@ -1470,8 +1518,8 @@ def cleanup_duplicate_meal_bank_items(
             text = re.sub(r'\s+', ' ', text.strip().lower())
             return text
         
-        # Get all meal bank items
-        all_items = db.query(MealBank).all()
+        # A trainer de-duplicates their own items only (audit 2026-11, F-06: was deleting every trainer's rows)
+        all_items = db.query(MealBank).all() if is_admin(current_user) else db.query(MealBank).filter(MealBank.created_by == current_user.id).all()
         
         # Group items by normalized name
         seen = {}
@@ -1553,7 +1601,7 @@ def export_meal_bank_excel(
         from openpyxl.styles import Font, PatternFill, Alignment
         
         # Get all meal bank items (including public ones)
-        meal_bank_items = db.query(MealBank).order_by(MealBank.macro_type, MealBank.name).all()
+        meal_bank_items = _bank_visible(db.query(MealBank), current_user).order_by(MealBank.macro_type, MealBank.name).all()
         
         # Create workbook
         wb = Workbook()

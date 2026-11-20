@@ -161,6 +161,7 @@ class WorkoutPlanFilter(BaseModel):
 
 class ExerciseCompletionFilter(BaseModel):
     client_id: Optional[int] = None
+    client_ids: Optional[List[int]] = None  # tenant scope (audit 2026-11)
     workout_exercise_id: Optional[int] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None

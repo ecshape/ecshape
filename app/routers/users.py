@@ -8,8 +8,23 @@ from app.auth.utils import get_current_user
 from app.models.user import ClientProfile
 from pydantic import BaseModel
 from typing import Optional
+from app.auth.access import is_admin, is_trainer, is_client
 
 router = APIRouter()
+
+
+def _guard_privileged_fields(current_user: UserResponse, target, user_update: UserUpdate) -> None:
+    """Mass-assignment guard (audit 2026-11, F-01): only an admin may change a role; a trainer may (de)activate
+    their own clients; nobody else may touch is_active."""
+    sent = user_update.model_fields_set
+    if "role" in sent and user_update.role is not None:
+        current_role = target.role.value if hasattr(target.role, "value") else str(target.role)
+        if user_update.role.value != current_role and not is_admin(current_user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only an admin can change a role")
+    if "is_active" in sent and user_update.is_active is not None and user_update.is_active != target.is_active:
+        own_client = is_trainer(current_user) and target.trainer_id == current_user.id
+        if not (is_admin(current_user) or own_client):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot change the account status")
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
@@ -33,7 +48,11 @@ async def get_users(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins and trainers can view all users"
         )
-    return user_service.get_users(db)
+    if is_admin(current_user):
+        return user_service.get_users(db)
+    # A trainer sees themself and their own clients, never other tenants (audit 2026-11, F-03)
+    from app.models.user import User as _User
+    return db.query(_User).filter((_User.id == current_user.id) | (_User.trainer_id == current_user.id)).all()
 
 @router.get("/clients", response_model=List[UserResponse])
 async def get_trainer_clients(
@@ -66,6 +85,9 @@ async def get_trainers(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins and trainers can view trainers"
         )
+    if not is_admin(current_user):
+        # other trainers' emails are not a trainer's business (audit 2026-11, F-03)
+        return [u for u in user_service.get_users_by_role(db, UserRole.TRAINER) if u.id == current_user.id]
     return user_service.get_users_by_role(db, UserRole.TRAINER)
 
 @router.post("/clients/{client_id}/assign", status_code=status.HTTP_200_OK)
@@ -83,6 +105,10 @@ async def assign_client(
             detail="Only trainers can assign clients"
         )
     
+    # A client who already has a trainer cannot be taken over by another trainer (audit 2026-11, F-02)
+    target = user_service.get_user_by_id(db, client_id)
+    if not target or (target.trainer_id is not None and target.trainer_id != current_user.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
     success = user_service.assign_client_to_trainer(db, current_user.id, client_id)
     if not success:
         raise HTTPException(
@@ -147,6 +173,9 @@ async def assign_client_to_trainer(
             detail="Trainer not found"
         )
     
+    target = user_service.get_user_by_id(db, client_id)
+    if not target or (target.trainer_id is not None and target.trainer_id != current_user.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
     success = user_service.assign_client_to_trainer(db, trainer_id, client_id)
     if not success:
         raise HTTPException(
@@ -325,18 +354,18 @@ async def update_user(
     Update user by ID. Admins can update anyone, trainers can update their clients, users can only update themselves.
     """
     # Check permissions
+    target_user = user_service.get_user_by_id(db, user_id)
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     if current_user.role == UserRole.ADMIN:
         # Admins can update anyone
         pass
     elif current_user.role == UserRole.TRAINER:
-        # Trainers can update their clients
-        target_user = user_service.get_user_by_id(db, user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        if target_user.trainer_id != current_user.id:
+        # Trainers can update themselves and their clients
+        if target_user.id != current_user.id and target_user.trainer_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only update your own clients"
@@ -347,7 +376,8 @@ async def update_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only update your own profile"
         )
-    
+    _guard_privileged_fields(current_user, target_user, user_update)
+
     updated_user = user_service.update_user(db, user_id, user_update)
     if not updated_user:
         raise HTTPException(
@@ -405,6 +435,9 @@ async def update_user_me(
     """
     Update current user's information.
     """
+    target_user = user_service.get_user_by_id(db, current_user.id)
+    if target_user:
+        _guard_privileged_fields(current_user, target_user, user_update)
     updated_user = user_service.update_user(db, current_user.id, user_update)
     if not updated_user:
         raise HTTPException(

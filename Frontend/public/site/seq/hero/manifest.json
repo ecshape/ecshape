@@ -1,12 +1,12 @@
 {
-  "count": 103,
+  "count": 104,
   "digits": 4,
   "ext": "webp",
   "large": "l",
   "small": "s",
   "width": 1200,
   "height": 1600,
-  "lock": 0.78,
+  "lock": 0.8,
   "focus": ".40,.23,.76,.95",
   "pos": ".58,.27",
   "source": "ai-image-to-video"

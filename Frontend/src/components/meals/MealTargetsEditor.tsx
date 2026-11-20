@@ -248,10 +248,14 @@ export default function MealTargetsEditor({
             </div>
 
             <div className="space-y-3">
+              {/* column names once, so four narrow inputs per meal stay readable */}
+              <div className="grid grid-cols-4 gap-1.5 text-center text-[11px] text-muted-foreground" aria-hidden>
+                {slotFields.map((field) => <span key={field.key} className="truncate">{field.label}</span>)}
+              </div>
               {slots.map((slot, index) => (
                 <div key={slot.meal_slot_id ?? index} className="space-y-1">
                   <div className="text-xs font-medium text-muted-foreground">{slot.name}</div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {slotFields.map((field) => (
                       <Input
                         key={field.key}
@@ -260,7 +264,7 @@ export default function MealTargetsEditor({
                         inputMode="numeric"
                         dir="ltr"
                         aria-label={`${slot.name} ${field.label}`}
-                        className="text-end tabular-nums"
+                        className="h-9 px-1 text-center text-sm tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         value={perSlot[index]?.[field.key] ?? 0}
                         onChange={(e) => updateSlotField(index, field.key, e.target.value)}
                       />
@@ -274,10 +278,8 @@ export default function MealTargetsEditor({
               className={`text-xs tabular-nums ${
                 drift === 0 ? "text-muted-foreground" : "text-destructive"
               }`}
-              dir="ltr"
             >
-              {t("meals.targets.drift", "Drift")}: {drift > 0 ? "+" : ""}
-              {Math.round(drift)} kcal
+              {t("meals.targets.drift", "Drift")}: <span dir="ltr">{drift > 0 ? "+" : ""}{Math.round(drift)}</span> {t("foodBankPro.kcal", "kcal")}
             </div>
           </>
         ) : null}

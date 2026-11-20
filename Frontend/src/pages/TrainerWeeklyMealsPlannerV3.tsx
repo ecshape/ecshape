@@ -26,6 +26,7 @@ import { FoodLibraryDrawer, libraryKey } from '@/components/foodbank/FoodLibrary
 import type { MealBankItem } from '@/components/foodbank/foodbankModel';
 import { SearchAllSources } from '@/components/foodbank/SearchAllSources';
 import { toast as sonner } from 'sonner';
+import '@/i18n/ticketsStudio';
 import '@/i18n/foodTable';
 
 type QuantityMode = "per_100g" | "per_portion";
@@ -877,6 +878,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
       // Refresh day view so UI reflects the published plan structure.
       await fetchDayForWeek();
+      // The save used to finish silently; confirm it like the workout builder does.
+      sonner.success(t('trainer.builder.planSaved', { defaultValue: 'Plan saved' }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to publish week plan");
     } finally {

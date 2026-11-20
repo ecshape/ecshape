@@ -2,7 +2,7 @@
 
 Branch `claude/audit-ux-features-1bbe94`, fast-forwarded to `sam-dev-1` first (it had been cut from `main`, which is 9 commits behind and lacks `lib/optimistic.ts`, automations and the nutrition table). Local API on port 8070 and portal on 5230, with a scratch SQLite DB and `DEV_DEMO_SEED=1`. Tested as a trainer at desktop width (1280px) in Hebrew/RTL, dark theme.
 
-**Status: partial.** The session hit its usage limit after the trainer screens through the exercise library. Everything below "Not yet audited" is still to do.
+**Status: in progress (resumed).** The session hit its usage limit after the trainer screens through the exercise library. Everything below "Not yet audited" is still to do.
 
 ## Screens
 
@@ -17,7 +17,10 @@ Branch `claude/audit-ux-features-1bbe94`, fast-forwarded to `sam-dev-1` first (i
 | Exercise bank | fixed | fixed | issue | Description was required in the form but not by the API (fixed). Delete used the browser's `confirm()` and waited for the server (fixed: app dialog, optimistic). The header stays invisible for about 1 s (motion). The create dialog's small inputs don't match the add-client dialog. |
 | Exercise sheet (from the profile) | fixed | pass | pass | Muscle chips showed raw "back" (fixed). |
 | Exercise library | fixed | pass | fixed | The close X sat on top of the search field in RTL (fixed). |
-| Food bank | pass | — | issue | Content took about 5 s to appear. The API answers in 18 ms (680 KB, 1,249 foods), so the delay is client-side rendering or animation. Not yet diagnosed. |
+| Food bank | pass | pass | issue | Search, group and property chips, and 60-per-page paging all work. The API answers in 18 ms, but the page sits at opacity 0 for seconds behind the `.tr-route` fade when the tab is in the background (motion). Data: "Whey protein isolate" is listed at 58 g protein / 29 g carbs per 100 g in `app/data/ecshape_table.json` (real isolate is ~85–90 g protein). That's the owner's table, so it's reported, not edited. Only 3 of 1,349 foods are tagged high-fibre. |
+| Food packs (ready menus) | fixed | pass | fixed | Cards and the detail view used Latin "P / C / F" and "kcal"; they now use the Hebrew macro names and the food cards' macro layout. Assigning to a client works. The confirmation toast ran the Hebrew prefix into the name ("לNoa"); it now reads "ל-Noa". |
+| Client meal plan (profile tab) | fixed | pass | fixed | Food placeholders showed the English initial ("W" next to דג לבן); they now use the letter of the name shown. Plan foods have no photos even where the food bank has one (the plan stores its own copy of each food). |
+| Meal plan editor (weekly, variants) | fixed | issue | fixed | Saving finished with no feedback (fixed: toast). The per-meal targets packed 4 unlabeled inputs into each row, clipping the values (fixed: column headers, tighter inputs, no spinner arrows). "Drift" showed English "kcal" (fixed). The client comes from `location.state`, so a reload loses it (same as the workout builder). |
 
 **Not yet audited:** meal plans and variants, nutrition table and food packs (details), meal tracking, daily check-in sliders, progress, chat, notifications, automations, Studio and QA, settings, the session player, the whole client app, English/LTR, 375px mobile, and light mode.
 

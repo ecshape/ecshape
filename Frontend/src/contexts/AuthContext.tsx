@@ -233,6 +233,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    const token = getToken();
+    if (token) {
+      // End the session server-side as well (the token is deny-listed); fire-and-forget, sign-out never waits.
+      fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    }
     setUser(null);
     removeToken();
     clearPersistedQueries(queryClient); // the next account never sees this one's cached screens

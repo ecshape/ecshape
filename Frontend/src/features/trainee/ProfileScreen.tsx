@@ -115,7 +115,9 @@ const PasswordSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => voi
     if (!valid) return;
     setBusy(true);
     try {
-      await api('/auth/password/change', { method: 'POST', body: { current_password: cur, new_password: next } });
+      // The server ends every other session and returns a fresh token for this device.
+      const res = await api<{ access_token?: string }>('/auth/password/change', { method: 'POST', body: { current_password: cur, new_password: next } });
+      if (res?.access_token) localStorage.setItem('access_token', res.access_token);
       toast.success(t('trainee.profile.passwordChanged'));
       setCur('');
       setNext('');

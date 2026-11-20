@@ -426,7 +426,8 @@ async def require_qa_access(
             row.value = val
             flag_modified(row, "value")
             db.commit()
-            owner = await get_current_user(token=create_access_token({"sub": str(val["created_by"])}, timedelta(minutes=1)), db=db)
+            from app.auth.utils import load_active_user
+            owner = load_active_user(db, val["created_by"])
             return require_studio(owner)
         raise HTTPException(status_code=401, detail="Invalid QA agent key")
     if not authorization or not authorization.lower().startswith("bearer "):

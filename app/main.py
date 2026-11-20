@@ -233,6 +233,9 @@ async def lifespan(app: FastAPI):
         from app.migrations.user_avatar_migration import run_user_avatar_migration
         run_user_avatar_migration()
 
+        from app.migrations.user_token_version_migration import run_user_token_version_migration
+        run_user_token_version_migration()
+
         from app.migrations.chat_payload_migration import run_chat_payload_migration
         run_chat_payload_migration()
         
@@ -420,30 +423,17 @@ async def performance_monitoring_middleware(request: Request, call_next):
 
 # Custom CORS middleware for wildcard domains
 def is_allowed_origin(origin: str) -> bool:
-    if not origin:
+    """Credentialed CORS allow-list (auth audit M4). Exact CORS_ORIGINS, plus https on our own domains.
+    Shared-hosting wildcards (*.up.railway.app, *.duckdns.org: anyone can get one) are no longer trusted, and
+    localhost / plain http only off deployed hosts. Same-origin requests (Railway SPA, Vercel rewrite) need no CORS."""
+    if not origin or len(origin) > 253:
         return False
-    
-    # Check against configured CORS_ORIGINS first
     if origin in CORS_ORIGINS:
         return True
-    
-    # Allow localhost and 127.0.0.1 for dev
-    if re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
+    from app.auth.config import is_deployed as _is_deployed
+    if not _is_deployed() and re.match(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
         return True
-    
-    # Allow any subdomain of duckdns.org
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*duckdns\.org(:\d+)?$", origin):
-        return True
-    
-    # Allow any subdomain of up.railway.app
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*up\.railway\.app(:\d+)?$", origin):
-        return True
-    
-    # Allow ecshape.org and its subdomains
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*ecshape\.org(:\d+)?$", origin):
-        return True
-    
-    return False
+    return bool(re.match(r"^https://([a-z0-9-]+\.)*ecshape\.(com|org)$", origin))
 
 class WildcardCORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -674,8 +664,6 @@ async def api_test_endpoint():
     return {
         "message": "API endpoint is accessible!",
         "environment": ENVIRONMENT,
-        "domain": DOMAIN,
-        "cors_origins": CORS_ORIGINS,
         "timestamp": time.time(),
         "api_status": "working"
     }
@@ -687,7 +675,7 @@ async def debug_environment(
 ):
     """Debug endpoint to check environment variables - Admin only."""
     # Only allow in development or for admins
-    if ENVIRONMENT == "production" and current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Admin only."
@@ -714,8 +702,10 @@ async def health_check_options():
 
 # Performance metrics endpoint for monitoring
 @app.get("/metrics")
-async def get_performance_metrics():
-    """Get comprehensive performance metrics for monitoring."""
+async def get_performance_metrics(current_user: UserResponse = Depends(get_current_user)):
+    """Get comprehensive performance metrics for monitoring (admins only)."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin only")
     try:
         # Database metrics
         pool_stats = get_db_pool_stats()
@@ -742,8 +732,10 @@ async def get_performance_metrics():
 
 # Database status endpoint for detailed database information
 @app.get("/status/database")
-async def get_database_status():
-    """Get detailed database status and statistics."""
+async def get_database_status(current_user: UserResponse = Depends(get_current_user)):
+    """Get detailed database status and statistics (admins only)."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin only")
     try:
         db_healthy = check_db_connection()
         pool_stats = get_db_pool_stats()
@@ -879,13 +871,23 @@ except Exception as e:
     logger.error(f"Stack trace: {traceback.format_exc()}")
     raise
 
+
+_STATIC_ROOT = os.path.realpath("static")
+
+
+def _safe_static_path(full_path: str):
+    """Absolute path of a file inside ./static, or None. Blocks ../ and encoded traversal (auth audit C1)."""
+    candidate = os.path.realpath(os.path.join(_STATIC_ROOT, full_path))
+    if os.path.commonpath([candidate, _STATIC_ROOT]) != _STATIC_ROOT:
+        return None
+    return candidate if os.path.isfile(candidate) else None
+
 # Handle OPTIONS requests for static files (CORS preflight)
 @app.options("/{full_path:path}")
 async def handle_static_options(full_path: str):
     """Handle OPTIONS requests for static files to support CORS."""
-    static_file_path = os.path.join("static", full_path)
-    abs_static_file_path = os.path.abspath(static_file_path)
-    if os.path.exists(abs_static_file_path) and os.path.isfile(abs_static_file_path):
+    abs_static_file_path = _safe_static_path(full_path)
+    if abs_static_file_path:
         from fastapi.responses import Response
         return Response(
             status_code=200,
@@ -915,10 +917,9 @@ async def serve_spa_routes(full_path: str):
         raise HTTPException(status_code=404, detail="Not found")
     
     # Check if the requested path is a static file
-    static_file_path = os.path.join("static", full_path)
-    abs_static_file_path = os.path.abspath(static_file_path)
-    logger.info(f"Checking static file: {full_path} -> {abs_static_file_path}, exists: {os.path.exists(abs_static_file_path)}")
-    if os.path.exists(abs_static_file_path) and os.path.isfile(abs_static_file_path):
+    abs_static_file_path = _safe_static_path(full_path)
+    static_file_path = abs_static_file_path or ""
+    if abs_static_file_path:
         # Determine content type
         import mimetypes
         mimetype, _ = mimetypes.guess_type(static_file_path)

@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 def _fernet() -> Fernet:
-    raw = os.getenv("AI_KEY_SECRET") or os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY") or "ecshape-dev-ai-key-secret"
+    raw = os.getenv("AI_KEY_SECRET") or os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
+    if not raw:
+        # No repo-published fallback (auth audit M10). Deployed hosts can't get here: app.auth.config refuses to
+        # start without JWT_SECRET. Locally, use the generated local signing key.
+        from app.auth.config import JWT_SECRET as _local
+        raw = _local
     digest = hashlib.sha256(raw.encode("utf-8")).digest()
     return Fernet(base64.urlsafe_b64encode(digest))
 

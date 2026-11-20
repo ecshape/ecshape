@@ -139,9 +139,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         // Extract base URL from API_BASE_URL (remove /api if present)
         const baseUrl = API_BASE_URL.replace(/^https?:\/\//, '').replace(/\/api\/?$/, '');
         // Router is mounted at /api/ws and endpoint is /{user_id}, so full path is /api/ws/{user_id}
-        const wsUrl = `${wsProtocol}//${baseUrl}/api/ws/${user.id}?token=${token}`;
+        const wsUrl = `${wsProtocol}//${baseUrl}/api/ws/${user.id}`;
 
-        const ws = new WebSocket(wsUrl);
+        // Token in Sec-WebSocket-Protocol, not the URL (URLs end up in proxy / access logs)
+        const ws = new WebSocket(wsUrl, ['ecshape.bearer', token]);
         wsRef.current = ws;
 
         ws.onopen = () => {

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, constr, ConfigDict
+from pydantic import BaseModel, EmailStr, constr, ConfigDict, Field
 from typing import Optional
 from enum import Enum
 from datetime import datetime
@@ -15,7 +15,9 @@ class UserBase(BaseModel):
     role: UserRole
 
 class UserCreate(UserBase):
-    password: str
+    username: str = Field(..., min_length=2, max_length=64)
+    full_name: str = Field(..., min_length=1, max_length=120)
+    password: str = Field(..., max_length=1024)  # strength rules: app.auth.password_policy
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -25,8 +27,8 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class UserLogin(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., max_length=254)
+    password: str = Field(..., max_length=1024)
 
 class Token(BaseModel):
     access_token: str

@@ -348,5 +348,5 @@ async def meta_data_deletion(request: Request):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid signed_request")
     code = secrets.token_hex(8)
-    site = os.getenv("PUBLIC_SITE_URL", "https://ecshape.com").rstrip("/")
+    site = (os.getenv("PUBLIC_SITE_URL") or str(request.base_url)).rstrip("/")
     return {"url": f"{site}/legal/privacy#instagram", "confirmation_code": code}

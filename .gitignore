@@ -81,3 +81,7 @@ docs/env.production.example
 
 # QA agent key (tools/qa.py)
 .qa-agent-key
+
+# Secrets (auth audit 2026-11)
+.cursor/railwaytoken.txt
+.dev-jwt-secret

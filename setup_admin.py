@@ -92,6 +92,9 @@ def ensure_admin_exists():
         print("Running user avatar migration...")
         from app.migrations.user_avatar_migration import run_user_avatar_migration
         run_user_avatar_migration()
+        # users.token_version too (the User model selects it)
+        from app.migrations.user_token_version_migration import run_user_token_version_migration
+        run_user_token_version_migration()
         
     except Exception as migration_error:
         print(f"⚠️ Warning: Some migrations encountered errors: {migration_error}")

@@ -348,6 +348,7 @@ async def update_user(
             detail="You can only update your own profile"
         )
     
+    _guard_privileged_fields(user_update, current_user, user_id)
     updated_user = user_service.update_user(db, user_id, user_update)
     if not updated_user:
         raise HTTPException(
@@ -355,6 +356,16 @@ async def update_user(
             detail="User not found"
         )
     return updated_user
+
+
+def _guard_privileged_fields(user_update: UserUpdate, current_user: UserResponse, target_id: int) -> None:
+    """role: admins only. is_active: admins, or a trainer for their own client (never themselves). Auth audit C2."""
+    fields = user_update.model_dump(exclude_unset=True)
+    if "role" in fields and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can change roles")
+    if "is_active" in fields and current_user.role != UserRole.ADMIN and (
+            current_user.role != UserRole.TRAINER or current_user.id == target_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to change account status")
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
@@ -405,6 +416,7 @@ async def update_user_me(
     """
     Update current user's information.
     """
+    _guard_privileged_fields(user_update, current_user, current_user.id)
     updated_user = user_service.update_user(db, current_user.id, user_update)
     if not updated_user:
         raise HTTPException(

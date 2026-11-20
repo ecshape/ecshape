@@ -233,6 +233,9 @@ async def lifespan(app: FastAPI):
         from app.migrations.user_avatar_migration import run_user_avatar_migration
         run_user_avatar_migration()
 
+        from app.migrations.user_token_version_migration import run_user_token_version_migration
+        run_user_token_version_migration()
+
         from app.migrations.chat_payload_migration import run_chat_payload_migration
         run_chat_payload_migration()
         
@@ -879,13 +882,23 @@ except Exception as e:
     logger.error(f"Stack trace: {traceback.format_exc()}")
     raise
 
+
+_STATIC_ROOT = os.path.realpath("static")
+
+
+def _safe_static_path(full_path: str):
+    """Absolute path of a file inside ./static, or None. Blocks ../ and encoded traversal (auth audit C1)."""
+    candidate = os.path.realpath(os.path.join(_STATIC_ROOT, full_path))
+    if os.path.commonpath([candidate, _STATIC_ROOT]) != _STATIC_ROOT:
+        return None
+    return candidate if os.path.isfile(candidate) else None
+
 # Handle OPTIONS requests for static files (CORS preflight)
 @app.options("/{full_path:path}")
 async def handle_static_options(full_path: str):
     """Handle OPTIONS requests for static files to support CORS."""
-    static_file_path = os.path.join("static", full_path)
-    abs_static_file_path = os.path.abspath(static_file_path)
-    if os.path.exists(abs_static_file_path) and os.path.isfile(abs_static_file_path):
+    abs_static_file_path = _safe_static_path(full_path)
+    if abs_static_file_path:
         from fastapi.responses import Response
         return Response(
             status_code=200,
@@ -915,10 +928,9 @@ async def serve_spa_routes(full_path: str):
         raise HTTPException(status_code=404, detail="Not found")
     
     # Check if the requested path is a static file
-    static_file_path = os.path.join("static", full_path)
-    abs_static_file_path = os.path.abspath(static_file_path)
-    logger.info(f"Checking static file: {full_path} -> {abs_static_file_path}, exists: {os.path.exists(abs_static_file_path)}")
-    if os.path.exists(abs_static_file_path) and os.path.isfile(abs_static_file_path):
+    abs_static_file_path = _safe_static_path(full_path)
+    static_file_path = abs_static_file_path or ""
+    if abs_static_file_path:
         # Determine content type
         import mimetypes
         mimetype, _ = mimetypes.guess_type(static_file_path)

@@ -35,8 +35,11 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> Optional[
         return None
     
     update_data = user_update.dict(exclude_unset=True)
+    revoke = ("role" in update_data and update_data["role"] != db_user.role) or update_data.get("is_active") is False
     for field, value in update_data.items():
         setattr(db_user, field, value)
+    if revoke:  # role change / deactivation ends every existing session
+        db_user.token_version = int(db_user.token_version or 0) + 1
     
     db.commit()
     db.refresh(db_user)

@@ -326,4 +326,7 @@ class V3FoodCatalogItemResponse(V3FoodOption):
     is_public: Optional[bool] = None
     created_by: Optional[int] = None
     macro_type: Optional[MacroType] = None
+    source: Optional[str] = None
+    source_id: Optional[str] = None
+    food_group: Optional[str] = None
 

@@ -282,19 +282,34 @@ async def lifespan(app: FastAPI):
     from app.routers.exercise_library import ensure_library_column
     ensure_library_column(engine)
 
-    # QA #64: bank foods get the new, better staple photos (only where there was none or an old Commons pick)
-    try:
-        from app.database import SessionLocal
-        from app.services.food_library_service import refresh_bank_photos
-        _db = SessionLocal()
+    # The ECShape nutrition table is every coach's default food bank (copied once per coach, in the background)
+    def _ecshape_table() -> None:
         try:
-            n = refresh_bank_photos(_db)
-            if n:
-                logger.info(f"🖼️ Updated photos of {n} food bank items")
-        finally:
-            _db.close()
-    except Exception as e:  # never block startup
-        logger.warning(f"Food bank photo refresh skipped: {e}")
+            from app.database import SessionLocal
+            from app.services.ecshape_table import ensure_all_trainers
+            _db = SessionLocal()
+            try:
+                ensure_all_trainers(_db)
+            finally:
+                _db.close()
+        except Exception as e:  # never block startup
+            logger.warning(f"ECShape table copy skipped: {e}")
+        # QA #64: bank foods get the new, better staple photos (only where there was none or an old Commons pick).
+        # In the background too: with 1,300+ table foods per coach it takes seconds.
+        try:
+            from app.database import SessionLocal
+            from app.services.food_library_service import refresh_bank_photos
+            _db = SessionLocal()
+            try:
+                n = refresh_bank_photos(_db)
+                if n:
+                    logger.info(f"🖼️ Updated photos of {n} food bank items")
+            finally:
+                _db.close()
+        except Exception as e:
+            logger.warning(f"Food bank photo refresh skipped: {e}")
+    import threading as _threading
+    _threading.Thread(target=_ecshape_table, name="ecshape-table", daemon=True).start()
 
     # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
     from app.dev_seed import run_if_enabled as run_dev_seed

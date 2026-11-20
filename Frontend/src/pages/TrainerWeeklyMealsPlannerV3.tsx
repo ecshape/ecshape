@@ -21,6 +21,12 @@ import { formatDateForAPI } from "../utils/dashboard";
 import type { TFunction } from "i18next";
 import { PortalSelect } from '@/components/ui/portal-select';
 import { Avatar } from '@/features/trainer/ui';
+import { GroupChips, matchesGroup, type GroupFilter } from '@/components/foodbank/GroupChips';
+import { FoodLibraryDrawer, libraryKey } from '@/components/foodbank/FoodLibraryDrawer';
+import type { MealBankItem } from '@/components/foodbank/foodbankModel';
+import { SearchAllSources } from '@/components/foodbank/SearchAllSources';
+import { toast as sonner } from 'sonner';
+import '@/i18n/foodTable';
 
 type QuantityMode = "per_100g" | "per_portion";
 
@@ -644,6 +650,11 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
   type FoodDialogMode = "recommended" | "allowed";
   const [foodDialogMode, setFoodDialogMode] = useState<FoodDialogMode>("recommended");
   const [foodDialogQuery, setFoodDialogQuery] = useState("");
+  const [foodDialogGroup, setFoodDialogGroup] = useState<GroupFilter>("all");
+  const [foodDialogShown, setFoodDialogShown] = useState(80);
+  // "Not finding it? Search all sources": the food library, then the food goes into the bank and into this meal
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryQuery, setLibraryQuery] = useState("");
 
   const foodDialogInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -652,6 +663,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     setFoodDialogMealSlotId(mealSlotId);
     setFoodDialogMode(mode);
     setFoodDialogQuery("");
+    setFoodDialogGroup("all");
     setFoodDialogOpen(true);
   }, []);
 
@@ -672,14 +684,26 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     return fatCatalog;
   }, [carbCatalog, fatCatalog, foodDialogMacroType, proteinCatalog]);
 
-  const filteredCatalogItems = useMemo(() => {
+  // Search both names (Hebrew and English); the food itself first, then names starting with it, then the rest
+  const searchedCatalogItems = useMemo(() => {
     const q = foodDialogQuery.trim().toLowerCase();
-    if (!q) return catalogItemsForDialog;
-    return catalogItemsForDialog.filter((item) => {
-      const name = (isRtlHe ? item.name_hebrew ?? item.name : item.name) ?? "";
-      return name.toLowerCase().includes(q);
-    });
+    const shown = (item: V3FoodOption) => (isRtlHe ? item.name_hebrew ?? item.name : item.name) ?? "";
+    const byName = (a: V3FoodOption, b: V3FoodOption) => shown(a).localeCompare(shown(b), isRtlHe ? "he" : undefined);
+    if (!q) return [...catalogItemsForDialog].sort(byName);
+    const names = (item: V3FoodOption) => [item.name, item.name_hebrew].filter(Boolean).map((n) => (n as string).toLowerCase());
+    const rank = (item: V3FoodOption) => {
+      const n = names(item);
+      return n.includes(q) ? 0 : n.some((x) => x.startsWith(q)) ? 1 : 2;
+    };
+    return catalogItemsForDialog
+      .filter((item) => names(item).some((n) => n.includes(q)))
+      .sort((a, b) => rank(a) - rank(b) || byName(a, b));
   }, [catalogItemsForDialog, foodDialogQuery, isRtlHe]);
+  const filteredCatalogItems = useMemo(
+    () => searchedCatalogItems.filter((item) => matchesGroup(item, foodDialogGroup)),
+    [searchedCatalogItems, foodDialogGroup]
+  );
+  useEffect(() => setFoodDialogShown(80), [foodDialogQuery, foodDialogGroup, foodDialogMacroType]);
 
   const applyFoodSelection = useCallback(
     (food: V3FoodOption) => {
@@ -695,6 +719,33 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
       setFoodDialogOpen(false);
     },
     [addAllowedSwapFood, foodDialogMacroType, foodDialogMealSlotId, foodDialogMode, setRecommendedFood]
+  );
+
+  const openLibraryFromDialog = useCallback(() => {
+    setLibraryQuery(foodDialogQuery.trim());
+    setFoodDialogOpen(false);
+    setLibraryOpen(true);
+  }, [foodDialogQuery]);
+
+  const importedKeys = useMemo(
+    () => new Set([...proteinCatalog, ...carbCatalog, ...fatCatalog].map((f) => libraryKey(f.source, f.source_id)).filter(Boolean)),
+    [proteinCatalog, carbCatalog, fatCatalog]
+  );
+
+  /** A food added from the library lands in the bank (catalog) and, when it is of this macro, in the meal being edited. */
+  const onLibraryImported = useCallback(
+    async (item: MealBankItem) => {
+      await fetchAllCatalog().catch(() => undefined);
+      if (item.macro_type !== foodDialogMacroType || !foodDialogMealSlotId) return;
+      if (foodDialogMode === "recommended") {
+        setRecommendedFood(foodDialogMealSlotId, foodDialogMacroType, item.id);
+        setLibraryOpen(false);
+      } else {
+        addAllowedSwapFood(foodDialogMealSlotId, foodDialogMacroType, item.id);
+      }
+      sonner.success(t("foodTable.addedSelect"));
+    },
+    [addAllowedSwapFood, fetchAllCatalog, foodDialogMacroType, foodDialogMealSlotId, foodDialogMode, setRecommendedFood, t]
   );
 
   const publishWeekPlan = useCallback(async () => {
@@ -1227,12 +1278,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
               />
             </div>
 
+            <GroupChips items={searchedCatalogItems} value={foodDialogGroup} onChange={setFoodDialogGroup} showMine />
+
             <div className="max-h-[50vh] overflow-auto rounded-lg border bg-background/60">
               {filteredCatalogItems.length === 0 ? (
                 <div className="p-3 text-sm text-muted-foreground">{t("meals.weeklyMeals.noResults", "No results")}</div>
               ) : (
                 <div className="flex flex-col divide-y">
-                  {filteredCatalogItems.map((item) => {
+                  {filteredCatalogItems.slice(0, foodDialogShown).map((item) => {
                     const selected = (() => {
                       if (typeof item.id !== "number") return false;
                       if (!currentDialogSlotPlan) return false;
@@ -1266,9 +1319,16 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
                       </Button>
                     );
                   })}
+                  {filteredCatalogItems.length > foodDialogShown && (
+                    <Button type="button" variant="ghost" className="rounded-none" onClick={() => setFoodDialogShown((n) => n + 120)}>
+                      {t("foodTable.showMore", { count: filteredCatalogItems.length - foodDialogShown })}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
+
+            <SearchAllSources query={foodDialogQuery.trim()} onClick={openLibraryFromDialog} />
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setFoodDialogOpen(false)} className="w-full sm:w-auto">
@@ -1278,6 +1338,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <FoodLibraryDrawer
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        importedKeys={importedKeys}
+        onImported={onLibraryImported}
+        initialQuery={libraryQuery}
+      />
     </Layout>
   );
 };

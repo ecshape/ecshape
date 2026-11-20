@@ -99,11 +99,15 @@ def get_food_catalog(
     """
     v3 catalog endpoint used for swap selection.
     """
+    from app.services.ecshape_table import ensure_for_trainer
+
     query = db.query(MealBank)
 
     if macro_type is not None:
         query = query.filter(MealBank.macro_type == macro_type)
 
+    if current_user.role == UserRole.TRAINER:
+        ensure_for_trainer(db, current_user.id)
     if current_user.role in {UserRole.TRAINER, UserRole.ADMIN} and include_public:
         query = query.filter((MealBank.is_public == True) | (MealBank.created_by == current_user.id))  # noqa
     elif current_user.role == UserRole.CLIENT and include_public:
@@ -116,6 +120,9 @@ def get_food_catalog(
         )
         if active_plan:
             trainer_id = active_plan.trainer_id
+        if trainer_id is None:
+            trainer_id = getattr(db.query(User).filter(User.id == current_user.id).first(), "trainer_id", None)
+        ensure_for_trainer(db, trainer_id)
         if trainer_id is not None:
             query = query.filter((MealBank.is_public == True) | (MealBank.created_by == trainer_id))  # noqa
         else:
@@ -144,6 +151,9 @@ def get_food_catalog(
                 created_by=item.created_by,
                 macro_type=item.macro_type,
                 image_url=getattr(item, "image_url", None),
+                source=getattr(item, "source", None),
+                source_id=getattr(item, "source_id", None),
+                food_group=getattr(item, "food_group", None),
             )
         )
     return payload

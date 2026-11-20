@@ -17,6 +17,8 @@ import '@/components/foodbank/foodbank.css';
 import { useTranslatedMap } from './useTranslated';
 import { LibText } from './libText';
 import { FoodThumb, HitRow, useDebounced } from './AddMealSheet';
+import { GroupChips, matchesGroup, type GroupFilter } from '@/components/foodbank/GroupChips';
+import '@/i18n/foodTable';
 import { useFoodSearch, useLocalizedHits, useLogSaved, useSavedMeals, type FoodHit } from './mealTools';
 import { CountUp, EmptyState, ErrorState, Ring, Screen, ScreenHeader, Sheet, Skel } from './ui';
 import { addDays, fmtDate, fmtNum, fmtWeekday, haptic, parseDate, todayISO } from './format';
@@ -570,18 +572,28 @@ const MealsScreen: React.FC = () => {
 const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | null; date: string; onClose: () => void; foodName: (f: V3FoodOption) => string }> = ({ target, date, onClose, foodName }) => {
   const { t, i18n } = useTranslation();
   const [q, setQ] = useState('');
+  const [group, setGroup] = useState<GroupFilter>('all');
   const write = useMealWrite(date);
   const catalog = useCatalog(target?.row.macro ?? 'protein', !!target);
+  useEffect(() => setGroup('all'), [target]);
   const row = target?.row;
   // QA #61: beyond the coach's list, search the whole food database (staples, USDA, Open Food Facts).
   const dq = useDebounced(q.trim(), 300);
   const db = useFoodSearch(dq, (i18n.language || 'en').slice(0, 2), !!target && dq.length >= 2);
   const dbHits: FoodHit[] = useLocalizedHits(db.data && dq.length >= 2 ? [...db.data.recent, ...db.data.coach, ...db.data.foods, ...db.data.products] : []);
   const dbSearching = dq.length >= 2 && (db.isFetching || db.data?.query !== dq);
-  const list = (catalog.data ?? []).filter((f) => {
-    const s = q.trim().toLowerCase();
-    return !s || f.name.toLowerCase().includes(s) || (f.name_hebrew || '').toLowerCase().includes(s);
-  });
+  // The coach's table first: search both names, the food itself before dishes that contain it; then a group filter
+  const swapNeedle = q.trim().toLowerCase();
+  const searchedCatalog = (catalog.data ?? [])
+    .filter((f) => !swapNeedle || f.name.toLowerCase().includes(swapNeedle) || (f.name_hebrew || '').toLowerCase().includes(swapNeedle))
+    .map((f) => {
+      const names = [f.name, f.name_hebrew].filter(Boolean).map((n) => (n as string).toLowerCase());
+      return { f, r: !swapNeedle ? 0 : names.includes(swapNeedle) ? 0 : names.some((n) => n.startsWith(swapNeedle)) ? 1 : 2 };
+    })
+    .map((x) => ({ ...x, n: foodName(x.f) }))
+    .sort((a, b) => a.r - b.r || a.n.localeCompare(b.n, i18n.language))
+    .map((x) => x.f);
+  const list = searchedCatalog.filter((f) => matchesGroup(f, group));
 
   const pick = (food: V3FoodOption, source: 'plan' | 'bank') => {
     if (!target || !row || typeof food.id !== 'number') return;
@@ -658,6 +670,7 @@ const SwapSheet: React.FC<{ target: { slot: V3MealSlotView; row: PlanRow } | nul
             <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input className="tp-input ps-10" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('trainee.meals.search')} dir="auto" />
           </label>
+          <GroupChips items={searchedCatalog} value={group} onChange={setGroup} />
           {catalog.isLoading ? (
             <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skel key={i} className="h-14" />)}</div>
           ) : catalog.isError ? (
@@ -713,6 +726,7 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
   const [macro, setMacro] = useState<'all' | MacroType>('all');
   const [tags, setTags] = useState<PropertyTag[]>([]);
   const [sort, setSort] = useState<'name' | 'protein' | 'kcalAsc'>('name');
+  const [group, setGroup] = useState<GroupFilter>('all');
 
   // Every food the coach put in today's plan, this meal first.
   const menu = useMemo(() => {
@@ -740,7 +754,7 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
   searched.forEach((f) => { const m = (f.macro_type || 'protein') as MacroType; macroCounts[m] = (macroCounts[m] ?? 0) + 1; });
   const presentTags = PROPERTY_TAGS.filter((tg) => searched.some((f, i) => tagsOf(f, i).includes(tg)) || tags.includes(tg));
   const list = searched
-    .filter((f, i) => (macro === 'all' || (f.macro_type || 'protein') === macro) && tags.every((tg) => tagsOf(f, i).includes(tg)))
+    .filter((f, i) => (macro === 'all' || (f.macro_type || 'protein') === macro) && matchesGroup(f, group) && tags.every((tg) => tagsOf(f, i).includes(tg)))
     .sort((a, b) => sort === 'protein' ? (b.protein ?? -1) - (a.protein ?? -1) : sort === 'kcalAsc' ? (a.calories ?? Infinity) - (b.calories ?? Infinity) : foodName(a).localeCompare(foodName(b)));
   const toggleTag = (tg: PropertyTag) => setTags((p) => (p.includes(tg) ? p.filter((x) => x !== tg) : [...p, tg]));
   const portion = chosen?.measurement_type === 'per_portion';
@@ -847,6 +861,9 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
               {(['name', 'protein', 'kcalAsc'] as const).map((k) => <option key={k} value={k}>{t(`foodBankPro.sort.${k}`)}</option>)}
             </select>
           </div>
+          {tab === 'bank' && (
+            <GroupChips items={searched.filter((f) => macro === 'all' || (f.macro_type || 'protein') === macro)} value={group} onChange={setGroup} />
+          )}
           {presentTags.length > 0 && (
             <div className="tp-scroll-x flex gap-1.5 py-0.5">
               {presentTags.map((tg) => <PropertyChip key={tg} tag={tg} size="xs" active={tags.includes(tg)} onClick={() => toggleTag(tg)} />)}
@@ -859,7 +876,7 @@ const AddFoodSheet: React.FC<{ open: boolean; slot: V3MealSlotView | null; date:
           ) : !list.length ? (
             <p className="py-6 text-center text-sm text-muted-foreground">{tab === 'menu' && !menu.length ? t('trainee.meals.menuEmpty') : t('trainee.meals.noResults')}</p>
           ) : (
-            <div key={`${macro}|${tags.join()}|${sort}`} className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+            <div key={`${macro}|${tags.join()}|${sort}|${group}`} className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
               {list.slice(0, 120).map((f, i) => (
                 <div key={`${f.id ?? ''}-${f.name}`} className="relative">
                   <FoodCard item={asItem(f, i)} index={Math.min(i, 8)} canEdit={false} readOnly activeTags={tags} onToggleTag={toggleTag} onEdit={() => undefined} onDelete={() => undefined} onOpen={() => choose(f)} />

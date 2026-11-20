@@ -293,6 +293,7 @@ def _ensure_meal_bank_library_columns() -> None:
             "tags": "TEXT",
             "nutriscore": "TEXT",
             "nova_group": "INTEGER",
+            "food_group": "TEXT",
         },
     )
 

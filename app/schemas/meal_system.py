@@ -343,6 +343,7 @@ class MealBankBase(BaseModel):
     tags: Optional[List[str]] = None
     nutriscore: Optional[str] = None
     nova_group: Optional[int] = None
+    food_group: Optional[str] = Field(None, max_length=32)
 
     @field_validator("tags", mode="before")
     @classmethod
@@ -387,6 +388,7 @@ class MealBankUpdate(BaseModel):
     tags: Optional[List[str]] = None
     nutriscore: Optional[str] = None
     nova_group: Optional[int] = None
+    food_group: Optional[str] = Field(None, max_length=32)
 
 class MealBankResponse(MealBankBase):
     id: int

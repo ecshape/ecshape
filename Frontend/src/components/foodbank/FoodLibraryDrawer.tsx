@@ -335,11 +335,14 @@ export function FoodLibraryDrawer({
   onOpenChange,
   importedKeys,
   onImported,
+  initialQuery,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   importedKeys: Set<string>;
   onImported: (item: MealBankItem) => void;
+  /** Opened from "not finding it? search all sources": start with the coach's search. */
+  initialQuery?: string;
 }) {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
@@ -431,6 +434,10 @@ export function FoodLibraryDrawer({
       /* packs are optional */
     }
   }, []);
+
+  useEffect(() => {
+    if (open && initialQuery) setQuery(initialQuery);
+  }, [open, initialQuery]);
 
   // Debounced search (Open Food Facts and USDA ask clients to keep search traffic low).
   useEffect(() => {

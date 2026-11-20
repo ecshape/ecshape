@@ -42,6 +42,9 @@ import { IconOf, MACRO_ICON, PlateIcon } from '../components/foodbank/FoodIcons'
 import { FoodCard, FoodCardSkeleton, FoodPhoto, PropertyChip } from '../components/foodbank/FoodParts';
 import { FoodLibraryDrawer, libraryKey } from '../components/foodbank/FoodLibraryDrawer';
 import '../components/foodbank/foodbank.css';
+import { GroupChips, matchesGroup, type GroupFilter } from '../components/foodbank/GroupChips';
+import { SearchAllSources } from '../components/foodbank/SearchAllSources';
+import '@/i18n/foodTable';
 import { PortalSelect } from '@/components/ui/portal-select';
 
 type MacroFilter = 'all' | MacroType;
@@ -141,6 +144,12 @@ const MealBank = () => {
   const [macroFilter, setMacroFilter] = useState<MacroFilter>('all');
   const [tagFilter, setTagFilter] = useState<PropertyTag[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [groupFilter, setGroupFilter] = useState<GroupFilter>('all');
+  const [libraryQuery, setLibraryQuery] = useState('');
+  // 1,300+ foods: draw them by pages of 60 (the next page comes when the end of the list scrolls into view)
+  const PAGE = 60;
+  const [shown, setShown] = useState(PAGE);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MealBankItem | null>(null);
@@ -207,7 +216,7 @@ const MealBank = () => {
   };
 
   const macroCounts = useMemo(() => {
-    const base = items.filter((i) => searchMatches(i) && tagMatches(i));
+    const base = items.filter((i) => searchMatches(i) && tagMatches(i) && matchesGroup(i, groupFilter));
     return {
       all: base.length,
       protein: base.filter((i) => i.macro_type === 'protein').length,
@@ -215,29 +224,44 @@ const MealBank = () => {
       fat: base.filter((i) => i.macro_type === 'fat').length,
     } as Record<MacroFilter, number>;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, normalizedSearch, tagFilter, tagsById]);
+  }, [items, normalizedSearch, tagFilter, tagsById, groupFilter]);
+
+  // Group chips count what the search, macro and property filters leave
+  const groupBase = useMemo(
+    () => items.filter((i) => searchMatches(i) && tagMatches(i) && (macroFilter === 'all' || i.macro_type === macroFilter)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, normalizedSearch, tagFilter, macroFilter, tagsById],
+  );
 
   const tagCounts = useMemo(() => {
-    const base = items.filter((i) => searchMatches(i) && (macroFilter === 'all' || i.macro_type === macroFilter));
+    const base = items.filter((i) => searchMatches(i) && matchesGroup(i, groupFilter) && (macroFilter === 'all' || i.macro_type === macroFilter));
     const counts = new Map<PropertyTag, number>();
     base.forEach((i) => (tagsById.get(i.id) ?? []).forEach((tag) => counts.set(tag, (counts.get(tag) ?? 0) + 1)));
     return counts;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, normalizedSearch, macroFilter, tagsById]);
+  }, [items, normalizedSearch, macroFilter, tagsById, groupFilter]);
 
   const visibleItems = useMemo(() => {
     const list = items.filter(
-      (i) => searchMatches(i) && tagMatches(i) && (macroFilter === 'all' || i.macro_type === macroFilter),
+      (i) => searchMatches(i) && tagMatches(i) && matchesGroup(i, groupFilter) && (macroFilter === 'all' || i.macro_type === macroFilter),
     );
     const nameOf = (i: MealBankItem) => displayName(i, lang).primary;
     const sorted = [...list];
-    if (sortKey === 'name') sorted.sort((a, b) => nameOf(a).localeCompare(nameOf(b), lang));
+    if (sortKey === 'name') {
+      // Searching: the food itself first ("חזה עוף"), then names starting with it, then the rest
+      const rank = (i: MealBankItem) => {
+        if (!normalizedSearch) return 0;
+        const names = [i.name, i.name_hebrew].filter(Boolean).map((n) => (n as string).toLowerCase());
+        return names.includes(normalizedSearch) ? 0 : names.some((n) => n.startsWith(normalizedSearch)) ? 1 : 2;
+      };
+      sorted.sort((a, b) => rank(a) - rank(b) || nameOf(a).localeCompare(nameOf(b), lang));
+    }
     if (sortKey === 'protein') sorted.sort((a, b) => (b.protein ?? -1) - (a.protein ?? -1));
     if (sortKey === 'kcalAsc') sorted.sort((a, b) => (a.calories ?? Infinity) - (b.calories ?? Infinity));
     if (sortKey === 'recent') sorted.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
     return sorted;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, normalizedSearch, tagFilter, macroFilter, sortKey, lang, tagsById]);
+  }, [items, normalizedSearch, tagFilter, macroFilter, sortKey, lang, tagsById, groupFilter]);
 
   const importedKeys = useMemo(
     () =>
@@ -259,8 +283,21 @@ const MealBank = () => {
     [items],
   );
 
-  const filtersActive = tagFilter.length > 0 || macroFilter !== 'all' || !!normalizedSearch;
-  const gridKey = `${macroFilter}|${tagFilter.join(',')}|${sortKey}|${normalizedSearch}`;
+  const filtersActive = tagFilter.length > 0 || macroFilter !== 'all' || groupFilter !== 'all' || !!normalizedSearch;
+  const gridKey = `${macroFilter}|${tagFilter.join(',')}|${sortKey}|${normalizedSearch}|${groupFilter}`;
+  const hasTable = useMemo(() => items.some((i) => i.source === 'ecshape'), [items]);
+  const openLibrary = (q = '') => { setLibraryQuery(q); setLibraryOpen(true); };
+
+  useEffect(() => setShown(PAGE), [gridKey]);
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el || shown >= visibleItems.length) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setShown((n) => n + PAGE);
+    }, { rootMargin: '600px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shown, visibleItems.length]);
   const canEdit = (item: MealBankItem) => item.created_by === user?.id || user?.role === 'ADMIN';
 
   const toggleTag = (tag: PropertyTag) =>
@@ -269,6 +306,7 @@ const MealBank = () => {
   const clearFilters = () => {
     setTagFilter([]);
     setMacroFilter('all');
+    setGroupFilter('all');
     setSearchTerm('');
   };
 
@@ -527,10 +565,10 @@ const MealBank = () => {
             </span>
           }
           title={t('foodBankPro.title')}
-          lead={t('foodBankPro.subtitle')}
+          lead={hasTable ? t('foodTable.lead') : t('foodBankPro.subtitle')}
           actions={
             <>
-              <button type="button" onClick={() => setLibraryOpen(true)} className="tp-btn tp-btn--primary tp-btn--sm tp-press max-sm:flex-1">
+              <button type="button" onClick={() => openLibrary()} className="tp-btn tp-btn--primary tp-btn--sm tp-press max-sm:flex-1">
                 <Library className="h-4 w-4" />
                 {t('foodBankPro.openLibrary')}
               </button>
@@ -596,6 +634,8 @@ const MealBank = () => {
             />
           </div>
 
+          <GroupChips items={groupBase} value={groupFilter} onChange={setGroupFilter} showMine />
+
           {presentTags.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="hidden shrink-0 text-xs font-medium text-muted-foreground sm:inline">
@@ -634,8 +674,9 @@ const MealBank = () => {
             ))}
           </div>
         ) : visibleItems.length > 0 ? (
+          <>
           <div key={gridKey} className="fb-grid">
-            {visibleItems.map((item, index) => (
+            {visibleItems.slice(0, shown).map((item, index) => (
               <FoodCard
                 key={item.id}
                 item={item}
@@ -649,6 +690,17 @@ const MealBank = () => {
               />
             ))}
           </div>
+          {shown < visibleItems.length && (
+            <div ref={moreRef} className="flex justify-center">
+              <Button variant="outline" className="rounded-xl" onClick={() => setShown((n) => n + PAGE)}>
+                {t('foodTable.showMore', { count: visibleItems.length - shown })}
+              </Button>
+            </div>
+          )}
+          {normalizedSearch && (
+            <SearchAllSources query={searchTerm.trim()} onClick={() => openLibrary(searchTerm.trim())} />
+          )}
+          </>
         ) : (
           <div className="fb-card flex flex-col items-center justify-center rounded-2xl border border-dashed border-border px-6 py-16 text-center">
             <div className="fb-hero-mark mb-4 grid h-16 w-16 place-items-center rounded-2xl border border-border/70 text-primary">
@@ -663,7 +715,7 @@ const MealBank = () => {
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {items.length === 0 ? (
                 <>
-                  <Button onClick={() => setLibraryOpen(true)} className="gap-2 rounded-xl">
+                  <Button onClick={() => openLibrary()} className="gap-2 rounded-xl">
                     <Library className="h-4 w-4" />
                     {t('foodBankPro.openLibrary')}
                   </Button>
@@ -673,10 +725,18 @@ const MealBank = () => {
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" onClick={clearFilters} className="gap-2 rounded-xl">
-                  <X className="h-4 w-4" />
-                  {t('foodBankPro.clearFilters')}
-                </Button>
+                <>
+                  {normalizedSearch && (
+                    <Button onClick={() => openLibrary(searchTerm.trim())} className="gap-2 rounded-xl">
+                      <Library className="h-4 w-4" />
+                      <span dir="auto">{t('foodTable.searchAll', { q: searchTerm.trim() })}</span>
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={clearFilters} className="gap-2 rounded-xl">
+                    <X className="h-4 w-4" />
+                    {t('foodBankPro.clearFilters')}
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -689,6 +749,7 @@ const MealBank = () => {
         onOpenChange={setLibraryOpen}
         importedKeys={importedKeys}
         onImported={(item) => setItems((prev) => [...prev, item])}
+        initialQuery={libraryQuery}
       />
 
       {/* Create / edit (#25) */}

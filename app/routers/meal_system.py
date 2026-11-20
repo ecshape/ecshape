@@ -1207,7 +1207,7 @@ def upsert_meal_completion(
 
 _MEAL_BANK_LIBRARY_KEYS = (
     "image_url", "image_credit", "source", "source_id", "brand",
-    "fiber", "tags", "nutriscore", "nova_group",
+    "fiber", "tags", "nutriscore", "nova_group", "food_group",
 )
 
 
@@ -1302,10 +1302,15 @@ def get_meal_bank_items(
         query = db.query(MealBank)
         
         if current_user.role == UserRole.TRAINER or current_user.role == UserRole.ADMIN:
-            # Trainers and admins see all items
+            # The coach's own bank (the ECShape table is copied into it once) plus foods shared as public.
+            # Not every coach's private rows: each coach has his own copy of the table.
+            if current_user.role == UserRole.TRAINER:
+                from app.services.ecshape_table import ensure_for_trainer
+                ensure_for_trainer(db, current_user.id)
             if not include_public:
-                # If include_public is False, only show items created by current user
                 query = query.filter(MealBank.created_by == current_user.id)
+            else:
+                query = query.filter((MealBank.created_by == current_user.id) | (MealBank.is_public == True))  # noqa: E712
         else:
             # Clients only see public items
             query = query.filter(MealBank.is_public == True)

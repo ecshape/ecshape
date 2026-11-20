@@ -306,11 +306,24 @@ def _attach_cached_image(food: Dict[str, Any]) -> None:
 def _bank_foods(db: Session, client_id: int, query: str, lang: str, limit: int) -> List[Dict[str, Any]]:
     me = db.query(User).filter(User.id == client_id).first()
     trainer_id = getattr(me, "trainer_id", None)
+    from app.services.ecshape_table import ensure_for_trainer
+    ensure_for_trainer(db, trainer_id)
     q = db.query(MealBank).filter(or_(MealBank.created_by == trainer_id, MealBank.is_public.is_(True)) if trainer_id else MealBank.is_public.is_(True))
     if query:
         like = f"%{query}%"
         q = q.filter(or_(MealBank.name.ilike(like), MealBank.name_hebrew.ilike(like), MealBank.brand.ilike(like)))
-    rows = q.order_by((MealBank.created_by == trainer_id).desc() if trainer_id else MealBank.id, MealBank.name).limit(limit).all()
+    rows = q.order_by((MealBank.created_by == trainer_id).desc() if trainer_id else MealBank.id, MealBank.name).limit(max(limit * 5, 60)).all()
+    if query:  # "חזה עוף" first, then names starting with it, then the shortest (plain foods before dishes)
+        ql = query.strip().lower()
+
+        def _rank(b):
+            names = [n.lower() for n in (b.name_hebrew, b.name) if n]
+            mine = 0 if trainer_id and b.created_by == trainer_id else 1
+            exact = 0 if ql in names else 1 if any(n.startswith(ql) for n in names) else 2
+            return (exact, mine, min((len(n) for n in names), default=99))
+
+        rows.sort(key=_rank)
+    rows = rows[:limit]
     out = []
     seen = set()
     for b in rows:
@@ -325,7 +338,7 @@ def _bank_foods(db: Session, client_id: int, query: str, lang: str, limit: int) 
             "image_url": b.image_url, "unit": "portion" if portion else "g",
             "serving_grams": None if portion else _serving_grams(b.serving_size), "serving_label": b.serving_size,
             "calories": round(_r(b.calories, 0)), "protein": _r(b.protein), "carbs": _r(b.carbs), "fat": _r(b.fat),
-            "macro_type": getattr(b.macro_type, "value", b.macro_type),
+            "macro_type": getattr(b.macro_type, "value", b.macro_type), "food_group": b.food_group,
         })
     return out
 
@@ -374,7 +387,7 @@ def search_foods(
 ):
     """One search over everything a trainee may have eaten.
 
-    Order: foods they logged before, their coach's food bank, everyday staples, generic foods (USDA) and
+    Order: their coach's food bank (the ECShape table first), foods they logged before, everyday staples, generic foods (USDA) and
     packaged products (Open Food Facts, any language). Values are per 100 g (``unit: "g"``) or per portion
     (``unit: "portion"``). Foods without a photo get their AI photo when one exists, else ``needs_image``.
     """
@@ -385,7 +398,7 @@ def search_foods(
     errors: List[str] = []
     if page == 1:
         sections["recent"] = _recent_foods(db, current_user.id, query, 6 if query else 8)
-        sections["coach"] = _bank_foods(db, current_user.id, query, lang, 8 if query else 0) if query else []
+        sections["coach"] = _bank_foods(db, current_user.id, query, lang, 12) if query else []
         sections["foods"] = [_from_library(s) for s in library.search_staples(query, lang, limit=10)] if query else []
     has_more = False
     if len(query) >= 2:
@@ -409,9 +422,9 @@ def search_foods(
             errors.append("generic")
         if off_res.get("error"):
             errors.append("products")
-    # The same food from several places: keep the first (recent > coach > staple > generic).
+    # The same food from several places: keep the coach's (his table is the default), then recent > staple > generic.
     seen = set()
-    for key in ("recent", "coach", "foods", "products"):
+    for key in ("coach", "recent", "foods", "products"):
         kept = []
         for f in sections[key]:
             k = (food_images.normalize_name(f["name"]), food_images.normalize_name(f.get("brand") or ""))

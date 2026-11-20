@@ -325,12 +325,17 @@ def refresh_bank_photos(db) -> int:
     from app.models.meal_system import MealBank
 
     changed = 0
+    matched: Dict[tuple, Any] = {}  # every coach has the same ECShape table names: match each name once
     for item in db.query(MealBank).all():
         url = item.image_url or ""
         if url and not url.startswith("https://commons.wikimedia.org/wiki/Special:FilePath/"):
             continue
         staple = STAPLES_BY_KEY.get(item.source_id or "") if item.source == "staple" else None
-        staple = staple or match_staple(item.name_hebrew, item.name)
+        if not staple:
+            names = (item.name_hebrew, item.name)
+            if names not in matched:
+                matched[names] = match_staple(*names)
+            staple = matched[names]
         if not staple:
             continue
         new_url, credit = staple_photo(staple)

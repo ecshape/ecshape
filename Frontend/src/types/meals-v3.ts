@@ -16,6 +16,11 @@ export interface V3FoodOption {
   macro_type?: MacroType;
   /** Photo from the food bank (Open Food Facts / Wikimedia), when available. */
   image_url?: string | null;
+  /** "ecshape" for rows of the ECShape nutrition table (the default bank) */
+  source?: string | null;
+  source_id?: string | null;
+  /** ECShape table group (poultry, dairy, bread…) */
+  food_group?: string | null;
 }
 
 export interface V3FoodCatalogItem extends V3FoodOption {

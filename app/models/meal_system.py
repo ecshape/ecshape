@@ -256,4 +256,5 @@ class MealBank(Base):
     tags = Column(Text, nullable=True)             # JSON list of property tags (vegan, kosher, ...)
     nutriscore = Column(String(1), nullable=True)  # a-e
     nova_group = Column(Integer, nullable=True)    # 1-4
+    food_group = Column(String(32), nullable=True)  # ECShape table group key (poultry, dairy, bread…)
 

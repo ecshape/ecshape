@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/foodTable';
 import { toast } from 'sonner';
 import { Barcode, Camera, Check, ChevronRight, Heart, ImagePlus, Loader2, PencilLine, Plus, ScanLine, Search, Sparkles, Trash2, UtensilsCrossed, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -144,8 +145,9 @@ const AddMealSheet: React.FC<Props> = ({ open, slot, date, onClose, onManual }) 
   const loc = (list: FoodHit[]) => list.map((h) => allHits.find((x) => x.id === h.id && x.source === h.source) ?? h);
   const sections: { key: string; label: string; hits: FoodHit[] }[] = res
     ? [
+        // The coach's table is the default: it comes first, then what they logged before, then other sources
+        { key: 'coach', label: t('foodTable.coachTable'), hits: loc(res.coach) },
         { key: 'recent', label: t('trainee.mealTools.secRecent'), hits: loc(res.recent) },
-        { key: 'coach', label: t('trainee.mealTools.secCoach'), hits: loc(res.coach) },
         { key: 'foods', label: t('trainee.mealTools.secFoods'), hits: loc(res.foods) },
         { key: 'products', label: t('trainee.mealTools.secProducts'), hits: loc(res.products) },
       ].filter((s) => s.hits.length)

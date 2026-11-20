@@ -30,6 +30,8 @@ export interface MealBankItem {
   tags?: string[] | null;
   nutriscore?: string | null;
   nova_group?: number | null;
+  /** ECShape table group (poultry, dairy, bread…) */
+  food_group?: string | null;
 }
 
 export interface LibraryFood {

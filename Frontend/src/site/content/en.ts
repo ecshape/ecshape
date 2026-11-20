@@ -160,7 +160,7 @@ export const en: SiteContent = {
     title: 'Free consultation call',
     sub: "Leave your details and I'll get back to you within 24 hours.",
     name: 'Full name', phone: 'Phone', email: 'Email (optional)', goal: 'My goal', program: 'Preferred program', message: 'Anything I should know?',
-    messagePh: 'How often you train today, injuries, availability…',
+    messagePh: 'How often you train today, availability, what matters to you…',
     submit: 'Send', sending: 'Sending…', success: 'Got it!', successSub: "I'll get back to you shortly to book the intro call.",
     error: 'Something went wrong. Please try again or message me on WhatsApp.', required: 'Please enter your name and a phone number or email.', invalidEmail: 'That email address doesn’t look right.',
     privacy: 'Your details are only used to contact you about coaching.',
@@ -173,6 +173,6 @@ export const en: SiteContent = {
     ],
     close: 'Close',
   },
-  cookie: { text: 'This site uses cookies for analytics to improve your experience. You can accept or decline.', accept: 'Accept', decline: 'Decline' },
+  cookie: { text: 'With your permission we use Google Analytics statistics cookies to understand how the site is used. The site works without them too.', accept: 'Accept', decline: 'No, thanks' },
   contact: { ...he.contact, whatsappText: "Hi Elior, I found your website and I'd like to check if your coaching is right for me." },
 };

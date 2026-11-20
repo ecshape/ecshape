@@ -13,6 +13,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { NotificationContainer } from "./components/NotificationContainer";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ConsentGate from "./components/legal/ConsentGate";
 import PublicRoute from "./components/PublicRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -398,6 +399,7 @@ const App = () => {
                   <AgentSidekickProvider>
                   <AppRoutes />
                   <AgentHost />
+                  <ConsentGate />
                   </AgentSidekickProvider>
                   {/* never inside the site editor / preview frames */}
                   {window.self === window.top && <QaCaptureWidget />}

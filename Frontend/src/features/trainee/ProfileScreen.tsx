@@ -13,6 +13,7 @@ import { useCheckInSummary, useConversations, useSessions } from './hooks';
 import { Screen, Sheet } from './ui';
 import { fmtDate, fmtNum } from './format';
 import { AvatarEditor } from '@/components/avatar/AvatarEditor';
+import PrivacyCard from './PrivacyCard';
 
 const ProfileScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -79,6 +80,8 @@ const ProfileScreen: React.FC = () => {
           <Row icon={ExternalLink} label={t('trainee.profile.website')} onClick={() => window.open('/home', '_blank')} />
           <Row icon={LogOut} label={t('trainee.profile.logout')} onClick={logout} danger />
         </SectionCard>
+
+        <PrivacyCard style={{ ['--i' as string]: 6 }} />
       </div>
 
       <PasswordSheet open={pwOpen} onOpenChange={setPwOpen} />

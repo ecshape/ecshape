@@ -160,7 +160,7 @@ export const fr: SiteContent = {
     title: 'Appel découverte gratuit',
     sub: 'Laisse tes coordonnées, je te recontacte sous 24 heures.',
     name: 'Nom complet', phone: 'Téléphone', email: 'E-mail (facultatif)', goal: 'Mon objectif', program: 'Formule souhaitée', message: 'Quelque chose à me dire ?',
-    messagePh: 'Combien de fois tu t’entraînes aujourd’hui, blessures, disponibilités…',
+    messagePh: 'Combien de fois tu t’entraînes aujourd’hui, disponibilités, ce qui compte pour toi…',
     submit: 'Envoyer', sending: 'Envoi…', success: 'C’est reçu !', successSub: 'Je te recontacte rapidement pour fixer l’appel découverte.',
     error: 'Un problème est survenu. Réessaie ou écris-moi sur WhatsApp.', required: 'Indique ton nom et un téléphone ou un e-mail.', invalidEmail: 'Cette adresse e-mail ne semble pas valide.',
     privacy: 'Tes coordonnées servent uniquement à te recontacter au sujet du coaching.',
@@ -173,6 +173,6 @@ export const fr: SiteContent = {
     ],
     close: 'Fermer',
   },
-  cookie: { text: 'Ce site utilise des cookies de mesure d’audience pour améliorer ton expérience. Tu peux accepter ou refuser.', accept: 'Accepter', decline: 'Refuser' },
+  cookie: { text: 'Avec ton accord, nous utilisons les cookies de statistiques Google Analytics pour comprendre l’usage du site. Le site fonctionne aussi sans eux.', accept: 'Accepter', decline: 'Refuser' },
   contact: { ...he.contact, whatsappText: 'Bonjour Elior, j’ai trouvé ton site et j’aimerais savoir si ton coaching me correspond.' },
 };

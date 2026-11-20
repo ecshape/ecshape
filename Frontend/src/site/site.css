@@ -15,7 +15,7 @@
   --surface-2: #211e18;
   --ink: #f5f0e6;
   --ink-2: rgba(245, 240, 230, .68);
-  --ink-3: rgba(245, 240, 230, .42);
+  --ink-3: rgba(245, 240, 230, .55); /* legal audit 2026-11: .42 was 3.7:1 on --bg, below WCAG 2.0 AA (IS 5568) for small text; .55 = 5.6:1 */
   --line: rgba(245, 240, 230, .1);
   --line-2: rgba(245, 240, 230, .18);
   --accent: #f0661f;
@@ -1082,6 +1082,9 @@ html.ec-site-active.ec-locked body { padding-inline-end: var(--ec-sbw, 0px); }
 .ec-site .hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; }
 .ec-site .form-msg { min-height: 1.2em; color: #ff8f6b; font-size: .9rem; font-weight: 600; }
 .ec-site .form-privacy { font-size: .78rem; color: var(--ink-3); text-align: center; }
+.ec-site .form-privacy a, .ec-site .cookie p a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.ec-site .legal-note { margin-top: 18px; font-size: .8rem; color: var(--ink-3); }
+.ec-site .footer__biz { font-size: .75rem; color: var(--ink-3); }
 .ec-site .form-done { text-align: center; padding: 30px 0 10px; display: grid; justify-items: center; }
 .ec-site .form-done[hidden] { display: none; }
 .ec-site .form-done .lead { margin: 0 auto 26px; }

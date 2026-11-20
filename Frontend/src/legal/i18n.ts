@@ -4,8 +4,8 @@ import { LEGAL, LEGAL_NAV, type LegalDoc, type LegalLang, type LegalPage } from 
 /** Any interface language: he / en / fr as written above; Russian / Arabic translated on the server (QA #85). */
 const base = (lang: string): LegalLang => (lang === 'he' || lang === 'fr' ? lang : 'en');
 const NAV_EXTRA = {
-  ru: { privacy: 'Политика конфиденциальности', terms: 'Условия использования', accessibility: 'Заявление о доступности', credits: 'Авторы и лицензии', back: 'Назад на сайт', updatedLabel: 'Обновлено', footerLabel: 'Правовая информация' },
-  ar: { privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام', accessibility: 'بيان إمكانية الوصول', credits: 'الحقوق والتراخيص', back: 'العودة إلى الموقع', updatedLabel: 'آخر تحديث', footerLabel: 'معلومات قانونية' },
+  ru: { privacy: 'Политика конфиденциальности', terms: 'Условия и отмена', health: 'Медицинское предупреждение', accessibility: 'Заявление о доступности', credits: 'Авторы и лицензии', back: 'Назад на сайт', updatedLabel: 'Обновлено', footerLabel: 'Правовая информация' },
+  ar: { privacy: 'سياسة الخصوصية', terms: 'الشروط والإلغاء', health: 'تنبيه صحي', accessibility: 'بيان إمكانية الوصول', credits: 'الحقوق والتراخيص', back: 'العودة إلى الموقع', updatedLabel: 'آخر تحديث', footerLabel: 'معلومات قانونية' },
 };
 export function legalNavFor(lang: string) {
   const l = lang.slice(0, 2);

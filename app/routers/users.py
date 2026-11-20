@@ -418,12 +418,27 @@ async def delete_user(
             )
     # Admins can delete any user
     try:
+        # Legal audit 2026-11: deleting an account also deletes the person's uploaded files (progress photos,
+        # chat photos / voice, avatar), as the privacy policy promises.
+        from app.routers.privacy import _user_files
+        target = user_service.get_user_by_id(db, user_id)
+        files = []
+        if target is not None:
+            ids = [user_id] + ([c.id for c in user_service.get_trainer_clients(db, user_id)] if target.role == UserRole.TRAINER else [])
+            for uid in ids:
+                files += _user_files(db, uid)
         deleted = user_service.delete_user(db, user_id)
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+        import os as _os
+        for f in files:
+            try:
+                _os.remove(f)
+            except OSError:
+                pass
     except HTTPException:
         raise
     except Exception as e:

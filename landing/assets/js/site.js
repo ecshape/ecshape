@@ -190,7 +190,17 @@
     else if (consent !== 'denied') setTimeout(function () { banner.classList.add('is-on'); }, 2200);
     function set(v) { try { localStorage.setItem('cookie_consent', v); } catch (e) {} banner.classList.remove('is-on'); }
     $('#cbAccept').addEventListener('click', function () { set('granted'); loadGoogleAnalytics(); });
-    $('#cbDecline').addEventListener('click', function () { set('denied'); });
+    $('#cbDecline').addEventListener('click', function () {
+      set('denied');
+      // legal audit 2026-11: withdrawing consent stops GA and deletes its cookies
+      window['ga-disable-G-6QJ1G81SGP'] = true;
+      var host = location.hostname, parts = host.split('.'), domains = [''];
+      for (var i = 0; i < parts.length - 1; i++) domains.push('.' + parts.slice(i).join('.'));
+      document.cookie.split(';').forEach(function (c) {
+        var n = c.split('=')[0].trim();
+        if (/^_ga(_|$)/.test(n)) domains.forEach(function (d) { document.cookie = n + '=; Max-Age=0; path=/' + (d ? '; domain=' + d : ''); });
+      });
+    });
     $('#cookieSettings').addEventListener('click', function (e) { e.preventDefault(); banner.classList.add('is-on'); });
   })();
 

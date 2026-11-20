@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { PROVIDER_LOGOS } from '@/lib/providerLogos';
 import { useTranslation } from 'react-i18next';
 import { Check, ExternalLink, KeyRound, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import LegalLinksCard from '@/components/legal/LegalLinksCard';
 import Layout from '@/components/Layout';
 import { StudioHeader } from '@/components/studio/StudioHeader';
 import { Button } from '@/components/ui/button';
@@ -341,6 +342,7 @@ const SettingsPage = () => {
             </p>
           )}
         </section>
+        <LegalLinksCard />
       </div>
     </Layout>
   );

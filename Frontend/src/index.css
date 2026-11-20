@@ -1,6 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Heebo:wght@300;400;500;600;700;800;900&family=Karantina:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Racing+Sans+One&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700;800&display=swap'); /* QA #85: Arabic */
+/* Legal audit 2026-11: fonts are self-hosted (Fontsource, SIL OFL 1.1) instead of fonts.googleapis.com, so no visitor IP
+   goes to Google before cookie consent. Same families and weights as before; unicode-range keeps downloads per script. */
+@import '@fontsource/heebo/300.css';
+@import '@fontsource/heebo/400.css';
+@import '@fontsource/heebo/500.css';
+@import '@fontsource/heebo/600.css';
+@import '@fontsource/heebo/700.css';
+@import '@fontsource/heebo/800.css';
+@import '@fontsource/heebo/900.css';
+@import '@fontsource/anton/400.css';
+@import '@fontsource/karantina/400.css';
+@import '@fontsource/karantina/700.css';
+@import '@fontsource/racing-sans-one/400.css';
+@import '@fontsource/noto-sans-arabic/400.css'; /* QA #85: Arabic */
+@import '@fontsource/noto-sans-arabic/600.css';
+@import '@fontsource/noto-sans-arabic/700.css';
+@import '@fontsource/noto-sans-arabic/800.css';
 
 /* QA #84: the Airbolt font (Freepik licence: may not be downloadable by third parties) was unused and is no longer served. */
 

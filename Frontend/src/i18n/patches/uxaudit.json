@@ -1,0 +1,26 @@
+{
+  "he": {
+    "ux": {
+      "discardTitle": "לצאת בלי לשמור?",
+      "discardBody": "השינויים שעשית כאן עוד לא נשמרו ויאבדו.",
+      "discardKeep": "המשך לערוך",
+      "discardLeave": "צא בלי לשמור"
+    }
+  },
+  "en": {
+    "ux": {
+      "discardTitle": "Leave without saving?",
+      "discardBody": "The changes you made here are not saved yet and will be lost.",
+      "discardKeep": "Keep editing",
+      "discardLeave": "Leave without saving"
+    }
+  },
+  "fr": {
+    "ux": {
+      "discardTitle": "Quitter sans enregistrer ?",
+      "discardBody": "Les modifications faites ici ne sont pas encore enregistrées et seront perdues.",
+      "discardKeep": "Continuer à modifier",
+      "discardLeave": "Quitter sans enregistrer"
+    }
+  }
+}

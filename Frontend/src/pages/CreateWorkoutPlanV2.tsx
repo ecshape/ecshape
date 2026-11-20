@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, BackLink, Field, PageTitle, SectionCard } from '@/features/trainer/ui';
 import ExercisePicker, { ExerciseThumb, type PickableExercise } from '@/features/trainer/ExercisePicker';
 import { PortalSelect } from '@/components/ui/portal-select';
+import DiscardChangesDialog, { useBeforeUnload } from '@/components/DiscardChangesDialog';
 
 interface WorkoutExercise {
   /** Existing workout exercise id: sent back so the server edits it in place (its logged sets stay attached). */
@@ -119,6 +120,19 @@ const CreateWorkoutPlanV2: React.FC = () => {
   const [showCreateSplitDialog, setShowCreateSplitDialog] = useState(false);
   const hasHydratedExistingPlan = useRef(false);
 
+  // Unsaved-changes guard: Cancel / Back used to drop the edits silently.
+  const snapshot = (f: WorkoutPlanFormData) => JSON.stringify(f, (k, v) => (k === '_key' || k === 'client_id' ? undefined : v));
+  const baseline = useRef<string | null>(null);
+  const saved = useRef(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  useEffect(() => {
+    if (baseline.current === null && !existingPlan) baseline.current = snapshot(formData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]);
+  const dirty = baseline.current !== null && !saved.current && snapshot(formData) !== baseline.current;
+  useBeforeUnload(dirty);
+  const leave = () => (dirty ? setConfirmLeave(true) : navigate(-1));
+
   const exerciseById = useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
 
   useEffect(() => {
@@ -171,7 +185,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
         _key: nextKey(),
       })),
     }));
-    setFormData({
+    const hydrated: WorkoutPlanFormData = {
       client_id: client?.id || existingPlan.client_id,
       name: existingPlan.name || '',
       description: existingPlan.description || '',
@@ -181,7 +195,9 @@ const CreateWorkoutPlanV2: React.FC = () => {
       notes: existingPlan.notes || '',
       is_active: existingPlan.is_active ?? true,
       workout_days: mappedDays.length ? mappedDays : [{ name: dayLabel(1), day_type: 'custom', order_index: 0, notes: '', estimated_duration: null, exercises: [] }],
-    });
+    };
+    setFormData(hydrated);
+    baseline.current = snapshot(hydrated);
     hasHydratedExistingPlan.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingPlan, client]);
@@ -393,6 +409,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
       }
       // back to the client the plan belongs to (r2 N6), with a confirmation (r2 P4)
       toast.success(t('trainer.builder.planSaved', { defaultValue: 'Plan saved' }));
+      saved.current = true;
       navigate(formData.client_id ? `/client/${formData.client_id}` : '/trainer-dashboard');
     } catch (err) {
       console.error('Failed to create workout plan:', err);
@@ -421,7 +438,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
   return (
     <Layout currentPage="clients">
       <div className="tr-page">
-        <BackLink className="mb-4" />
+        <BackLink className="mb-4" onClick={leave} />
         <PageTitle
           eyebrow={selectedClient ? t('trainer.builder.forClient', { name: selectedClient.full_name }) : t('workoutCreation.subtitle')}
           title={isEditing ? t('workoutCreation.updateTitle') : t('workoutCreation.title')}
@@ -665,7 +682,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
             )}
           </p>
           <div className="flex gap-2">
-            <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={() => navigate(-1)}>{t('workoutCreation.cancel')}</button>
+            <button type="button" className="tp-btn tp-btn--ghost tp-btn--sm tp-press" onClick={leave}>{t('workoutCreation.cancel')}</button>
             <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press" onClick={handleSubmit} disabled={!isFormValid() || loading}>
               <Save className="h-4 w-4" />
               {loading
@@ -711,6 +728,7 @@ const CreateWorkoutPlanV2: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <DiscardChangesDialog open={confirmLeave} onKeep={() => setConfirmLeave(false)} onLeave={() => { saved.current = true; setConfirmLeave(false); navigate(-1); }} />
     </Layout>
   );
 };

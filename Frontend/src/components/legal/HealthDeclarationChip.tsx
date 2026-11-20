@@ -39,7 +39,7 @@ const HealthDeclarationChip: React.FC<{ clientId: number | string }> = ({ client
             ))}
           </ol>
           {d.notes && <p className="whitespace-pre-wrap rounded-2xl bg-foreground/[.05] p-3 text-sm">{d.notes}</p>}
-          {d.needs_medical_clearance && <p className="mt-3 text-sm font-semibold text-amber-700 dark:text-amber-300">{c.clearance}</p>}
+          {d.needs_medical_clearance && <p className="mt-3 text-sm font-semibold text-amber-700 dark:text-amber-300">{c.declCoach}</p>}
         </Sheet>
       )}
     </>

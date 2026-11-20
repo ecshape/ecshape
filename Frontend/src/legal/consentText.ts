@@ -49,6 +49,7 @@ interface ConsentCopy {
   declOk: string;
   declClearance: string;
   declAt: string;
+  declCoach: string;
 }
 
 export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
@@ -89,7 +90,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     deleteConfirm: 'מחיקה לצמיתות', deleteError: 'המחיקה נכשלה. נסו שוב או פנו אלינו.', cancel: 'ביטול',
     staffDelete: 'למחיקת חשבון מאמן יש לפנות אלינו: החשבון כולל מידע של מתאמנים.',
     policies: 'מדיניות הפרטיות ותנאי השימוש',
-    declNone: 'טרם מולאה הצהרת בריאות', declOk: 'הצהרת בריאות: תקינה', declClearance: 'הצהרת בריאות: נדרש אישור רופא', declAt: 'מולאה ב-',
+    declNone: 'טרם מולאה הצהרת בריאות', declOk: 'הצהרת בריאות: תקינה', declClearance: 'הצהרת בריאות: נדרש אישור רופא', declAt: 'מולאה ב-', declCoach: 'המתאמן/ת ענה/תה "כן" לפחות על שאלה אחת: נדרש אישור רופא בכתב לפני תחילת האימונים.',
   },
   en: {
     title: 'Before you start',
@@ -128,7 +129,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     deleteConfirm: 'Delete permanently', deleteError: 'Deletion failed. Try again or contact us.', cancel: 'Cancel',
     staffDelete: 'To delete a coach account, contact us: it holds other people’s data.',
     policies: 'Privacy policy and terms',
-    declNone: 'No health declaration yet', declOk: 'Health declaration: all clear', declClearance: 'Health declaration: doctor’s approval needed', declAt: 'Filled in on ',
+    declNone: 'No health declaration yet', declOk: 'Health declaration: all clear', declClearance: 'Health declaration: doctor’s approval needed', declAt: 'Filled in on ', declCoach: 'The client answered "yes" to at least one question: a doctor’s written approval is needed before training starts.',
   },
   fr: {
     title: 'Avant de commencer',
@@ -167,7 +168,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     deleteConfirm: 'Supprimer définitivement', deleteError: 'La suppression a échoué. Réessayez ou contactez-nous.', cancel: 'Annuler',
     staffDelete: 'Pour supprimer un compte coach, contactez-nous : il contient les données d’autres personnes.',
     policies: 'Politique de confidentialité et conditions',
-    declNone: 'Pas encore de déclaration de santé', declOk: 'Déclaration de santé : RAS', declClearance: 'Déclaration de santé : accord médical requis', declAt: 'Remplie le ',
+    declNone: 'Pas encore de déclaration de santé', declOk: 'Déclaration de santé : RAS', declClearance: 'Déclaration de santé : accord médical requis', declAt: 'Remplie le ', declCoach: 'L’élève a répondu « oui » à au moins une question : l’accord écrit d’un médecin est requis avant de commencer.',
   },
 };
 

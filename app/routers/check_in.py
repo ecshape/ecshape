@@ -383,7 +383,7 @@ def get_trainer_dashboard(
     """סטטוס כל הלקוחות (מאמן בלבד)"""
     if current_user.role != UserRole.TRAINER:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=403,
             detail="Only trainers can access this endpoint"
         )
     

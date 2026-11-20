@@ -127,7 +127,7 @@ const TAG_ATTRS: Record<string, string[]> = {
 
 function safeUrl(value: string, forImage: boolean) {
   const v = value.trim();
-  if (/^(https:\/\/|\/(?!\/)|#)/i.test(v)) return v;
+  if (/^(https:\/\/|\/(?![\/\\])|#)/i.test(v)) return v; // "/\\host" is read as "//host" by browsers
   if (!forImage && /^(mailto:|tel:)/i.test(v)) return v;
   return null;
 }
@@ -151,9 +151,10 @@ function rebuildTag(tag: string, attrs: string, closing: boolean) {
       value = url;
     }
     if (name === 'target' && value !== '_blank') continue;
+    if (name === 'rel') continue; // rebuilt below: never let an article keep rel="opener"
     out.push(`${name}="${escapeAttr(value)}"`);
   }
-  if (tag === 'a' && out.includes('target="_blank"') && !out.some((a) => a.startsWith('rel='))) out.push('rel="noopener noreferrer"');
+  if (tag === 'a' && out.includes('target="_blank"')) out.push('rel="noopener noreferrer"');
   return `<${tag}${out.length ? ` ${out.join(' ')}` : ''}${VOID_TAGS.has(tag) ? ' /' : ''}>`;
 }
 

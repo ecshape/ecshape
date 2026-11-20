@@ -644,6 +644,8 @@ def generate_variants(
     variants but never trigger generation (each run is a paid Claude call).
     Optionally specify meal_slot_id to generate only one slot.
     """
+    from app.services import rate_limit as _rl
+    _rl.check("ai", current_user.id)
     _require_coach(current_user)
     if not request.client_id:
         raise HTTPException(

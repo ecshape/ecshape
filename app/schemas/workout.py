@@ -1,3 +1,4 @@
+from app.schemas.safe_types import SafeHttpUrl, SafeHttpUrlOut
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
@@ -7,7 +8,7 @@ from app.models.workout import MuscleGroup
 class ExerciseBase(BaseModel):
     name: str
     description: Optional[str] = Field(None, description="General description of the exercise")
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     image_path: Optional[str] = Field(None, description="Path to uploaded exercise image (used if no video_url)")
     muscle_group: str  # Changed to str to support dynamic muscle groups
     equipment_needed: Optional[str] = None
@@ -20,7 +21,7 @@ class ExerciseCreate(ExerciseBase):
 class ExerciseUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     image_path: Optional[str] = None
     muscle_group: Optional[str] = None  # Changed to str to support dynamic muscle groups
     equipment_needed: Optional[str] = None
@@ -28,6 +29,7 @@ class ExerciseUpdate(BaseModel):
     category: Optional[str] = None
 
 class ExerciseResponse(ExerciseBase):
+    video_url: SafeHttpUrlOut = None
     id: int
     library_id: Optional[str] = None
     created_by: int

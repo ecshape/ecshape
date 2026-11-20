@@ -557,6 +557,8 @@ class AgentChatIn(BaseModel):
 
 @router.post("/agent/chat")
 def agent_chat(payload: AgentChatIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.agent_ec import AgentUnavailable, run_agent
     try:
         return {"ok": True, **run_agent(db, user, [t.model_dump() for t in payload.messages], lang=payload.lang or "he",
@@ -577,6 +579,8 @@ class AgentDraftIn(BaseModel):
 @router.post("/agent/draft")
 def agent_draft(payload: AgentDraftIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
     """Inline Agent EC draft for one text box (prospect reply / notes, QA ticket, SEO fields, site texts)."""
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.agent_draft import draft_text
     from app.services.agent_ec import AgentUnavailable
     # Small flat context only (field values shown next to the box)
@@ -868,6 +872,8 @@ def prefer_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db:
 
 @router.post("/ai-keys/{key_id}/test")
 def test_ai_key(key_id: int, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.agent_ec import AgentUnavailable, test_engine
     try:
         return {"ok": True, "engine": test_engine(db, user, key_id)}
@@ -925,6 +931,8 @@ class ArticleBriefIn(BaseModel):
 
 @router.post("/seo/generate")
 def generate_article(payload: ArticleBriefIn, user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
+    from app.services import rate_limit as _rl
+    _rl.check("ai", user.id)
     from app.services.seo_writer import generate_article as run
     lang = payload.lang if payload.lang in LANGS else "he"
     brief = payload.model_dump(exclude={"statuses", "lang"})

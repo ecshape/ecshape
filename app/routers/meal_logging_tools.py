@@ -179,9 +179,11 @@ async def identify_meal_photo(
     AI keys (coach's / server's, Gemini first) are tried in turn; with none, or when all fail, the photo is read by
     the local open model on our server (QA #51), so every client can use it without any key.
     """
+    from app.services import rate_limit as _rl
+    _rl.check("ai", current_user.id)
     _require_member(current_user)
     engines = _engines_for(db, current_user)
-    data = await file.read()
+    data = await file.read(MAX_PHOTO_BYTES + 1)  # never buffer more than the limit
     if not data or len(data) > MAX_PHOTO_BYTES:
         raise HTTPException(status_code=400, detail="Photo is empty or larger than 8 MB")
     mime = (file.content_type or "").lower()

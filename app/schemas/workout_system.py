@@ -1,3 +1,4 @@
+from app.schemas.safe_types import SafeHttpUrl, SafeHttpUrlOut
 """
 Pydantic schemas for the new workout system
 """
@@ -40,7 +41,7 @@ class WorkoutExerciseBase(BaseModel):
     rest_seconds: Optional[int] = None  # Optional - trainer's choice
     tempo: Optional[str] = None
     notes: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     group_name: Optional[str] = None
     
     @field_validator('target_sets')
@@ -68,10 +69,11 @@ class WorkoutExerciseUpdate(BaseModel):
     rest_seconds: Optional[int] = Field(None, ge=0, le=600)
     tempo: Optional[str] = None
     notes: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     group_name: Optional[str] = None
 
 class WorkoutExerciseResponse(WorkoutExerciseBase):
+    video_url: SafeHttpUrlOut = None
     id: int
     workout_day_id: int
     created_at: datetime
@@ -158,7 +160,7 @@ class CompleteWorkoutExercise(BaseModel):
     rest_seconds: Optional[int] = None  # Optional - trainer's choice
     tempo: Optional[str] = None
     notes: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     group_name: Optional[str] = None
     
     @field_validator('target_sets')

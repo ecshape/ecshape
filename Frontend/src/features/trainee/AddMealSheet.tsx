@@ -319,7 +319,8 @@ function useSeen<T extends Element>(): [React.RefObject<T>, boolean] {
 const PALETTE = ['bg-[hsl(24_90%_55%/.16)] text-[hsl(24_80%_45%)]', 'bg-[hsl(142_50%_45%/.16)] text-[hsl(142_45%_32%)]', 'bg-[hsl(205_80%_55%/.16)] text-[hsl(205_70%_40%)]', 'bg-[hsl(330_70%_60%/.16)] text-[hsl(330_60%_45%)]', 'bg-[hsl(45_90%_55%/.2)] text-[hsl(40_80%_35%)]'];
 
 /** Food photo: the real one, else the shared AI photo (made on first view), else an illustrated tile. */
-export const FoodThumb: React.FC<{ name: string; src?: string | null; needsImage?: boolean; hint?: string | null; allowAi?: boolean; className?: string }> = ({ name, src, needsImage, hint, allowAi = true, className }) => {
+/** `name` feeds the photo lookup; `label` (the name shown next to it) gives the placeholder letter, so a Hebrew row never gets an English initial. */
+export const FoodThumb: React.FC<{ name: string; label?: string | null; src?: string | null; needsImage?: boolean; hint?: string | null; allowAi?: boolean; className?: string }> = ({ name, label, src, needsImage, hint, allowAi = true, className }) => {
   const { t } = useTranslation();
   const [ref, seen] = useSeen<HTMLDivElement>();
   const [broken, setBroken] = useState(false);
@@ -327,7 +328,7 @@ export const FoodThumb: React.FC<{ name: string; src?: string | null; needsImage
   const gen = useFoodImage(name, hint, wantAi && seen);
   const url = !broken && src ? mediaUrl(src) : gen.data?.url ? mediaUrl(gen.data.url) : undefined;
   const isAi = !(!broken && src) && !!gen.data?.url;
-  const letter = (name.trim()[0] || '?').toUpperCase();
+  const letter = ((label || name).trim()[0] || '?').toUpperCase();
   const tone = PALETTE[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % PALETTE.length];
   return (
     <div ref={ref} className={cn('relative flex-none overflow-hidden rounded-xl bg-foreground/[.06]', className ?? 'h-14 w-14')}>

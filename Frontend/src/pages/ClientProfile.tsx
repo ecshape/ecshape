@@ -690,7 +690,7 @@ const ClientProfile = () => {
                                   <div className="mt-1.5 space-y-1">
                                     {macro.food_options.map((f, fi) => (
                                       <button key={fi} type="button" onClick={() => setFoodDetail(f)} className="tp-press flex w-full items-center gap-2.5 rounded-xl bg-background/60 p-1.5 text-start">
-                                        <FoodThumb name={f.name} src={f.image_url} needsImage={!f.image_url} className="h-10 w-10 rounded-lg" />
+                                        <FoodThumb name={f.name} label={f.name_hebrew || f.name} src={f.image_url} needsImage={!f.image_url} className="h-10 w-10 rounded-lg" />
                                         <span className="min-w-0 flex-1 truncate text-xs font-semibold" dir="auto">{f.name_hebrew || f.name}</span>
                                       </button>
                                     ))}
@@ -817,7 +817,7 @@ const ClientProfile = () => {
       >
         {foodDetail && (
           <div className="space-y-4 px-5 pb-6 sm:px-6">
-            <FoodThumb name={foodDetail.name} src={foodDetail.image_url} needsImage={!foodDetail.image_url} className="aspect-[4/3] w-full rounded-2xl" />
+            <FoodThumb name={foodDetail.name} label={foodDetail.name_hebrew || foodDetail.name} src={foodDetail.image_url} needsImage={!foodDetail.image_url} className="aspect-[4/3] w-full rounded-2xl" />
             <div className="flex flex-wrap gap-2">
               {foodDetail.calories != null && <span className="tp-chip tp-chip--primary"><Flame className="h-3.5 w-3.5" />{fmtNum(foodDetail.calories)} {t('meals.calories')}</span>}
               {foodDetail.protein != null && <span className="tp-chip">{fmtNum(foodDetail.protein, 1)}g {t('meals.protein')}</span>}

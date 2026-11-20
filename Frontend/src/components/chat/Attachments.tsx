@@ -183,7 +183,7 @@ const FoodShareCard: React.FC<{ food: ShareFood; own: boolean }> = ({ food, own 
   return (
     <div className={cn('w-[min(17rem,64vw)] overflow-hidden rounded-[14px]', own ? 'bg-white/12' : 'bg-foreground/[.04]')}>
       <div className="flex items-center gap-3 p-1.5">
-        <FoodThumb name={food.name} src={food.image_url} needsImage={!food.image_url} className="h-16 w-16 rounded-xl" />
+        <FoodThumb name={food.name} label={name} src={food.image_url} needsImage={!food.image_url} className="h-16 w-16 rounded-xl" />
         <span className="min-w-0 flex-1">
           <span className={cn('block text-[11px] font-bold uppercase tracking-[.08em]', own ? 'text-white/80' : 'text-primary')}>{t('chatAtt.foodMsg')}</span>
           <span className="line-clamp-2 block font-semibold leading-snug" dir="auto"><LibText text={name} /></span>
@@ -392,7 +392,7 @@ export const FoodSharePicker: React.FC<{ open: boolean; onOpenChange: (o: boolea
                 onClick={() => { onPick({ name: f.name, name_hebrew: f.name_hebrew, image_url: f.image_url ? mediaUrl(f.image_url) : null, calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat, measurement_type: f.measurement_type, serving_size: f.serving_size }); onOpenChange(false); }}
                 className="tp-press block w-full overflow-hidden rounded-2xl bg-card text-start ring-1 ring-border/60 hover:ring-2 hover:ring-primary/60"
               >
-                <FoodThumb name={f.name} src={f.image_url} needsImage={!f.image_url} className="aspect-[4/3] w-full rounded-none" />
+                <FoodThumb name={f.name} label={he && f.name_hebrew ? f.name_hebrew : f.name} src={f.image_url} needsImage={!f.image_url} className="aspect-[4/3] w-full rounded-none" />
                 <span className="block p-2">
                   <span className="line-clamp-2 block text-xs font-bold leading-tight" dir="auto">{he && f.name_hebrew ? f.name_hebrew : <LibText text={f.name} />}</span>
                   <span className="block text-[10px] text-muted-foreground" dir="ltr">{f.calories ?? '—'} kcal · P{f.protein ?? '—'}</span>

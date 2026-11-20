@@ -11,6 +11,7 @@ export type HealthQuestion = (typeof HEALTH_QUESTIONS)[number];
 interface ConsentCopy {
   title: string;
   intro: string;
+  staffIntro: string;
   terms: [string, string, string, string]; // before, terms link, middle, privacy link
   health: string;
   age: string;
@@ -53,6 +54,7 @@ interface ConsentCopy {
 export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
   he: {
     title: 'לפני שמתחילים',
+    staffIntro: 'כדי להשתמש ב-ECshape יש לאשר את תנאי השימוש ומדיניות הפרטיות. כמאמן/ת תטפל/י במידע בריאותי של מתאמנים: השתמש/י בו רק לצורך הליווי, אל תשתף/י אותו, ושמור/י על הסיסמה. אם את/ה מלווה מתאמנים משלך, את/ה האחראי/ת למידע שלהם.',
     intro: 'כדי ללוות אותך אנחנו צריכים לשמור מידע בריאותי (משקל, מידות, תמונות התקדמות, תזונה, שינה ופציעות). זהו מידע רגיש במיוחד, ולכן אנחנו מבקשים את הסכמתך המפורשת. אפשר לחזור בך בכל עת בהגדרות.',
     terms: ['קראתי ואני מסכים/ה ל', 'תנאי השימוש', ' ול', 'מדיניות הפרטיות'],
     health: 'אני מסכים/ה במפורש שהמאמן שלי ו-ECshape יעבדו את המידע הבריאותי שאמסור (כולל תמונות התקדמות וצ׳אט) לצורך הליווי בלבד, כמפורט במדיניות הפרטיות, כולל אחסון אצל ספקי ענן ועיבוד בכלי בינה מלאכותית.',
@@ -91,6 +93,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
   },
   en: {
     title: 'Before you start',
+    staffIntro: 'To use ECshape, please accept the terms and the privacy policy. As a coach you handle clients’ health information: use it only for their coaching, do not share it, and keep your password safe. If you coach your own clients, you are responsible for their data.',
     intro: 'To coach you we need to store health information (weight, measurements, progress photos, food, sleep and injuries). This is especially sensitive information, so we ask for your explicit consent. You can withdraw it at any time in Settings.',
     terms: ['I have read and agree to the ', 'Terms of use', ' and the ', 'Privacy policy'],
     health: 'I explicitly consent to my coach and ECshape processing the health information I provide (including progress photos and chat) only for my coaching, as described in the privacy policy, including storage with cloud providers and processing by AI tools.',
@@ -129,6 +132,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
   },
   fr: {
     title: 'Avant de commencer',
+    staffIntro: 'Pour utiliser ECshape, acceptez les conditions et la politique de confidentialité. En tant que coach, vous traitez des données de santé d’élèves : utilisez-les uniquement pour leur accompagnement, ne les partagez pas et protégez votre mot de passe. Si vous suivez vos propres élèves, vous êtes responsable de leurs données.',
     intro: 'Pour vous accompagner, nous devons conserver des données de santé (poids, mensurations, photos de progression, alimentation, sommeil, blessures). Ce sont des données particulièrement sensibles : nous vous demandons donc votre consentement explicite. Vous pouvez le retirer à tout moment dans les réglages.',
     terms: ['J’ai lu et j’accepte les ', 'Conditions d’utilisation', ' et la ', 'Politique de confidentialité'],
     health: 'Je consens explicitement à ce que mon coach et ECshape traitent les données de santé que je fournis (y compris photos de progression et chat) uniquement pour mon accompagnement, comme décrit dans la politique de confidentialité, y compris leur hébergement chez des prestataires cloud et leur traitement par des outils d’IA.',

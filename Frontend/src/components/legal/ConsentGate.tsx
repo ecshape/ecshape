@@ -113,7 +113,7 @@ const GateDialog: React.FC<{
       <form onSubmit={submit} className="mx-auto max-w-2xl px-4 py-8 sm:py-12" noValidate>
         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/12 text-primary"><ShieldCheck className="h-6 w-6" /></span>
         <h1 id="ec-consent-title" className="tp-title mt-4 text-[2.6rem] leading-none">{c.title}</h1>
-        <p className="mt-3 leading-relaxed text-muted-foreground">{c.intro}</p>
+        <p className="mt-3 leading-relaxed text-muted-foreground">{status.role === 'CLIENT' ? c.intro : c.staffIntro}</p>
 
         <div className="mt-6 space-y-3">
           {(needs('terms') || needs('privacy')) && (
@@ -154,7 +154,7 @@ const GateDialog: React.FC<{
           </fieldset>
         )}
 
-        <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{c.disclaimer}</p>
+        {status.role === 'CLIENT' && <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{c.disclaimer}</p>}
         <p className="mt-4 min-h-5 text-sm font-semibold text-destructive" role="alert" aria-live="polite">{msg}</p>
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button" onClick={onLogout} className="tp-btn tp-press">{c.logout}</button>

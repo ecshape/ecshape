@@ -134,6 +134,8 @@ export interface AgentPage {
   title: string;
   snapshot: string;
   selection: string;
+  /** Interactive elements with refs, for the agent's page steps (lib/agentUi.collectElements) */
+  elements?: string;
 }
 export interface AiProvider {
   id: string;

@@ -7,6 +7,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { TFunction } from 'i18next';
 import { scrollBehavior } from '@/lib/motion';
+import type { UiEffect, UiStep } from '@/lib/agentUi';
 
 export type AgentForm = 'prospect' | 'qa_ticket' | 'client' | 'article';
 
@@ -25,7 +26,9 @@ export type AgentOp =
       seo?: { title?: string; description?: string }; status: 'draft' | 'published' } }
   | { kind: 'site.menu'; lang: string; items: { label: string; href: string }[] }
   | { kind: 'site.layout'; order?: string[]; hidden?: string[] }
-  | { kind: 'site.link'; path: string; target: string };
+  | { kind: 'site.link'; path: string; target: string }
+  /** Steps on the open page (click, type, pick, press…) the agent does while the trainer watches (agentUi.ts). */
+  | { kind: 'ui.task'; summary: string; effect: UiEffect; steps: UiStep[]; continueAfter?: boolean };
 
 /** What the server returned after an action ran (address of the new page / article). */
 export type OpResult = { article?: { slug: string; lang: string; status: string }; page?: { slug: string; lang: string; status: string } };
@@ -64,9 +67,11 @@ export function askAgent(prompt?: string) {
   window.dispatchEvent(new CustomEvent(AGENT_ASK_EVENT, { detail: { prompt } }));
 }
 
-export const opNeedsConfirm = (op: AgentOp) => op.kind !== 'navigate' && op.kind !== 'ui.open-form';
-export const opAutoRun = (op: AgentOp) => op.kind === 'navigate' || op.kind === 'ui.open-form';
-export const opIsDanger = (op: AgentOp) => (op.kind === 'lead.update' && op.status === 'lost') || (op.kind === 'site.layout' && (op.hidden?.length ?? 0) > 3);
+/** Looking around (navigate, open a form, page steps with effect "none") runs at once; anything that changes data asks first. */
+export const opAutoRun = (op: AgentOp) => op.kind === 'navigate' || op.kind === 'ui.open-form' || (op.kind === 'ui.task' && op.effect === 'none');
+export const opNeedsConfirm = (op: AgentOp) => !opAutoRun(op);
+export const opIsDanger = (op: AgentOp) =>
+  (op.kind === 'lead.update' && op.status === 'lost') || (op.kind === 'site.layout' && (op.hidden?.length ?? 0) > 3) || (op.kind === 'ui.task' && op.effect === 'danger');
 
 export function formHref(form: AgentForm) {
   if (form === 'article') return '/studio/seo';
@@ -141,6 +146,8 @@ export function opSummary(op: AgentOp, t: TFunction): string {
       ].filter(Boolean).join(' ');
     case 'site.link':
       return op.target ? t('agent.op.link', { button: op.path, target: op.target }) : t('agent.op.linkDefault', { button: op.path });
+    case 'ui.task':
+      return op.summary || t('agent.task.default');
   }
 }
 

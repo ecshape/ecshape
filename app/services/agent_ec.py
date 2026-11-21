@@ -5,8 +5,10 @@ Agent EC — the trainer's assistant, docked beside every studio page (modelled 
 - Never changes data on its own: "proposal" tools turn into actions (ops) that the trainer sees
   as cards and confirms; the browser then runs them on the right page (/agent/execute).
 - Sees the page the trainer is on (path, title, visible text, selection).
-- Runs on the trainer's own AI key (Claude, ChatGPT, Gemini, Mistral, Grok, DeepSeek, Groq,
-  OpenRouter or any OpenAI-compatible endpoint), or the server's ANTHROPIC_API_KEY.
+- Works the page itself (do_on_page): clicks, typing, options, keys on the elements the browser lists with refs;
+  the trainer watches a cursor do it. Looking around runs at once; anything that changes data is confirmed first.
+- Runs on the trainer's own AI key (Claude, ChatGPT, Gemini — the free AI Studio key works —, Mistral, Grok, DeepSeek,
+  Groq, OpenRouter or any OpenAI-compatible endpoint), or the server's GEMINI_API_KEY / ANTHROPIC_API_KEY.
 """
 from __future__ import annotations
 
@@ -63,6 +65,11 @@ one or two sentences: what you prepared and "Shall I do it for you?". Write comp
 <h2>, <p>, <ul>, <strong>; no <h1>, no markdown), never placeholders.
 - When the trainer says the result is not what they wanted, ask what to change and propose the corrected version.
 - To take the trainer somewhere, call navigate (or open_form to open a "new …" form). These run immediately.
+- You can also work the page itself like a person would, with do_on_page: click buttons, tabs and links, type into fields, pick options, press Enter, scroll to or highlight something. The list "Interactive elements on the page" gives each element a ref like [e12]: use only refs from the latest list. Use do_on_page for everything no dedicated tool covers (clients and their plans, workouts, menus, the meal bank, exercises, tasks, automations, chat, settings…). Prefer a dedicated tool when one exists (it can be undone).
+- Understand when the trainer needs an action: "add / change / create / remove / fix / send / set up / do it" means act — prepare the steps with do_on_page (or the matching tool), do not explain how. "How do I…?" means: answer in two lines AND offer the steps as a do_on_page card, so they can say "do it for me". Pure questions get answers only.
+- Set do_on_page's effect honestly: "none" = only looks, scrolls, opens tabs/menus, searches or fills a filter (runs right away); "change" = saves, creates, edits or adds anything (the trainer confirms first); "danger" = deletes, sends something to a client or prospect, publishes, or cannot be undone (red card, always confirmed). Never hide a save or delete click inside an effect "none" task.
+- A task that spans several pages or screens: do the steps you can see, set continue_after=true, and stop there with one short sentence. You will then receive the new page and its elements ("[Automatic] steps done…") and continue from it. When the task is finished, say so in one sentence and do not call do_on_page again.
+- Never type passwords, card numbers, ID numbers or API keys into the page; ask the trainer to do it.
 - For communication work (Instagram captions, WhatsApp replies to prospects, SEO titles and descriptions, articles), \
 write ready-to-use text in the requested language. Brand voice: direct, warm, motivating, no medical claims, no emojis \
 unless the trainer asks for them.
@@ -74,8 +81,22 @@ use real exercises and foods from the app. Ask for missing essentials (goal, day
 """
 
 # Routes the agent may open (prefix match)
-ALLOWED_PATHS = ("/trainer-dashboard", "/client/", "/exercises", "/meal-bank", "/chat", "/studio/prospects", "/studio/site",
-                 "/studio/seo", "/studio/qa", "/studio/settings", "/trainer-weekly-meals-v3", "/create-workout-plan-v2")
+ALLOWED_PATHS = ("/trainer-dashboard", "/clients", "/client/", "/exercises", "/create-exercise", "/meal-bank", "/chat",
+                 "/studio/prospects", "/studio/tasks", "/studio/automations", "/studio/site", "/studio/seo", "/studio/qa",
+                 "/studio/settings", "/trainer-weekly-meals-v3", "/create-workout-plan-v2", "/create-workout",
+                 "/create-meal-plan", "/create-meal-plan-v3", "/admin", "/users", "/blog", "/p/", "/home")
+
+# What lives where (so the agent can take the trainer anywhere and act there)
+ROUTE_MAP = """Pages of the app:
+/trainer-dashboard — overview, today, clients at a glance · /clients — all clients, add a client
+/client/<id> — one client: profile, plan, menu, check-ins, progress · /client/<id>/edit — edit the client
+/create-workout-plan-v2 — build a training program · /create-workout — single workout · /exercises — exercise library
+/create-exercise — new exercise · /meal-bank — food bank · /trainer-weekly-meals-v3 — weekly menus
+/create-meal-plan-v3 — new meal plan · /chat — messages with clients
+/studio/prospects — website leads · /studio/tasks — to-dos · /studio/automations — automatic WhatsApp/email flows
+/studio/site — public website editor · /studio/seo — blog and SEO · /studio/qa — QA tickets about the site/app
+/studio/settings — preferences and AI keys · /admin, /users — administration (admins)
+Public site: /home, /blog, /blog/<slug>, /p/<slug>"""
 
 # ------------------------------------------------------------------ tools (provider-neutral)
 READ_TOOLS: List[Dict[str, Any]] = [
@@ -111,7 +132,26 @@ READ_TOOLS: List[Dict[str, Any]] = [
      "schema": {"type": "object", "properties": {"search": {"type": "string"}, "macro": {"type": "string", "enum": ["protein", "carb", "fat"]}}, "additionalProperties": False}},
 ]
 
+UI_ACTIONS = ("click", "fill", "select", "press", "scroll", "highlight")
+UI_EFFECTS = ("none", "change", "danger")
+
 PROPOSAL_TOOLS: List[Dict[str, Any]] = [
+    {"name": "do_on_page", "description": "Do steps on the page the trainer has open, like a person would, while they watch (a cursor "
+                                     "moves to each element). Refs come from 'Interactive elements on the page'. effect none runs "
+                                     "now; change / danger are confirmed by the trainer first.",
+     "schema": {"type": "object", "properties": {
+         "summary": {"type": "string", "description": "What this does, in the trainer's language, e.g. 'Add Dana to the 3-day program and save'."},
+         "effect": {"type": "string", "enum": list(UI_EFFECTS)},
+         "steps": {"type": "array", "items": {"type": "object", "properties": {
+             "action": {"type": "string", "enum": list(UI_ACTIONS), "description": "fill = type a value (replaces the field); select = pick an "
+                        "option by its text; press = a key (Enter, Escape, Tab) in the element or the page; highlight = show it to the trainer."},
+             "ref": {"type": "string", "description": "e.g. e12 (may be empty for press/scroll on the whole page)"},
+             "label": {"type": "string", "description": "Visible name of the element, e.g. 'Save' or 'Client name' (used to find it again)."},
+             "value": {"type": "string", "description": "Text for fill, option text for select, key for press."},
+             "say": {"type": "string", "description": "Very short caption shown next to the cursor, e.g. 'Typing the name'."}},
+             "required": ["action", "label"]}},
+         "continue_after": {"type": "boolean", "description": "true = send me the new page after the steps so I can continue the task."}},
+         "required": ["summary", "effect", "steps"], "additionalProperties": False}},
     {"name": "navigate", "description": "Open a studio page now. href must be one of: " + ", ".join(ALLOWED_PATHS) + " (client pages: /client/<id>).",
      "schema": {"type": "object", "properties": {"href": {"type": "string"}, "label": {"type": "string", "description": "Button text, e.g. 'Open prospects'."}},
                 "required": ["href", "label"], "additionalProperties": False}},
@@ -191,6 +231,8 @@ def _tool_to_op(name: str, args: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return {"kind": "navigate", "href": href, "label": str(args.get("label") or href)[:80]}
     if name == "open_form":
         return {"kind": "ui.open-form", "form": args.get("form")}
+    if name == "do_on_page":
+        return _ui_task_op(args)
     if name == "update_prospect":
         return {"kind": "lead.update", "leadId": int(args["lead_id"]), "leadName": args.get("lead_name", ""), "status": args.get("status"), "note": args.get("note")}
     if name == "create_prospect":
@@ -229,6 +271,38 @@ def _tool_to_op(name: str, args: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             return None
         return {"kind": "site.link", "path": args["button"], "target": clean_href(target) if target else ""}
     return None
+
+
+_DANGER_WORDS = ("delete", "remove", "erase", "send", "publish", "log out", "logout", "sign out", "pay", "archive",
+                 "מחק", "מחיקה", "הסר", "שלח", "פרסם", "התנתק", "supprimer", "effacer", "envoyer", "publier", "déconnexion")
+
+
+def _ui_task_op(args: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    import re
+
+    steps = []
+    for st in (args.get("steps") or [])[:12]:
+        if not isinstance(st, dict) or st.get("action") not in UI_ACTIONS:
+            return None
+        ref = str(st.get("ref") or "").strip()
+        if ref and not re.fullmatch(r"e\d{1,4}", ref):
+            return None
+        if not ref and st["action"] not in ("press", "scroll"):
+            return None
+        steps.append({"action": st["action"], "ref": ref, "label": str(st.get("label") or "")[:80],
+                      "value": str(st.get("value") or "")[:4000], "say": str(st.get("say") or "")[:80]})
+    if not steps:
+        return None
+    effect = args.get("effect") if args.get("effect") in UI_EFFECTS else "change"
+    # A delete / send / publish click is never "just looking", whatever the model said.
+    clicks = " ".join(s["label"].lower() for s in steps if s["action"] in ("click", "press"))
+    if any(w in clicks for w in _DANGER_WORDS):
+        effect = "danger"
+    elif effect == "none" and any(s["action"] == "click" for s in steps) and re.search(
+            r"save|create|add|submit|confirm|apply|שמור|שמירה|צור|הוסף|אישור|enregistrer|créer|ajouter|valider|confirmer", clicks):
+        effect = "change"
+    return {"kind": "ui.task", "summary": str(args.get("summary") or "")[:200], "effect": effect, "steps": steps,
+            "continueAfter": bool(args.get("continue_after"))}
 
 
 # ------------------------------------------------------------------ read tool implementations
@@ -345,9 +419,27 @@ def _anthropic_tools() -> List[Dict[str, Any]]:
     return [{"name": t["name"], "description": t["description"], "input_schema": t["schema"]} for t in READ_TOOLS + PROPOSAL_TOOLS]
 
 
-def _openai_tools() -> List[Dict[str, Any]]:
-    return [{"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["schema"]}}
-            for t in READ_TOOLS + PROPOSAL_TOOLS]
+def _strip_schema(node: Any) -> Any:
+    """Gemini's OpenAI-compatible endpoint rejects some JSON-schema keywords (additionalProperties)."""
+    if isinstance(node, dict):
+        return {k: _strip_schema(v) for k, v in node.items() if k != "additionalProperties"}
+    if isinstance(node, list):
+        return [_strip_schema(v) for v in node]
+    return node
+
+
+def _openai_tools(provider: str = "openai") -> List[Dict[str, Any]]:
+    out = []
+    for t in READ_TOOLS + PROPOSAL_TOOLS:
+        fn: Dict[str, Any] = {"name": t["name"], "description": t["description"]}
+        if provider == "google":
+            schema = _strip_schema(t["schema"])
+            if schema.get("properties"):  # Gemini refuses an object schema without properties
+                fn["parameters"] = schema
+        else:
+            fn["parameters"] = t["schema"]
+        out.append({"type": "function", "function": fn})
+    return out
 
 
 def _dispatch(db: Session, user: UserResponse, name: str, args: Dict[str, Any], ops: List[Dict[str, Any]]) -> Tuple[Any, bool]:
@@ -358,8 +450,12 @@ def _dispatch(db: Session, user: UserResponse, name: str, args: Dict[str, Any], 
             if not op:
                 return {"error": "This action or address is not allowed."}, True
             ops.append(op)
-            auto = op["kind"] in ("navigate", "ui.open-form")
-            return {"proposed": True, "note": "Runs now." if auto else "Shown to the trainer as a card; it runs only if they confirm."}, False
+            auto = op["kind"] in ("navigate", "ui.open-form") or (op["kind"] == "ui.task" and op["effect"] == "none")
+            note = "Runs now." if auto else "Shown to the trainer as a card; it runs only if they confirm."
+            if op["kind"] == "ui.task":
+                note += (" Stop here with one short sentence; the new page will be sent to you after the steps ran."
+                         if op["continueAfter"] else " Stop here with one short sentence.")
+            return {"proposed": True, "note": note}, False
         result = _run_read_tool(db, user, name, args)
         return result, isinstance(result, dict) and "error" in result
     except Exception as e:
@@ -399,18 +495,32 @@ def _run_claude(engine: Engine, db: Session, user: UserResponse, system: List[Di
             if response.stop_reason == "pause_turn":
                 continue
             results = []
+            before = sum(1 for o in ops if o["kind"] == "ui.task")
             for block in response.content:
                 if block.type != "tool_use":
                     continue
                 result, err = _dispatch(db, user, block.name, dict(block.input or {}), ops)
                 results.append({"type": "tool_result", "tool_use_id": block.id, "content": json.dumps(result, ensure_ascii=False, default=str), **({"is_error": True} if err else {})})
+            if sum(1 for o in ops if o["kind"] == "ui.task") > before:
+                # Page steps end the turn: the page must change before the agent can see what comes next.
+                return "".join(b.text for b in response.content if b.type == "text").strip()
             messages.append({"role": "user", "content": results})
             continue
         return "".join(b.text for b in response.content if b.type == "text").strip()
     return "I stopped after several steps without finishing. Please narrow the request."
 
 
-def _post_json(url: str, api_key: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+def _retry_delay(body: str) -> Optional[float]:
+    """Seconds the provider asks to wait (Gemini free tier: "retryDelay": "7s" / "Please retry in 6.2s")."""
+    import re
+
+    m = re.search(r'retryDelay"?\s*:\s*"(\d+(?:\.\d+)?)s', body) or re.search(r"retry in (\d+(?:\.\d+)?)\s*s", body, re.I)
+    return float(m.group(1)) if m else None
+
+
+def _post_json(url: str, api_key: str, payload: Dict[str, Any], retry_on_rate_limit: bool = False) -> Dict[str, Any]:
+    import time
+
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST",
                                  headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}",
                                           "HTTP-Referer": "https://ecshape.org", "X-Title": "ECshape Studio"})
@@ -418,12 +528,20 @@ def _post_json(url: str, api_key: str, payload: Dict[str, Any]) -> Dict[str, Any
         with urllib.request.urlopen(req, timeout=90) as res:
             return json.loads(res.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "ignore")[:300]
+        body = e.read().decode("utf-8", "ignore")[:2000]
         if e.code in (401, 403):
             raise AgentUnavailable("The AI key was refused by the provider.", {"label": "settings", "href": "/studio/settings#ai-keys"})
         if e.code == 429:
+            # Free Gemini keys allow a few requests per minute: one short wait, then a second try.
+            delay = _retry_delay(body)
+            if retry_on_rate_limit and (delay is None or delay <= 12):
+                time.sleep(min(delay or 4.0, 12.0))
+                return _post_json(url, api_key, payload, retry_on_rate_limit=False)
+            if "quota" in body.lower() and "day" in body.lower():
+                raise AgentUnavailable("The free daily quota of this AI key is used up. Try again tomorrow or add another key.",
+                                       {"label": "settings", "href": "/studio/settings#ai-keys"})
             raise AgentUnavailable("The AI service is busy (rate limit). Try again in a minute.")
-        logger.error("Agent EC provider error %s: %s", e.code, body)
+        logger.error("Agent EC provider error %s: %s", e.code, body[:300])
         raise AgentUnavailable(f"The AI service answered with an error ({e.code}).")
     except urllib.error.URLError:
         raise AgentUnavailable("The AI service could not be reached.")
@@ -434,22 +552,31 @@ def _run_openai_compatible(engine: Engine, db: Session, user: UserResponse, syst
         raise AgentUnavailable("This AI key has no API address.", {"label": "settings", "href": "/studio/settings#ai-keys"})
     url = engine.base_url.rstrip("/") + "/chat/completions"
     messages: List[Dict[str, Any]] = [{"role": "system", "content": system_text}] + [{"role": t["role"], "content": t["content"]} for t in turns]
-    tools = _openai_tools()
+    tools = _openai_tools(engine.provider)
+    google = engine.provider == "google"
     for _ in range(MAX_TOOL_ROUNDS):
-        data = _post_json(url, engine.api_key, {"model": engine.model, "messages": messages, "tools": tools, "tool_choice": "auto"})
+        data = _post_json(url, engine.api_key, {"model": engine.model, "messages": messages, "tools": tools, "tool_choice": "auto"},
+                          retry_on_rate_limit=google)
         choice = (data.get("choices") or [{}])[0]
         msg = choice.get("message") or {}
         calls = msg.get("tool_calls") or []
         if calls:
+            # Gemini may attach thought signatures (extra_content) to its calls: they are sent back untouched.
             messages.append({"role": "assistant", "content": msg.get("content") or "", "tool_calls": calls})
-            for call in calls:
+            before = sum(1 for o in ops if o["kind"] == "ui.task")
+            for i, call in enumerate(calls):
                 fn = call.get("function") or {}
                 try:
                     args = json.loads(fn.get("arguments") or "{}")
                 except json.JSONDecodeError:
                     args = {}
                 result, _err = _dispatch(db, user, fn.get("name", ""), args if isinstance(args, dict) else {}, ops)
-                messages.append({"role": "tool", "tool_call_id": call.get("id"), "content": json.dumps(result, ensure_ascii=False, default=str)})
+                tool_msg: Dict[str, Any] = {"role": "tool", "tool_call_id": call.get("id") or f"call_{i}", "content": json.dumps(result, ensure_ascii=False, default=str)}
+                if google:
+                    tool_msg["name"] = fn.get("name", "")
+                messages.append(tool_msg)
+            if sum(1 for o in ops if o["kind"] == "ui.task") > before:
+                return (msg.get("content") or "").strip()
             continue
         return (msg.get("content") or "").strip()
     return "I stopped after several steps without finishing. Please narrow the request."
@@ -458,7 +585,9 @@ def _run_openai_compatible(engine: Engine, db: Session, user: UserResponse, syst
 # ------------------------------------------------------------------ entry point
 def run_agent(db: Session, user: UserResponse, turns: List[Dict[str, str]], lang: str = "he",
               page: Optional[Dict[str, str]] = None, provider: Optional[str] = None) -> Dict[str, Any]:
-    engine = resolve_engine(db, user.id, provider)
+    from app.services.ai_keys import all_engines
+
+    engine = resolve_engine(db, user.id, provider) or next(iter(all_engines(db, [user.id])), None)  # e.g. the server's free Gemini key
     if not engine:
         raise AgentUnavailable("No AI key yet. Add one in Settings → AI keys.", {"label": "settings", "href": "/studio/settings#ai-keys"})
 
@@ -469,6 +598,9 @@ def run_agent(db: Session, user: UserResponse, turns: List[Dict[str, str]], lang
             context += f"\nText the trainer selected:\n{page['selection'][:2000]}"
         if page.get("snapshot"):
             context += f"\nVisible page text (for context):\n{page['snapshot'][:9000]}"
+        if page.get("elements"):
+            context += f"\nInteractive elements on the page (ref, kind, name, state) — for do_on_page:\n{page['elements'][:10000]}"
+    context = ROUTE_MAP + "\n\n" + context
 
     # QA #87: the expert skill(s) for this request (workout plan, menu, SEO, social content…) go into the instructions.
     from app.services import agent_skills
@@ -482,8 +614,6 @@ def run_agent(db: Session, user: UserResponse, turns: List[Dict[str, str]], lang
 
     # QA #99: when the chosen model fails (no credit, refused key, provider down…), the other connected models are
     # tried in turn, so the trainer gets an answer whenever any of their models works.
-    from app.services.ai_keys import all_engines
-
     engines = [engine] + [e for e in all_engines(db, [user.id]) if (e.provider, e.api_key, e.model) != (engine.provider, engine.api_key, engine.model)]
     first_error: Optional[AgentUnavailable] = None
     for i, eng in enumerate(engines[:5]):

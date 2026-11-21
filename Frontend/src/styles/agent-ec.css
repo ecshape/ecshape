@@ -303,3 +303,47 @@ html[dir='rtl'] { --ec-travel-origin: right; }
 [data-radix-popper-content-wrapper] { z-index: calc(var(--ec-z-agent, 80) + 40) !important; }
 .ec-psk-fallback { margin-top: .4rem; font-size: .72rem; opacity: .65; }
 .ec-psk-retry { margin-top: .5rem; }
+
+/* ---------- Page tasks (do_on_page): step list in the card + the agent's cursor on the page ---------- */
+.ec-psk-task-head { display: flex; align-items: flex-start; gap: 8px; font-weight: 700; }
+.ec-psk-task-head svg { margin-top: 2px; color: hsl(var(--primary)); }
+.ec-psk-task.is-danger .ec-psk-task-head svg { color: hsl(var(--destructive)); }
+.ec-psk-task-warn { display: flex; align-items: flex-start; gap: 6px; color: hsl(var(--destructive)); font-size: 12.5px !important; font-weight: 600; }
+.ec-psk-task-chain { font-size: 12px !important; color: hsl(var(--muted-foreground)); }
+.ec-psk-steps { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.ec-psk-step { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; color: hsl(var(--foreground) / .82);
+  transition: color var(--dur-fast) var(--ease-out); }
+.ec-psk-step-dot { display: grid; place-items: center; flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%;
+  border: 1.5px solid hsl(var(--primary) / .45); color: #fff; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-med) var(--ease-out); }
+.ec-psk-step.is-running { color: hsl(var(--foreground)); font-weight: 600; }
+.ec-psk-step.is-running .ec-psk-step-dot { border-color: hsl(var(--primary)); color: hsl(var(--primary)); transform: scale(1.12); }
+.ec-psk-step.is-done .ec-psk-step-dot { background: hsl(var(--primary)); border-color: hsl(var(--primary)); animation: ec-pop var(--dur-med) var(--ease-out) both; }
+.ec-psk-step.is-failed .ec-psk-step-dot { background: hsl(var(--destructive)); border-color: hsl(var(--destructive)); }
+.ec-psk-step.is-skipped { opacity: .5; text-decoration: line-through; }
+.ec-psk-step-why { display: block; font-style: normal; font-size: 12px; color: hsl(var(--destructive)); }
+.ec-psk-task-stop { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
+.ec-psk-autoline { display: flex; align-items: center; gap: 6px; margin: 0; padding-inline: 4px; font-size: 12px; color: hsl(var(--muted-foreground)); }
+.ec-psk-msg.is-bare { padding: 0; background: none; border: 0; box-shadow: none; }
+
+.ec-agent-cursor {
+  position: fixed; top: 0; left: 0; z-index: calc(var(--ec-z-agent) + 30); pointer-events: none;
+  opacity: 0; transition: transform 520ms cubic-bezier(.22,1,.36,1), opacity var(--dur-med) var(--ease-out);
+}
+.ec-agent-cursor.is-on { opacity: 1; }
+.ec-agent-cursor-arrow { position: absolute; top: -3px; left: -3px; width: 24px; height: 24px; fill: hsl(var(--primary)); stroke: #fff; stroke-width: 1.6;
+  stroke-linejoin: round; filter: drop-shadow(0 3px 6px rgba(0,0,0,.3)); }
+.ec-agent-cursor-dot { position: absolute; top: -14px; left: -14px; width: 28px; height: 28px; border-radius: 50%; background: hsl(var(--primary) / .35); transform: scale(0); }
+.ec-agent-cursor.is-press .ec-agent-cursor-dot { animation: ec-agent-press 520ms cubic-bezier(.22,1,.36,1); }
+.ec-agent-cursor-say {
+  position: absolute; top: 18px; left: 16px; max-width: 220px; padding: 5px 10px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--ec-grad); color: #fff; font-size: 12px; font-weight: 700; box-shadow: 0 8px 20px -8px hsl(var(--primary) / .8);
+}
+.ec-agent-cursor-say:empty { display: none; }
+.ec-agent-cursor.is-flip .ec-agent-cursor-say { left: auto; right: 10px; }
+.ec-agent-target { outline: 2px solid hsl(var(--primary)) !important; outline-offset: 3px; border-radius: 10px; transition: outline-color var(--dur-fast) var(--ease-out); }
+@keyframes ec-agent-press { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .ec-agent-cursor { transition: opacity var(--dur-fast) linear; }
+  .ec-agent-cursor.is-press .ec-agent-cursor-dot, .ec-psk-step.is-done .ec-psk-step-dot { animation: none; }
+}
+@media print { .ec-agent-cursor { display: none !important; } }

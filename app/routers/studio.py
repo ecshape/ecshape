@@ -546,6 +546,7 @@ class PageContext(BaseModel):
     path: Optional[str] = Field(None, max_length=300)
     title: Optional[str] = Field(None, max_length=300)
     snapshot: Optional[str] = Field(None, max_length=12000)
+    elements: Optional[str] = Field(None, max_length=12000)  # interactive elements with refs (do_on_page)
     selection: Optional[str] = Field(None, max_length=4000)
 
 
@@ -596,8 +597,8 @@ def agent_draft(payload: AgentDraftIn, user: UserResponse = Depends(require_stud
 
 @router.get("/agent/status")
 def agent_status(user: UserResponse = Depends(require_studio), db: Session = Depends(get_db)):
-    from app.services.ai_keys import resolve_engine
-    eng = resolve_engine(db, user.id)
+    from app.services.ai_keys import all_engines, resolve_engine
+    eng = resolve_engine(db, user.id) or next(iter(all_engines(db, [user.id])), None)  # server Gemini key counts too
     return {"configured": bool(eng), "engine": eng.label if eng else None, "source": eng.source if eng else "none"}
 
 

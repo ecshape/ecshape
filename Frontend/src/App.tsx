@@ -123,11 +123,11 @@ const RedirectGate = () => {
 const queryClient = makeQueryClient();
 persistQueries(queryClient);
 
-/** Agent EC lives at app level so it stays open from page to page (trainer studio only). */
+/** Agent EC lives at app level so it stays open from page to page (every trainer / admin page). */
 const AgentHost = () => {
   const { user, isAuthenticated } = useAuth();
   const location = useLocation();
-  const studio = isAuthenticated && user?.role === 'TRAINER';
+  const studio = isAuthenticated && (user?.role === 'TRAINER' || user?.role === 'ADMIN');
   const onPublic = location.pathname === '/login' || location.pathname.startsWith('/home');
   if (!studio || onPublic) return null;
   return <AgentEc />;

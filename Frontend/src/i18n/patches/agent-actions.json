@@ -1,0 +1,77 @@
+{
+  "en": { "agent": { "task": {
+    "default": "Steps on this page",
+    "ask": "I will do these steps on the page while you watch. Shall I go?",
+    "go": "Yes, do it for me",
+    "stop": "Stop",
+    "stopped": "Stopped — nothing more will run",
+    "looking": "Agent EC looks at the result and continues…",
+    "continuing": "Continuing the task you approved",
+    "danger": "This deletes, sends or publishes something. Check the steps before you say yes.",
+    "step": {
+      "click": "Click “{{label}}”",
+      "fill": "Type “{{value}}” in “{{label}}”",
+      "select": "Choose “{{value}}” in “{{label}}”",
+      "press": "Press {{value}}",
+      "scroll": "Scroll to “{{label}}”",
+      "highlight": "Show you “{{label}}”"
+    },
+    "why": {
+      "notFound": "“{{label}}” is not on the page any more",
+      "refused": "Agent EC never types passwords or payment details: please fill this one yourself",
+      "external": "This link leaves ECshape: open it yourself",
+      "noOption": "This option is not in the list",
+      "stopped": "Stopped"
+    }
+  } } },
+  "he": { "agent": { "task": {
+    "default": "פעולות בעמוד הזה",
+    "ask": "אבצע את הפעולות האלה בעמוד מול העיניים שלך. להתחיל?",
+    "go": "כן, תעשה את זה בשבילי",
+    "stop": "עצור",
+    "stopped": "נעצר — שום דבר נוסף לא ירוץ",
+    "looking": "Agent EC בודק את התוצאה וממשיך…",
+    "continuing": "ממשיך במשימה שאישרת",
+    "danger": "הפעולה מוחקת, שולחת או מפרסמת משהו. כדאי לעבור על השלבים לפני שמאשרים.",
+    "step": {
+      "click": "לחיצה על „{{label}}”",
+      "fill": "הקלדת „{{value}}” ב„{{label}}”",
+      "select": "בחירת „{{value}}” ב„{{label}}”",
+      "press": "הקשה על {{value}}",
+      "scroll": "גלילה אל „{{label}}”",
+      "highlight": "להראות לך את „{{label}}”"
+    },
+    "why": {
+      "notFound": "„{{label}}” כבר לא מופיע בעמוד",
+      "refused": "Agent EC אף פעם לא מקליד סיסמאות או פרטי תשלום: מלא את השדה הזה בעצמך",
+      "external": "הקישור יוצא מ-ECshape: פתח אותו בעצמך",
+      "noOption": "האפשרות הזו לא נמצאת ברשימה",
+      "stopped": "נעצר"
+    }
+  } } },
+  "fr": { "agent": { "task": {
+    "default": "Étapes sur cette page",
+    "ask": "Je fais ces étapes sur la page sous vos yeux. J’y vais ?",
+    "go": "Oui, fais-le pour moi",
+    "stop": "Arrêter",
+    "stopped": "Arrêté — plus rien ne s’exécute",
+    "looking": "Agent EC regarde le résultat et continue…",
+    "continuing": "Suite de la tâche que vous avez validée",
+    "danger": "Cela supprime, envoie ou publie quelque chose. Vérifiez les étapes avant de dire oui.",
+    "step": {
+      "click": "Cliquer sur « {{label}} »",
+      "fill": "Écrire « {{value}} » dans « {{label}} »",
+      "select": "Choisir « {{value}} » dans « {{label}} »",
+      "press": "Appuyer sur {{value}}",
+      "scroll": "Aller jusqu’à « {{label}} »",
+      "highlight": "Vous montrer « {{label}} »"
+    },
+    "why": {
+      "notFound": "« {{label}} » n’est plus sur la page",
+      "refused": "Agent EC ne tape jamais de mot de passe ni de données de paiement : remplissez ce champ vous-même",
+      "external": "Ce lien sort d’ECshape : ouvrez-le vous-même",
+      "noOption": "Cette option n’est pas dans la liste",
+      "stopped": "Arrêté"
+    }
+  } } }
+}

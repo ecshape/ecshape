@@ -2,7 +2,7 @@ import { floatingToolProps, floatingTouchProps, installFloatingToolGuard } from 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, ExternalLink, KeyRound, Undo2, ThumbsUp, MessageSquareText, Plus, RotateCcw, X, Wand2, PenLine, Users2, HeartPulse, Bug, Search as SearchIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, ExternalLink, KeyRound, Undo2, ThumbsUp, MessageSquareText, Plus, RotateCcw, X, Wand2, PenLine, Users2, HeartPulse, Bug, Search as SearchIcon, MousePointerClick, Square, Loader2, ShieldAlert } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -20,11 +20,17 @@ import { cn, isRtlLang } from '@/lib/utils';
 import '@/i18n/ticketsQa3';
 import { localizeAiError } from '@/lib/aiErrors';
 import { sanitizeArticleHtml } from '@/lib/seo/articles';
+import { collectElements, riskOf, runUiSteps, stepsReport, type StepState, type UiStep } from '@/lib/agentUi';
+import '@/i18n/agentActions';
+
+/** Page tasks that may chain on their own (continue_after) before the agent hands back to the trainer. */
+const MAX_AUTO_STEPS = 6;
 
 type Fix = { label: string; href: string };
 /** Per action: undo snapshot and what the server returned (address of a new page / article). */
-type OpMeta = { undoId?: string | null; result?: OpResult | null };
-type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; opMeta?: OpMeta[]; engine?: string; error?: boolean; fix?: Fix | null; fallbackFrom?: string };
+type OpMeta = { undoId?: string | null; result?: OpResult | null; steps?: StepState[]; stepReasons?: (string | undefined)[]; chained?: boolean };
+/** auto = a message Agent EC sent itself after page steps ran (the new page follows), shown as a quiet line. */
+type Turn = { role: 'user' | 'assistant'; text: string; actions?: AgentOp[]; opStates?: OpState[]; opMeta?: OpMeta[]; engine?: string; error?: boolean; fix?: Fix | null; fallbackFrom?: string; auto?: boolean };
 type Conversation = { id: string; title: string; updatedAt: string; turns: Turn[] };
 
 const MIN_W = 340;
@@ -101,6 +107,23 @@ function OpPreview({ op }: { op: AgentOp }) {
         <div dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(item.contentHtml || '') }} />
       </div>
     </details>
+  );
+}
+
+/** One step of a page task, in plain words, with its live state. */
+function StepLine({ step, state, reason }: { step: UiStep; state: StepState; reason?: string }) {
+  const { t } = useTranslation();
+  const value = (step.value || '').length > 48 ? `${step.value!.slice(0, 48)}…` : step.value || '';
+  return (
+    <li className={cn('ec-psk-step', `is-${state}`)}>
+      <span className="ec-psk-step-dot" aria-hidden>
+        {state === 'running' ? <Loader2 className="h-3 w-3 animate-spin" /> : state === 'done' ? <Check className="h-3 w-3" /> : state === 'failed' ? <X className="h-3 w-3" /> : null}
+      </span>
+      <span className="min-w-0">
+        {t(`agent.task.step.${step.action}`, { label: step.label, value })}
+        {state === 'failed' && reason ? <em className="ec-psk-step-why">{t(`agent.task.why.${reason}`, { label: step.label })}</em> : null}
+      </span>
+    </li>
   );
 }
 
@@ -317,9 +340,15 @@ export function AgentEc() {
   });
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  /** The current chain of page tasks: approved once by the trainer, how many hops it already made. */
+  const chainRef = useRef({ approved: false, depth: 0 });
+  const [taskRunning, setTaskRunning] = useState(false);
 
   const conv = store.convs.find((c) => c.id === store.current) || store.convs[0];
   const turns = conv?.turns || [];
+  const turnsRef = useRef(turns);
+  turnsRef.current = turns;
 
   const updateConv = (mutate: (c: Conversation) => Conversation) =>
     setStore((s) => ({ ...s, convs: s.convs.map((c) => (c.id === (s.current || s.convs[0].id) ? mutate(c) : c)) }));
@@ -454,6 +483,10 @@ export function AgentEc() {
       window.setTimeout(() => spotlight('[role="dialog"], [data-ec-main] h1'), 650);
       return;
     }
+    if (op.kind === 'ui.task') {
+      await runPageTask(op, turnIndex, opIndex);
+      return;
+    }
     setOpState(turnIndex, opIndex, 'running');
     const target = opTarget(op);
     if (target && !pathname.startsWith(target.path)) {
@@ -478,6 +511,45 @@ export function AgentEc() {
     }
   }
 
+  /** Page steps, live: a cursor goes to each element while the card ticks the steps off; then the agent may continue. */
+  async function runPageTask(op: Extract<AgentOp, { kind: 'ui.task' }>, turnIndex: number, opIndex: number) {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    if (op.effect !== 'none') chainRef.current.approved = true; // the trainer said yes to this task
+    setOpState(turnIndex, opIndex, 'running');
+    setOpMeta(turnIndex, opIndex, { steps: op.steps.map((): StepState => 'pending'), stepReasons: [] });
+    setTaskRunning(true);
+    const states: StepState[] = op.steps.map(() => 'pending');
+    const reasons: (string | undefined)[] = [];
+    const results = await runUiSteps(op.steps, (k, state, res) => {
+      states[k] = state;
+      reasons[k] = res?.reason;
+      setOpMeta(turnIndex, opIndex, { steps: [...states], stepReasons: [...reasons] });
+    }, ctrl.signal);
+    setTaskRunning(false);
+    if (abortRef.current === ctrl) abortRef.current = null;
+    const stopped = ctrl.signal.aborted;
+    const ok = results.every((r) => r.ok);
+    setOpState(turnIndex, opIndex, stopped ? 'cancelled' : ok ? 'done' : 'failed');
+    if (op.effect !== 'none') window.dispatchEvent(new CustomEvent(AGENT_CHANGED_EVENT));
+    if (stopped) return;
+    // Continue the task from the new page, or tell the agent what blocked it.
+    if ((op.continueAfter || !ok) && chainRef.current.depth < MAX_AUTO_STEPS) {
+      chainRef.current.depth += 1;
+      const report = stepsReport(op.steps, results);
+      const text = ok
+        ? `[Automatic] The steps of "${op.summary}" ran:\n${report}\nContinue the task from the new page and its elements below. If it is finished, say so in one sentence.`
+        : `[Automatic] Some steps of "${op.summary}" could not run:\n${report}\nLook at the page and its elements below: try another way, or tell the trainer in one sentence what to do.`;
+      window.setTimeout(() => void send(text, turnsRef.current, { auto: true }), 450);
+    }
+  }
+
+  function stopTask() {
+    abortRef.current?.abort();
+    chainRef.current = { approved: false, depth: MAX_AUTO_STEPS };
+  }
+
   /** QA #99: resend the last question after an error (the error answer is dropped first). */
   function retry() {
     const lastUser = turns.map((x, k) => [x, k] as const).filter(([x]) => x.role === 'user').pop();
@@ -492,10 +564,11 @@ export function AgentEc() {
     return `${x.text}\n\n[Proposed actions and what the trainer did with them (done = ran, approved = trainer confirmed the result, undone = trainer undid it, cancelled = trainer refused)]\n${lines.join('\n')}`.slice(0, 20000);
   }
 
-  async function send(text: string, history: Turn[] = turns) {
+  async function send(text: string, history: Turn[] = turns, opts: { auto?: boolean } = {}) {
     const question = text.trim();
-    if (!question || busy) return;
-    const next: Turn[] = [...history, { role: 'user', text: question }];
+    if (!question || (busy && !opts.auto)) return;
+    if (!opts.auto) chainRef.current = { approved: false, depth: 0 }; // a new request from the trainer starts a new chain
+    const next: Turn[] = [...history, { role: 'user', text: question, ...(opts.auto ? { auto: true } : {}) }];
     setTurns(next);
     setInput('');
     setBusy(true);
@@ -503,17 +576,32 @@ export function AgentEc() {
       const res = await studioApi.agentChat(
         next.filter((x) => !x.error).map((x) => ({ role: x.role, content: withActionStates(x) })).slice(-30),
         i18n.language,
-        { path: pathname + location.search, title: pageTitle(), snapshot: articleBridge ? `${articleBridge.context}\n\n---\n${pageSnapshot()}`.slice(0, 12000) : pageSnapshot(), selection: window.getSelection()?.toString().slice(0, 2000) || '' },
+        {
+          path: window.location.pathname + window.location.search, title: pageTitle(),
+          snapshot: articleBridge ? `${articleBridge.context}\n\n---\n${pageSnapshot()}`.slice(0, 12000) : pageSnapshot(),
+          selection: window.getSelection()?.toString().slice(0, 2000) || '', elements: collectElements(),
+        },
         provider,
       );
-      const actions = res.ok ? res.actions || [] : [];
+      const actions = (res.ok ? res.actions || [] : []).map((op) =>
+        op.kind === 'ui.task' ? { ...op, effect: riskOf(op.steps || [], op.effect) } : op,
+      );
       const turn: Turn = res.ok
         ? { role: 'assistant', text: res.reply || '', actions, opStates: actions.map((): OpState => 'pending'), engine: res.engine, fallbackFrom: res.fallback_from }
         : { role: 'assistant', text: res.error ? (/answered with an error|api key|credit|quota|rate limit|overloaded/i.test(res.error) ? localizeAiError(res.error, t) : res.error) : t('agent.noAnswer'), error: true, fix: res.fix || null }; // QA #96
       setTurns([...next, turn]);
       if (res.ok && actions.length) {
         const turnIndex = next.length;
-        window.setTimeout(() => actions.forEach((op, j) => opAutoRun(op) && void runAction(op, turnIndex, j)), 80);
+        // Inside a task the trainer already approved, the next "change" steps go on by themselves; "danger" always asks.
+        const chained = (op: AgentOp) => opts.auto && chainRef.current.approved && op.kind === 'ui.task' && op.effect === 'change';
+        window.setTimeout(() => {
+          void (async () => {
+            for (const [j, op] of actions.entries()) {
+              if (chained(op)) setOpMeta(turnIndex, j, { chained: true });
+              if (opAutoRun(op) || chained(op)) await runAction(op, turnIndex, j);
+            }
+          })();
+        }, 120);
       }
     } catch {
       setTurns([...next, { role: 'assistant', text: t('agent.connectionLost'), error: true }]);
@@ -639,9 +727,14 @@ export function AgentEc() {
               </div>
             ) : null}
 
-            {turns.map((turn, i) => (
-              <div key={i} className={cn('ec-psk-msg', `is-${turn.role}`, turn.error && 'is-error')}>
-                {turn.role === 'assistant' && !turn.error ? <Rich text={turn.text} /> : <p>{turn.text}</p>}
+            {turns.map((turn, i) => turn.auto ? (
+              <p key={i} className="ec-psk-autoline">
+                <MousePointerClick className="h-3.5 w-3.5" />
+                {t('agent.task.looking')}
+              </p>
+            ) : (
+              <div key={i} className={cn('ec-psk-msg', `is-${turn.role}`, turn.error && 'is-error', !turn.text && 'is-bare')}>
+                {turn.role === 'assistant' && !turn.error ? (turn.text ? <Rich text={turn.text} /> : null) : <p>{turn.text}</p>}
                 {turn.fallbackFrom && turn.engine && <p className="ec-psk-fallback">{t('qa5.agent.fallback', { from: turn.fallbackFrom, to: turn.engine })}</p>}
                 {turn.error && i === turns.length - 1 && !busy && (
                   <button type="button" className="ec-psk-op-btn ec-psk-retry" onClick={retry}>
@@ -658,6 +751,43 @@ export function AgentEc() {
                     ) : null}
                     {turn.actions.map((op, j) => {
                       const state = turn.opStates?.[j] || 'pending';
+                      if (op.kind === 'ui.task') {
+                        const meta = turn.opMeta?.[j];
+                        return (
+                          <div key={j} className={cn('ec-psk-op-card ec-psk-task', `is-${state}`, opIsDanger(op) && 'is-danger')}>
+                            <p className="ec-psk-task-head"><MousePointerClick className="h-4 w-4 flex-none" /><span>{opSummary(op, t)}</span></p>
+                            {op.effect === 'danger' && state === 'pending' ? (
+                              <p className="ec-psk-task-warn"><ShieldAlert className="h-3.5 w-3.5 flex-none" />{t('agent.task.danger')}</p>
+                            ) : null}
+                            {meta?.chained ? <p className="ec-psk-task-chain">{t('agent.task.continuing')}</p> : null}
+                            <ol className="ec-psk-steps">
+                              {op.steps.map((st, k) => (
+                                <StepLine key={k} step={st} state={meta?.steps?.[k] || 'pending'} reason={meta?.stepReasons?.[k]} />
+                              ))}
+                            </ol>
+                            {state === 'pending' && op.effect !== 'none' ? (
+                              <>
+                                <p className="ec-psk-op-ask">{t('agent.task.ask')}</p>
+                                <div className="ec-psk-op-actions">
+                                  <button type="button" className="ec-psk-op-confirm" disabled={taskRunning} onClick={() => void runAction(op, i, j)}>
+                                    <MousePointerClick className="h-3.5 w-3.5" />{t('agent.task.go')}
+                                  </button>
+                                  <button type="button" className="ec-psk-op-cancel" onClick={() => setOpState(i, j, 'cancelled')}>{t('agent.selfDo')}</button>
+                                </div>
+                              </>
+                            ) : state === 'running' ? (
+                              <button type="button" className="ec-psk-op-cancel ec-psk-task-stop" onClick={stopTask}>
+                                <Square className="h-3 w-3" />{t('agent.task.stop')}
+                              </button>
+                            ) : state !== 'pending' ? (
+                              <span className="ec-psk-op-state">
+                                {state === 'done' ? <Check className="h-3.5 w-3.5" /> : null}
+                                {t(state === 'cancelled' && meta?.steps?.length ? 'agent.task.stopped' : `agent.state.${state}`)}
+                              </span>
+                            ) : null}
+                          </div>
+                        );
+                      }
                       if (!opNeedsConfirm(op)) {
                         return (
                           <button key={j} type="button" className="ec-psk-op-btn" disabled={state === 'done'} onClick={() => void runAction(op, i, j)}>

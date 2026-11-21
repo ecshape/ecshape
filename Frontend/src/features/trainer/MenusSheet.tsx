@@ -9,7 +9,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Pencil, Plus, Salad, Search, Sparkles, Trash2, UserRound, X,
+  ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Pencil, Plus, Salad, Sparkles, Trash2, UserRound, WandSparkles, X,
 } from 'lucide-react';
 import { EcSpinner } from '@/components/brand/EcLoader';
 import { PortalSelect } from '@/components/ui/portal-select';
@@ -17,6 +17,8 @@ import { useConfirm } from '@/components/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Sheet } from './ui';
+import { FoodPickerSheet } from './FoodPickerSheet';
+import { api } from '@/features/trainee/api';
 import { useTrainerClients } from './hooks';
 import { FOODS, MEAL_TEMPLATES, pick, type Macro, type MealTemplate } from './planTemplates';
 import {
@@ -29,7 +31,10 @@ type View =
   | { kind: 'list' }
   | { kind: 'mine'; id: number }
   | { kind: 'builtin'; id: string }
-  | { kind: 'edit'; draft: Menu };
+  | { kind: 'edit'; draft: Menu }
+  | { kind: 'ai' };
+
+interface AiDraft { menu: Menu; engine: string | null; client: string | null; errors?: string[] }
 
 const MACROS: Macro[] = ['protein', 'carb', 'fat'];
 const MACRO_TONE: Record<Macro, string> = {
@@ -113,10 +118,12 @@ export const MenusSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) =>
   const duplicate = (m: Menu) => setView({ kind: 'edit', draft: { ...m, id: undefined, name: t('menus.copyOf', { name: m.name }) } });
 
   const title =
-    view.kind === 'edit' ? (view.draft.id ? t('menus.editTitle') : t('menus.newTitle'))
+    view.kind === 'ai' ? t('menus.aiTitle')
+      : view.kind === 'edit' ? (view.draft.id ? t('menus.editTitle') : t('menus.newTitle'))
       : mine ? mine.name : builtin ? pick(builtin.name, lang) : t('tt.tpl.mealButton');
   const description =
-    view.kind === 'edit' ? t('menus.editLead')
+    view.kind === 'ai' ? t('menus.aiLead')
+      : view.kind === 'edit' ? t('menus.editLead')
       : mine ? mine.goal : builtin ? pick(builtin.goal, lang) : t('menus.lead');
 
   const footer = mine || builtin ? (
@@ -147,6 +154,15 @@ export const MenusSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) =>
                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><Plus className="h-5 w-5" /></span>
                 <b>{t('menus.new')}</b>
                 <span className="text-xs text-muted-foreground">{t('menus.newHint')}</span>
+              </button>
+              <button
+                type="button" onClick={() => setView({ kind: 'ai' })}
+                className="tp-press tr-lift flex min-h-[9.5rem] flex-col items-center justify-center gap-2 rounded-[1.25rem] bg-gradient-to-br from-primary/[.14] to-primary/[.03] p-4 text-center shadow-[inset_0_0_0_1px_hsl(var(--primary)/.3)]"
+                data-testid="menu-ai"
+              >
+                <span className="grid h-11 w-11 place-items-center rounded-2xl text-white" style={{ background: 'var(--tr-grad)' }}><WandSparkles className="h-5 w-5" /></span>
+                <b className="text-primary">{t('menus.aiNew')}</b>
+                <span className="text-xs text-muted-foreground">{t('menus.aiHint')}</span>
               </button>
               {menusLoading && !menus.length && [0, 1].map((i) => <div key={i} className="ec-skel min-h-[9.5rem] rounded-[1.25rem] bg-card" />)}
               {menus.map((m, i) => (
@@ -210,6 +226,18 @@ export const MenusSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) =>
           </div>
           <p className="text-xs text-muted-foreground">{t('tt.tpl.replaceNote')}</p>
         </div>
+      )}
+
+      {view.kind === 'ai' && (
+        <AiBuilder
+          clients={activeClients} defaultClient={clientId} bankEmpty={!bank.length}
+          onBack={() => setView({ kind: 'list' })}
+          onDraft={(d, cid) => {
+            if (cid) setClientId(cid);
+            toast({ title: d.engine ? t('menus.aiDone', { engine: d.engine }) : t('menus.aiFallback'), description: d.engine ? undefined : d.errors?.[0] });
+            setView({ kind: 'edit', draft: d.menu });
+          }}
+        />
       )}
 
       {view.kind === 'edit' && (
@@ -423,14 +451,7 @@ const CatEditor: React.FC<{ cat: MenuCat; bank: BankFood[]; onChange: (c: Partia
   const { t, i18n } = useTranslation();
   const lang = i18n.language || 'he';
   const [picking, setPicking] = useState(false);
-  const [q, setQ] = useState('');
   const byId = useMemo(() => new Map(bank.map((b) => [b.id, b])), [bank]);
-  const results = useMemo(() => {
-    const n = q.trim().toLowerCase();
-    return bank
-      .filter((b) => (n ? `${b.name} ${b.name_hebrew ?? ''}`.toLowerCase().includes(n) : (b.macro_type ?? cat.macro) === cat.macro))
-      .slice(0, 40);
-  }, [bank, q, cat.macro]);
   const toggle = (id: number) => onChange({ foods: cat.foods.includes(id) ? cat.foods.filter((x) => x !== id) : [...cat.foods, id] });
 
   return (
@@ -458,35 +479,88 @@ const CatEditor: React.FC<{ cat: MenuCat; bank: BankFood[]; onChange: (c: Partia
             </span>
           );
         })}
-        <button type="button" onClick={() => setPicking((v) => !v)} aria-expanded={picking}
+        {/* QA #125: a full search popup with photos, not an inline list */}
+        <button type="button" onClick={() => setPicking(true)} aria-haspopup="dialog" data-testid="menu-add-food"
           className="tp-press inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/15">
           <Plus className="h-3 w-3" />{t('menus.addFood')}
         </button>
       </div>
-      {picking && (
-        <div className="ec-enter mt-2 rounded-xl bg-background p-2 shadow-sm">
-          <div className="relative">
-            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input className="tp-input h-9 ps-9 text-sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('menus.searchBank')} autoFocus />
-          </div>
-          <ul className="mt-1.5 max-h-52 overflow-y-auto">
-            {results.map((b) => {
-              const on = cat.foods.includes(b.id);
-              return (
-                <li key={b.id}>
-                  <button type="button" onClick={() => toggle(b.id)} className={cn('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-sm transition-colors', on ? 'bg-primary/10 text-primary' : 'hover:bg-muted/60')}>
-                    <span className={cn('grid h-4 w-4 flex-none place-items-center rounded border', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>{on && <Check className="h-3 w-3" />}</span>
-                    <span className="min-w-0 flex-1 truncate" dir="auto">{foodLabel(b, lang)}</span>
-                    <span className="flex-none text-[11px] tabular-nums text-muted-foreground" dir="ltr">{Math.round(b.calories ?? 0)} {t('foodBankPro.kcal')}</span>
-                  </button>
-                </li>
-              );
-            })}
-            {!results.length && <li className="px-2 py-3 text-center text-xs text-muted-foreground">{t('menus.noFood')}</li>}
-          </ul>
-        </div>
-      )}
+      <FoodPickerSheet open={picking} onOpenChange={setPicking} bank={bank} macro={cat.macro} selected={cat.foods} onDone={(foods) => onChange({ foods })} />
     </div>
+  );
+};
+
+/* ------------------------------------------------------------------ AI builder (QA #125) */
+
+const AiBuilder: React.FC<{
+  clients: { id: number; full_name?: string | null; username: string }[];
+  defaultClient: number | '';
+  bankEmpty: boolean;
+  onBack: () => void;
+  onDraft: (d: AiDraft, clientId: number | '') => void;
+}> = ({ clients, defaultClient, bankEmpty, onBack, onDraft }) => {
+  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
+  const [clientId, setClientId] = useState<number | ''>(defaultClient);
+  const [kcal, setKcal] = useState(2000);
+  const [meals, setMeals] = useState(5);
+  const [wishes, setWishes] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const d = await api<AiDraft>('/v3/meals/menus/ai-draft', {
+        method: 'POST',
+        body: { client_id: clientId || null, kcal, meals, wishes, lang: (i18n.language || 'he').slice(0, 2) },
+      });
+      onDraft(d, clientId);
+    } catch (e) {
+      toast({ title: t('common.error'), description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <form className="space-y-4 pb-2" onSubmit={(e) => { e.preventDefault(); if (!busy && !bankEmpty) void run(); }}>
+      <button type="button" className="tr-back tp-press" onClick={onBack}><ArrowLeft className="h-4 w-4" />{t('tt.tpl.all')}</button>
+      <div className="space-y-1.5">
+        <span className="tp-label block">{t('menus.aiClient')}</span>
+        <PortalSelect
+          className="bg-foreground/[.06]" icon={UserRound} label={t('menus.aiClient')} placeholder={t('menus.aiNoClient')}
+          value={clientId === '' ? '' : String(clientId)} onChange={(v) => setClientId(v ? Number(v) : '')}
+          options={[{ value: '', label: t('menus.aiNoClient') }, ...clients.map((c) => ({ value: String(c.id), label: c.full_name || c.username }))]}
+        />
+        <span className="block text-xs text-muted-foreground">{t('menus.aiClientHint')}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        <label className="tr-stat !p-3">
+          <span className="tp-label block">{t('menus.aiKcal')}</span>
+          <input type="number" min={800} max={6000} step={50} dir="ltr" inputMode="numeric" value={kcal}
+            onChange={(e) => setKcal(Math.max(0, Number(e.target.value) || 0))} onBlur={() => setKcal((k) => Math.min(6000, Math.max(800, k)))}
+            className="tp-num mt-1 w-full bg-transparent text-2xl outline-none" />
+        </label>
+        <div className="tr-stat !p-3">
+          <span className="tp-label block">{t('menus.meals')}</span>
+          <div className="mt-1.5 flex gap-1" role="radiogroup" aria-label={t('menus.meals')}>
+            {[3, 4, 5, 6].map((n) => (
+              <button key={n} type="button" role="radio" aria-checked={meals === n} onClick={() => setMeals(n)}
+                className={cn('tp-press h-9 flex-1 rounded-xl text-sm font-bold tabular-nums transition-colors', meals === n ? 'bg-primary text-primary-foreground' : 'bg-foreground/[.06] text-muted-foreground')}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <label className="block space-y-1.5">
+        <span className="tp-label">{t('menus.aiWishes')}</span>
+        <textarea className="tp-input min-h-[6rem] py-2.5 text-sm" value={wishes} onChange={(e) => setWishes(e.target.value)} placeholder={t('menus.aiWishesPh')} rows={3} maxLength={1500} />
+      </label>
+      {bankEmpty && <p className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{t('menus.aiEmptyBank')}</p>}
+      <button type="submit" className="tp-btn tp-btn--primary tp-press w-full" disabled={busy || bankEmpty} data-testid="menu-ai-run">
+        {busy ? <EcSpinner className="h-4 w-4" mono /> : <Sparkles className="h-4 w-4" />}{busy ? t('menus.aiBusy') : t('menus.aiRun')}
+      </button>
+      <p className="text-center text-xs text-muted-foreground">{t('menus.aiNote')}</p>
+    </form>
   );
 };
 

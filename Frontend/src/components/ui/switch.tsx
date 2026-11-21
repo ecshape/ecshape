@@ -18,8 +18,10 @@ const Switch = React.forwardRef<
     <SwitchPrimitives.Thumb
       className={cn(
         "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
+        // QA #128: the flex track already starts the thumb at the inline start (right in RTL), so "off" is 0 in both
+        // directions and "on" travels toward the inline end: +20px in LTR, -20px in RTL. Never push it the other way.
         "data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-5",
-        "rtl:data-[state=unchecked]:translate-x-5 rtl:data-[state=checked]:translate-x-0"
+        "rtl:data-[state=checked]:-translate-x-5"
       )}
     />
   </SwitchPrimitives.Root>

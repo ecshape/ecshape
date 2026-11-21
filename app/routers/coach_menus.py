@@ -114,3 +114,23 @@ def update_menu(menu_id: int, body: MenuIn, user: UserResponse = Depends(_coach)
 def delete_menu(menu_id: int, user: UserResponse = Depends(_coach), db: Session = Depends(get_db)):
     db.delete(_own(db, user, menu_id))
     db.commit()
+
+
+class AiMenuIn(BaseModel):
+    client_id: Optional[int] = None
+    kcal: int = Field(2000, ge=800, le=6000)
+    meals: int = Field(5, ge=2, le=6)
+    wishes: str = Field('', max_length=1500)
+    lang: str = Field('he', max_length=8)
+
+
+@router.post('/menus/ai-draft')
+def ai_draft_menu(body: AiMenuIn, user: UserResponse = Depends(_coach), db: Session = Depends(get_db)):
+    """QA #125: a draft menu (not saved) built from the coach's bank and the trainee's preferences."""
+    from app.services import rate_limit as _rl
+    from app.services.menu_ai import generate_menu
+    _rl.check("ai", user.id)  # each draft can be a paid AI call
+    try:
+        return generate_menu(db, user.id, body.client_id, body.kcal, body.meals, body.wishes.strip(), (body.lang or 'he')[:2])
+    except ValueError:
+        raise HTTPException(400, 'Your food bank is empty: add foods first')

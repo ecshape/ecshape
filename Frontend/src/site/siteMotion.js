@@ -640,7 +640,14 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     cards.forEach((card, i) => {
       const next = cards[i + 1];
       if (!next) return;
-      gsap.to(card, { scale: 0.92, filter: 'brightness(.55)', ease: 'none', scrollTrigger: { trigger: next, start: 'top bottom', end: 'top 20%', scrub: true } });
+      // QA #126/#127: a card stays fully lit while it is being read. It only dims once the next card has slid over
+      // most of it (from the next card's top at 45% of the screen until it docks at its sticky top), and never so far
+      // that its art / text turn unreadable. Before, it darkened as soon as the next card peeked in at the bottom.
+      const dockAt = () => `top ${(parseFloat(getComputedStyle(next).top) || 0) + 4}px`;
+      gsap.fromTo(card, { scale: 1, filter: 'brightness(1)' }, {
+        scale: 0.94, filter: 'brightness(.72)', ease: 'power1.in',
+        scrollTrigger: { trigger: next, start: 'top 45%', end: dockAt, scrub: true, invalidateOnRefresh: true },
+      });
     });
 
     // CTA outline fill + footer wordmark
@@ -704,6 +711,21 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     return () => { window.removeEventListener('resize', placePhone); clearInterval(timer); st.kill(); appItems.forEach((it, i) => it.removeEventListener('click', handlers[i])); };
   });
 
+  // QA #126/#127: refresh triggers in page order, pins first. ScrollTrigger measures them in creation order, and the
+  // stacking-card / process triggers are created before the hero and results pins above them, so they ignored those
+  // pins' spacing and fired ~2,500px early: the "why" cards were already dimmed when you reached them.
+  const pageOrder = (a, b) => {
+    const ta = a.pin || a.trigger;
+    const tb = b.pin || b.trigger;
+    if (!ta || !tb || ta === tb) return (b.pin ? 1 : 0) - (a.pin ? 1 : 0);
+    if (ta.contains(tb)) return a.pin ? -1 : 1;
+    if (tb.contains(ta)) return b.pin ? 1 : -1;
+    return ta.compareDocumentPosition(tb) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  };
+  const sortTriggers = () => ScrollTrigger.sort(pageOrder);
+  ScrollTrigger.addEventListener('refreshInit', sortTriggers);
+  ScrollTrigger.refresh();
+
   // Images load late; recompute pin distances once they have dimensions
   const refresh = () => ScrollTrigger.refresh();
   on(window, 'load', refresh);
@@ -713,6 +735,7 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     alive = false;
     ac.abort();
     timers.forEach(clearTimeout);
+    ScrollTrigger.removeEventListener('refreshInit', sortTriggers);
     mm.revert();
     ctx.revert();
     ScrollTrigger.getAll().forEach((t) => t.kill());

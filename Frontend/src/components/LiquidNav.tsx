@@ -69,10 +69,11 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ items, active, orientation
 
   const vertical = orientation === 'vertical';
   return (
-    <div ref={wrap} role="navigation" aria-label={ariaLabel} className={cn('relative isolate', vertical ? 'flex flex-col gap-1' : 'flex items-center gap-1', className)}>
+    <div ref={wrap} role="navigation" aria-label={ariaLabel} data-pill-guard className={cn('relative isolate', vertical ? 'flex flex-col gap-1' : 'flex items-center gap-1', className)}>
       {blob && (
         <span
           aria-hidden="true"
+          data-pill
           className="liquid-blob pointer-events-none absolute left-0 top-0 -z-10 rounded-full bg-primary"
           data-stretch={blob.stretch ? (vertical ? 'y' : 'x') : undefined}
           style={{ width: blob.w, height: blob.h, transform: `translate3d(${blob.x}px, ${blob.y}px, 0)` }}
@@ -89,7 +90,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ items, active, orientation
             onClick={item.onClick}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              'relative flex items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'relative z-[1] flex items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               isActive ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
               vertical && 'w-full justify-start rounded-2xl',
               itemClassName

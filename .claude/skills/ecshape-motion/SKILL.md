@@ -111,3 +111,11 @@ tokens in `tailwind.config.ts` (200→fast, 300→med, 500→slow, 700/1000→da
 14. Signature one-offs keep their own timing and must be listed in the audit doc: Agent EC travel/spotlight/edge
     peek, brand mark draw, rest-timer shrink, workout burst, AI "write" blur (`ec-sx-write`), site hero/pins (GSAP),
     automations flow wire / live dot / spark burst (`src/styles/automations.css`, `<Burst>`).
+15. **Pill contract (QA #89 / #95 / #97, and again on Zaun).** The liquid pill and the selected label are ONE colour
+    pair declared together: `--pill-bg` / `--pill-fg` (trainer.css). The pill uses only `--pill-bg`, the selected label
+    only `--pill-fg`, and only once the pill has arrived (`[data-arrived="true"]`). Labels are `position:relative;
+    z-index:1`, the pill sits below them in an isolated container. `src/lib/pillGuard.ts` (installed in `main.tsx`)
+    measures the real contrast after every change and forces ink/white below 2:1 (console error in dev). New pill
+    components: put `data-pill-guard` on the container and `data-pill` on the pill. Test by setting `--pill-fg` to the
+    pill colour on purpose: the label must stay readable.
+

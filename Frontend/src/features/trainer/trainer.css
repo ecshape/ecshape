@@ -6,6 +6,9 @@
   --tr-rail-w: 74px; /* QA #82: icons sit at the same spot (.85rem in) collapsed or not, so folding the menu moves nothing sideways */
   --tr-bar-h: 4.25rem;
   --tr-grad: linear-gradient(135deg, #F59532 0%, #E8652A 55%, #D8361E 100%);
+  /* Pill contract: the liquid pill and the label sitting on it are ONE pair. Change them together, never apart. */
+  --pill-bg: var(--tr-grad);
+  --pill-fg: #fff;
   --tr-ok: 142 64% 45%;
   --tr-warn: 37 92% 55%;
   --tr-bad: 0 72% 58%;
@@ -58,9 +61,10 @@
 .tr-side[data-collapsed="true"] .tr-nav-badge { position: absolute; top: .2rem; inset-inline-end: .55rem; min-width: 1.05rem; height: 1.05rem; font-size: .6rem; box-shadow: 0 0 0 2px hsl(var(--card)); }
 
 /* Liquid indicator: one gradient blob that stretches between the old and new item, then settles. */
+.tr-nav-link { z-index: 1; } /* labels always paint above the pill */
 .tr-blob {
   position: absolute; z-index: -1; inset-inline: 0; top: 0; border-radius: 1rem; pointer-events: none;
-  background: var(--tr-grad);
+  background: var(--pill-bg);
   box-shadow: 0 14px 28px -14px hsl(var(--primary) / .95), inset 0 1px 0 rgba(255, 255, 255, .28);
   transform: translate3d(0, var(--y, 0), 0);
   height: var(--h, 0);
@@ -75,7 +79,7 @@
 /* Horizontal variant (phone bar, tabs) */
 .tr-hblob {
   position: absolute; z-index: 0; top: 0; left: 0; border-radius: 9999px; pointer-events: none;
-  background: var(--tr-grad);
+  background: var(--pill-bg);
   box-shadow: 0 10px 22px -10px hsl(var(--primary) / .95), inset 0 1px 0 rgba(255, 255, 255, .28);
   transform: translate3d(var(--x, 0), var(--y, 0), 0);
   width: var(--w, 0); height: var(--h, 0);
@@ -566,5 +570,5 @@
 .tr-seg-btn[aria-pressed="true"], .tr-seg-btn[aria-selected="true"],
 .tr-tab[aria-current="page"], .tr-nav-link[aria-current="page"] { color: hsl(var(--foreground)); }
 [data-arrived="true"] > .tr-seg-btn[aria-pressed="true"], [data-arrived="true"] > .tr-seg-btn[aria-selected="true"],
-[data-arrived="true"] > .tr-tab[aria-current="page"], [data-arrived="true"] .tr-nav-link[aria-current="page"] { color: #fff; }
+[data-arrived="true"] > .tr-tab[aria-current="page"], [data-arrived="true"] .tr-nav-link[aria-current="page"] { color: var(--pill-fg); }
 

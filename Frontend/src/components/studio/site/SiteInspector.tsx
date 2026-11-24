@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { getIn, parsePath } from '@/lib/siteContentOps';
 import type { SiteContent } from '@/site/content';
 import { isMultilinePath, type EcSelect } from '@/site/editProtocol';
-import { SITE_SECTIONS, isSharedPath } from '@/site/sections';
+import { NO_PHOTO, SITE_SECTIONS, isSharedPath, photoRemoval } from '@/site/sections';
 import { AgentDraft } from '@/components/studio/AgentDraft';
 import { InfoTip } from '@/components/ui/info-tip';
 import { LINKABLE, LINK_PAGES, cleanTarget, isLinkPath, kindOf, type LinkKind } from '@/site/links';
@@ -120,9 +120,13 @@ interface ImageFieldProps {
   shared?: boolean;
   onChange: (v: string) => void;
   pickSignal?: number;
+  /** QA #133: value written by "remove photo"; no button when undefined / null */
+  removeTo?: string | null;
 }
 
-export const ImageField: React.FC<ImageFieldProps> = ({ value, original, shared, onChange, pickSignal }) => {
+export const ImageField: React.FC<ImageFieldProps> = ({ value: stored, original, shared, onChange, pickSignal, removeTo }) => {
+  const value = stored === NO_PHOTO ? '' : stored;
+  const removed = removeTo != null && stored === removeTo;
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -134,7 +138,7 @@ export const ImageField: React.FC<ImageFieldProps> = ({ value, original, shared,
   return (
     <div className="ec-studio-photo">
       <div className={cn('ec-studio-photo-frame', busy && 'is-busy')}>
-        {value ? <img key={value.slice(0, 80)} src={value} alt="" /> : null}
+        {value ? <img key={value.slice(0, 80)} src={value} alt="" /> : removed ? <span className="ec-studio-photo-busy">{t('qa6.site.noPhoto')}</span> : null}
         {busy && <span className="ec-studio-photo-busy">{t('mysite.studio.photo.preparing')}</span>}
       </div>
       <button type="button" className="ec-studio-btn is-primary is-block" onClick={() => fileRef.current?.click()} disabled={busy}>
@@ -174,7 +178,13 @@ export const ImageField: React.FC<ImageFieldProps> = ({ value, original, shared,
         <button type="submit" disabled={!url.trim()}>{t('mysite.studio.photo.apply')}</button>
       </form>
       {error && <p className="ec-studio-error">{error}</p>}
-      {original && value !== original && (
+      {removeTo != null && !removed && (
+        <button type="button" className="ec-studio-btn is-ghost is-block" onClick={() => onChange(removeTo)}>
+          <Trash2 className="h-4 w-4" />
+          {t('qa6.site.removePhoto')}
+        </button>
+      )}
+      {original && stored !== original && (
         <button type="button" className="ec-studio-btn is-ghost is-block" onClick={() => onChange(original)}>
           <RotateCcw className="h-4 w-4" />
           {t('mysite.studio.photo.reset')}
@@ -336,7 +346,7 @@ const ValueEditor: React.FC<{ path: string; ctx: EditorCtx; label?: string }> = 
     return (
       <div className="ec-studio-field">
         <Label changed={changed}>{name}</Label>
-        <ImageField value={v} original={typeof base === 'string' ? base : undefined} shared={isSharedPath(path)} onChange={(nv) => ctx.onSet(path, nv)} />
+        <ImageField value={v} original={typeof base === 'string' ? base : undefined} shared={isSharedPath(path)} removeTo={photoRemoval(path)} onChange={(nv) => ctx.onSet(path, nv)} />
       </div>
     );
   }
@@ -524,6 +534,7 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
             original={String(getIn(p.base, parsePath(select.path)) ?? '')}
             shared={isSharedPath(select.path)}
             pickSignal={p.pickSignal}
+            removeTo={photoRemoval(select.path)}
             onChange={(v) => p.onSet(select.path, v)}
           />
         )}
@@ -567,7 +578,8 @@ export const SiteInspector: React.FC<SiteInspectorProps> = (p) => {
           </>
         )}
 
-        {select.kind !== 'text' && (
+        {/* QA #133: no "rewrite with AI" on a photo: there is no text to rewrite */}
+        {select.kind !== 'text' && select.kind !== 'image' && (
         <button
           type="button"
           className="ec-studio-btn is-agent is-block"

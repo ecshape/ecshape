@@ -3,7 +3,8 @@ import { EcSpinner } from '@/components/brand/EcLoader';
 import { Check, Compass, MessageCirclePlus, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { prefetchTranslatedTexts } from '../useTranslated';
 import { api } from '../api';
 import { cn } from '@/lib/utils';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -35,7 +36,7 @@ const useDebounced = (v: string, ms = 300) => {
 
 /** Explore: read-only browse of the exercise library, filtered by tapping a muscle on the body map. */
 const ExploreScreen: React.FC = () => {
-  const { t, tt } = useTT();
+  const { t, tt, i18n } = useTT();
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState('');
   const [open, setOpen] = useState<LibraryExercise | null>(null);
@@ -46,6 +47,18 @@ const ExploreScreen: React.FC = () => {
   const selected = useMemo(() => (muscle ? (Object.keys(REGION_MUSCLE) as Region[]).filter((r) => REGION_MUSCLE[r] === muscle) : []), [muscle]);
 
   const pick = (m: string) => setMuscle((cur) => (cur === m ? '' : m));
+
+  // QA #131: the instructions are translated on the server the first time anyone opens an exercise. Start that as
+  // soon as a card is touched / hovered, and for the first cards on screen, so the sheet opens with them ready.
+  const qc = useQueryClient();
+  const warm = (e: LibraryExercise) => { if (e.instructions?.length) prefetchTranslatedTexts(qc, e.instructions, i18n.language); };
+  useEffect(() => {
+    const first = items.slice(0, 6);
+    if (!first.length) return;
+    const id = window.setTimeout(() => first.forEach(warm), 1200);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, i18n.language]);
 
   return (
     <Screen>
@@ -118,7 +131,7 @@ const ExploreScreen: React.FC = () => {
             <>
               <div className="tt-ex-grid">
                 {items.map((e) => (
-                  <button key={e.id} type="button" onClick={() => setOpen(e)} className="tp-card tp-press flex flex-col overflow-hidden text-start">
+                  <button key={e.id} type="button" onClick={() => setOpen(e)} onPointerEnter={() => warm(e)} onPointerDown={() => warm(e)} onFocus={() => warm(e)} className="tp-card tp-press flex flex-col overflow-hidden text-start">
                     <span className="block aspect-[4/3] w-full bg-white">
                       <ExerciseDemo frames={e.frames?.length ? e.frames : libraryFrames(e.id)} alt={e.name} className="h-full w-full" />
                     </span>

@@ -297,9 +297,14 @@
 
 /* Sticky action bar for long forms / builders */
 .tr-actionbar {
-  position: sticky; bottom: calc(var(--tr-bar-h) + 1.5rem + env(safe-area-inset-bottom, 0px)); z-index: 30; margin-top: 1.5rem;
+  /* QA #129: sticky offsets count from inside .tr-body's bottom padding (tab bar + 2rem + safe area), so this sits the
+     bar .5rem above the phone tab bar instead of ~100px higher, floating mid-screen. */
+  --tr-ab-bottom: calc(max(.75rem, env(safe-area-inset-bottom, 0px)) - 1.5rem - env(safe-area-inset-bottom, 0px));
+  position: sticky; bottom: var(--tr-ab-bottom); z-index: 30; margin-top: 1.5rem;
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .7rem .7rem 1.1rem; border-radius: 1.5rem;
 }
+/* ...and it doesn't lift at the end of the page either: its resting spot is the same as its sticky spot */
+@media (max-width: 1023px) { .tr-page > .tr-actionbar:last-child { margin-bottom: calc(var(--tr-ab-bottom) - 2.5rem); } }
 @media (min-width: 1024px) { .tr-actionbar { bottom: 1rem; } }
 
 /* Builder */
@@ -559,7 +564,7 @@
 /* Phones: the builders' save bar is one compact row right above the tab bar; the long hint is a single clipped line
    (it wrapped onto 6 lines and floated over the form, A2A trainer F6) */
 @media (max-width: 639px) {
-  .tr-actionbar { bottom: calc(var(--tr-bar-h) + .9rem + env(safe-area-inset-bottom, 0px)); flex-wrap: nowrap; gap: .5rem; padding: .5rem .5rem .5rem .9rem; }
+  .tr-actionbar { flex-wrap: nowrap; gap: .5rem; padding: .5rem .5rem .5rem .9rem; }
   .tr-actionbar > p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .8rem; }
   .tr-actionbar > div { flex: none; }
 }

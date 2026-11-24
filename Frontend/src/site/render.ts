@@ -6,7 +6,7 @@ import { siteNotices } from '@/legal/siteNotices';
  * All text is escaped; only icons and structure are raw HTML.
  */
 import type { SiteContent, SiteLang } from './content/types';
-import { hiddenSections, sectionOrder, type SectionKey } from './sections';
+import { NO_PHOTO, hiddenSections, sectionOrder, type SectionKey } from './sections';
 import { cleanTarget, isLinkPath } from './links';
 
 const P = '/site/photos/';
@@ -108,7 +108,12 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
   const ig = `https://www.instagram.com/${encodeURIComponent(c.contact.instagram)}`;
   const name = lang === 'he' ? 'אליאור קרמיזי' : 'Elior Cremisi';
   const heroImg = c.hero.image || `${P}opt/trainer.jpg`;
-  const storyImg = c.story.image || `${P}opt/trainer_story.jpg`;
+  // QA #133: NO_PHOTO = the trainer removed this photo (empty = the default photo). Visitors see no photo there; the
+  // studio keeps an empty frame so a photo can be added back.
+  const storyNone = c.story.image === NO_PHOTO;
+  const storyImg = !storyNone && c.story.image ? c.story.image : `${P}opt/trainer_story.jpg`;
+  const manifestoNone = c.manifesto.image === NO_PHOTO;
+  const emptyFig = (cls: string, path: string) => (edit ? `<figure class="${cls} is-nophoto"${IMG(path)}><span>+</span></figure>` : '');
   const navItems = ([
     ['story', '#story', 'about'], ['results', '#results', 'results'], ['programs', '#programs', 'programs'],
     ['app', '#app', 'app'], ['voices', '#voices', 'reviews'], ['faq', '#faq', 'faq'],
@@ -165,7 +170,7 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
     </div>
     <div class="manifesto__art" aria-hidden="true">
       <svg class="mart__ring" viewBox="0 0 200 200"><g class="mart__spin">${Array.from({ length: 60 }, (_, k) => `<line x1="100" y1="4" x2="100" y2="${k % 5 ? 9 : 14}" transform="rotate(${k * 6} 100 100)"/>`).join('')}<circle class="mart__arc" cx="100" cy="100" r="88" pathLength="100"/></g></svg>
-      <figure class="mart__photo"${IMG('manifesto.image')}><img src="${esc(c.manifesto.image || `${P}opt/trainer_portrait.jpg`)}" alt="" loading="lazy"></figure>
+      ${manifestoNone ? emptyFig('mart__photo', 'manifesto.image') : `<figure class="mart__photo"${IMG('manifesto.image')}><img src="${esc(c.manifesto.image || `${P}opt/trainer_portrait.jpg`)}" alt="" loading="lazy"></figure>`}
       ${c.hero.stats.slice(0, 3).map((s, i) => `<div class="mart__chip mart__chip--${i}"><span class="num" dir="ltr">${esc(s.value)}${esc(s.suffix)}</span><small>${esc(s.label)}</small></div>`).join('')}
     </div>
   </div>
@@ -173,11 +178,11 @@ export function renderSite(content: SiteContent, lang: SiteLang, opts: RenderOpt
 
     story: () => `
 <section class="section" id="story" style="padding-top:0">
-  <div class="wrap story">
-    <figure class="story__media" data-cursor="${esc(name.split(' ')[0])}"${IMG('story.image')}>
+  <div class="wrap story${storyNone ? ' story--nophoto' : ''}">
+    ${storyNone ? emptyFig('story__media', 'story.image') : `<figure class="story__media" data-cursor="${esc(name.split(' ')[0])}"${IMG('story.image')}>
       <img src="${esc(storyImg)}" alt="${esc(name)}" loading="lazy" data-parallax>
       <figcaption><b>${esc(name)}</b><span${P_('story.photoRole')}>${esc(c.story.photoRole)}</span></figcaption>
-    </figure>
+    </figure>`}
     <div class="story__body">
       <span class="eyebrow" data-reveal${P_('story.eyebrow')}>${esc(c.story.eyebrow)}</span>
       <h2 class="display h-lg" data-split style="margin:20px 0 32px">${titles('story')}</h2>

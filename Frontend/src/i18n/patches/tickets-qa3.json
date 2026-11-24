@@ -124,6 +124,12 @@
         "before": "תמונת לפני",
         "after": "תמונת אחרי"
       }
+    },
+    "qa6": {
+      "site": {
+        "removePhoto": "הסרת התמונה",
+        "noPhoto": "אין תמונה"
+      }
     }
   },
   "en": {
@@ -251,6 +257,12 @@
         "before": "Before photo",
         "after": "After photo"
       }
+    },
+    "qa6": {
+      "site": {
+        "removePhoto": "Remove photo",
+        "noPhoto": "No photo"
+      }
     }
   },
   "fr": {
@@ -377,6 +389,12 @@
         "photo": "Photo",
         "before": "Photo avant",
         "after": "Photo après"
+      }
+    },
+    "qa6": {
+      "site": {
+        "removePhoto": "Supprimer la photo",
+        "noPhoto": "Pas de photo"
       }
     }
   }

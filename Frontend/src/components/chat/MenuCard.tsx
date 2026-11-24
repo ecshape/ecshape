@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, Check, ChefHat, Clock, Loader2, Salad, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChefHat, ClipboardList, Clock, Loader2, Salad, Send, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/features/trainee/api';
@@ -10,6 +10,7 @@ import { MEAL_TEMPLATES, pick } from '@/features/trainer/planTemplates';
 import { buildMealPlanBody, fetchBank, menuPlanBody, useMenus } from '@/features/trainer/menus';
 import type { ChatMessage } from './api';
 import './chatCardsI18n';
+import { sendIntake } from './IntakeCards';
 
 /** QA #54: the coach sends a weekly menu as a card; the client goes through it meal by meal and confirms. */
 type PlanFood = { name: string; name_hebrew?: string | null; calories?: number | null; protein?: number | null; carbs?: number | null; fat?: number | null; serving_size?: string | null; measurement_type?: string };
@@ -261,6 +262,23 @@ export const MenuSendButton: React.FC<{ clientId: number; clientName: string; on
           </button>
         }
       >
+        {/* QA #134: or let the AI build it from the client's own answers */}
+        <button
+          type="button" disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setError(null);
+            try { onSent(await sendIntake(clientId, lang)); setOpen(false); } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); }
+          }}
+          className="tp-press mb-3 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-br from-primary/15 to-transparent p-3 text-start ring-1 ring-primary/30"
+          data-testid="intake-send"
+        >
+          <span className="grid h-11 w-11 flex-none place-items-center rounded-2xl bg-primary text-primary-foreground"><ClipboardList className="h-5 w-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold">{t('chatCards.intake.sendTitle')}</span>
+            <span className="block text-xs leading-relaxed text-muted-foreground">{t('chatCards.intake.sendHelp', { name: clientName })}</span>
+          </span>
+        </button>
         <div className="space-y-2 pb-2" role="radiogroup" aria-label={t('chatCards.menu.sendTitle')}>
           {options.map((x) => {
             const on = x.key === sel;

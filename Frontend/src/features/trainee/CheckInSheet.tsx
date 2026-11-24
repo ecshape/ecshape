@@ -18,8 +18,29 @@ const SliderScale: React.FC<{
   value: number | null; onChange: (v: number) => void; from: number; to: number; label: string;
   low?: string; high?: string; unit?: string;
 }> = ({ value, onChange, from, to, label, low, high, unit }) => {
-  const shown = value ?? Math.round((from + to) / 2);
+  // QA #132: the thumb glides with the finger (fine steps) instead of jumping from number to number, then eases
+  // onto the nearest whole number when released. The saved value is always a whole number.
+  const [raw, setRaw] = useState<number | null>(null);
+  const anim = React.useRef(0);
+  useEffect(() => () => cancelAnimationFrame(anim.current), []);
+  const shown = raw ?? value ?? Math.round((from + to) / 2);
   const pct = ((shown - from) / (to - from)) * 100;
+  const pick = (v: number) => {
+    const n = Math.min(to, Math.max(from, Math.round(v)));
+    if (n !== value) { haptic(); onChange(n); }
+  };
+  const settle = () => {
+    if (raw == null) return;
+    const a = raw, b = Math.min(to, Math.max(from, Math.round(raw))), t0 = performance.now();
+    pick(b);
+    cancelAnimationFrame(anim.current);
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / 140);
+      const e = 1 - (1 - k) ** 3;
+      if (k < 1) { setRaw(a + (b - a) * e); anim.current = requestAnimationFrame(step); } else setRaw(null);
+    };
+    anim.current = requestAnimationFrame(step);
+  };
   return (
     <div className="tp-slider" data-empty={value == null || undefined}>
       <div className="mb-1 flex items-baseline justify-center gap-1.5" aria-hidden="true">
@@ -30,22 +51,37 @@ const SliderScale: React.FC<{
         type="range"
         min={from}
         max={to}
-        step={1}
+        step={0.01}
         value={shown}
         aria-label={label}
+        aria-valuenow={value ?? undefined}
         aria-valuetext={value == null ? '–' : `${value}${unit ? ` ${unit}` : ''}`}
         onChange={(e) => {
           const v = Number(e.target.value);
-          if (v !== value) haptic();
-          onChange(v);
+          cancelAnimationFrame(anim.current);
+          setRaw(v);
+          pick(v);
         }}
-        onPointerDown={() => { if (value == null) onChange(shown); }}
+        onKeyDown={(e) => {
+          // whole steps from the keyboard
+          const d = e.key === 'ArrowUp' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowDown' || e.key === 'ArrowLeft' ? -1 : 0;
+          if (!d) return;
+          e.preventDefault();
+          const rtl = getComputedStyle(e.currentTarget).direction === 'rtl' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft');
+          setRaw(null);
+          pick((value ?? shown) + (rtl ? -d : d));
+        }}
+        onPointerDown={() => { if (value == null) onChange(Math.round(shown)); }}
+        onPointerUp={settle}
+        onPointerCancel={settle}
+        onTouchEnd={settle}
+        onBlur={settle}
         className="tp-range"
         style={{ '--p': `${pct}%` } as React.CSSProperties}
       />
       <div className="mt-1 flex justify-between px-[6px] text-[11px] tabular-nums text-muted-foreground" aria-hidden="true">
         {Array.from({ length: to - from + 1 }, (_, i) => from + i).map((n) => (
-          <span key={n} className={cn('w-4 text-center', n === value && 'font-bold text-foreground')}>{n}</span>
+          <span key={n} className={cn('w-4 text-center transition-colors', n === value && 'font-bold text-foreground')}>{n}</span>
         ))}
       </div>
       {(low || high) && (

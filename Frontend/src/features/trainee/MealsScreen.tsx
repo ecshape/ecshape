@@ -316,7 +316,7 @@ const MealsScreen: React.FC = () => {
                     {slot.notes && (
                       <p className="flex gap-2 rounded-2xl bg-primary/10 px-3 py-2 text-sm" dir="auto">
                         <NotebookPen className="mt-0.5 h-4 w-4 flex-none text-primary" />
-                        <span className="min-w-0">{slot.notes}</span>
+                        <span className="min-w-0 whitespace-pre-line">{slot.notes}</span>
                       </p>
                     )}
 

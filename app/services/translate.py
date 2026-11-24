@@ -26,7 +26,19 @@ LANGS = {"he": "Hebrew", "fr": "French", "en": "English", "ru": "Russian", "ar":
 # src_lang "auto": mixed sources (Open Food Facts names in French, wger exercises in German…), detected per text.
 SRC_NAMES = {**LANGS, "auto": "their original language (detect it per item)"}
 FAST_CLAUDE = "claude-haiku-5-5"
-_lock = threading.Lock()
+_locks_guard = threading.Lock()
+_locks: Dict[str, threading.Lock] = {}
+
+
+def _batch_lock(key: str) -> threading.Lock:
+    """One lock per batch of texts (QA #131). A single global lock made every screen's translation wait behind all
+    the others (an exercise's instructions queued behind a whole list of food names); now only requests for the very
+    same texts wait for each other, so the same texts are still never paid for twice."""
+    with _locks_guard:
+        if len(_locks) > 512:
+            for k in [k for k, l in _locks.items() if not l.locked()]:
+                _locks.pop(k, None)
+        return _locks.setdefault(key, threading.Lock())
 
 
 def _hash(text: str, src_lang: str = "en") -> str:
@@ -153,8 +165,19 @@ def translate(db: Session, user_id: int, texts: List[str], lang: str, src_lang: 
         for i in range(0, len(missing), 40):
                     chunk = missing[i:i + 40]
                     out: Optional[List[Optional[str]]] = None
+                    lock = _batch_lock(lang + "|" + "|".join(sorted(_hash(t, src_lang) for t in chunk)))
                     if engines:
-                        with _lock:  # one paid AI batch at a time per worker (avoids paying twice for the same texts)
+                        with lock:  # one paid AI batch per set of texts (avoids paying twice for the same texts)
+                            # another request may have just translated them while we waited
+                            done_rows = db.query(TranslationCache).filter(
+                                TranslationCache.lang == lang,
+                                TranslationCache.src_hash.in_([_hash(t, src_lang) for t in chunk])).all()
+                            db.rollback()
+                            for r in done_rows:
+                                have[r.src_hash] = r.text
+                            chunk = [t for t in chunk if _hash(t, src_lang) not in have]
+                            if not chunk:
+                                continue
                             for engine in engines:
                                 try:
                                     out = _parse(_call(engine, _prompt(LANGS[lang], chunk, SRC_NAMES.get(src_lang, "English"))), len(chunk))

@@ -42,7 +42,9 @@ const ExercisePicker: React.FC<{
   subtitle?: React.ReactNode;
 }> = ({ open, onOpenChange, exercises, loading, onPick, counts, title, subtitle }) => {
   const { t, i18n } = useTranslation();
-  const swipeRef = useSwipeClose(() => onOpenChange(false), { maxWidth: 768 });
+  const swipeRef = useSwipeClose(() => onOpenChange(false), { maxWidth: 768, handleSelector: '[data-swipe-handle]' });
+  // QA #130: no keyboard popping up on phones when the picker opens (it covered the list and the sheet jumped while scrolling)
+  const [autoFocusSearch] = useState(() => typeof window !== 'undefined' && !window.matchMedia?.('(pointer: coarse)').matches);
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState('all');
   const [added, setAdded] = useState(0);
@@ -75,8 +77,8 @@ const ExercisePicker: React.FC<{
         <div className="tr-root tp-root tr-picker" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
           <DialogPrimitive.Overlay className="tr-picker-scrim" />
           <DialogPrimitive.Content ref={swipeRef} className="tr-picker-panel focus:outline-none" aria-describedby={undefined}>
-            <div className="mx-auto mt-2.5 h-1.5 w-12 flex-none rounded-full bg-foreground/15 md:hidden" />
-            <header className="flex-none space-y-3 px-4 pb-3 pt-4 sm:px-6 sm:pt-6">
+            <div data-swipe-handle className="flex-none pb-1 pt-2.5 md:hidden"><div className="mx-auto h-1.5 w-12 rounded-full bg-foreground/15" /></div>
+            <header data-swipe-handle className="flex-none space-y-3 px-4 pb-3 pt-4 sm:px-6 sm:pt-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <DialogPrimitive.Title className="tp-title text-4xl">{title ?? t('workoutCreation.selectExercise')}</DialogPrimitive.Title>
@@ -90,7 +92,7 @@ const ExercisePicker: React.FC<{
                 <Search />
                 <input
                   type="search"
-                  autoFocus
+                  autoFocus={autoFocusSearch}
                   className="tp-input"
                   placeholder={t('workoutCreation.searchExercisePlaceholder', 'Search exercise or muscle group...')}
                   aria-label={t('workoutCreation.searchExercisePlaceholder', 'Search exercise or muscle group...')}

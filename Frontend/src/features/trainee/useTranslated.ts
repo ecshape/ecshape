@@ -1,4 +1,4 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, type QueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 
@@ -13,19 +13,36 @@ const CHUNK = 40;
  * wger exercises in German…). Long lists are sent in batches; texts already written in Hebrew are kept as they are
  * when the app is in Hebrew.
  */
-export function useTranslatedTexts(texts: string[], enabled = true, src: 'en' | 'auto' = 'en') {
-  const { i18n } = useTranslation();
-  const lang = (i18n.language || 'en').slice(0, 2);
+function plan(texts: string[], lang: string, enabled: boolean, src: 'en' | 'auto') {
   const clean = texts.map((t) => t ?? '');
   const needs = (t: string) => !!t.trim() && !(lang === 'he' && HEBREW.test(t));
   const todo = Array.from(new Set(clean.filter(needs)));
   const on = enabled && (lang !== 'en' || src === 'auto') && todo.length > 0;
   const chunks: string[][] = [];
   for (let i = 0; on && i < todo.length; i += CHUNK) chunks.push(todo.slice(i, i + CHUNK));
+  return { clean, on, chunks };
+}
+
+const translateQuery = (lang: string, src: 'en' | 'auto', chunk: string[]) => ({
+  queryKey: ['translate', lang, src, chunk],
+  queryFn: () => api<{ texts: string[]; translated: boolean }>('/translate', { method: 'POST', body: { texts: chunk, lang, src_lang: src } }),
+});
+
+/** QA #131: start translating texts before they are shown (e.g. when an exercise card is touched), so the sheet
+ *  opens with them ready. Same cache entries as useTranslatedTexts; already-cached texts cost nothing. */
+export function prefetchTranslatedTexts(qc: QueryClient, texts: string[], language: string, src: 'en' | 'auto' = 'en') {
+  const lang = (language || 'en').slice(0, 2);
+  const { chunks } = plan(texts, lang, true, src);
+  for (const chunk of chunks) void qc.prefetchQuery({ ...translateQuery(lang, src, chunk), staleTime: Infinity, retry: false });
+}
+
+export function useTranslatedTexts(texts: string[], enabled = true, src: 'en' | 'auto' = 'en') {
+  const { i18n } = useTranslation();
+  const lang = (i18n.language || 'en').slice(0, 2);
+  const { clean, on, chunks } = plan(texts, lang, enabled, src);
   const qs = useQueries({
     queries: chunks.map((chunk) => ({
-      queryKey: ['translate', lang, src, chunk],
-      queryFn: () => api<{ texts: string[]; translated: boolean }>('/translate', { method: 'POST', body: { texts: chunk, lang, src_lang: src } }),
+      ...translateQuery(lang, src, chunk),
       staleTime: Infinity,
       gcTime: 60 * 60_000,
       retry: false,

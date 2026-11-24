@@ -68,3 +68,13 @@ export function sectionOfPath(path: string): SectionKey | null {
 export const SHARED_PATHS = ['layout', 'links', 'hero.image', 'story.image'];
 export const isSharedPath = (path: string) =>
   SHARED_PATHS.some((p) => path === p || path.startsWith(p + '.')) || /^results\.cards\.\d+\.image$/.test(path);
+
+/** QA #133: value of a photo the trainer removed ("" means the built-in default photo). */
+export const NO_PHOTO = 'none';
+/** What "remove photo" writes for a photo path, or null when that photo can't be removed (the layout needs it). */
+export function photoRemoval(path: string): string | null {
+  if (path === 'story.image' || path === 'manifesto.image') return NO_PHOTO;
+  // these already have a no-photo look (drawn header / initial avatar)
+  if (/^programs\.items\.\d+\.image$/.test(path) || /^voices\.quotes\.\d+\.photo$/.test(path)) return '';
+  return null;
+}

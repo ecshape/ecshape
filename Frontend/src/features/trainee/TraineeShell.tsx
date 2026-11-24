@@ -12,6 +12,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import './qa2I18n';
 import { useLiquid } from '@/features/trainer/ui';
 import { useConversations } from './hooks';
+import { api } from './api';
 import './trainee.css';
 
 const RAIL_KEY = 'ec.trainee.rail';
@@ -67,6 +68,14 @@ const TraineeShell: React.FC<{ current: string; children: React.ReactNode; immer
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [pathname]);
+  useEffect(() => {
+    // QA #134: a new trainee gets the coach's food-preferences card in the chat (the server sends it once)
+    if (user?.role !== 'CLIENT') return;
+    const k = `ec-intake-checked-${user.id}`;
+    try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); } catch { /* private mode */ }
+    api('/v2/chat/nutrition-intake/ensure', { method: 'POST', body: { lang: (i18n.language || 'he').slice(0, 2) } }).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const tabs: { id: TraineeTab; label: string; icon: React.ElementType; href: string; badge?: number }[] = [
     { id: 'dashboard', label: t('trainee.nav.today'), icon: House, href: '/' },

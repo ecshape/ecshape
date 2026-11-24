@@ -706,3 +706,224 @@ async def accept_menu_proposal(message_id: int, body: MenuAcceptIn, background_t
     db.refresh(reply)
     background_tasks.add_task(websocket_service.send_live_refresh, current_user.id, "plan")
     return await _push_chat(db, reply, msg.trainer_id, current_user)
+
+
+# ------------------------------------------------------------------ food-preferences intake -> AI menu options (QA #134)
+# A new trainee gets a form card from their coach. Their answers build a menu of 4-5 options per meal (AI picks the
+# foods from the coach's bank, quantities are computed for the trainee's targets). The menu comes back as a card the
+# trainee can edit (replace a meal / a product) and confirm into their meal plan.
+
+
+class IntakeEnsureIn(BaseModel):
+    lang: str = Field("he", min_length=2, max_length=5)
+
+
+class IntakeSendIn(BaseModel):
+    client_id: int
+    lang: str = Field("he", min_length=2, max_length=5)
+
+
+class IntakeAnswerIn(BaseModel):
+    answers: Dict[str, Any]
+
+
+class MenuOptionsSwapIn(BaseModel):
+    slot: int = Field(ge=0, le=10)
+    option: int = Field(ge=0, le=10)
+    item: Optional[int] = Field(None, ge=0, le=10)  # None = replace the whole meal
+
+
+class MenuOptionsAcceptIn(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+
+
+def _card_of(msg: Optional[ChatMessage]) -> Optional[Dict[str, Any]]:
+    if not msg or not msg.payload:
+        return None
+    try:
+        c = json.loads(msg.payload)
+    except ValueError:
+        return None
+    return c if isinstance(c, dict) else None
+
+
+def _new_intake(db: Session, trainer_id: int, client_id: int, lang: str) -> ChatMessage:
+    from app.services import menu_intake as mi
+
+    card = {"kind": "nutrition_intake", "status": "pending", "lang": mi.L(lang)}
+    msg = ChatMessage(trainer_id=trainer_id, client_id=client_id, sender_id=trainer_id, message=mi.text(lang, "intake"),
+                      payload=json.dumps(card, ensure_ascii=False), created_at=datetime.now(timezone.utc))
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
+
+
+@router.post("/nutrition-intake/ensure")
+async def ensure_nutrition_intake(body: IntakeEnsureIn, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainee app start: a new trainee without a meal plan gets the food-preferences card from their coach (once)."""
+    from app.services import menu_intake as mi
+
+    if current_user.role != UserRole.CLIENT:
+        return {"sent": False}
+    client = db.query(User).filter(User.id == current_user.id).first()
+    if not mi.should_send_intake(db, client):
+        return {"sent": False}
+    trainer = db.query(User).filter(User.id == client.trainer_id).first()
+    if not trainer:
+        return {"sent": False}
+    msg = _new_intake(db, trainer.id, client.id, body.lang)
+    await _push_chat(db, msg, client.id, UserResponse.model_validate(trainer))
+    return {"sent": True, "message_id": msg.id}
+
+
+@router.post("/nutrition-intake/send", response_model=ChatMessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_nutrition_intake(body: IntakeSendIn, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Coach: send the food-preferences form to a client by hand (e.g. an existing client)."""
+    if current_user.role != UserRole.TRAINER:
+        raise HTTPException(status_code=403, detail="Only the coach can send the form")
+    trainer_id, client_id = _resolve_pair(current_user, db, body.client_id)
+    msg = _new_intake(db, trainer_id, client_id, body.lang)
+    return await _push_chat(db, msg, client_id, current_user)
+
+
+async def _build_and_send_menu(trainer_id: int, client_id: int, answers: Dict[str, Any], lang: str) -> None:
+    """Background: build the menu options (AI call may take a while) and send them as a card from the coach."""
+    from starlette.concurrency import run_in_threadpool
+    from app.database import SessionLocal
+    from app.services import menu_intake as mi
+
+    db = SessionLocal()
+    try:
+        try:
+            menu = await run_in_threadpool(mi.build_menu, db, trainer_id, client_id, answers, lang)
+        except Exception as e:  # never leave the trainee without an answer
+            logger.warning("menu intake: build failed: %s", e)
+            menu = None
+        if menu:
+            card = {"kind": "menu_options", "status": "pending", "menu": menu}
+            text = mi.text(lang, "menu")
+        else:
+            card, text = None, mi.text(lang, "failed")
+        msg = ChatMessage(trainer_id=trainer_id, client_id=client_id, sender_id=trainer_id, message=text,
+                          payload=json.dumps(card, ensure_ascii=False) if card else None, created_at=datetime.now(timezone.utc))
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        trainer = db.query(User).filter(User.id == trainer_id).first()
+        sender = UserResponse.model_validate(trainer)
+        await _push_chat(db, msg, client_id, sender)
+        await _push_chat(db, msg, trainer_id, sender)
+    finally:
+        db.close()
+
+
+@router.post("/nutrition-intake/{message_id}/answer", response_model=ChatMessageResponse)
+async def answer_nutrition_intake(message_id: int, body: IntakeAnswerIn, background_tasks: BackgroundTasks,
+                                  current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainee: send the form. Saves the answers, then the menu is built and sent back as a card."""
+    from app.services import menu_intake as mi
+
+    if current_user.role != UserRole.CLIENT:
+        raise HTTPException(status_code=403, detail="Only the client fills in the form")
+    msg = db.query(ChatMessage).filter(ChatMessage.id == message_id, ChatMessage.client_id == current_user.id).first()
+    card = _card_of(msg)
+    if not card or card.get("kind") != "nutrition_intake":
+        raise HTTPException(status_code=404, detail="Form not found")
+    if card.get("status") != "pending":
+        raise HTTPException(status_code=409, detail="Already answered")
+    answers = mi.clean_answers(body.answers or {})
+    client = db.query(User).filter(User.id == current_user.id).first()
+    mi.save_profile(db, client, answers)
+    lang = card.get("lang") or "he"
+    card["status"] = "answered"
+    card["answers"] = answers
+    msg.payload = json.dumps(card, ensure_ascii=False)
+    reply = ChatMessage(trainer_id=msg.trainer_id, client_id=msg.client_id, sender_id=current_user.id, message=mi.text(lang, "answered"),
+                        payload=json.dumps({"kind": "nutrition_intake_reply", "request_id": msg.id, "answers": answers}, ensure_ascii=False),
+                        created_at=datetime.now(timezone.utc))
+    db.add(reply)
+    db.commit()
+    db.refresh(reply)
+    background_tasks.add_task(_build_and_send_menu, msg.trainer_id, msg.client_id, answers, lang)
+    await _push_chat(db, reply, msg.client_id, current_user)  # the trainee's own thread shows it at once
+    return await _push_chat(db, reply, msg.trainer_id, current_user)
+
+
+def _menu_options_for_client(db: Session, message_id: int, client: UserResponse) -> Tuple[ChatMessage, Dict[str, Any]]:
+    if client.role != UserRole.CLIENT:
+        raise HTTPException(status_code=403, detail="Only the client edits their menu")
+    msg = db.query(ChatMessage).filter(ChatMessage.id == message_id, ChatMessage.client_id == client.id).first()
+    card = _card_of(msg)
+    if not card or card.get("kind") != "menu_options":
+        raise HTTPException(status_code=404, detail="Menu not found")
+    if card.get("status") != "pending":
+        raise HTTPException(status_code=409, detail="Already confirmed")
+    return msg, card
+
+
+def _intake_answers(db: Session, client_id: int) -> Dict[str, Any]:
+    from app.models.meal_variants import ClientNutritionProfile
+    from app.services import menu_intake as mi
+
+    row = db.query(ClientNutritionProfile).filter(ClientNutritionProfile.client_id == client_id).first()
+    try:
+        return mi.clean_answers(json.loads(row.raw_answers) if row and row.raw_answers else {})
+    except ValueError:
+        return mi.clean_answers({})
+
+
+@router.post("/menu-options/{message_id}/swap", response_model=ChatMessageResponse)
+def swap_menu_option(message_id: int, body: MenuOptionsSwapIn, current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainee: replace one meal of the menu, or one product of a meal (its quantity keeps the calories)."""
+    from app.services import menu_intake as mi
+
+    msg, card = _menu_options_for_client(db, message_id, current_user)
+    menu = card["menu"]
+    try:
+        slot = menu["slots"][body.slot]
+        opt = slot["options"][body.option]
+        if body.item is not None:
+            opt["items"][body.item]
+    except (IndexError, KeyError, TypeError):
+        raise HTTPException(status_code=422, detail="Unknown meal")
+    answers = _intake_answers(db, current_user.id)
+    try:
+        if body.item is None:
+            mi.swap_option(db, msg.trainer_id, menu, answers, body.slot, body.option)
+        else:
+            mi.swap_item(db, msg.trainer_id, menu, answers, body.slot, body.option, body.item)
+    except ValueError:
+        raise HTTPException(status_code=409, detail="No other fitting food in your coach's list")
+    card["menu"] = menu
+    msg.payload = json.dumps(card, ensure_ascii=False)
+    db.commit()
+    db.refresh(msg)
+    return _serialize([msg], db)[0]
+
+
+@router.post("/menu-options/{message_id}/accept", response_model=ChatMessageResponse)
+async def accept_menu_options(message_id: int, body: MenuOptionsAcceptIn, background_tasks: BackgroundTasks,
+                              current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trainee: confirm the menu; it becomes their active meal plan."""
+    from app.routers.meal_tracking_v3 import create_or_update_complete_plan
+    from app.schemas.meal_tracking_v3 import V3CompleteMealPlanCreate
+    from app.services import menu_intake as mi
+
+    msg, card = _menu_options_for_client(db, message_id, current_user)
+    trainer = db.query(User).filter(User.id == msg.trainer_id).first()
+    if not trainer:
+        raise HTTPException(status_code=409, detail="Coach not found")
+    plan = mi.plan_body(db, msg.trainer_id, card["menu"])
+    create_or_update_complete_plan(V3CompleteMealPlanCreate(**{**plan, "client_id": current_user.id}),
+                                   current_user=UserResponse.model_validate(trainer), db=db)
+    card["status"] = "accepted"
+    msg.payload = json.dumps(card, ensure_ascii=False)
+    reply = ChatMessage(trainer_id=msg.trainer_id, client_id=msg.client_id, sender_id=current_user.id, message=body.message.strip(),
+                        payload=json.dumps({"kind": "menu_reply", "request_id": msg.id, "name": card["menu"].get("name")}, ensure_ascii=False),
+                        created_at=datetime.now(timezone.utc))
+    db.add(reply)
+    db.commit()
+    db.refresh(reply)
+    background_tasks.add_task(websocket_service.send_live_refresh, current_user.id, "plan")
+    return await _push_chat(db, reply, msg.trainer_id, current_user)

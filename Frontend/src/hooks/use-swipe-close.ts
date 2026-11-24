@@ -9,11 +9,12 @@ import { useEffect, useRef, useState } from 'react';
  * - From inside a scroll area it starts only when that area is scrolled to the top and the finger moves down,
  *   so normal scrolling still works.
  * - Horizontal swipes (carousels), sliders and text fields are left alone.
+ * - `handleSelector`: the drag may start only inside it (list-heavy sheets, QA #130).
  *
  * Returns a callback ref for the panel element.
  */
-export function useSwipeClose(onClose: () => void, opts: { maxWidth?: number; overlaySelector?: string } = {}) {
-  const { maxWidth = 640, overlaySelector = '.tp-sheet-overlay, .tr-xs-overlay, .tr-picker-scrim' } = opts;
+export function useSwipeClose(onClose: () => void, opts: { maxWidth?: number; overlaySelector?: string; handleSelector?: string } = {}) {
+  const { maxWidth = 640, overlaySelector = '.tp-sheet-overlay, .tr-xs-overlay, .tr-picker-scrim', handleSelector } = opts;
   const [node, setNode] = useState<HTMLElement | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -50,6 +51,9 @@ export function useSwipeClose(onClose: () => void, opts: { maxWidth?: number; ov
       if (window.innerWidth >= maxWidth || e.touches.length !== 1) { mode = 'off'; return; }
       const target = e.target as HTMLElement;
       if (target.closest('input, textarea, select, [contenteditable="true"], [data-no-swipe], input[type="range"]')) { mode = 'off'; return; }
+      // QA #130: sheets that are mostly a long list (exercise picker) close only from their handle / header,
+      // so scrolling the list never closes them.
+      if (handleSelector && !target.closest(handleSelector)) { mode = 'off'; return; }
       fromScroll = scrollParent(e.target);
       if (fromScroll && fromScroll.scrollTop > 0) { mode = 'off'; return; }
       const t = e.touches[0];
@@ -106,7 +110,7 @@ export function useSwipeClose(onClose: () => void, opts: { maxWidth?: number; ov
       el.removeEventListener('touchend', onEnd);
       el.removeEventListener('touchcancel', onEnd);
     };
-  }, [node, maxWidth, overlaySelector]);
+  }, [node, maxWidth, overlaySelector, handleSelector]);
 
   return setNode;
 }

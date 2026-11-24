@@ -263,3 +263,11 @@ html.tp-on, html.tp-on body, html.tp-on #root { overflow-x: clip; }
 /* …and a faint, hollow thumb, so the middle of the scale never reads as an answer the trainee already gave */
 .tp-slider[data-empty] .tp-range::-webkit-slider-thumb { opacity: .45; box-shadow: none; border-style: dashed; }
 .tp-slider[data-empty] .tp-range::-moz-range-thumb { opacity: .45; box-shadow: none; border-style: dashed; }
+
+/* QA #135: water tracker bottle */
+.tp-water { transition: transform .7s cubic-bezier(.2,.9,.25,1.15); }
+.tp-water__wave { animation: tp-wave 2.4s linear infinite; }
+@keyframes tp-wave { from { transform: translateX(0); } to { transform: translateX(64px); } }
+.tp-water__drop { animation: tp-drop .6s cubic-bezier(.3,.7,.4,1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes tp-drop { 0% { transform: translateY(-34px) scale(.6); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(2px) scale(1.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tp-water, .tp-water__wave, .tp-water__drop { transition: none; animation: none; } }

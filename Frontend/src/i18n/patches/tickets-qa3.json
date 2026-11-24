@@ -130,6 +130,18 @@
         "removePhoto": "הסרת התמונה",
         "noPhoto": "אין תמונה"
       }
+    },
+    "qa7": {
+      "water": {
+        "title": "מים היום",
+        "add": "הוספת חצי ליטר",
+        "remove": "הורדת חצי ליטר",
+        "goal": "יעד {{goal}} ל׳",
+        "left": "נשארו {{left}} ל׳",
+        "done": "הגעת ליעד המים 💧",
+        "saveError": "לא הצלחנו לשמור את המים. נסו שוב.",
+        "l": "ל׳"
+      }
     }
   },
   "en": {
@@ -263,6 +275,18 @@
         "removePhoto": "Remove photo",
         "noPhoto": "No photo"
       }
+    },
+    "qa7": {
+      "water": {
+        "title": "Water today",
+        "add": "Add half a litre",
+        "remove": "Remove half a litre",
+        "goal": "Goal {{goal}} L",
+        "left": "{{left}} L to go",
+        "done": "Water goal reached 💧",
+        "saveError": "Couldn’t save your water. Try again.",
+        "l": "L"
+      }
     }
   },
   "fr": {
@@ -395,6 +419,18 @@
       "site": {
         "removePhoto": "Supprimer la photo",
         "noPhoto": "Pas de photo"
+      }
+    },
+    "qa7": {
+      "water": {
+        "title": "Eau aujourd’hui",
+        "add": "Ajouter un demi-litre",
+        "remove": "Retirer un demi-litre",
+        "goal": "Objectif {{goal}} L",
+        "left": "Encore {{left}} L",
+        "done": "Objectif d’eau atteint 💧",
+        "saveError": "Impossible d’enregistrer l’eau. Réessayez.",
+        "l": "L"
       }
     }
   }

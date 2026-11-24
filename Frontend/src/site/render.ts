@@ -9,6 +9,17 @@ import type { SiteContent, SiteLang } from './content/types';
 import { NO_PHOTO, hiddenSections, sectionOrder, type SectionKey } from './sections';
 import { cleanTarget, isLinkPath } from './links';
 
+
+/** QA #137: phone prefix picker (Israel first and default) + digits only. */
+const PHONE_CC: [string, string, string][] = [
+  ['IL', '972', '🇮🇱'], ['FR', '33', '🇫🇷'], ['US', '1', '🇺🇸'], ['GB', '44', '🇬🇧'], ['BE', '32', '🇧🇪'], ['CH', '41', '🇨🇭'],
+  ['DE', '49', '🇩🇪'], ['ES', '34', '🇪🇸'], ['IT', '39', '🇮🇹'], ['NL', '31', '🇳🇱'], ['RU', '7', '🇷🇺'], ['UA', '380', '🇺🇦'],
+  ['CA', '1', '🇨🇦'], ['AU', '61', '🇦🇺'], ['BR', '55', '🇧🇷'], ['AR', '54', '🇦🇷'], ['MA', '212', '🇲🇦'], ['ZA', '27', '🇿🇦'],
+  ['AE', '971', '🇦🇪'], ['TR', '90', '🇹🇷'],
+];
+/** QA #138: one-tap email domain shortcuts. */
+const MAIL_DOMAINS = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'walla.co.il'];
+
 const P = '/site/photos/';
 const esc = (v: unknown) =>
   String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -467,14 +478,14 @@ ${page}
         <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <label class="field"><span>${esc(c.form.name)}</span><input name="name" autocomplete="name" required maxlength="120"></label>
         <div class="field-row">
-          <label class="field"><span>${esc(c.form.phone)}</span><input name="phone" type="tel" autocomplete="tel" maxlength="40" dir="ltr"></label>
-          <label class="field"><span>${esc(c.form.email)}</span><input name="email" type="email" autocomplete="email" maxlength="160" dir="ltr"></label>
+          <div class="field"><span id="leadPhoneL">${esc(c.form.phone)}</span><div class="phone-in" dir="ltr"><select name="cc" aria-label="${esc(({ he: 'קידומת מדינה', en: 'Country code', fr: 'Indicatif pays' } as Record<string, string>)[lang] || 'Country code')}" autocomplete="tel-country-code">${PHONE_CC.map(([iso, code, flag]) => `<option value="${code}"${iso === 'IL' ? ' selected' : ''}>${flag} +${code}</option>`).join('')}</select><input name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" aria-labelledby="leadPhoneL" placeholder="50 123 4567"></div></div>
+          <label class="field field--email"><span>${esc(c.form.email)}</span><input name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="160" dir="ltr" placeholder="name@gmail.com"><span class="mail-hints" dir="ltr" hidden>${MAIL_DOMAINS.map((d) => `<button type="button" tabindex="-1" data-mail="${d}">@${d}</button>`).join('')}</span></label>
         </div>
         <fieldset class="field"><legend>${esc(c.form.goal)}</legend><div class="choice">${c.form.goals.map((g, i) => `<label><input type="radio" name="goal" value="${esc(g.value)}"${i === 0 ? ' checked' : ''}><span>${esc(g.label)}</span></label>`).join('')}</div></fieldset>
         <fieldset class="field"><legend>${esc(c.form.program)}</legend><div class="choice">${c.form.programs.map((p, i) => `<label><input type="radio" name="program" value="${esc(p.value)}"${i === 0 ? ' checked' : ''}><span>${esc(p.label)}</span></label>`).join('')}</div></fieldset>
         <label class="field"><span>${esc(c.form.message)}</span><textarea name="message" rows="3" maxlength="2000" placeholder="${esc(c.form.messagePh)}"></textarea></label>
         <p class="form-msg" role="status" aria-live="polite"></p>
-        <button type="submit" class="btn btn--primary btn--block" data-icon="arrow" data-sending="${esc(c.form.sending)}" data-error="${esc(c.form.error)}" data-required="${esc(c.form.required)}" data-invalid-email="${esc(c.form.invalidEmail || ({ he: 'כתובת האימייל לא נראית תקינה.', en: 'That email address doesn’t look right.', fr: 'Cette adresse e-mail ne semble pas valide.' } as Record<string, string>)[lang] || '')}">${esc(c.form.submit)}</button>
+        <button type="submit" class="btn btn--primary btn--block" data-icon="arrow" data-sending="${esc(c.form.sending)}" data-error="${esc(c.form.error)}" data-required="${esc(c.form.required)}" data-invalid-phone="${esc(({ he: 'מספר הטלפון לא נראה תקין.', en: 'That phone number doesn’t look right.', fr: 'Ce numéro de téléphone ne semble pas valide.' } as Record<string, string>)[lang] || '')}" data-invalid-email="${esc(c.form.invalidEmail || ({ he: 'כתובת האימייל לא נראית תקינה.', en: 'That email address doesn’t look right.', fr: 'Cette adresse e-mail ne semble pas valide.' } as Record<string, string>)[lang] || '')}">${esc(c.form.submit)}</button>
         <p class="form-privacy">${esc(c.form.privacy)} ${esc(siteNotices(lang).form)} <a href="/legal/privacy" target="_blank" rel="noopener">${esc(siteNotices(lang).policy)}</a></p>
       </form>
       <div class="form-done" hidden>

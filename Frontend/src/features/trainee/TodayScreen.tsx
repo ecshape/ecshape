@@ -13,6 +13,7 @@ import {
 } from './hooks';
 import { Bar, CountUp, EmptyState, ErrorState, Ring, Screen, Skel, Sparkline } from './ui';
 import CheckInSheet from './CheckInSheet';
+import WaterCard from './WaterCard';
 import { fmtDate, fmtNum, fmtRelative, fmtSigned, parseDate, todayISO } from './format';
 
 const greetingKey = () => {
@@ -305,6 +306,9 @@ const TodayScreen: React.FC = () => {
             </button>
           )}
         </section>
+
+        {/* QA #135: water tracker */}
+        <WaterCard style={{ ['--i' as string]: 7 }} />
       </div>
 
       <CheckInSheet open={checkInOpen} onOpenChange={setCheckInOpen} lastWeight={lastWeight?.weight} existing={checkIn.data ?? null} />

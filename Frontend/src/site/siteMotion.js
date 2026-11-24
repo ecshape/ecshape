@@ -291,11 +291,67 @@ export function initSite(root, { navigate, content, lang, onLang, mode = 'live',
     if (modalOpen) trap(e, [panel]);
     else if (menuOpen) trap(e, [menuBtn, menu]);
   });
+  // QA #137: the phone field takes digits only (spaces/dashes allowed while typing); the prefix comes from the picker.
+  const phoneInput = form.querySelector('input[name="phone"]');
+  const ccSelect = form.querySelector('select[name="cc"]');
+  if (phoneInput) on(phoneInput, 'input', () => {
+    let v = phoneInput.value;
+    // pasted "+33 6 12..." / "00972..." picks the matching prefix
+    const intl = v.replace(/[\s\-().]/g, '').match(/^(?:\+|00)(\d{1,3})/);
+    if (intl && ccSelect) {
+      const digits = v.replace(/[\s\-().]/g, '').replace(/^(?:\+|00)/, '');
+      const opt = [...ccSelect.options].map((o) => o.value).sort((a, b) => b.length - a.length).find((c) => digits.startsWith(c));
+      if (opt) { ccSelect.value = opt; v = digits.slice(opt.length); }
+    }
+    const clean = v.replace(/[^\d\s-]/g, '').replace(/\s{2,}/g, ' ');
+    if (clean !== phoneInput.value) phoneInput.value = clean;
+    phoneInput.removeAttribute('aria-invalid');
+  });
+  // QA #138: tap a domain to complete the email.
+  const mailInput = form.querySelector('input[name="email"]');
+  const hints = form.querySelector('.mail-hints');
+  if (mailInput && hints) {
+    const sync = () => {
+      const v = mailInput.value.trim();
+      const at = v.indexOf('@');
+      const typed = at >= 0 ? v.slice(at + 1).toLowerCase() : '';
+      let shown = 0;
+      hints.querySelectorAll('button').forEach((b) => {
+        const d = b.dataset.mail;
+        const ok = v.length > 0 && at !== 0 && (at < 0 || (d.startsWith(typed) && d !== typed));
+        b.hidden = !ok; if (ok) shown++;
+      });
+      hints.hidden = !shown;
+    };
+    on(mailInput, 'input', () => { mailInput.removeAttribute('aria-invalid'); sync(); });
+    on(mailInput, 'focus', sync);
+    on(mailInput, 'blur', () => setTimeout(() => { if (document.activeElement !== mailInput) hints.hidden = true; }, 150));
+    // pointerdown keeps the field focused (no keyboard flicker on phones)
+    hints.querySelectorAll('button').forEach((b) => on(b, 'pointerdown', (e) => {
+      e.preventDefault();
+      const v = mailInput.value.trim();
+      const local = v.split('@')[0];
+      if (!local) return;
+      mailInput.value = `${local}@${b.dataset.mail}`;
+      hints.hidden = true;
+      mailInput.focus();
+    }));
+  }
   on(form, 'submit', async (e) => {
     e.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
     const msg = $('.form-msg', form);
     const data = Object.fromEntries(new FormData(form).entries());
+    // phone = +prefix + national number (a leading 0 is the national trunk prefix, dropped)
+    const national = String(data.phone || '').replace(/\D/g, '').replace(/^0+/, '');
+    delete data.cc;
+    if (national && (national.length < 6 || national.length > 14)) {
+      msg.textContent = btn.dataset.invalidPhone || btn.dataset.required;
+      phoneInput.setAttribute('aria-invalid', 'true');
+      phoneInput.focus();
+      return;
+    }
+    data.phone = national ? `+${ccSelect ? ccSelect.value : '972'} ${national}` : '';
     data.lang = lang;
     data.source = form.dataset.source || 'site';
     msg.textContent = '';

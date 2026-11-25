@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, Boolean, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, Float, Boolean, Date, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -25,3 +25,16 @@ class DailyCheckIn(Base):
         UniqueConstraint('client_id', 'date', name='unique_daily_checkin'),
     )
 
+
+
+class WaterLog(Base):
+    """QA #135: water the trainee drank on a day (their own local calendar day), in millilitres."""
+    __tablename__ = "water_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    day = Column(Date, nullable=False)
+    ml = Column(Integer, nullable=False, default=0)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    __table_args__ = (UniqueConstraint("client_id", "day", name="unique_water_day"),)

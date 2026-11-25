@@ -358,7 +358,7 @@ const ProgressTrackingV2 = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gradient">{t('progress.title')}</h1>
+              <h1 className="ec-page-title text-gradient">{t('progress.title')}</h1>
               <p className="text-muted-foreground mt-1">{t('progress.subtitle')}</p>
             </div>
             <Dialog open={isAddingEntry} onOpenChange={setIsAddingEntry}>
@@ -607,14 +607,14 @@ const ProgressTrackingV2 = () => {
       <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 space-y-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/[.03] border-primary/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{t('progress.currentWeight')}</p>
                   <p className="text-3xl font-bold text-foreground">{currentWeight || '-'} {t('progress.kg')}</p>
                 </div>
-                <Scale className="w-8 h-8 text-blue-500" />
+                <Scale className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -639,7 +639,7 @@ const ProgressTrackingV2 = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
+          <Card className="bg-gradient-to-br from-[hsl(var(--gold)/.12)] to-[hsl(var(--gold)/.03)] border-[hsl(var(--gold)/.25)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -648,7 +648,7 @@ const ProgressTrackingV2 = () => {
                     {weightChangePercentage}%
                   </p>
                 </div>
-                <Calendar className="w-8 h-8 text-purple-500" />
+                <Calendar className="w-8 h-8 text-[hsl(var(--gold))]" />
               </div>
             </CardContent>
           </Card>

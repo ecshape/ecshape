@@ -1,0 +1,231 @@
+import React, { useMemo, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, CalendarDays, Dumbbell, Home, Salad, UserRound } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { api } from '@/features/trainee/api';
+import { InfoTip } from '@/components/ui/info-tip';
+import { useToast } from '@/hooks/use-toast';
+import { LevelBars } from '@/components/exercises/ExerciseLibrary';
+import { Sheet } from './ui';
+import { useTrainerClients } from './hooks';
+import {
+  FOODS, MEAL_TEMPLATES, WORKOUT_TEMPLATES, libName, pick,
+  type MealTemplate, type WorkoutTemplate,
+} from './planTemplates';
+import { PortalSelect } from '@/components/ui/portal-select';
+import { buildMealPlanBody } from './menus';
+
+type Kind = 'workout' | 'meal';
+interface BankExercise { id: number; library_id?: string | null }
+
+async function assignWorkout(tpl: WorkoutTemplate, clientId: number, lang: string) {
+  const ids = [...new Set(tpl.days.flatMap((d) => d.ex.map((e) => e.lib)))];
+  await api('/exercise-library/import', { method: 'POST', body: { ids, lang: lang.slice(0, 2) } });
+  const bank = await api<BankExercise[]>('/exercises/');
+  const byLib = new Map(bank.filter((e) => e.library_id).map((e) => [e.library_id as string, e.id]));
+  return api('/v2/workouts/plans/complete', {
+    method: 'POST',
+    body: {
+      client_id: clientId,
+      name: pick(tpl.name, lang),
+      description: pick(tpl.goal, lang),
+      split_type: tpl.split,
+      days_per_week: tpl.daysPerWeek,
+      duration_weeks: tpl.weeks,
+      workout_days: tpl.days.map((d, di) => ({
+        name: pick(d.name, lang),
+        order_index: di,
+        exercises: d.ex
+          .filter((e) => byLib.has(e.lib))
+          .map((e, ei) => ({ exercise_id: byLib.get(e.lib), order_index: ei, target_sets: e.sets, target_reps: e.reps, rest_seconds: e.rest })),
+      })),
+    },
+  });
+}
+
+// QA #120: menus are built only from the coach's bank (missing foods are added to it) — see ./menus.
+export { buildMealPlanBody };
+
+async function assignMeal(tpl: MealTemplate, clientId: number, lang: string) {
+  return api('/v3/meals/plans', { method: 'POST', body: { client_id: clientId, ...(await buildMealPlanBody(tpl, lang)) } });
+}
+
+/**
+ * Ready-made plans (#15): browse workout and meal templates, preview one, assign it to a client in one click.
+ * Assigning replaces the client's active plan of that kind (same behaviour as the plan builders).
+ */
+export const TemplatesSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void; initialKind?: Kind }> = ({ open, onOpenChange, initialKind = 'workout' }) => {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language || 'he';
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [kind, setKind] = useState<Kind>(initialKind);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [clientId, setClientId] = useState<number | ''>('');
+  const [busy, setBusy] = useState(false);
+  const { data: clients = [] } = useTrainerClients();
+
+  React.useEffect(() => {
+    if (open) { setKind(initialKind); setSelected(null); }
+  }, [open, initialKind]);
+
+  const workout = useMemo(() => WORKOUT_TEMPLATES.find((w) => w.id === selected) ?? null, [selected]);
+  const meal = useMemo(() => MEAL_TEMPLATES.find((m) => m.id === selected) ?? null, [selected]);
+  const current = kind === 'workout' ? workout : meal;
+  const activeClients = clients.filter((c) => c.is_active !== false);
+
+  const assign = async () => {
+    if (!current || !clientId) return;
+    setBusy(true);
+    try {
+      if (kind === 'workout' && workout) await assignWorkout(workout, clientId, lang);
+      if (kind === 'meal' && meal) await assignMeal(meal, clientId, lang);
+      const who = clients.find((c) => c.id === clientId)?.full_name ?? '';
+      toast({ title: t('tt.tpl.assigned', { plan: pick(current.name, lang), client: who }) });
+      qc.invalidateQueries({ queryKey: ['trainer'] });
+      onOpenChange(false);
+    } catch (e) {
+      toast({ title: t('common.error'), description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const levelLabel = (l: string) => t(`exerciseLibrary.level.${l}`, { defaultValue: l });
+
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={current ? pick(current.name, lang) : t('tt.tpl.title')}
+      description={current ? pick(current.goal, lang) : t(kind === 'meal' ? 'tt.tpl.leadMeal' : 'tt.tpl.leadWorkout')}
+      footer={current ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <PortalSelect
+            className="flex-1 bg-foreground/[.06]"
+            icon={UserRound}
+            label={t('tt.tpl.client')}
+            placeholder={t('tt.tpl.pickClient')}
+            value={clientId === '' ? '' : String(clientId)}
+            onChange={(v) => setClientId(v ? Number(v) : '')}
+            options={activeClients.map((c) => ({ value: String(c.id), label: c.full_name || c.username }))}
+          />
+          <button type="button" className="tp-btn tp-btn--primary tp-btn--sm tp-press" disabled={!clientId || busy} onClick={assign}>
+            {busy && <EcSpinner className="h-4 w-4" mono />}
+            {t('tt.tpl.assign')}
+          </button>
+        </div>
+      ) : undefined}
+    >
+      {!current ? (
+        <div className="space-y-4 pb-2">
+          {/* QA #67: the food bank shows only ready menus, the exercise bank only ready workouts (no switch between them). */}
+          <div className="tr-tpl-grid">
+            {kind === 'workout'
+              ? WORKOUT_TEMPLATES.map((w) => (
+                <button key={w.id} type="button" className="tp-card tr-tpl-card tr-lift text-start" onClick={() => setSelected(w.id)}>
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="tr-kpi-ico !h-9 !w-9">{w.place === 'home' ? <Home className="h-[18px] w-[18px]" /> : <Dumbbell className="h-[18px] w-[18px]" />}</span>
+                    <LevelBars level={w.level} />
+                  </span>
+                  <span className="mt-3 block font-bold leading-snug">{pick(w.name, lang)}</span>
+                  <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">{pick(w.goal, lang)}</span>
+                  <span className="mt-3 flex flex-wrap gap-1.5">
+                    <span className="tp-chip"><CalendarDays className="h-3.5 w-3.5" />{t('tt.tpl.perWeek', { count: w.daysPerWeek })}</span>
+                    <span className="tp-chip">{levelLabel(w.level)}</span>
+                  </span>
+                </button>
+              ))
+              : MEAL_TEMPLATES.map((m) => (
+                <button key={m.id} type="button" className="tp-card tr-tpl-card tr-lift text-start" onClick={() => setSelected(m.id)}>
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="tr-kpi-ico !h-9 !w-9"><Salad className="h-[18px] w-[18px]" /></span>
+                    <span className="tp-num text-lg">{m.kcal}<span className="ms-1 text-xs text-muted-foreground">{t('foodBankPro.kcal')}</span></span>
+                  </span>
+                  <span className="mt-3 block font-bold leading-snug">{pick(m.name, lang)}</span>
+                  <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">{pick(m.goal, lang)}</span>
+                  <span className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+                    {([['protein', m.p], ['carb', m.c], ['fat', m.f]] as const).map(([k, v]) => (
+                      <span key={k} className="rounded-lg bg-muted/60 px-1 py-1.5">
+                        <span className="block text-[10px] text-muted-foreground">{t(`foodBankPro.macro.${k}`)}</span>
+                        <span className="block text-sm font-semibold tabular-nums">{v}<span className="ms-0.5 text-[10px] font-normal text-muted-foreground">{t('foodBankPro.g')}</span></span>
+                      </span>
+                    ))}
+                  </span>
+                </button>
+              ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4 pb-2">
+          <button type="button" className="tr-back tp-press" onClick={() => setSelected(null)}>
+            <ArrowLeft className="h-4 w-4" />
+            {t('tt.tpl.all')}
+          </button>
+          <p className="flex items-start gap-1.5 rounded-2xl bg-foreground/[.04] p-3 text-xs text-muted-foreground">
+            {kind === 'workout' ? t('tt.tpl.workoutNote') : t('tt.tpl.mealNote')}
+            <InfoTip>{t('tt.tpl.replaceNote')}</InfoTip>
+          </p>
+          {workout && (
+            <>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="tp-chip"><CalendarDays className="h-3.5 w-3.5" />{t('tt.tpl.perWeek', { count: workout.daysPerWeek })}</span>
+                <span className="tp-chip">{t('tt.tpl.weeks', { count: workout.weeks })}</span>
+                <span className="tp-chip">{levelLabel(workout.level)}</span>
+              </div>
+              <div className="tr-tpl-days">
+                {workout.days.map((d, i) => (
+                  <section key={i} className="tp-card p-4">
+                    <h3 className="mb-2 text-sm font-bold">{pick(d.name, lang)}</h3>
+                    <ol className="space-y-1.5 text-sm">
+                      {d.ex.map((e, j) => (
+                        <li key={j} className="flex items-baseline justify-between gap-3">
+                          <span className="min-w-0 truncate" dir="ltr">{libName(e.lib)}</span>
+                          <span className="flex-none text-xs tabular-nums text-muted-foreground" dir="ltr">{e.sets} x {e.reps}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                ))}
+              </div>
+            </>
+          )}
+          {meal && (
+            <>
+              <div className="grid grid-cols-4 gap-2 text-center" dir="ltr">
+                {([['kcal', meal.kcal], ['protein', meal.p], ['carb', meal.c], ['fat', meal.f]] as const).map(([k, v]) => (
+                  <div key={String(k)} className="tr-stat !p-2.5"><p className="tp-label">{k === 'kcal' ? t('foodBankPro.kcal') : t(`foodBankPro.macro.${k}`)}</p><p className="tp-num mt-0.5 text-lg">{String(v)}{k === 'kcal' ? '' : t('foodBankPro.g')}</p></div>
+                ))}
+              </div>
+              <div className="tr-tpl-days">
+                {meal.slots.map((s, i) => (
+                  <section key={i} className="tp-card p-4">
+                    <div className="mb-2 flex items-baseline justify-between gap-2">
+                      <h3 className="text-sm font-bold">{pick(s.name, lang)}</h3>
+                      <span className="text-xs tabular-nums text-muted-foreground" dir="ltr">{s.time} · {s.kcal} {t('foodBankPro.kcal')}</span>
+                    </div>
+                    <ul className="space-y-1.5 text-sm">
+                      {s.cats.map((cat, j) => (
+                        <li key={j} className="flex items-baseline gap-2">
+                          <span className={cn('tp-chip flex-none', cat.macro === 'protein' && 'tp-chip--primary')}>{t(`foodBankPro.macro.${cat.macro}`)}</span>
+                          <span className="min-w-0 text-muted-foreground">
+                            {cat.foods.map((k) => (lang.startsWith('he') ? FOODS[k].he : FOODS[k].name)).join(' / ')}
+                            <span className="ms-1 text-xs">({pick(cat.qty, lang)})</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </Sheet>
+  );
+};
+
+export default TemplatesSheet;

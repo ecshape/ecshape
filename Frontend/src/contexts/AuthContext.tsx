@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
 import { requestNotificationPermission } from '../lib/notifications';
+import { forgetLastUser, rememberLastUser } from '../lib/avatar';
+import { useQueryClient } from '@tanstack/react-query';
+import { clearPersistedQueries } from '../lib/optimistic';
 
 export type UserRole = 'ADMIN' | 'TRAINER' | 'CLIENT';
 
@@ -13,12 +16,20 @@ export interface User {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  /** Profile photo ("/api/files/avatars/…"), null = initials. Resolve with avatarSrc() from lib/avatar. */
+  avatar_url?: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<User | null>;
+  /** Dev environment only: one-click demo trainer / client. */
+  demoLogin: (role: 'trainer' | 'client') => Promise<User | null>;
   logout: () => void;
+  /** Re-read /auth/me (after a profile change such as a new photo). */
+  refreshUser: () => Promise<void>;
+  /** Update the photo locally right away (the server already saved it). */
+  setAvatarUrl: (url: string | null) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -26,6 +37,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -106,44 +118,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        return userData;
-      } else if (response.status === 401) {
-        // Token is invalid, try to refresh
-        const refreshed = await refreshToken();
-        if (refreshed) {
-          // Retry the request with new token
-          const retryResponse = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${getToken()}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          if (retryResponse.ok) {
-            const userData = await retryResponse.json();
-            return userData;
+    // Only an invalid token (401 that cannot be refreshed, or 403) signs the user out. A network error or a 5xx (a
+    // deploy, a slow API) is retried and never deletes the token (A2A r3 N1: trainers were logged out by a stall).
+    const delays = [0, 1500, 3500, 7000];
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (delays[attempt]) await new Promise((r) => setTimeout(r, delays[attempt]));
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (response.ok) return await response.json();
+        if (response.status === 401) {
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            const retryResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+              headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+            });
+            if (retryResponse.ok) return await retryResponse.json();
           }
+          removeToken();
+          return null;
         }
-        removeToken();
-        return null;
-      } else {
-        removeToken();
-        return null;
+        if (response.status === 403) {
+          removeToken();
+          return null;
+        }
+        // 5xx / other: transient, try again
+      } catch (error) {
+        console.warn('Fetching the current user failed, retrying:', error);
       }
-    } catch (error) {
-      console.error('Error fetching current user:', error);
-      removeToken();
-      return null;
     }
+    return null;
+  };
+
+  const demoLogin = async (role: 'trainer' | 'client'): Promise<User | null> => {
+    const response = await fetch(`${API_BASE_URL}/auth/demo-login/${role}`, { method: 'POST' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    setToken(data.access_token);
+    const userData = await fetchCurrentUser();
+    if (userData) setUser(userData);
+    return userData;
   };
 
   const login = async (username: string, password: string): Promise<User | null> => {
@@ -215,9 +233,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    const token = getToken();
+    if (token) {
+      // End the session server-side as well (the token is deny-listed); fire-and-forget, sign-out never waits.
+      fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    }
     setUser(null);
     removeToken();
+    clearPersistedQueries(queryClient); // the next account never sees this one's cached screens
+    forgetLastUser();
   };
+
+  // Remember who was signed in on this device (name + photo only) for the small bubble on the public site
+  useEffect(() => {
+    if (user) rememberLastUser({ name: user.full_name, avatar_url: user.avatar_url ?? null, role: user.role });
+  }, [user]);
 
   // Check for stored token and fetch user data on mount
   useEffect(() => {
@@ -225,13 +255,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = getToken();
       if (token) {
         // Try to fetch user data - if it fails (401), token is invalid/expired
+        // fetchCurrentUser clears the token itself when it is really invalid (401 / 403)
         const userData = await fetchCurrentUser();
-        if (userData) {
-          setUser(userData);
-        } else {
-          // Token is invalid, clear it
-          removeToken();
-        }
+        if (userData) setUser(userData);
       }
       setLoading(false);
     };
@@ -256,10 +282,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(refreshInterval);
   }, [user]);
 
+  const refreshUser = async () => {
+    const userData = await fetchCurrentUser();
+    if (userData) setUser(userData);
+  };
+  const setAvatarUrl = (url: string | null) => setUser((u) => (u ? { ...u, avatar_url: url } : u));
+
   const value: AuthContextType = {
     user,
     login,
+    demoLogin,
     logout,
+    refreshUser,
+    setAvatarUrl,
     isAuthenticated: !!user,
     loading,
   };

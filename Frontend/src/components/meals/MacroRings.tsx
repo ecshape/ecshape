@@ -3,9 +3,9 @@ import React from "react";
 /** Shared macro palette for the meal menu (rings, totals underlines, progress bars). */
 export const MACRO_COLORS = {
   calories: "#4C8DFF",
-  protein: "#22C55E",
-  carbs: "#F59E0B",
-  fat: "#EC4899",
+  protein: "hsl(var(--macro-protein))",
+  carbs: "hsl(var(--macro-carbs))",
+  fat: "hsl(var(--macro-fat))",
 } as const;
 
 export type MacroKey = keyof typeof MACRO_COLORS;

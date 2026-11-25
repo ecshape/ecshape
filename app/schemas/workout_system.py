@@ -1,3 +1,4 @@
+from app.schemas.safe_types import SafeHttpUrl, SafeHttpUrlOut
 """
 Pydantic schemas for the new workout system
 """
@@ -40,7 +41,7 @@ class WorkoutExerciseBase(BaseModel):
     rest_seconds: Optional[int] = None  # Optional - trainer's choice
     tempo: Optional[str] = None
     notes: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     group_name: Optional[str] = None
     
     @field_validator('target_sets')
@@ -68,10 +69,11 @@ class WorkoutExerciseUpdate(BaseModel):
     rest_seconds: Optional[int] = Field(None, ge=0, le=600)
     tempo: Optional[str] = None
     notes: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     group_name: Optional[str] = None
 
 class WorkoutExerciseResponse(WorkoutExerciseBase):
+    video_url: SafeHttpUrlOut = None
     id: int
     workout_day_id: int
     created_at: datetime
@@ -149,6 +151,7 @@ class WorkoutPlanResponse(WorkoutPlanBase):
 # ============ Complete Workout Plan Creation (All at once) ============
 
 class CompleteWorkoutExercise(BaseModel):
+    id: Optional[int] = None  # existing workout exercise being edited (its logged sets stay attached)
     exercise_id: int
     order_index: int
     target_sets: Optional[int] = None  # Optional - trainer's choice
@@ -157,7 +160,7 @@ class CompleteWorkoutExercise(BaseModel):
     rest_seconds: Optional[int] = None  # Optional - trainer's choice
     tempo: Optional[str] = None
     notes: Optional[str] = None
-    video_url: Optional[str] = None
+    video_url: SafeHttpUrl = None
     group_name: Optional[str] = None
     
     @field_validator('target_sets')
@@ -175,12 +178,21 @@ class CompleteWorkoutExercise(BaseModel):
         return v
 
 class CompleteWorkoutDay(BaseModel):
+    id: Optional[int] = None  # existing day being edited (kept in place so its sessions survive)
     name: str
     day_type: Optional[DayType] = None  # Optional - trainer defines custom day names
     order_index: int
     notes: Optional[str] = None
     estimated_duration: Optional[int] = None
     exercises: List[CompleteWorkoutExercise]
+
+    @field_validator('day_type', mode='before')
+    @classmethod
+    def _blank_day_type(cls, v):
+        # Older payloads echo "None" / "" / custom labels back: they mean "no type" (A2A cross B2)
+        if v in (None, '', 'None', 'null'):
+            return None
+        return v if v in [e.value for e in DayType] else None
 
 class CompleteWorkoutPlanCreate(BaseModel):
     client_id: int
@@ -204,6 +216,8 @@ class SetCompletionCreate(BaseModel):
     form_rating: Optional[int] = Field(None, ge=1, le=5)
     notes: Optional[str] = None
     completed_at: Optional[datetime] = None
+    performed_exercise_name: Optional[str] = Field(None, max_length=200)
+    performed_library_id: Optional[str] = Field(None, max_length=120)
 
 class SetCompletionResponse(SetCompletionCreate):
     id: int

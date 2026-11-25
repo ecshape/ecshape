@@ -8,6 +8,7 @@ contract for the frontend redesign.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple, Dict, Any
@@ -90,8 +91,21 @@ def _scale_from_measurement_type(
     return quantity_value / 100.0 if quantity_value is not None else 1.0
 
 
+@lru_cache(maxsize=2048)
+def _plan_food_photo(name_hebrew: Optional[str], name: Optional[str]) -> Optional[str]:
+    """Photo of a plan food from the built-in food library (free-licence photos, QA #64), matched by name."""
+    try:
+        from app.services import food_library_service as library
+
+        staple = library.match_staple(name_hebrew, name)
+        return library._staple_image(staple, 330) if staple else None
+    except Exception:  # a photo is a nice-to-have: never break the day view
+        return None
+
+
 def _food_option_to_v3_food(food: FoodOption) -> V3FoodOption:
     return V3FoodOption(
+        image_url=_plan_food_photo(food.name_hebrew, food.name),
         id=food.id,
         name=food.name,
         name_hebrew=food.name_hebrew,
@@ -105,9 +119,32 @@ def _food_option_to_v3_food(food: FoodOption) -> V3FoodOption:
     )
 
 
+_GRAM_UNIT = re.compile(r"\d\s*(g|gr|gram|grams|גרם|ג׳|ג)\b", re.IGNORECASE)
+
+
+def _portions_for_grams(food: FoodOption, grams: float) -> float:
+    """A per-portion food (egg, bread slice) under a gram instruction ("120g") is not 120 portions: give the same
+    calories as the row's per-100g food (A2A r3: 9,480 kcal for "bread slice 120g"). Halves, at least half a portion."""
+    category = getattr(food, "macro_category", None)
+    sibling = None
+    if category is not None:
+        sibling = next(
+            (f for f in sorted(category.food_options, key=lambda f: f.order_index or 0)
+             if f.id != food.id and f.measurement_type != MeasurementType.PER_PORTION and (f.calories or 0) > 0),
+            None,
+        )
+    if sibling is None or not (food.calories or 0):
+        return 1.0
+    target_kcal = (sibling.calories or 0) * grams / 100.0
+    return max(0.5, round(target_kcal / float(food.calories) * 2) / 2)
+
+
 def _compute_plan_food_macros(food: FoodOption, choice_quantity: Optional[str]) -> Tuple[float, float, float, float]:
     quantity_value = _parse_quantity_value(choice_quantity)
-    scale = _scale_from_measurement_type(food.measurement_type, quantity_value)
+    if food.measurement_type == MeasurementType.PER_PORTION and choice_quantity and _GRAM_UNIT.search(choice_quantity):
+        scale = _portions_for_grams(food, quantity_value)
+    else:
+        scale = _scale_from_measurement_type(food.measurement_type, quantity_value)
 
     calories = float((food.calories or 0) * scale)
     protein = float((food.protein or 0) * scale)

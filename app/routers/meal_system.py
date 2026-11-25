@@ -44,6 +44,37 @@ from app.schemas.meal_system import (
 from app.models.user import User
 from app.services.trainer_notification_helper import notify_trainer_immediate
 from app.services.websocket_service import websocket_service
+from app.auth.access import (
+    require_trainer_of, require_plan_access, require_client_access, can_access_client, visible_client_ids,
+    is_admin, is_client, is_trainer, not_found,
+)
+
+
+# ---- tenant guards (audit 2026-11, F-04)
+def _plan_of_macro(db, user, macro_id, write=True):
+    mc = db.query(MacroCategory).filter(MacroCategory.id == macro_id).first()
+    slot = db.query(MealSlot).filter(MealSlot.id == mc.meal_slot_id).first() if mc else None
+    plan = db.query(NewMealPlan).filter(NewMealPlan.id == slot.meal_plan_id).first() if slot else None
+    if not plan:
+        raise not_found("Macro category not found")
+    require_plan_access(db, user, plan.trainer_id, plan.client_id, write=write, detail="Macro category not found")
+    return plan
+
+
+def _food_option_guard(db, user, food_id, write=True):
+    fo = db.query(FoodOption).filter(FoodOption.id == food_id).first()
+    if not fo:
+        raise not_found("Food option not found")
+    _plan_of_macro(db, user, fo.macro_category_id, write)
+    return fo
+
+
+def _bank_visible(query, user):
+    """Meal bank rows a caller may see: their own + public ones (admins: all)."""
+    if is_admin(user):
+        return query
+    return query.filter((MealBank.created_by == user.id) | (MealBank.is_public == True))
+
 from app.models.meal_system import (
     MealPlanV2 as NewMealPlan,
     MealSlot,
@@ -73,6 +104,7 @@ def create_meal_plan(
     db: Session = Depends(get_db)
 ):
     """Create a new meal plan (trainer only)"""
+    require_trainer_of(db, current_user, plan_data.client_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -143,6 +175,7 @@ def create_complete_meal_plan(
     db: Session = Depends(get_db)
 ):
     """Create a complete meal plan with all meals and food options at once (trainer only)"""
+    require_trainer_of(db, current_user, plan_data.client_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -385,6 +418,7 @@ def add_food_option(
     db: Session = Depends(get_db)
 ):
     """Add a food option to a macro category (trainer only)"""
+    _plan_of_macro(db, current_user, macro_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can add food options")
     
@@ -417,6 +451,7 @@ def update_food_option(
     db: Session = Depends(get_db)
 ):
     """Update a food option (trainer only)"""
+    _food_option_guard(db, current_user, food_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can update food options")
     
@@ -440,6 +475,7 @@ def delete_food_option(
     db: Session = Depends(get_db)
 ):
     """Delete a food option (trainer only)"""
+    _food_option_guard(db, current_user, food_id)
     if current_user.role != UserRole.TRAINER and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only trainers can delete food options")
     
@@ -500,16 +536,18 @@ def get_meal_choices(
     db: Session = Depends(get_db)
 ):
     """Get meal choices (trainers see their clients, clients see their own)"""
+    if client_id is not None and not is_client(current_user):
+        require_client_access(db, current_user, client_id)
     from datetime import datetime, timedelta, timezone
 
     query = db.query(ClientMealChoice)
     
     if current_user.role == "CLIENT":
         query = query.filter(ClientMealChoice.client_id == current_user.id)
-    elif current_user.role == UserRole.TRAINER and client_id:
-        query = query.filter(ClientMealChoice.client_id == client_id)
     elif client_id:
         query = query.filter(ClientMealChoice.client_id == client_id)
+    elif not is_admin(current_user):
+        query = query.filter(ClientMealChoice.client_id.in_(list(visible_client_ids(db, current_user))))
     
     if date:
         try:
@@ -543,6 +581,8 @@ def update_meal_choice(
     # Clients can only update their own choices
     if current_user.role == UserRole.CLIENT and choice.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if not can_access_client(db, current_user, choice.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     
     for field, value in choice_data.dict(exclude_unset=True).items():
         setattr(choice, field, value)
@@ -566,6 +606,8 @@ def delete_meal_choice(
     
     if current_user.role == UserRole.CLIENT and choice.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if not can_access_client(db, current_user, choice.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     
     db.delete(choice)
     db.commit()
@@ -580,6 +622,8 @@ def get_daily_macros(
     db: Session = Depends(get_db)
 ):
     """Calculate daily macro consumption for a client on a specific date"""
+    if client_id is not None:
+        require_client_access(db, current_user, client_id)
     from datetime import datetime, timedelta, timezone
     
     # Determine which client to query
@@ -716,6 +760,8 @@ def save_daily_meal_history(
     db: Session = Depends(get_db)
 ):
     """Save or update daily meal history"""
+    if history_data.client_id and not is_client(current_user):
+        require_client_access(db, current_user, history_data.client_id)
     from datetime import datetime
     
     # Ensure clients can only save their own history
@@ -771,13 +817,38 @@ def get_meal_history(
     # Permission check
     if current_user.role == UserRole.CLIENT and target_client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if current_user.role == UserRole.TRAINER and target_client_id != current_user.id:
+        from app.models.user import User as _User
+        if not db.query(_User).filter(_User.id == target_client_id, _User.trainer_id == current_user.id).first():
+            raise HTTPException(status_code=403, detail="Not authorized")
     
     history_entries = db.query(DailyMealHistory).filter(
         DailyMealHistory.client_id == target_client_id
     ).order_by(DailyMealHistory.date.desc()).all()
     
-    from datetime import timedelta
+    from datetime import timedelta, datetime as _dt
+    from types import SimpleNamespace
     import re
+
+    # The app logs meals as choices / completions (v3) and never fills DailyMealHistory: build those days too, so the
+    # trainer's Nutrition history is not empty (A2A cross M3). Totals are summed from the logged foods below.
+    known_days = {e.date.date() for e in history_entries}
+    since = _dt.utcnow() - timedelta(days=60)
+    logged_days = {
+        d.date() for (d,) in db.query(ClientMealChoice.date).filter(
+            ClientMealChoice.client_id == target_client_id, ClientMealChoice.date >= since).all() if d
+    } | {
+        d.date() for (d,) in db.query(MealCompletionStatus.date).filter(
+            MealCompletionStatus.client_id == target_client_id, MealCompletionStatus.date >= since,
+            MealCompletionStatus.is_completed == True).all() if d  # noqa: E712
+    }
+    for day in sorted(logged_days - known_days, reverse=True):
+        start = _dt(day.year, day.month, day.day)
+        history_entries.append(SimpleNamespace(
+            id=-int(start.strftime("%Y%m%d")), client_id=target_client_id, date=start, total_calories=None,
+            total_protein=None, total_carbs=None, total_fat=None, is_complete=False, created_at=start, updated_at=None,
+        ))
+    history_entries.sort(key=lambda e: e.date, reverse=True)
 
     detailed_history: List[Dict[str, Any]] = []
 
@@ -895,8 +966,14 @@ def get_meal_history(
                 
                 # Calculate scale based on measurement type
                 if food_option.measurement_type == MeasurementType.PER_PORTION:
-                    # For per_portion: multiply by number of portions
-                    scale = quantity_value
+                    # For per_portion: multiply by number of portions. A gram amount ("120g" of a bread slice) is not a
+                    # portion count: convert with the portion's grams when known, else count one portion (A2A r3 N4)
+                    q = (choice.quantity or "").lower()
+                    if re.search(r"\d\s*(g|gr|gram|grams|גרם|ג)\b", q):
+                        portion_g = parse_quantity(food_option.serving_size) if food_option.serving_size and re.search(r"\d\s*(g|gr|gram|grams|גרם)", food_option.serving_size.lower()) else None
+                        scale = quantity_value / portion_g if portion_g else 1
+                    else:
+                        scale = quantity_value
                 else:
                     # For per_100g: scale based on grams (default per 100g)
                     scale = quantity_value / 100 if quantity_value else 1
@@ -947,15 +1024,25 @@ def get_meal_history(
         for meal in meals_list:
             meal.pop("order_index", None)
 
+        def _sum(key: str) -> float:
+            return round(sum((c.get(key) or 0) for m in meals_list for c in m["choices"]), 1)
+
+        synthetic = entry.total_calories is None
+        if synthetic and not meals_list and completion_map:
+            # completed meals without logged foods: show the completed slots
+            for sid, done in completion_map.items():
+                slot = db.query(MealSlot).filter(MealSlot.id == sid).first()
+                if slot and done:
+                    meals_list.append({"meal_slot_id": slot.id, "meal_name": slot.name, "time_suggestion": slot.time_suggestion, "choices": [], "is_completed": True})
         detailed_history.append(
             {
                 "id": entry.id,
                 "client_id": entry.client_id,
                 "date": entry.date,
-                "total_calories": entry.total_calories,
-                "total_protein": entry.total_protein,
-                "total_carbs": entry.total_carbs,
-                "total_fat": entry.total_fat,
+                "total_calories": _sum("calories") if synthetic else entry.total_calories,
+                "total_protein": _sum("protein") if synthetic else entry.total_protein,
+                "total_carbs": _sum("carbs") if synthetic else entry.total_carbs,
+                "total_fat": _sum("fat") if synthetic else entry.total_fat,
                 "is_complete": entry.is_complete,
                 "created_at": entry.created_at,
                 "updated_at": entry.updated_at,
@@ -973,6 +1060,8 @@ def get_average_calories(
     db: Session = Depends(get_db)
 ):
     """Calculate average calories per day over specified period"""
+    if client_id is not None:
+        require_client_access(db, current_user, client_id)
     from datetime import datetime, timedelta
     from sqlalchemy import func
     
@@ -986,12 +1075,14 @@ def get_average_calories(
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
     
-    # Get daily histories in date range
-    histories = db.query(DailyMealHistory).filter(
-        DailyMealHistory.client_id == target_client_id,
-        DailyMealHistory.date >= start_date,
-        DailyMealHistory.date <= end_date
-    ).all()
+    # Same days as the history list (stored summaries + days built from the app's meal logs, A2A cross M3);
+    # get_meal_history also checks that a trainer only reads their own clients.
+    from types import SimpleNamespace
+    histories = [
+        SimpleNamespace(date=h["date"], total_calories=h["total_calories"] or 0, is_complete=h["is_complete"])
+        for h in get_meal_history(client_id=target_client_id, current_user=current_user, db=db)
+        if start_date <= h["date"] <= end_date and (h["total_calories"] or 0) > 0
+    ]
     
     if not histories:
         return {
@@ -1162,6 +1253,45 @@ def upsert_meal_completion(
 
 # ============ Meal Bank Endpoints ============
 
+_MEAL_BANK_LIBRARY_KEYS = (
+    "image_url", "image_credit", "source", "source_id", "brand",
+    "fiber", "tags", "nutriscore", "nova_group", "food_group",
+)
+
+
+def _meal_bank_library_fields(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert optional food-library fields from the API shape to DB columns.
+
+    Only keys present in ``data`` are returned, so partial updates stay partial.
+    """
+    import json as _json
+    import re as _re
+
+    out: Dict[str, Any] = {}
+    for key in _MEAL_BANK_LIBRARY_KEYS:
+        if key not in data:
+            continue
+        value = data[key]
+        if key == "tags":
+            value = _json.dumps([str(t) for t in value][:30]) if value else None
+        elif key == "image_credit":
+            from app.services.food_library_service import credit_string
+            value = credit_string(value)
+        elif key == "image_url":
+            value = value.strip() if isinstance(value, str) else None
+            # https URLs, or a photo uploaded through POST /api/files/food-photo (served by this API).
+            uploaded = bool(value) and _re.fullmatch(r"/files/media/food_photos/food_\d+_[0-9a-f]{32}\.(jpg|png|webp|gif)", value) is not None
+            if value and not value.startswith("https://") and not uploaded:
+                raise HTTPException(status_code=400, detail="image_url must be an https URL")
+            value = value or None
+        elif key == "nutriscore":
+            value = value.lower()[:1] if value and value.lower()[:1] in "abcde" else None
+        elif key == "nova_group":
+            value = value if value in (1, 2, 3, 4) else None
+        out[key] = value
+    return out
+
+
 @router.post("/meal-bank", response_model=MealBankResponse, status_code=status.HTTP_201_CREATED)
 def create_meal_bank_item(
     item_data: MealBankCreate,
@@ -1196,7 +1326,8 @@ def create_meal_bank_item(
         measurement_type=item_data.measurement_type if hasattr(item_data, 'measurement_type') and item_data.measurement_type else MeasurementType.PER_100G,
         serving_size=item_data.serving_size if hasattr(item_data, 'serving_size') else None,
         created_by=current_user.id,
-        is_public=item_data.is_public
+        is_public=False,  # QA #119: a coach's foods are never shared with other coaches
+        **_meal_bank_library_fields(item_data.model_dump(exclude_unset=True)),
     )
     
     db.add(meal_bank_item)
@@ -1219,10 +1350,15 @@ def get_meal_bank_items(
         query = db.query(MealBank)
         
         if current_user.role == UserRole.TRAINER or current_user.role == UserRole.ADMIN:
-            # Trainers and admins see all items
+            # The coach's own bank (the ECShape table is copied into it once) plus foods shared as public.
+            # Not every coach's private rows: each coach has his own copy of the table.
+            if current_user.role == UserRole.TRAINER:
+                from app.services.ecshape_table import ensure_for_trainer
+                ensure_for_trainer(db, current_user.id)
             if not include_public:
-                # If include_public is False, only show items created by current user
                 query = query.filter(MealBank.created_by == current_user.id)
+            else:
+                query = query.filter((MealBank.created_by == current_user.id) | (MealBank.is_public == True))  # noqa: E712
         else:
             # Clients only see public items
             query = query.filter(MealBank.is_public == True)
@@ -1299,6 +1435,7 @@ def update_meal_bank_item(
     
     # Update fields
     update_data = item_data.dict(exclude_unset=True)
+    update_data.pop("is_public", None)  # QA #119: sharing with other coaches is gone
 
     if "name" in update_data or "name_hebrew" in update_data:
         english_name = update_data.get("name", meal_bank_item.name or "")
@@ -1319,6 +1456,11 @@ def update_meal_bank_item(
         # Remove processed fields so they are not set again
         update_data.pop("name", None)
         update_data.pop("name_hebrew", None)
+
+    library_fields = _meal_bank_library_fields(update_data)
+    for key in _MEAL_BANK_LIBRARY_KEYS:
+        update_data.pop(key, None)
+    update_data.update(library_fields)
 
     for field, value in update_data.items():
         setattr(meal_bank_item, field, value)
@@ -1377,8 +1519,8 @@ def cleanup_duplicate_meal_bank_items(
             text = re.sub(r'\s+', ' ', text.strip().lower())
             return text
         
-        # Get all meal bank items
-        all_items = db.query(MealBank).all()
+        # A trainer de-duplicates their own items only (audit 2026-11, F-06: was deleting every trainer's rows)
+        all_items = db.query(MealBank).all() if is_admin(current_user) else db.query(MealBank).filter(MealBank.created_by == current_user.id).all()
         
         # Group items by normalized name
         seen = {}
@@ -1460,7 +1602,7 @@ def export_meal_bank_excel(
         from openpyxl.styles import Font, PatternFill, Alignment
         
         # Get all meal bank items (including public ones)
-        meal_bank_items = db.query(MealBank).order_by(MealBank.macro_type, MealBank.name).all()
+        meal_bank_items = _bank_visible(db.query(MealBank), current_user).order_by(MealBank.macro_type, MealBank.name).all()
         
         # Create workbook
         wb = Workbook()
@@ -2075,3 +2217,9 @@ async def import_meal_plan_excel(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to import meal plan: {str(e)}"
         )
+
+
+# ============ Food Library (Open Food Facts + staples) ============
+from app.routers.food_library import router as food_library_router  # noqa: E402
+
+router.include_router(food_library_router)

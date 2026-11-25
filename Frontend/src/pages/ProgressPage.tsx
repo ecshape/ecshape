@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import ProgressTrackingV2 from '../components/ProgressTrackingV2';
+import ProgressScreen from '@/features/trainee/ProgressScreen';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProgressPage = () => {
@@ -27,7 +27,7 @@ const ProgressPage = () => {
 
   return (
     <Layout currentPage="progress">
-      <ProgressTrackingV2 />
+      <ProgressScreen />
     </Layout>
   );
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, Clock, TrendingUp, Activity, Moon, Heart } from 'lucide-react';
@@ -32,7 +33,7 @@ export const ClientCheckInSummary: React.FC<ClientCheckInSummaryProps> = ({
     return (
       <Card className="bg-gradient-to-br from-card to-secondary border-border/50">
         <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">{t('common.loading')}</div>
+          <div className="flex justify-center py-2"><EcSpinner className="h-8 w-8" label={t('common.loading')} /></div>
         </CardContent>
       </Card>
     );

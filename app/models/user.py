@@ -18,6 +18,12 @@ class User(Base):
     created_at = Column(DateTime, default=func.now())  # SQLite compatible
     updated_at = Column(DateTime, onupdate=func.now())  # SQLite compatible
     last_login = Column(DateTime, nullable=True)  # Track last login time
+    # Profile photo (Settings / trainee profile). avatar_path = file on disk, avatar_url = public URL served by /api/files/avatars
+    avatar_url = Column(String, nullable=True)
+    avatar_path = Column(String, nullable=True)
+    # Session epoch: every JWT carries it as `tv`. Bumped on password change / reset, deactivation and role change,
+    # which invalidates every token issued before (auth audit 2026-11, H3).
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")
 
     # Trainer-Client relationship
     trainer_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
@@ -56,3 +62,11 @@ class ClientProfile(Base):
     phone = Column(String)
     address = Column(String)
     emergency_contact = Column(String) 
+
+class RevokedToken(Base):
+    """Access tokens ended by an explicit sign-out (jti denylist). Rows are useless after `expires_at`."""
+    __tablename__ = "revoked_tokens"
+
+    jti = Column(String(64), primary_key=True)
+    user_id = Column(Integer, index=True, nullable=True)
+    expires_at = Column(DateTime, index=True, nullable=False)

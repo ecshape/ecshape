@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useNavigate } from 'react-router-dom';
 import {
   BadgeHelp,
@@ -7,7 +8,6 @@ import {
   Clock,
   Dumbbell,
   History,
-  Loader2,
   MoreHorizontal,
   PlayCircle,
   PlusCircle,
@@ -36,7 +36,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
+import { cn, isRtlLang } from '@/lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 
 import { API_BASE_URL } from '../config/api';
@@ -279,7 +279,7 @@ const TrainingPlanV2: React.FC = () => {
     return (
       <div className="pb-20 lg:pb-8">
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-3 px-4 py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <EcSpinner className="h-8 w-8" />
           <p className="text-sm text-muted-foreground">
             {t('training.loadingPlan', 'טוען את תוכנית האימון...')}
           </p>
@@ -293,7 +293,7 @@ const TrainingPlanV2: React.FC = () => {
       <div className="pb-20 lg:pb-8">
         <div className="bg-gradient-to-br from-card to-secondary px-4 lg:px-6 py-6 lg:py-8">
           <div className="max-w-6xl mx-auto">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gradient">{t('training.myWorkouts')}</h1>
+            <h1 className="ec-page-title text-gradient">{t('training.myWorkouts')}</h1>
             <p className="text-muted-foreground mt-1">
               {t('training.defaultPlanDescription', 'התוכנית האישית שלך לאימונים')}
             </p>
@@ -362,16 +362,16 @@ const TrainingPlanV2: React.FC = () => {
                 <Card
                   key={day.id}
                   className={cn(
-                    'border rounded-lg cursor-pointer transition-all hover:shadow-lg hover:scale-[1.01]',
+                    'border rounded-lg cursor-pointer transition-all hover:shadow-lg',
                     isCompleted && 'border-green-500/30 bg-green-500/5',
                     !isCompleted && 'border-border/60 hover:border-primary/30'
                   )}
                   onClick={() => navigate(`/training/day/${day.id}`)}
                 >
-                  <CardContent className="px-6 py-4" dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+                  <CardContent className="px-6 py-4" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
                     <div className="flex items-center justify-between w-full gap-4">
                       <div className="flex items-start space-x-3 flex-1 min-w-0">
-                        <div className="flex-1 min-w-0 space-y-1" dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+                        <div className="flex-1 min-w-0 space-y-1" dir={isRtlLang(i18n.language) ? 'rtl' : 'ltr'}>
                           {/* Training Name - RTL for Hebrew, centered */}
                           <p className="font-semibold text-lg text-center">
                             {workoutPlan.name}
@@ -737,7 +737,7 @@ const ExerciseHistoryDialog: React.FC<{ exerciseId: number }> = ({ exerciseId })
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <EcSpinner className="h-6 w-6" />
       </div>
     );
   }

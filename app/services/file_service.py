@@ -149,8 +149,15 @@ class FileService:
         if not is_valid:
             raise HTTPException(status_code=400, detail=error_message)
         
-        # Generate unique filename
-        original_extension = Path(file.filename).suffix if file.filename else ".jpg"
+        # Generate unique filename. The extension comes from the detected type, never from the uploader's file name:
+        # a JPEG/HTML polyglot named x.html was stored as .html and served as text/html (audit 2026-11, F-09)
+        await file.seek(0)
+        _head = await file.read(4096)
+        await file.seek(0)
+        _mime = magic.from_buffer(_head, mime=True)
+        original_extension = {**self.ALLOWED_IMAGE_TYPES, **self.ALLOWED_DOCUMENT_TYPES}.get(_mime)
+        if not original_extension:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
         unique_id = str(uuid.uuid4())
         filename = f"{category}_{entity_id}_{unique_id}{original_extension}"
         

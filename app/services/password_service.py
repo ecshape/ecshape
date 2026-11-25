@@ -1,162 +1,147 @@
-from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-from jose import jwt
-from app.models.user import User
-from app.auth.utils import get_password_hash, verify_password
-import secrets
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+"""Password change, trainer/admin reset and the emailed forgot-password flow.
+
+Forgot-password tokens (auth audit 2026-11, C5):
+- signed with a key derived from JWT_SECRET (no repo default), HS256 pinned, 30 min expiry;
+- bound to the user id and a fingerprint of the current password hash, so a token works once (the reset changes
+  the hash) and dies as soon as the password changes any other way;
+- the link base comes from PUBLIC_APP_URL, never from the request's Host header (no link poisoning);
+- the token travels in the URL fragment (#token=...), which browsers never send to servers or in Referer.
+"""
+import hashlib
+import logging
 import os
+import smtplib
+from datetime import datetime, timedelta, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Optional
 
-# Environment variables for email configuration
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+
+from app.auth import password_policy
+from app.auth.config import derived_key
+from app.auth.utils import bump_token_version, get_password_hash, verify_password
+from app.models.user import User
+
+logger = logging.getLogger(__name__)
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USERNAME = os.getenv("EMAIL_USERNAME", "your-email@gmail.com")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your-app-specific-password")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "your-email@gmail.com")
+EMAIL_USERNAME = os.getenv("EMAIL_USERNAME", "")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "")
 
-# Secret key for reset tokens
-RESET_TOKEN_SECRET = os.getenv("RESET_TOKEN_SECRET", "your-reset-token-secret-key")
 RESET_TOKEN_EXPIRE_MINUTES = 30
+_RESET_TYP = "password_reset"
+_INVALID = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset link")
 
-async def send_password_reset_email(email: str, reset_token: str, base_url: str) -> bool:
-    """Send password reset email to user."""
-    reset_url = f"{base_url}/reset-password?token={reset_token}"
-    
-    message = MIMEMultipart("alternative")
-    message["Subject"] = "Password Reset Request"
-    message["From"] = EMAIL_FROM
-    message["To"] = email
 
-    text = f"""
-    Hello,
+def _reset_key() -> str:
+    return derived_key("password-reset").hex()
 
-    You have requested to reset your password. Please click the link below to reset your password:
-    {reset_url}
 
-    This link will expire in {RESET_TOKEN_EXPIRE_MINUTES} minutes.
+def _pw_fingerprint(user: User) -> str:
+    return hashlib.sha256((user.hashed_password or "").encode()).hexdigest()[:24]
 
-    If you did not request this reset, please ignore this email.
 
-    Best regards,
-    Your App Team
-    """
+def create_password_reset_token(user: User) -> str:
+    now = datetime.now(timezone.utc)
+    return jwt.encode({
+        "sub": str(user.id),
+        "typ": _RESET_TYP,
+        "pwf": _pw_fingerprint(user),
+        "iat": now,
+        "exp": now + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+    }, _reset_key(), algorithm="HS256")
 
-    html = f"""
-    <html>
-        <body>
-            <p>Hello,</p>
-            <p>You have requested to reset your password. Please click the link below to reset your password:</p>
-            <p><a href="{reset_url}">Reset Password</a></p>
-            <p>This link will expire in {RESET_TOKEN_EXPIRE_MINUTES} minutes.</p>
-            <p>If you did not request this reset, please ignore this email.</p>
-            <p>Best regards,<br>Your App Team</p>
-        </body>
-    </html>
-    """
 
-    message.attach(MIMEText(text, "plain"))
-    message.attach(MIMEText(html, "html"))
-
+def _user_for_reset_token(db: Session, token: str) -> User:
+    if not token or len(token) > 2048:
+        raise _INVALID
     try:
-        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+        payload = jwt.decode(token, _reset_key(), algorithms=["HS256"], options={"require_exp": True, "require_sub": True})
+    except JWTError:
+        raise _INVALID
+    if payload.get("typ") != _RESET_TYP or not str(payload.get("sub", "")).isdigit():
+        raise _INVALID
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user or not user.is_active or payload.get("pwf") != _pw_fingerprint(user):
+        raise _INVALID
+    return user
+
+
+def _app_url() -> Optional[str]:
+    url = (os.getenv("PUBLIC_APP_URL") or "").strip().rstrip("/")
+    return url if url.startswith("https://") or url.startswith("http://localhost") else None
+
+
+def send_password_reset_email(email: str, reset_token: str) -> bool:
+    """Runs in a background task. Never logs the token, the link or SMTP credentials."""
+    base = _app_url()
+    if not (base and EMAIL_HOST and EMAIL_USERNAME and EMAIL_PASSWORD):
+        logger.warning("Password reset requested but PUBLIC_APP_URL / EMAIL_* are not configured; no email sent")
+        return False
+    reset_url = f"{base}/reset-password#token={reset_token}"
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Password reset"
+    message["From"] = EMAIL_FROM or EMAIL_USERNAME
+    message["To"] = email
+    text = (f"Someone asked to reset the password of your ECShape account.\n\nOpen this link within "
+            f"{RESET_TOKEN_EXPIRE_MINUTES} minutes to choose a new one:\n{reset_url}\n\n"
+            "If it wasn't you, ignore this email: your password stays the same.")
+    message.attach(MIMEText(text, "plain"))
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT, timeout=15) as server:
             server.starttls()
             server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
             server.send_message(message)
         return True
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error("Password reset email failed: %s", type(e).__name__)
         return False
 
-async def create_password_reset_token(email: str) -> str:
-    """Create a password reset token."""
-    expire = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
-    data = {
-        "sub": email,
-        "exp": expire,
-        "type": "password_reset"
-    }
-    return jwt.encode(data, RESET_TOKEN_SECRET, algorithm="HS256")
 
-async def verify_reset_token(token: str) -> str:
-    """Verify the reset token and return the email."""
-    try:
-        payload = jwt.decode(token, RESET_TOKEN_SECRET, algorithms=["HS256"])
-        if payload.get("type") != "password_reset":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid reset token"
-            )
-        return payload.get("sub")
-    except jwt.JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
-        )
+def prepare_password_reset(db: Session, email: str) -> Optional[tuple]:
+    """(email, token) to send, or None when there's no such active account. The endpoint answers the same either way."""
+    user = db.query(User).filter(User.email == (email or "").strip()).first()
+    if not user or not user.is_active:
+        return None
+    return user.email, create_password_reset_token(user)
 
-async def request_password_reset(db: Session, email: str, base_url: str) -> bool:
-    """Handle password reset request."""
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        # Return True to prevent email enumeration
-        return True
-    
-    reset_token = await create_password_reset_token(email)
-    return await send_password_reset_email(email, reset_token, base_url)
 
-async def reset_password(db: Session, token: str, new_password: str) -> bool:
-    """Reset user's password using the reset token."""
-    email = await verify_reset_token(token)
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
+def reset_password(db: Session, token: str, new_password: str) -> bool:
+    user = _user_for_reset_token(db, token)
+    password_policy.enforce(new_password, username=user.username, email=user.email)
     user.hashed_password = get_password_hash(new_password)
+    bump_token_version(db, user)
     db.commit()
     return True
 
-async def change_password(
-    db: Session,
-    user_id: int,
-    current_password: str,
-    new_password: str
-) -> bool:
-    """Change user's password."""
+
+def change_password(db: Session, user_id: int, current_password: str, new_password: str) -> User:
+    """Returns the user (with its new session epoch) so the caller can hand back a fresh token."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     if not verify_password(current_password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect password"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
+    password_policy.enforce(new_password, username=user.username, email=user.email)
     user.hashed_password = get_password_hash(new_password)
+    bump_token_version(db, user)
     db.commit()
-    return True
+    db.refresh(user)
+    return user
 
-async def reset_user_password(
-    db: Session,
-    user_id: int,
-    new_password: str
-) -> bool:
-    """Reset user's password (for trainers/admins, no current password required)."""
+
+def reset_user_password(db: Session, user_id: int, new_password: str) -> bool:
+    """Trainer / admin sets a password (no current password). Signs the user out everywhere."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    password_policy.enforce(new_password, username=user.username, email=user.email)
     user.hashed_password = get_password_hash(new_password)
+    bump_token_version(db, user)
     db.commit()
-    return True 
+    return True

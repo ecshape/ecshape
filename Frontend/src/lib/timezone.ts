@@ -3,6 +3,14 @@
  * All timestamps from the server are in UTC and are converted to the user's local timezone
  */
 
+import i18n from '@/i18n/config';
+
+/** Locale matching the interface language (he / en / fr), so dates read in the language on screen. */
+export const uiLocale = (): string => {
+  const l = (i18n.language || 'he').slice(0, 2);
+  return l === 'en' ? 'en-GB' : l === 'fr' ? 'fr-FR' : 'he-IL';
+};
+
 /**
  * Get the user's local timezone (browser timezone)
  * @returns Timezone string (e.g., 'Asia/Jerusalem', 'Europe/Paris', 'America/New_York')
@@ -15,7 +23,7 @@ export const getUserTimezone = (): string => {
  * Format date in user's local timezone
  * @param date - Date string (UTC) or Date object
  * @param options - Intl.DateTimeFormatOptions
- * @param locale - Locale string (default: 'he-IL' for Hebrew)
+ * @param locale - Locale string (default: the interface language)
  * @returns Formatted date string in user's local timezone
  */
 export const formatLocalTime = (
@@ -24,7 +32,7 @@ export const formatLocalTime = (
     hour: '2-digit',
     minute: '2-digit'
   },
-  locale: string = 'he-IL'
+  locale: string = uiLocale()
 ): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   // Date object automatically handles UTC to local timezone conversion

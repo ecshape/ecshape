@@ -160,7 +160,7 @@ except Exception as e:
 
 try:
     logger.info("Importing router modules...")
-    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook
+    from app.routers import auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications, meal_system, meal_tracking_v3, meal_tracking_v3_mock, meal_variants_v3, meal_logging_tools, translate, workout_system, muscle_groups, workout_splits, chat, check_in, instagram_webhook, studio
     logger.info("✅ Router modules imported successfully")
     logger.info("📋 Available routers: auth, users, exercises, workouts, nutrition, progress, files, websocket, meal_plans, system, notifications")
 except Exception as e:
@@ -175,6 +175,8 @@ except Exception as e:
 try:
     logger.info("Importing model modules...")
     from app.models import user as user_models, workout as workout_models, nutrition as nutrition_models, progress as progress_models, progress_photo as progress_photo_models
+    from app.models import automation as automation_models  # coach automations + task inbox
+    from app.models import coach_menu as coach_menu_models  # QA #121: coach's ready-made menus
     logger.info("✅ Model modules imported successfully")
     logger.info("📋 Available models: user, workout, nutrition, progress, progress_photo, notification")
 except Exception as e:
@@ -228,6 +230,15 @@ async def lifespan(app: FastAPI):
         logger.info("Running user last_login migration...")
         run_user_last_login_migration()
         logger.info("✅ User last_login migration completed")
+
+        from app.migrations.user_avatar_migration import run_user_avatar_migration
+        run_user_avatar_migration()
+
+        from app.migrations.user_token_version_migration import run_user_token_version_migration
+        run_user_token_version_migration()
+
+        from app.migrations.chat_payload_migration import run_chat_payload_migration
+        run_chat_payload_migration()
         
         logger.info("Running progress measurements migration...")
         run_progress_measurements_migration()
@@ -272,10 +283,66 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️ Continuing startup despite migration errors...")
         logger.warning("⚠️ Some schema changes may not be applied. Check logs for details.")
     
+    from app.routers.exercise_library import ensure_library_column
+    ensure_library_column(engine)
+
+    # The ECShape nutrition table is every coach's default food bank (copied once per coach, in the background)
+    def _ecshape_table() -> None:
+        try:
+            from app.database import SessionLocal
+            from app.services.ecshape_table import ensure_all_trainers
+            _db = SessionLocal()
+            try:
+                ensure_all_trainers(_db)
+            finally:
+                _db.close()
+        except Exception as e:  # never block startup
+            logger.warning(f"ECShape table copy skipped: {e}")
+        # QA #64: bank foods get the new, better staple photos (only where there was none or an old Commons pick).
+        # In the background too: with 1,300+ table foods per coach it takes seconds.
+        try:
+            from app.database import SessionLocal
+            from app.services.food_library_service import refresh_bank_photos
+            _db = SessionLocal()
+            try:
+                n = refresh_bank_photos(_db)
+                if n:
+                    logger.info(f"🖼️ Updated photos of {n} food bank items")
+            finally:
+                _db.close()
+        except Exception as e:
+            logger.warning(f"Food bank photo refresh skipped: {e}")
+    import threading as _threading
+    _threading.Thread(target=_ecshape_table, name="ecshape-table", daemon=True).start()
+    # QA #140: translate the exercise library to Hebrew + French once, into the DB (background, idempotent)
+    try:
+        from app.database import SessionLocal as _SL
+        from app.services.library_i18n import start_background as _lib_i18n
+        _lib_i18n(_SL)
+    except Exception as e:
+        logger.warning(f"Library translation warm-up skipped: {e}")
+
+    # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
+    from app.dev_seed import run_if_enabled as run_dev_seed
+    run_dev_seed(engine)
+
+    # QA #51: fetch the keyless meal-photo model in the background (first photo then answers at once)
+    try:
+        from app.services import food_photo_local
+        if food_photo_local.available():
+            food_photo_local.warm_up_in_background()
+    except Exception as e:  # never block startup
+        logger.warning(f"Meal photo model warm-up skipped: {e}")
+
     # Log database pool statistics
     pool_stats = get_db_pool_stats()
     logger.info(f"📊 Database pool initialized: {pool_stats}")
     
+    # Coach automations: one light loop every 15 min (AUTOMATIONS_ENABLED=0 turns it off)
+    import asyncio as _asyncio
+    from app.services.automation_engine import automation_loop
+    _automation_task = _asyncio.create_task(automation_loop())
+
     # REMOVED: Notification scheduler for minimal resource usage
     # logger.info("Starting notification scheduler...")
     # try:
@@ -290,7 +357,8 @@ async def lifespan(app: FastAPI):
     logger.info("✅ APPLICATION STARTUP COMPLETED SUCCESSFULLY")
     logger.info("=" * 40)
     yield
-    
+    _automation_task.cancel()
+
     # Shutdown
     logger.info("=" * 40)
     logger.info("APPLICATION SHUTDOWN INITIATED")
@@ -363,30 +431,17 @@ async def performance_monitoring_middleware(request: Request, call_next):
 
 # Custom CORS middleware for wildcard domains
 def is_allowed_origin(origin: str) -> bool:
-    if not origin:
+    """Credentialed CORS allow-list (auth audit M4). Exact CORS_ORIGINS, plus https on our own domains.
+    Shared-hosting wildcards (*.up.railway.app, *.duckdns.org: anyone can get one) are no longer trusted, and
+    localhost / plain http only off deployed hosts. Same-origin requests (Railway SPA, Vercel rewrite) need no CORS."""
+    if not origin or len(origin) > 253:
         return False
-    
-    # Check against configured CORS_ORIGINS first
     if origin in CORS_ORIGINS:
         return True
-    
-    # Allow localhost and 127.0.0.1 for dev
-    if re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
+    from app.auth.config import is_deployed as _is_deployed
+    if not _is_deployed() and re.match(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
         return True
-    
-    # Allow any subdomain of duckdns.org
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*duckdns\.org(:\d+)?$", origin):
-        return True
-    
-    # Allow any subdomain of up.railway.app
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*up\.railway\.app(:\d+)?$", origin):
-        return True
-    
-    # Allow ecshape.com / ecshape.org and their subdomains
-    if re.match(r"^https?://([a-zA-Z0-9-]+\.)*ecshape\.(com|org)(:\d+)?$", origin):
-        return True
-    
-    return False
+    return bool(re.match(r"^https://([a-z0-9-]+\.)*ecshape\.(com|org)$", origin))
 
 class WildcardCORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -420,12 +475,9 @@ logger.info("CORS middleware configured with frontend integration support")
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(PERSISTENT_PATH, "uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Mount static files for uploads with optimized settings
-try:
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-    logger.info(f"Static files mounted successfully from {UPLOAD_DIR}")
-except Exception as e:
-    logger.warning(f"Could not mount uploads directory: {e}")
+# The uploads directory is NOT mounted as static files any more (audit 2026-11, F-10): it served every tenant's
+# progress photos, chat photos and voice messages without authentication, and any stored .html as text/html.
+# Files are served by /api/files/* and /api/v2/chat/media/*, which check the owner.
 
 # Mount frontend static files with performance optimizations
 try:
@@ -617,8 +669,6 @@ async def api_test_endpoint():
     return {
         "message": "API endpoint is accessible!",
         "environment": ENVIRONMENT,
-        "domain": DOMAIN,
-        "cors_origins": CORS_ORIGINS,
         "timestamp": time.time(),
         "api_status": "working"
     }
@@ -630,7 +680,7 @@ async def debug_environment(
 ):
     """Debug endpoint to check environment variables - Admin only."""
     # Only allow in development or for admins
-    if ENVIRONMENT == "production" and current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Admin only."
@@ -657,8 +707,10 @@ async def health_check_options():
 
 # Performance metrics endpoint for monitoring
 @app.get("/metrics")
-async def get_performance_metrics():
-    """Get comprehensive performance metrics for monitoring."""
+async def get_performance_metrics(current_user: UserResponse = Depends(get_current_user)):
+    """Get comprehensive performance metrics for monitoring (admins only)."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin only")
     try:
         # Database metrics
         pool_stats = get_db_pool_stats()
@@ -685,8 +737,10 @@ async def get_performance_metrics():
 
 # Database status endpoint for detailed database information
 @app.get("/status/database")
-async def get_database_status():
-    """Get detailed database status and statistics."""
+async def get_database_status(current_user: UserResponse = Depends(get_current_user)):
+    """Get detailed database status and statistics (admins only)."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin only")
     try:
         db_healthy = check_db_connection()
         pool_stats = get_db_pool_stats()
@@ -728,6 +782,8 @@ try:
     
     logger.info("Including muscle_groups router...")
     app.include_router(muscle_groups.router, prefix="/api/muscle-groups", tags=["Muscle Groups"])
+    from app.routers import exercise_library
+    app.include_router(exercise_library.router, prefix="/api/exercise-library", tags=["Exercise library"])
     logger.info("✅ Muscle groups router included")
     
     logger.info("Including workout_splits router...")
@@ -738,9 +794,9 @@ try:
     app.include_router(workouts.router, prefix="/api/workouts", tags=["Workouts"])
     logger.info("✅ Workouts router included")
     
-    logger.info("Including nutrition router...")
-    app.include_router(nutrition.router, prefix="/api/nutrition", tags=["Nutrition"])
-    logger.info("✅ Nutrition router included")
+    # The legacy /api/nutrition router is no longer mounted (audit 2026-11, F-05): the portal never calls it and its
+    # 32 endpoints checked the role only, so any trainer or client could read and change every other tenant's
+    # nutrition plans, recipes, weigh-ins and goals. Meals live in /api/v2/meals and /api/v3/meals.
     
     logger.info("Including meal_plans router...")
     app.include_router(meal_plans.router, prefix="/api/meal-plans", tags=["Meal Plans"])
@@ -751,15 +807,20 @@ try:
     logger.info("✅ Meal system V2 router included")
 
     logger.info("Including meal_tracking_v3 router (v3)...")
+    from app.routers import coach_menus as coach_menus_router  # before v3 so /menus is never read as a plan id
+    app.include_router(coach_menus_router.router, prefix="/api/v3/meals", tags=["Coach menus"])
     app.include_router(meal_tracking_v3.router, prefix="/api/v3/meals", tags=["Meal Tracking V3"])
     logger.info("✅ Meal Tracking V3 router included")
 
-    logger.info("Including meal_tracking_v3_mock router (v3 mock)...")
-    app.include_router(meal_tracking_v3_mock.router, prefix="/api/v3/meals-mock", tags=["Meal Tracking V3 Mock"])
-    logger.info("✅ Meal Tracking V3 Mock router included")
+    # UI-testing mock: static data only, never mounted in production (audit 2026-11, L-03)
+    if ENVIRONMENT != "production":
+        app.include_router(meal_tracking_v3_mock.router, prefix="/api/v3/meals-mock", tags=["Meal Tracking V3 Mock"])
+        logger.info("✅ Meal Tracking V3 Mock router included")
 
     logger.info("Including meal_variants_v3 router (variants)...")
     app.include_router(meal_variants_v3.router, prefix="/api/v3/meals", tags=["Meal Variants V3"])
+    app.include_router(meal_logging_tools.router, prefix="/api/v3/meals", tags=["Meal logging tools"])
+    app.include_router(translate.router, prefix="/api", tags=["Translate"])
     logger.info("✅ Meal Variants V3 router included")
 
     logger.info("Including workout_system router (v2)...")
@@ -797,6 +858,18 @@ try:
     logger.info("Including instagram_webhook router...")
     app.include_router(instagram_webhook.router, prefix="/api/instagram", tags=["Instagram"])
     logger.info("✅ Instagram webhook router included")
+
+    logger.info("Including studio routers...")
+    app.include_router(studio.public_router, prefix="/api/public", tags=["Public site"])
+    from app.routers import i18n_bundle  # QA #85: Russian / Arabic interface texts
+    app.include_router(i18n_bundle.router, prefix="/api/public", tags=["Interface languages"])
+    app.include_router(studio.router, prefix="/api/studio", tags=["Trainer studio"])
+    from app.routers import automations as automations_router
+    app.include_router(automations_router.router, prefix="/api/studio", tags=["Coach automations"])
+    logger.info("✅ Studio routers included")
+    # Legal audit 2026-11: consent records, data export and self-service erasure (models/privacy.py)
+    from app.routers import privacy as privacy_router
+    app.include_router(privacy_router.router, prefix="/api/privacy", tags=["Privacy"])
     
     logger.info("=" * 40)
     logger.info("✅ ALL ROUTERS INCLUDED SUCCESSFULLY")
@@ -809,13 +882,23 @@ except Exception as e:
     logger.error(f"Stack trace: {traceback.format_exc()}")
     raise
 
+
+_STATIC_ROOT = os.path.realpath("static")
+
+
+def _safe_static_path(full_path: str):
+    """Absolute path of a file inside ./static, or None. Blocks ../ and encoded traversal (auth audit C1)."""
+    candidate = os.path.realpath(os.path.join(_STATIC_ROOT, full_path))
+    if os.path.commonpath([candidate, _STATIC_ROOT]) != _STATIC_ROOT:
+        return None
+    return candidate if os.path.isfile(candidate) else None
+
 # Handle OPTIONS requests for static files (CORS preflight)
 @app.options("/{full_path:path}")
 async def handle_static_options(full_path: str):
     """Handle OPTIONS requests for static files to support CORS."""
-    static_file_path = os.path.join("static", full_path)
-    abs_static_file_path = os.path.abspath(static_file_path)
-    if os.path.exists(abs_static_file_path) and os.path.isfile(abs_static_file_path):
+    abs_static_file_path = _safe_static_path(full_path)
+    if abs_static_file_path:
         from fastapi.responses import Response
         return Response(
             status_code=200,
@@ -845,10 +928,9 @@ async def serve_spa_routes(full_path: str):
         raise HTTPException(status_code=404, detail="Not found")
     
     # Check if the requested path is a static file
-    static_file_path = os.path.join("static", full_path)
-    abs_static_file_path = os.path.abspath(static_file_path)
-    logger.info(f"Checking static file: {full_path} -> {abs_static_file_path}, exists: {os.path.exists(abs_static_file_path)}")
-    if os.path.exists(abs_static_file_path) and os.path.isfile(abs_static_file_path):
+    abs_static_file_path = _safe_static_path(full_path)
+    static_file_path = abs_static_file_path or ""
+    if abs_static_file_path:
         # Determine content type
         import mimetypes
         mimetype, _ = mimetypes.guess_type(static_file_path)

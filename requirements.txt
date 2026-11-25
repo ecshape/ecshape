@@ -39,3 +39,5 @@ psycopg2-binary>=2.9.9  # PostgreSQL adapter for SQLAlchemy
 # httptools>=0.6.1  # REMOVED: Already included in uvicorn[standard]
 psutil>=5.9.6  # System monitoring (minimal usage)
 # docker>=6.1.3  # OPTIONAL: Docker API client - only needed if monitoring Docker from within container
+numpy>=1.26
+onnxruntime>=1.18  # QA #51: keyless meal photo recognition (open CLIP model on the server)

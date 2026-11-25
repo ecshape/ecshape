@@ -29,7 +29,9 @@ async def add_weight_entry(
     chest: Optional[float] = Form(None, description="Chest measurement in cm"),
     waist: Optional[float] = Form(None, description="Waist measurement in cm"),
     hips: Optional[float] = Form(None, description="Hips measurement in cm"),
-    thighs: Optional[float] = Form(None, description="Thighs measurement in cm"),
+    thighs: Optional[float] = Form(None, description="Thighs measurement in cm (deprecated: right_thigh / left_thigh)"),
+    right_thigh: Optional[float] = Form(None, description="Right thigh circumference in cm"),
+    left_thigh: Optional[float] = Form(None, description="Left thigh circumference in cm"),
     arms: Optional[float] = Form(None, description="Arms measurement in cm (deprecated)"),
     right_arm: Optional[float] = Form(None, description="Right arm circumference in cm"),
     left_arm: Optional[float] = Form(None, description="Left arm circumference in cm"),
@@ -81,6 +83,8 @@ async def add_weight_entry(
         waist=waist,
         hips=hips,
         thighs=thighs,
+        right_thigh=right_thigh,
+        left_thigh=left_thigh,
         arms=arms,  # Keep for backward compatibility
         right_arm=right_arm,
         left_arm=left_arm
@@ -123,6 +127,10 @@ async def add_weight_entry(
     )
     if created:
         await websocket_service.send_new_notification_hint(created.recipient_id)
+    # silent refresh of the trainer's screens whatever their notification preferences (r2 R5)
+    _trainer_id = db.query(User.trainer_id).filter(User.id == target_client_id).scalar()
+    if _trainer_id:
+        await websocket_service.send_live_refresh(_trainer_id, "weigh_in")
 
     # Check for goal achievements
     check_client_goals(db, target_client_id)
@@ -142,6 +150,8 @@ async def add_weight_entry(
         "waist": getattr(progress_entry, 'waist', None),
         "hips": getattr(progress_entry, 'hips', None),
         "thighs": getattr(progress_entry, 'thighs', None),
+        "right_thigh": getattr(progress_entry, 'right_thigh', None),
+        "left_thigh": getattr(progress_entry, 'left_thigh', None),
         "arms": getattr(progress_entry, 'arms', None),
         "right_arm": getattr(progress_entry, 'right_arm', None),
         "left_arm": getattr(progress_entry, 'left_arm', None),
@@ -158,7 +168,7 @@ async def get_weight_history(
     
     entries = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == current_user.id
-    ).order_by(ProgressEntry.date.desc()).all()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).all()
     
     # Normalize photo_path to just filename for all entries
     normalized_entries = []
@@ -179,6 +189,8 @@ async def get_weight_history(
             "waist": getattr(entry, 'waist', None),
             "hips": getattr(entry, 'hips', None),
             "thighs": getattr(entry, 'thighs', None),
+            "right_thigh": getattr(entry, 'right_thigh', None),
+            "left_thigh": getattr(entry, 'left_thigh', None),
             "arms": getattr(entry, 'arms', None),
             "right_arm": getattr(entry, 'right_arm', None),
             "left_arm": getattr(entry, 'left_arm', None),
@@ -210,7 +222,7 @@ async def get_progress_entries(
     
     entries = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == query_client_id
-    ).order_by(ProgressEntry.date.desc()).all()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).all()
     
     # Normalize photo_path to just filename for all entries
     # This handles both old entries (with full paths) and new entries (just filename)
@@ -244,6 +256,8 @@ async def get_progress_entries(
             "waist": getattr(entry, 'waist', None),
             "hips": getattr(entry, 'hips', None),
             "thighs": getattr(entry, 'thighs', None),
+            "right_thigh": getattr(entry, 'right_thigh', None),
+            "left_thigh": getattr(entry, 'left_thigh', None),
             "arms": getattr(entry, 'arms', None),
             "right_arm": getattr(entry, 'right_arm', None),
             "left_arm": getattr(entry, 'left_arm', None),
@@ -291,6 +305,8 @@ async def get_progress_entry(
         "waist": getattr(entry, 'waist', None),
         "hips": getattr(entry, 'hips', None),
         "thighs": getattr(entry, 'thighs', None),
+        "right_thigh": getattr(entry, 'right_thigh', None),
+        "left_thigh": getattr(entry, 'left_thigh', None),
         "arms": getattr(entry, 'arms', None),
         "right_arm": getattr(entry, 'right_arm', None),
         "left_arm": getattr(entry, 'left_arm', None),
@@ -306,7 +322,7 @@ async def get_current_weight(
     
     latest_entry = db.query(ProgressEntry).filter(
         ProgressEntry.client_id == current_user.id
-    ).order_by(ProgressEntry.date.desc()).first()
+    ).order_by(ProgressEntry.date.desc(), ProgressEntry.id.desc()).first()
     
     if not latest_entry:
         raise HTTPException(
@@ -444,7 +460,9 @@ async def update_progress_entry(
     chest: Optional[float] = Form(None, description="Chest measurement in cm"),
     waist: Optional[float] = Form(None, description="Waist measurement in cm"),
     hips: Optional[float] = Form(None, description="Hips measurement in cm"),
-    thighs: Optional[float] = Form(None, description="Thighs measurement in cm"),
+    thighs: Optional[float] = Form(None, description="Thighs measurement in cm (deprecated: right_thigh / left_thigh)"),
+    right_thigh: Optional[float] = Form(None, description="Right thigh circumference in cm"),
+    left_thigh: Optional[float] = Form(None, description="Left thigh circumference in cm"),
     arms: Optional[float] = Form(None, description="Arms measurement in cm (deprecated)"),
     right_arm: Optional[float] = Form(None, description="Right arm circumference in cm"),
     left_arm: Optional[float] = Form(None, description="Left arm circumference in cm"),
@@ -482,6 +500,10 @@ async def update_progress_entry(
         entry.hips = hips
     if thighs is not None:
         entry.thighs = thighs
+    if right_thigh is not None:
+        entry.right_thigh = right_thigh
+    if left_thigh is not None:
+        entry.left_thigh = left_thigh
     if arms is not None:
         entry.arms = arms
     if right_arm is not None:
@@ -509,6 +531,8 @@ async def update_progress_entry(
         "waist": getattr(entry, 'waist', None),
         "hips": getattr(entry, 'hips', None),
         "thighs": getattr(entry, 'thighs', None),
+        "right_thigh": getattr(entry, 'right_thigh', None),
+        "left_thigh": getattr(entry, 'left_thigh', None),
         "arms": getattr(entry, 'arms', None),
         "right_arm": getattr(entry, 'right_arm', None),
         "left_arm": getattr(entry, 'left_arm', None),

@@ -11,6 +11,33 @@ export default {
 	],
 	prefix: "",
 	theme: {
+		/* Motion tokens (src/styles/motion.css). The numeric scale is mapped onto the calm portal tokens so every
+		   existing duration-* / ease-* class follows the system; new code uses the names (duration-fast …). */
+		transitionDuration: {
+			DEFAULT: 'var(--dur-fast)',
+			0: '0ms',
+			75: 'var(--dur-fast)',
+			100: 'var(--dur-fast)',
+			150: 'var(--dur-fast)',
+			200: 'var(--dur-fast)',
+			300: 'var(--dur-med)',
+			500: 'var(--dur-slow)',
+			700: 'var(--dur-data)',
+			1000: 'var(--dur-data)',
+			press: 'var(--dur-press)',
+			fast: 'var(--dur-fast)',
+			med: 'var(--dur-med)',
+			slow: 'var(--dur-slow)',
+			data: 'var(--dur-data)',
+		},
+		transitionTimingFunction: {
+			DEFAULT: 'var(--ease-out)',
+			linear: 'linear',
+			in: 'var(--ease-in)',
+			out: 'var(--ease-out)',
+			'in-out': 'var(--ease-in-out)',
+			spring: 'var(--ease-spring)',
+		},
 		container: {
 			center: true,
 			padding: '1rem',
@@ -20,12 +47,17 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'inter': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+				'sans': ['Heebo', 'system-ui', '-apple-system', 'sans-serif'],
+				'inter': ['Heebo', 'system-ui', '-apple-system', 'sans-serif'],
+				'display': ['Karantina', 'Heebo', 'sans-serif'],
+				'num': ['Anton', 'Heebo', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
+				gold: 'hsl(var(--gold))',
+				success: 'hsl(var(--success))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
@@ -91,33 +123,14 @@ export default {
 					to: {
 						height: '0'
 					}
-				},
-				'fade-in': {
-					'0%': {
-						opacity: '0',
-						transform: 'translateY(10px)'
-					},
-					'100%': {
-						opacity: '1',
-						transform: 'translateY(0)'
-					}
-				},
-				'slide-up': {
-					'0%': {
-						transform: 'translateY(20px)',
-						opacity: '0'
-					},
-					'100%': {
-						transform: 'translateY(0)',
-						opacity: '1'
-					}
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.3s ease-out',
-				'slide-up': 'slide-up 0.4s ease-out'
+				'accordion-down': 'accordion-down var(--dur-med) var(--ease-out)',
+				'accordion-up': 'accordion-up var(--dur-fast) var(--ease-in)',
+				'fade-in': 'ec-rise var(--dur-med) var(--ease-out) backwards',
+				'slide-up': 'ec-rise var(--dur-med) var(--ease-out) backwards',
+				pulse: 'ec-pulse var(--dur-loop) var(--ease-in-out) infinite'
 			}
 		}
 	},

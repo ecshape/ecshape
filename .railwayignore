@@ -1,0 +1,7 @@
+# The API image never needs these (agent worktrees, frontend build/deps) — keeps `railway up` small
+.claude/
+Frontend/node_modules/
+Frontend/dist/
+**/__pycache__/
+.venv/
+venv/

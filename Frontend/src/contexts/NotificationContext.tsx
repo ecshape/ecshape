@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { notificationService } from '../services/notificationService';
@@ -55,6 +56,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [serverNotifications, setServerNotifications] = useState<ServerNotification[]>([]);
   const [serverUnreadCount, setServerUnreadCount] = useState(0);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const lastLiveRefresh = useRef(0);
+  const trailingRefresh = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -135,9 +139,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         // Extract base URL from API_BASE_URL (remove /api if present)
         const baseUrl = API_BASE_URL.replace(/^https?:\/\//, '').replace(/\/api\/?$/, '');
         // Router is mounted at /api/ws and endpoint is /{user_id}, so full path is /api/ws/{user_id}
-        const wsUrl = `${wsProtocol}//${baseUrl}/api/ws/${user.id}?token=${token}`;
+        const wsUrl = `${wsProtocol}//${baseUrl}/api/ws/${user.id}`;
 
-        const ws = new WebSocket(wsUrl);
+        // Token in Sec-WebSocket-Protocol, not the URL (URLs end up in proxy / access logs)
+        const ws = new WebSocket(wsUrl, ['ecshape.bearer', token]);
         wsRef.current = ws;
 
         ws.onopen = () => {
@@ -157,10 +162,30 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
               console.log('WebSocket connection established');
               return;
             }
+            // Anything live (a workout finished, a meal, a weigh-in, a chat message, a QA ticket...) refreshes the
+            // data on screen right away instead of waiting for the next poll (A2A cross M4); throttled.
+            // leading refresh, plus one trailing refresh so a second event inside the window is not lost (r2 R5)
+            const now = Date.now();
+            const refresh = () => {
+              lastLiveRefresh.current = Date.now();
+              queryClient.invalidateQueries({ refetchType: 'active' });
+              // screens that load with plain fetch (client profile) listen for this
+              window.dispatchEvent(new CustomEvent('ec:live', { detail: { type: data.type, event: data.event } }));
+            };
+            if (now - lastLiveRefresh.current > 2500) refresh();
+            else if (!trailingRefresh.current) {
+              trailingRefresh.current = window.setTimeout(() => {
+                trailingRefresh.current = 0;
+                refresh();
+              }, 2500 - (now - lastLiveRefresh.current));
+            }
+            if (data.type === 'live_refresh') return;
             if (data.type === 'new_notification') {
               refetchServerNotifications();
               return;
             }
+            // Frames without any text (read receipts, typing...) never become an empty "Notification" toast
+            if (!data.title && !data.message && !data.data?.message) return;
 
             // Map backend notification types to frontend types
             let notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';

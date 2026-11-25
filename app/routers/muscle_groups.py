@@ -87,6 +87,9 @@ def update_muscle_group(
     db: Session = Depends(get_db)
 ):
     """Update a muscle group (trainer/admin only)"""
+    _mg = db.query(MuscleGroup).filter(MuscleGroup.id == muscle_group_id).first()
+    if _mg and current_user.role != UserRole.ADMIN and _mg.created_by is not None and _mg.created_by != current_user.id:
+        raise HTTPException(status_code=404, detail="Muscle group not found")  # audit 2026-11: was any trainer
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -127,6 +130,9 @@ def delete_muscle_group(
     db: Session = Depends(get_db)
 ):
     """Delete a muscle group (trainer/admin only)"""
+    _mg = db.query(MuscleGroup).filter(MuscleGroup.id == muscle_group_id).first()
+    if _mg and current_user.role != UserRole.ADMIN and _mg.created_by is not None and _mg.created_by != current_user.id:
+        raise HTTPException(status_code=404, detail="Muscle group not found")  # audit 2026-11: was any trainer
     if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

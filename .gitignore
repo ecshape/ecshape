@@ -17,6 +17,8 @@ build
 .env.test.local
 .env.production.local
 env.production.example
+.dev-credentials
+.dev-credentials.json
 
 # Editor
 .vscode/
@@ -73,3 +75,20 @@ logs/*.log
 logs/*.json 
 run_dev.sh
 docs/env.production.example
+
+# local agent worktrees
+.claude/worktrees/
+
+# QA agent key (tools/qa.py)
+.qa-agent-key
+
+# Secrets (auth audit 2026-11)
+.cursor/railwaytoken.txt
+.dev-jwt-secret
+
+# Never commit real data (audit 2026-11, F-16)
+data/*.db*
+*.db-wal
+*.db-shm
+uploads/**
+!uploads/.gitkeep

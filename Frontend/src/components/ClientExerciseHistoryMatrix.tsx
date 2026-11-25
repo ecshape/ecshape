@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { isRtlLang } from '@/lib/utils';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 interface SetCompletion {
@@ -36,7 +37,7 @@ const ClientExerciseHistoryMatrix: React.FC<ClientExerciseHistoryMatrixProps> = 
   maxDates = MAX_DATES_DEFAULT,
 }) => {
   const { t, i18n } = useTranslation();
-  const isRtl = i18n.language === 'he';
+  const isRtl = isRtlLang(i18n.language);
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(
     exercises.length > 0 ? exercises[0].workout_exercise_id : null
   );
@@ -177,7 +178,7 @@ const ClientExerciseHistoryMatrix: React.FC<ClientExerciseHistoryMatrixProps> = 
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <EcSpinner className="h-6 w-6" />
           </div>
         ) : !selectedExercise ? (
           <p className="text-sm text-muted-foreground">{t('clientProfile.noExerciseSelected', 'Select an exercise to view its history.')}</p>

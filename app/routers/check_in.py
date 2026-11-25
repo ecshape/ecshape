@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
+from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import List, Optional
@@ -7,7 +8,7 @@ from datetime import datetime, date, timedelta
 from app.database import get_db
 from app.auth.utils import get_current_user
 from app.schemas.auth import UserResponse, UserRole
-from app.models.check_in import DailyCheckIn
+from app.models.check_in import DailyCheckIn, WaterLog
 from app.models.user import User
 from app.schemas.check_in import (
     DailyCheckInCreate,
@@ -25,6 +26,7 @@ def normalize_date(value: datetime) -> datetime:
 @router.post("", response_model=DailyCheckInResponse, status_code=status.HTTP_201_CREATED)
 def create_check_in(
     check_in_data: DailyCheckInCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -67,6 +69,7 @@ def create_check_in(
     db.add(check_in)
     db.commit()
     db.refresh(check_in)
+    queue_trainer_refresh(background_tasks, db, check_in.client_id, "check_in")
     
     return check_in
 
@@ -156,39 +159,80 @@ def get_today_check_in(
     
     return check_in
 
-@router.get("/{check_in_id}", response_model=DailyCheckInResponse)
-def get_check_in(
-    check_in_id: int,
+# ---- QA #135: water tracker (the trainee taps +0.5 L on the Today screen) ----
+from pydantic import BaseModel as _BM, Field as _F
+
+
+class WaterAdd(_BM):
+    day: date
+    delta_ml: int = _F(..., ge=-5000, le=5000)
+
+
+WATER_MAX_ML = 10000
+
+
+def _water_goal(db: Session, client_id: int) -> int:
+    """About 35 ml per kg of the latest weigh-in, rounded to half a litre (2-4 L); 3 L when no weight is known."""
+    row = db.query(DailyCheckIn.weight).filter(DailyCheckIn.client_id == client_id, DailyCheckIn.weight.isnot(None)) \
+        .order_by(DailyCheckIn.date.desc()).first()
+    if not row or not row[0]:
+        return 3000
+    return int(min(4000, max(2000, round(row[0] * 35 / 500) * 500)))
+
+
+def _water_out(db: Session, client_id: int, day: date, ml: int) -> dict:
+    return {"day": day.isoformat(), "ml": ml, "goal_ml": _water_goal(db, client_id), "step_ml": 500}
+
+
+def _client_only(user: UserResponse):
+    if user.role != UserRole.CLIENT:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="clients_only")
+
+
+@router.get("/water")
+def get_water(
+    day: Optional[date] = Query(None, description="the trainee's local day (YYYY-MM-DD)"),
     current_user: UserResponse = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """בדיקה ספציפית"""
-    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
-    
-    if not check_in:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Check-in not found"
-        )
-    
-    # בדיקת הרשאות
-    if current_user.role == UserRole.CLIENT:
-        if check_in.client_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view your own check-ins"
-            )
-    elif current_user.role == UserRole.TRAINER:
-        # בדיקה שהלקוח שייך למאמן
-        client = db.query(User).filter(User.id == check_in.client_id).first()
-        if not client or client.trainer_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view check-ins for your clients"
-            )
-    # ADMIN יכול לראות הכל
-    
-    return check_in
+    _client_only(current_user)
+    day = day or date.today()
+    row = db.query(WaterLog).filter(WaterLog.client_id == current_user.id, WaterLog.day == day).first()
+    return _water_out(db, current_user.id, day, row.ml if row else 0)
+
+
+@router.post("/water")
+def add_water(
+    payload: WaterAdd,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Adds (or, with a negative delta, removes) water for the day. Additive, so quick repeated taps never lose one."""
+    _client_only(current_user)
+    from sqlalchemy import case
+    from sqlalchemy.exc import IntegrityError
+
+    def _bump() -> int:
+        # one atomic UPDATE (ml = clamp(ml + delta)): taps arriving together never overwrite each other
+        new = WaterLog.ml + payload.delta_ml
+        clamped = case((new < 0, 0), (new > WATER_MAX_ML, WATER_MAX_ML), else_=new)
+        return db.query(WaterLog).filter(WaterLog.client_id == current_user.id, WaterLog.day == payload.day) \
+            .update({WaterLog.ml: clamped}, synchronize_session=False)
+
+    if not _bump():
+        try:
+            db.add(WaterLog(client_id=current_user.id, day=payload.day, ml=max(0, min(WATER_MAX_ML, payload.delta_ml))))
+            db.commit()
+        except IntegrityError:
+            # the first two taps of the day at once: the other request created the row; add onto it
+            db.rollback()
+            _bump()
+            db.commit()
+    else:
+        db.commit()
+    row = db.query(WaterLog).filter(WaterLog.client_id == current_user.id, WaterLog.day == payload.day).first()
+    return _water_out(db, current_user.id, payload.day, row.ml)
+
 
 @router.get("/summary", response_model=CheckInSummary)
 def get_check_in_summary(
@@ -348,6 +392,64 @@ def get_check_in_summary(
             last_check_in=None
         )
 
+
+@router.get("/{check_in_id}", response_model=DailyCheckInResponse)
+def get_check_in(
+    check_in_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """בדיקה ספציפית"""
+    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
+    
+    if not check_in:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Check-in not found"
+        )
+    
+    # בדיקת הרשאות
+    if current_user.role == UserRole.CLIENT:
+        if check_in.client_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view your own check-ins"
+            )
+    elif current_user.role == UserRole.TRAINER:
+        # בדיקה שהלקוח שייך למאמן
+        client = db.query(User).filter(User.id == check_in.client_id).first()
+        if not client or client.trainer_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view check-ins for your clients"
+            )
+    # ADMIN יכול לראות הכל
+    
+    return check_in
+
+@router.put("/{check_in_id}", response_model=DailyCheckInResponse)
+def update_check_in(
+    check_in_id: int,
+    payload: DailyCheckInUpdate,
+    background_tasks: BackgroundTasks,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """The client corrects their own check-in (A2A trainee F2). Fields sent as null are cleared."""
+    check_in = db.query(DailyCheckIn).filter(DailyCheckIn.id == check_in_id).first()
+    if not check_in:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Check-in not found")
+    if current_user.role != UserRole.ADMIN and check_in.client_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only edit your own check-ins")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(check_in, field, value)
+    if hasattr(check_in, "updated_at"):
+        check_in.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(check_in)
+    queue_trainer_refresh(background_tasks, db, check_in.client_id, "check_in")
+    return check_in
+
 @router.get("/trainer/dashboard", response_model=List[dict])
 def get_trainer_dashboard(
     current_user: UserResponse = Depends(get_current_user),
@@ -356,7 +458,7 @@ def get_trainer_dashboard(
     """סטטוס כל הלקוחות (מאמן בלבד)"""
     if current_user.role != UserRole.TRAINER:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=403,
             detail="Only trainers can access this endpoint"
         )
     

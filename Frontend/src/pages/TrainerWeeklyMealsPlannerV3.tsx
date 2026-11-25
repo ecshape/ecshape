@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../config/api";
-import { Trash2, Plus, Search, Save } from "lucide-react";
+import { Trash2, Plus, Search, Save, ArrowLeft } from "lucide-react";
 import MealTargetsEditor from "../components/meals/MealTargetsEditor";
 import type { MacroType, MeasurementType, V3DayViewResponse, V3FoodOption, V3DailyMacrosResponse, V3MealSlotView, V3MealSlotTargets } from "../types/meals-v3";
 
@@ -19,6 +19,15 @@ type MealTargetsState = {
 };
 import { formatDateForAPI } from "../utils/dashboard";
 import type { TFunction } from "i18next";
+import { PortalSelect } from '@/components/ui/portal-select';
+import { Avatar } from '@/features/trainer/ui';
+import { GroupChips, matchesGroup, type GroupFilter } from '@/components/foodbank/GroupChips';
+import { FoodLibraryDrawer, libraryKey } from '@/components/foodbank/FoodLibraryDrawer';
+import type { MealBankItem } from '@/components/foodbank/foodbankModel';
+import { SearchAllSources } from '@/components/foodbank/SearchAllSources';
+import { toast as sonner } from 'sonner';
+import '@/i18n/ticketsStudio';
+import '@/i18n/foodTable';
 
 type QuantityMode = "per_100g" | "per_portion";
 
@@ -182,6 +191,7 @@ const createDraftMealSlotView = (tempId: number, orderIndex: number, name: strin
 const TrainerWeeklyMealsPlannerV3: React.FC = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const location = useLocation();
 
   const isRtlHe = (i18n.language || "").toLowerCase().startsWith("he");
@@ -323,8 +333,25 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     setFatCatalog(fat);
   }, [fetchCatalog]);
 
+  // The plan stores its own copies of foods (new ids, no link to the food bank): the editor works with food-bank
+  // (catalog) ids, so plan foods are matched to the catalog by name (r2 R3: it showed catalog foods with the same ids).
+  const catalogRef = useRef(catalogByMacro);
+  catalogRef.current = catalogByMacro;
+  const lastViewRef = useRef<V3DayViewResponse | null>(null);
+  const toCatalogFood = useCallback((macro: MacroType, food: V3FoodOption | null | undefined): V3FoodOption | null => {
+    if (!food) return null;
+    const norm = (v?: string | null) => (v || "").trim().toLowerCase();
+    const items = Object.values(catalogRef.current[macro] || {});
+    return (
+      items.find((c) => norm(c.name) === norm(food.name)) ||
+      (food.name_hebrew ? items.find((c) => norm(c.name_hebrew) === norm(food.name_hebrew)) : undefined) ||
+      null
+    );
+  }, []);
+
   const initializeMealSlotPlansFromDayView = useCallback(
     (view: V3DayViewResponse) => {
+      lastViewRef.current = view;
       setMealSlotPlansById((prev) => {
         const apiDerived: Record<number, MealSlotPlanState> = {};
 
@@ -335,18 +362,20 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
           const recommendedOrNull = (food: V3FoodOption | undefined | null) => (typeof food?.id === "number" ? food : null);
 
-          const proteinRecommended = recommendedOrNull(proteinCat?.recommended_foods?.[0] ?? null);
-          const carbRecommended = recommendedOrNull(carbCat?.recommended_foods?.[0] ?? null);
-          const fatRecommended = recommendedOrNull(fatCat?.recommended_foods?.[0] ?? null);
+          const fromPlan = (macro: MacroType, food: V3FoodOption | null | undefined) =>
+            useV3MockBackend ? food ?? null : toCatalogFood(macro, food);
+          const proteinRecommended = recommendedOrNull(fromPlan("protein", proteinCat?.recommended_foods?.[0]));
+          const carbRecommended = recommendedOrNull(fromPlan("carb", carbCat?.recommended_foods?.[0]));
+          const fatRecommended = recommendedOrNull(fromPlan("fat", fatCat?.recommended_foods?.[0]));
 
           const mockAllowed: boolean = useV3MockBackend;
 
-          const toAllowedIds = (foods: V3FoodOption[] | undefined | null): number[] => {
+          const toAllowedIds = (macro: MacroType, foods: V3FoodOption[] | undefined | null): number[] => {
             if (!foods || foods.length === 0) return [];
             if (mockAllowed) return [];
             return foods
               .slice(1)
-              .map((f) => (typeof f.id === "number" ? f.id : null))
+              .map((f) => toCatalogFood(macro, f)?.id ?? null)
               .filter((id): id is number => typeof id === "number");
           };
 
@@ -362,17 +391,17 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
             protein: {
               ...proteinQ,
               recommendedFoodOptionId: proteinRecommended?.id ?? null,
-              allowedSwapFoodOptionIds: toAllowedIds(proteinCat?.recommended_foods ?? []),
+              allowedSwapFoodOptionIds: toAllowedIds("protein", proteinCat?.recommended_foods ?? []),
             },
             carb: {
               ...carbQ,
               recommendedFoodOptionId: carbRecommended?.id ?? null,
-              allowedSwapFoodOptionIds: toAllowedIds(carbCat?.recommended_foods ?? []),
+              allowedSwapFoodOptionIds: toAllowedIds("carb", carbCat?.recommended_foods ?? []),
             },
             fat: {
               ...fatQ,
               recommendedFoodOptionId: fatRecommended?.id ?? null,
-              allowedSwapFoodOptionIds: toAllowedIds(fatCat?.recommended_foods ?? []),
+              allowedSwapFoodOptionIds: toAllowedIds("fat", fatCat?.recommended_foods ?? []),
             },
           };
         }
@@ -389,8 +418,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
         return merged;
       });
     },
-    [useV3MockBackend]
+    [useV3MockBackend, toCatalogFood]
   );
+
+  // The catalog may arrive after the plan: map the plan's foods again once it is there
+  const catalogReady = proteinCatalog.length + carbCatalog.length + fatCatalog.length > 0;
+  useEffect(() => {
+    if (catalogReady && lastViewRef.current) initializeMealSlotPlansFromDayView(lastViewRef.current);
+  }, [catalogReady, initializeMealSlotPlansFromDayView]);
 
   const fetchDayForWeek = useCallback(async () => {
     if (!clientId) return;
@@ -398,7 +433,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [viewRes, summaryRes] = useV3MockBackend
+      // Promise.all: the two fetches used to be destructured un-awaited ("viewRes.json is not a function", A2A cross B3)
+      const [viewRes, summaryRes] = await Promise.all(useV3MockBackend
         ? [
             fetch(`${API_BASE_URL}/v3/meals-mock/day?date=${planLoadDate}`),
             fetch(`${API_BASE_URL}/v3/meals-mock/day/summary?date=${planLoadDate}`),
@@ -410,7 +446,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
             fetch(`${API_BASE_URL}/v3/meals/day/summary?date=${planLoadDate}&client_id=${clientId}`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
-          ];
+          ]);
       if (!viewRes.ok) {
         throw new Error((await viewRes.json().catch(() => null))?.detail || `HTTP ${viewRes.status}`);
       }
@@ -615,6 +651,11 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
   type FoodDialogMode = "recommended" | "allowed";
   const [foodDialogMode, setFoodDialogMode] = useState<FoodDialogMode>("recommended");
   const [foodDialogQuery, setFoodDialogQuery] = useState("");
+  const [foodDialogGroup, setFoodDialogGroup] = useState<GroupFilter>("all");
+  const [foodDialogShown, setFoodDialogShown] = useState(80);
+  // "Not finding it? Search all sources": the food library, then the food goes into the bank and into this meal
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryQuery, setLibraryQuery] = useState("");
 
   const foodDialogInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -623,6 +664,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     setFoodDialogMealSlotId(mealSlotId);
     setFoodDialogMode(mode);
     setFoodDialogQuery("");
+    setFoodDialogGroup("all");
     setFoodDialogOpen(true);
   }, []);
 
@@ -643,14 +685,26 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     return fatCatalog;
   }, [carbCatalog, fatCatalog, foodDialogMacroType, proteinCatalog]);
 
-  const filteredCatalogItems = useMemo(() => {
+  // Search both names (Hebrew and English); the food itself first, then names starting with it, then the rest
+  const searchedCatalogItems = useMemo(() => {
     const q = foodDialogQuery.trim().toLowerCase();
-    if (!q) return catalogItemsForDialog;
-    return catalogItemsForDialog.filter((item) => {
-      const name = (isRtlHe ? item.name_hebrew ?? item.name : item.name) ?? "";
-      return name.toLowerCase().includes(q);
-    });
+    const shown = (item: V3FoodOption) => (isRtlHe ? item.name_hebrew ?? item.name : item.name) ?? "";
+    const byName = (a: V3FoodOption, b: V3FoodOption) => shown(a).localeCompare(shown(b), isRtlHe ? "he" : undefined);
+    if (!q) return [...catalogItemsForDialog].sort(byName);
+    const names = (item: V3FoodOption) => [item.name, item.name_hebrew].filter(Boolean).map((n) => (n as string).toLowerCase());
+    const rank = (item: V3FoodOption) => {
+      const n = names(item);
+      return n.includes(q) ? 0 : n.some((x) => x.startsWith(q)) ? 1 : 2;
+    };
+    return catalogItemsForDialog
+      .filter((item) => names(item).some((n) => n.includes(q)))
+      .sort((a, b) => rank(a) - rank(b) || byName(a, b));
   }, [catalogItemsForDialog, foodDialogQuery, isRtlHe]);
+  const filteredCatalogItems = useMemo(
+    () => searchedCatalogItems.filter((item) => matchesGroup(item, foodDialogGroup)),
+    [searchedCatalogItems, foodDialogGroup]
+  );
+  useEffect(() => setFoodDialogShown(80), [foodDialogQuery, foodDialogGroup, foodDialogMacroType]);
 
   const applyFoodSelection = useCallback(
     (food: V3FoodOption) => {
@@ -666,6 +720,33 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
       setFoodDialogOpen(false);
     },
     [addAllowedSwapFood, foodDialogMacroType, foodDialogMealSlotId, foodDialogMode, setRecommendedFood]
+  );
+
+  const openLibraryFromDialog = useCallback(() => {
+    setLibraryQuery(foodDialogQuery.trim());
+    setFoodDialogOpen(false);
+    setLibraryOpen(true);
+  }, [foodDialogQuery]);
+
+  const importedKeys = useMemo(
+    () => new Set([...proteinCatalog, ...carbCatalog, ...fatCatalog].map((f) => libraryKey(f.source, f.source_id)).filter(Boolean)),
+    [proteinCatalog, carbCatalog, fatCatalog]
+  );
+
+  /** A food added from the library lands in the bank (catalog) and, when it is of this macro, in the meal being edited. */
+  const onLibraryImported = useCallback(
+    async (item: MealBankItem) => {
+      await fetchAllCatalog().catch(() => undefined);
+      if (item.macro_type !== foodDialogMacroType || !foodDialogMealSlotId) return;
+      if (foodDialogMode === "recommended") {
+        setRecommendedFood(foodDialogMealSlotId, foodDialogMacroType, item.id);
+        setLibraryOpen(false);
+      } else {
+        addAllowedSwapFood(foodDialogMealSlotId, foodDialogMacroType, item.id);
+      }
+      sonner.success(t("foodTable.addedSelect"));
+    },
+    [addAllowedSwapFood, fetchAllCatalog, foodDialogMacroType, foodDialogMealSlotId, foodDialogMode, setRecommendedFood, t]
   );
 
   const publishWeekPlan = useCallback(async () => {
@@ -764,7 +845,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
       const payload: V3CompleteMealPlanCreate = {
         client_id: clientId,
-        name: t("meals.weeklyMeals.planName", "Client meal plan"),
+        // keep the plan's own name; the generic one only names a first plan (saving used to rename every plan)
+        name: dayView?.meal_plan_name?.trim() || t("meals.weeklyMeals.planName", "Client meal plan"),
         description: null,
         number_of_meals: slotsForEditor.length,
         total_calories: Math.round(targetsState?.daily.calories ?? daySummary?.targets.calories ?? 0),
@@ -797,6 +879,8 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
 
       // Refresh day view so UI reflects the published plan structure.
       await fetchDayForWeek();
+      // The save used to finish silently; confirm it like the workout builder does.
+      sonner.success(t('trainer.builder.planSaved', { defaultValue: 'Plan saved' }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to publish week plan");
     } finally {
@@ -817,19 +901,26 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
     catalogByMacro,
     useV3MockBackend,
     planLoadDate,
+    dayView,
   ]);
 
   const isMobileBlockerText = t("meals.weeklyMeals.mobileBlocker", "This page must be accessed via computer due to complexity.");
 
   return (
-    <Layout currentPage="dashboard">
+    <Layout currentPage="clients">
       {/* Mobile-first: hard block editing on phone */}
       <div className="lg:hidden p-4">
         <Card className="rounded-xl border-border/60 bg-muted/30">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">{t("meals.weeklyMeals.mobileTitle", "Desktop only")}</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">{isMobileBlockerText}</CardContent>
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <p>{isMobileBlockerText}</p>
+            {/* a way back from the blocker (A2A trainer F7): to the client's profile, or the previous page */}
+            <button type="button" onClick={() => (clientId ? navigate(`/client/${clientId}`) : navigate(-1))} className="tp-btn tp-btn--ghost tp-btn--sm tp-press">
+              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />{t('common.back', 'Back')}
+            </button>
+          </CardContent>
         </Card>
       </div>
 
@@ -837,7 +928,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1 min-w-0">
-              <h1 className="text-2xl lg:text-3xl font-bold">{t("meals.weeklyMeals.title", "Meal plan")}</h1>
+              <h1 className="ec-page-title">{t("meals.weeklyMeals.title", "Meal plan")}</h1>
               <p className="text-muted-foreground text-sm break-words">
                 {t("meals.weeklyMeals.subtitle", {
                   defaultValue:
@@ -857,18 +948,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
               ) : (
                 <div className="min-w-[220px]">
                   <label className="text-sm font-medium">{t("meals.weeklyMeals.client", "Client")}</label>
-                  <select
-                    className="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background"
-                    value={clientId ?? ""}
-                    onChange={(e) => setClientId(e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">{t("meals.weeklyMeals.selectClient", "Select client...")}</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.full_name}
-                      </option>
-                    ))}
-                  </select>
+                  <PortalSelect
+                    className="mt-1 w-full"
+                    label={t("meals.weeklyMeals.client", "Client")}
+                    placeholder={t("meals.weeklyMeals.selectClient", "Select client...")}
+                    value={clientId ? String(clientId) : ""}
+                    onChange={(v) => setClientId(v ? Number(v) : null)}
+                    options={clients.map((c) => ({ value: String(c.id), label: c.full_name, media: <Avatar name={c.full_name} seed={c.id} size={26} src={(c as { avatar_url?: string | null }).avatar_url} /> }))}
+                  />
                 </div>
               )}
             </div>
@@ -994,7 +1081,7 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0 flex-1">
                                         <div className="text-xs text-muted-foreground mb-1">
-                                          {t(m.labelKey, m.macro === "protein" ? "🍗 Protein" : m.macro === "carb" ? "🍞 Carbs" : "🥑 Fats")}
+                                          {t(m.labelKey, m.macro === "protein" ? "Protein" : m.macro === "carb" ? "Carbs" : "Fats")}
                                         </div>
                                         <Button
                                           type="button"
@@ -1196,12 +1283,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
               />
             </div>
 
+            <GroupChips items={searchedCatalogItems} value={foodDialogGroup} onChange={setFoodDialogGroup} showMine />
+
             <div className="max-h-[50vh] overflow-auto rounded-lg border bg-background/60">
               {filteredCatalogItems.length === 0 ? (
                 <div className="p-3 text-sm text-muted-foreground">{t("meals.weeklyMeals.noResults", "No results")}</div>
               ) : (
                 <div className="flex flex-col divide-y">
-                  {filteredCatalogItems.map((item) => {
+                  {filteredCatalogItems.slice(0, foodDialogShown).map((item) => {
                     const selected = (() => {
                       if (typeof item.id !== "number") return false;
                       if (!currentDialogSlotPlan) return false;
@@ -1235,9 +1324,16 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
                       </Button>
                     );
                   })}
+                  {filteredCatalogItems.length > foodDialogShown && (
+                    <Button type="button" variant="ghost" className="rounded-none" onClick={() => setFoodDialogShown((n) => n + 120)}>
+                      {t("foodTable.showMore", { count: filteredCatalogItems.length - foodDialogShown })}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
+
+            <SearchAllSources query={foodDialogQuery.trim()} onClick={openLibraryFromDialog} />
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setFoodDialogOpen(false)} className="w-full sm:w-auto">
@@ -1247,6 +1343,14 @@ const TrainerWeeklyMealsPlannerV3: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <FoodLibraryDrawer
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        importedKeys={importedKeys}
+        onImported={onLibraryImported}
+        initialQuery={libraryQuery}
+      />
     </Layout>
   );
 };

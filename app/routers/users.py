@@ -8,8 +8,26 @@ from app.auth.utils import get_current_user
 from app.models.user import ClientProfile
 from pydantic import BaseModel
 from typing import Optional
+from app.auth.access import is_admin, is_trainer, is_client
 
 router = APIRouter()
+
+
+def _guard_privileged_fields(current_user: UserResponse, target, user_update: UserUpdate) -> None:
+    """Mass-assignment guard (auth audit C2 + API audit F-01, merged).
+
+    role: only an admin may send it. is_active: only an admin, or a trainer for their own client (never
+    themselves). Any attempt by anyone else is refused, even with the current value, so probing gets a 403.
+    """
+    sent = user_update.model_fields_set
+    if "role" in sent and not is_admin(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can change roles")
+    if "is_active" in sent:
+        own_client = (is_trainer(current_user) and target.trainer_id == current_user.id
+                      and target.id != current_user.id)
+        if not (is_admin(current_user) or own_client):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to change account status")
+
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
@@ -33,7 +51,11 @@ async def get_users(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins and trainers can view all users"
         )
-    return user_service.get_users(db)
+    if is_admin(current_user):
+        return user_service.get_users(db)
+    # A trainer sees themself and their own clients, never other tenants (audit 2026-11, F-03)
+    from app.models.user import User as _User
+    return db.query(_User).filter((_User.id == current_user.id) | (_User.trainer_id == current_user.id)).all()
 
 @router.get("/clients", response_model=List[UserResponse])
 async def get_trainer_clients(
@@ -66,6 +88,9 @@ async def get_trainers(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins and trainers can view trainers"
         )
+    if not is_admin(current_user):
+        # other trainers' emails are not a trainer's business (audit 2026-11, F-03)
+        return [u for u in user_service.get_users_by_role(db, UserRole.TRAINER) if u.id == current_user.id]
     return user_service.get_users_by_role(db, UserRole.TRAINER)
 
 @router.post("/clients/{client_id}/assign", status_code=status.HTTP_200_OK)
@@ -83,6 +108,10 @@ async def assign_client(
             detail="Only trainers can assign clients"
         )
     
+    # A client who already has a trainer cannot be taken over by another trainer (audit 2026-11, F-02)
+    target = user_service.get_user_by_id(db, client_id)
+    if not target or (target.trainer_id is not None and target.trainer_id != current_user.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
     success = user_service.assign_client_to_trainer(db, current_user.id, client_id)
     if not success:
         raise HTTPException(
@@ -147,6 +176,9 @@ async def assign_client_to_trainer(
             detail="Trainer not found"
         )
     
+    target = user_service.get_user_by_id(db, client_id)
+    if not target or (target.trainer_id is not None and target.trainer_id != current_user.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
     success = user_service.assign_client_to_trainer(db, trainer_id, client_id)
     if not success:
         raise HTTPException(
@@ -325,18 +357,18 @@ async def update_user(
     Update user by ID. Admins can update anyone, trainers can update their clients, users can only update themselves.
     """
     # Check permissions
+    target_user = user_service.get_user_by_id(db, user_id)
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     if current_user.role == UserRole.ADMIN:
         # Admins can update anyone
         pass
     elif current_user.role == UserRole.TRAINER:
-        # Trainers can update their clients
-        target_user = user_service.get_user_by_id(db, user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        if target_user.trainer_id != current_user.id:
+        # Trainers can update themselves and their clients
+        if target_user.id != current_user.id and target_user.trainer_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only update your own clients"
@@ -347,7 +379,8 @@ async def update_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only update your own profile"
         )
-    
+    _guard_privileged_fields(current_user, target_user, user_update)
+
     updated_user = user_service.update_user(db, user_id, user_update)
     if not updated_user:
         raise HTTPException(
@@ -355,6 +388,7 @@ async def update_user(
             detail="User not found"
         )
     return updated_user
+
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
@@ -382,12 +416,27 @@ async def delete_user(
             )
     # Admins can delete any user
     try:
+        # Legal audit 2026-11: deleting an account also deletes the person's uploaded files (progress photos,
+        # chat photos / voice, avatar), as the privacy policy promises.
+        from app.routers.privacy import _user_files
+        target = user_service.get_user_by_id(db, user_id)
+        files = []
+        if target is not None:
+            ids = [user_id] + ([c.id for c in user_service.get_trainer_clients(db, user_id)] if target.role == UserRole.TRAINER else [])
+            for uid in ids:
+                files += _user_files(db, uid)
         deleted = user_service.delete_user(db, user_id)
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+        import os as _os
+        for f in files:
+            try:
+                _os.remove(f)
+            except OSError:
+                pass
     except HTTPException:
         raise
     except Exception as e:
@@ -405,6 +454,10 @@ async def update_user_me(
     """
     Update current user's information.
     """
+    target_user = user_service.get_user_by_id(db, current_user.id)
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    _guard_privileged_fields(current_user, target_user, user_update)
     updated_user = user_service.update_user(db, current_user.id, user_update)
     if not updated_user:
         raise HTTPException(
@@ -487,18 +540,13 @@ async def update_client_profile(
             client_profile.height = profile_update.height
         if profile_update.weight is not None:
             client_profile.target_weight = int(profile_update.weight * 1000)  # Convert kg to grams
-        if profile_update.goals is not None:
-            client_profile.fitness_goals = profile_update.goals
-        if profile_update.injuries is not None:
-            client_profile.medical_conditions = profile_update.injuries
-        if profile_update.preferences is not None:
-            client_profile.dietary_restrictions = profile_update.preferences
-        if profile_update.phone is not None:
-            client_profile.phone = profile_update.phone
-        if profile_update.address is not None:
-            client_profile.address = profile_update.address
-        if profile_update.emergency_contact is not None:
-            client_profile.emergency_contact = profile_update.emergency_contact
+        # Text fields sent explicitly (even as null / empty) are written, so the trainer can clear them (A2A trainer F4)
+        sent = getattr(profile_update, "model_fields_set", set())
+        for src, dst in (("goals", "fitness_goals"), ("injuries", "medical_conditions"), ("preferences", "dietary_restrictions"),
+                         ("phone", "phone"), ("address", "address"), ("emergency_contact", "emergency_contact")):
+            if src in sent:
+                value = getattr(profile_update, src)
+                setattr(client_profile, dst, value if (value or "").strip() else None)
     
     db.commit()
     db.refresh(client_profile)

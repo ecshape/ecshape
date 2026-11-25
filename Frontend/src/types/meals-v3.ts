@@ -14,6 +14,13 @@ export interface V3FoodOption {
   measurement_type?: MeasurementType;
   notes?: string | null;
   macro_type?: MacroType;
+  /** Photo from the food bank (Open Food Facts / Wikimedia), when available. */
+  image_url?: string | null;
+  /** "ecshape" for rows of the ECShape nutrition table (the default bank) */
+  source?: string | null;
+  source_id?: string | null;
+  /** ECShape table group (poultry, dairy, bread…) */
+  food_group?: string | null;
 }
 
 export interface V3FoodCatalogItem extends V3FoodOption {
@@ -185,8 +192,9 @@ export interface V3DayViewResponse {
 
 export interface V3MealLogCreateRequest {
   date: string;
-  meal_slot_id: number;
-  macro_type: MacroType;
+  /** null/omitted = a free entry outside the coach's plan */
+  meal_slot_id?: number | null;
+  macro_type?: MacroType | null;
   food_option_id?: number | null;
   quantity?: string | null;
   custom_food_name?: string | null;

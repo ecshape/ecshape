@@ -13,6 +13,19 @@ from app.services import user_service
 
 router = APIRouter()
 
+_PUBLIC_IMAGE_EXT = (".jpg", ".jpeg", ".png", ".webp", ".gif")
+
+
+def _public_image_path(file_service, folder: str, filename: str):
+    """Public images are served only from their folder and only with an image extension, so an uploaded
+    polyglot named x.html can never come back as text/html (audit 2026-11, F-09)."""
+    if os.path.basename(filename) != filename or not filename.lower().endswith(_PUBLIC_IMAGE_EXT):
+        return None
+    base = os.path.abspath(os.path.join(file_service.base_upload_path, folder))
+    path = os.path.abspath(os.path.join(base, filename))
+    return path if os.path.dirname(path) == base and os.path.isfile(path) else None
+
+
 def get_file_service():
     """Dependency to get file service instance."""
     return FileService()
@@ -28,28 +41,108 @@ async def serve_exercise_image(
     This allows browser img tags to load them without auth headers.
     Exercise images are meant to be shared between trainer and clients.
     """
-    # Use persistent path for Railway, fallback to local for dev
-    persistent_base = os.getenv("PERSISTENT_PATH", "/app/persistent")
-    upload_dir = os.getenv("UPLOAD_DIR", os.path.join(persistent_base, "uploads"))
-    
-    # Try multiple possible locations
-    possible_paths = [
-        os.path.join(upload_dir, "exercise_images", filename),  # Railway persistent
-        f"{persistent_base}/uploads/exercise_images/{filename}",  # Alternative persistent path
-        f"uploads/exercise_images/{filename}",  # Local dev
-        f"/app/uploads/exercise_images/{filename}",  # Legacy path
-    ]
-    
-    file_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            file_path = path
-            break
-    
-    if not file_path:
+    path = _public_image_path(file_service, "exercise_images", filename)
+    if not path:
         raise HTTPException(status_code=404, detail="File not found")
-    
-    return FileResponse(file_path)
+    return FileResponse(path)
+
+FOOD_PHOTO_EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif"}
+
+
+def _food_photo_dir(file_service: FileService) -> str:
+    return os.path.join(file_service.base_upload_path, "food_photos")
+
+
+@router.post("/food-photo", status_code=status.HTTP_201_CREATED)
+async def upload_food_photo(
+    file: UploadFile = File(...),
+    current_user: UserResponse = Depends(get_current_user),
+    file_service: FileService = Depends(get_file_service),
+):
+    """Upload a photo for a food-bank item (trainers and admins). Returns a public URL path to store in image_url."""
+    if current_user.role not in (UserRole.TRAINER, UserRole.ADMIN):
+        raise HTTPException(status_code=403, detail="Only trainers can upload food photos")
+    is_valid, error_message = await file_service.validate_file(file, "image")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_message)
+    content = await file.read()
+    import magic  # same detector FileService uses
+    import uuid
+    ext = FOOD_PHOTO_EXT.get(magic.from_buffer(content, mime=True))
+    if not ext:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+    directory = _food_photo_dir(file_service)
+    os.makedirs(directory, exist_ok=True)
+    filename = f"food_{current_user.id}_{uuid.uuid4().hex}{ext}"
+    with open(os.path.join(directory, filename), "wb") as fh:
+        fh.write(content)
+    return {"filename": filename, "url": f"/files/media/food_photos/{filename}"}
+
+
+@router.get("/media/food_photos/{filename}")
+async def serve_food_photo(filename: str, file_service: FileService = Depends(get_file_service)):
+    """Serve food-bank photos publicly (like exercise images) so <img> tags work without auth headers."""
+    safe = os.path.basename(filename)
+    path = os.path.join(_food_photo_dir(file_service), safe)
+    if safe != filename or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
+
+
+# ---- private media (audit 2026-11, F-08): owner parsed exactly from the file name, then checked against the tenant.
+# Was: every trainer could read every tenant's progress / meal / profile photos, the client check was a substring
+# test (client 3 could open any name containing a "3"), DELETE had no check at all, and 404s leaked server paths.
+import re as _re
+from app.auth.access import can_access_client, is_admin, is_client
+
+_MEDIA_TYPES = ("meal_photos", "profile_photos", "progress_photos", "documents", "thumbnails")
+_MEDIA_NAME_RE = _re.compile(r"^(meal_photo|profile_photo|progress_photo|document|exercise_image)_(\d+)_[0-9a-fA-F-]{32,36}(?:_(?:compressed|thumb|medium|large))?\.(?:jpe?g|png|webp|gif|pdf|docx?)$")
+
+
+def _media_path(file_service: FileService, file_type: str, filename: str) -> Optional[str]:
+    if os.path.basename(filename) != filename or filename.startswith("."):
+        return None
+    base = os.path.abspath(os.path.join(file_service.base_upload_path, file_type))
+    path = os.path.abspath(os.path.join(base, filename))
+    if os.path.dirname(path) != base or not os.path.isfile(path):
+        return None
+    return path
+
+
+def _media_owner_user_id(db: Session, category: str, entity_id: int) -> Optional[int]:
+    """The client (or user, for profile photos) a media file belongs to."""
+    if category == "meal_photo":  # legacy: entity = nutrition meal completion
+        from app.models.nutrition import MealCompletion
+        mc = db.query(MealCompletion).filter(MealCompletion.id == entity_id).first()
+        return mc.client_id if mc else None
+    return entity_id
+
+
+def _can_use_media(db: Session, user: UserResponse, file_type: str, filename: str, write: bool = False) -> bool:
+    m = _MEDIA_NAME_RE.match(filename)
+    if not m:
+        return False
+    category, entity_id = m.group(1), int(m.group(2))
+    expected_dir = {"meal_photo": "meal_photos", "profile_photo": "profile_photos", "progress_photo": "progress_photos",
+                    "document": "documents"}.get(category)
+    if file_type != "thumbnails" and expected_dir != file_type:
+        return False
+    if is_admin(user):
+        return True
+    owner = _media_owner_user_id(db, category, entity_id)
+    if owner is None:
+        return False
+    if category == "profile_photo":
+        if owner == user.id:
+            return True
+        if write:
+            return False
+        from app.models.user import User as _U
+        target = db.query(_U).filter(_U.id == owner).first()
+        # own trainer's photo, or a trainer looking at their client
+        return bool(target and (target.id == getattr(user, "trainer_id", None) or target.trainer_id == user.id))
+    return can_access_client(db, user, owner)
+
 
 @router.get("/media/{file_type}/{filename}")
 async def serve_media_file(
@@ -60,276 +153,25 @@ async def serve_media_file(
     db: Session = Depends(get_db),
     file_service: FileService = Depends(get_file_service)
 ):
-    """
-    Serve media files with access control.
-    
-    Args:
-        file_type: Type of file (meal_photos, profile_photos, progress_photos, documents, thumbnails)
-        filename: Name of the file
-        size: Image size for processed images
-        current_user: Authenticated user
-        db: Database session
-        file_service: File service instance
-    """
-    
-    # Validate file type
-    allowed_types = ["meal_photos", "profile_photos", "progress_photos", "documents", "thumbnails"]
-    if file_type not in allowed_types:
-        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: {allowed_types}")
-    
-    # Construct file path - try multiple possible locations
-    # Priority: Use FileService's actual base_upload_path (where files are saved), then fallbacks
-    possible_paths = []
-    
-    # Get the actual path where FileService saves files
-    file_service_base = file_service.base_upload_path
-    
-    if size != "original" and file_type == "thumbnails":
-        possible_paths = [
-            os.path.join(file_service_base, "thumbnails", filename),  # Where FileService saves (primary)
-            os.path.join(os.getenv("UPLOAD_DIR", "/app/persistent/uploads"), "thumbnails", filename),  # Env var path
-            f"/app/persistent/uploads/thumbnails/{filename}",  # Explicit Railway persistent
-            f"uploads/thumbnails/{filename}",  # Local dev
-            f"/app/uploads/thumbnails/{filename}",  # Legacy path
-        ]
-    else:
-        possible_paths = [
-            os.path.join(file_service_base, file_type, filename),  # Where FileService saves (primary)
-            os.path.join(os.getenv("UPLOAD_DIR", "/app/persistent/uploads"), file_type, filename),  # Env var path
-            f"/app/persistent/uploads/{file_type}/{filename}",  # Explicit Railway persistent
-            f"uploads/{file_type}/{filename}",  # Local dev (relative)
-            f"./uploads/{file_type}/{filename}",  # Local dev (explicit relative)
-            f"/app/uploads/{file_type}/{filename}",  # Legacy absolute path
-            os.path.join(os.getcwd(), "uploads", file_type, filename),  # Current working directory
-        ]
-    
-    # Try to find the file in any of the possible locations
-    file_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            file_path = path
-            break
-    
-    # If not found, also try with the filename as-is (in case it's already a full path)
-    if not file_path and os.path.exists(filename):
-        file_path = filename
-    
-    if not file_path:
-        # Log all attempted paths for debugging
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"File not found: {filename}")
-        logger.error(f"File type: {file_type}")
-        logger.error(f"FileService base_upload_path: {file_service.base_upload_path}")
-        logger.error(f"Attempted paths: {possible_paths}")
-        logger.error(f"Also tried: {filename}")
-        logger.error(f"Current working directory: {os.getcwd()}")
-        logger.error(f"PERSISTENT_PATH env: {os.getenv('PERSISTENT_PATH', 'not set')}")
-        logger.error(f"UPLOAD_DIR env: {os.getenv('UPLOAD_DIR', 'not set')}")
-        
-        # Check if FileService base directory exists
-        if os.path.exists(file_service_base):
-            logger.error(f"FileService base directory exists: {file_service_base}")
-            try:
-                files_in_dir = os.listdir(file_service_base)
-                logger.error(f"Files in FileService base dir: {files_in_dir[:10]}")  # First 10 files
-                
-                # Check specific file_type directory
-                file_type_dir = os.path.join(file_service_base, file_type)
-                if os.path.exists(file_type_dir):
-                    logger.error(f"File type directory exists: {file_type_dir}")
-                    files_in_type_dir = os.listdir(file_type_dir)
-                    logger.error(f"Files in {file_type} dir ({len(files_in_type_dir)} total): {files_in_type_dir[:20]}")
-                else:
-                    logger.error(f"File type directory does NOT exist: {file_type_dir}")
-            except Exception as e:
-                logger.error(f"Error listing FileService base dir: {e}")
-        else:
-            logger.error(f"FileService base directory does not exist: {file_service_base}")
-        
-        # File not found - check access first, then return placeholder or 404
-        # This handles cases where database references exist but files were deleted/lost
-        # We still need to verify access before returning placeholder to avoid information leakage
-        
-        # Basic access check based on filename pattern
-        has_access = False
-        if file_type == "progress_photos":
-            # Extract client ID from filename (format: progress_photo_{client_id}_{uuid}_compressed.jpg)
-            try:
-                parts = filename.split('_')
-                if len(parts) >= 3:
-                    client_id = int(parts[2])  # progress_photo_{client_id}_{uuid}
-                    # Allow trainers to access all progress photos, clients only their own
-                    if current_user.role == UserRole.TRAINER:
-                        has_access = True
-                    elif current_user.role == UserRole.CLIENT and current_user.id == client_id:
-                        has_access = True
-            except (ValueError, IndexError):
-                pass
-        elif file_type == "meal_photos":
-            # Extract entity ID from filename (format: meal_photo_{entity_id}_{uuid}.jpg)
-            try:
-                parts = filename.split('_')
-                if len(parts) >= 3:
-                    entity_id = int(parts[2])  # meal_photo_{entity_id}_{uuid}
-                    # Allow trainers to access all meal photos, clients only their own
-                    if current_user.role == UserRole.TRAINER:
-                        has_access = True
-                    elif current_user.role == UserRole.CLIENT and str(current_user.id) in filename:
-                        has_access = True
-            except (ValueError, IndexError):
-                pass
-        
-        # Return placeholder for progress/meal photos if user has access, otherwise 404
-        if file_type in ["progress_photos", "meal_photos"] and has_access:
-            # Return a placeholder SVG image instead of 404
-            # This prevents broken image icons in the UI
-            placeholder_svg = f"""<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-                <rect width="400" height="300" fill="#f3f4f6"/>
-                <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">
-                    Photo not available
-                </text>
-            </svg>"""
+    """Serve a private media file to its owner, the owner's trainer, or an admin."""
+    if file_type not in _MEDIA_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    if not _can_use_media(db, current_user, file_type, filename):
+        raise HTTPException(status_code=404, detail="File not found")
+    path = _media_path(file_service, file_type, filename)
+    if not path:
+        if file_type in ("progress_photos", "meal_photos"):
+            # the database still references a lost file: a neutral placeholder instead of a broken image
             from fastapi.responses import Response
+            placeholder_svg = (
+                '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#f3f4f6"/>'
+                '<text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" '
+                'dominant-baseline="middle">Photo not available</text></svg>'
+            )
             return Response(content=placeholder_svg, media_type="image/svg+xml")
-        
-        raise HTTPException(status_code=404, detail=f"File not found: {filename}. Tried: {possible_paths}")
-    
-    # Access control based on file type
-    if file_type == "meal_photos":
-        # Extract entity ID from filename (format: meal_photo_{entity_id}_{uuid}.jpg)
-        try:
-            parts = filename.split('_')
-            if len(parts) >= 3:
-                entity_id = int(parts[2])  # meal_photo_{entity_id}_{uuid}
-                
-                # Get meal completion from nutrition service to verify access
-                from app.services.nutrition_service import NutritionService
-                nutrition_service = NutritionService(db)
-                meal_completion = nutrition_service.get_meal_completion(entity_id)
-                
-                if not meal_completion:
-                    raise HTTPException(status_code=404, detail="Meal completion not found")
-                
-                # Access control: trainers can access all meal photos, clients only their own
-                if current_user.role == UserRole.TRAINER:
-                    # Trainers can access all meal photos
-                    return FileResponse(file_path)
-                elif current_user.role == UserRole.CLIENT:
-                    # Clients can only access their own meal photos
-                    if meal_completion.client_id == current_user.id:
-                        return FileResponse(file_path)
-                    else:
-                        raise HTTPException(status_code=403, detail="Access denied")
-                else:
-                    raise HTTPException(status_code=403, detail="Access denied")
-            else:
-                raise HTTPException(status_code=400, detail="Invalid filename format")
-        except (ValueError, IndexError):
-            raise HTTPException(status_code=400, detail="Invalid filename format")
-    
-    elif file_type == "profile_photos":
-        # Extract user ID from filename (format: profile_photo_{user_id}_{uuid}.jpg)
-        try:
-            parts = filename.split('_')
-            if len(parts) >= 3:
-                user_id = int(parts[2])  # profile_photo_{user_id}_{uuid}
-                
-                # Allow access if user is viewing their own photo or is a trainer
-                if current_user.id == user_id or current_user.role == UserRole.TRAINER:
-                    return FileResponse(file_path)
-                else:
-                    raise HTTPException(status_code=403, detail="Access denied")
-            else:
-                raise HTTPException(status_code=400, detail="Invalid filename format")
-        except (ValueError, IndexError):
-            raise HTTPException(status_code=400, detail="Invalid filename format")
-    
-    elif file_type == "progress_photos":
-        # Extract entity ID from filename (format: progress_photo_{entity_id}_{uuid}.jpg)
-        try:
-            parts = filename.split('_')
-            if len(parts) >= 3:
-                entity_id = int(parts[2])  # progress_photo_{entity_id}_{uuid}
-                
-                # For now, implement basic access control for progress photos
-                # Allow trainers to access all progress photos, clients only their own
-                if current_user.role == UserRole.TRAINER:
-                    return FileResponse(file_path)
-                elif current_user.role == UserRole.CLIENT:
-                    # Extract client ID from filename and check if it matches current user
-                    if str(current_user.id) in filename:
-                        return FileResponse(file_path)
-                    else:
-                        raise HTTPException(status_code=403, detail="Access denied")
-                else:
-                    raise HTTPException(status_code=403, detail="Access denied")
-            else:
-                raise HTTPException(status_code=400, detail="Invalid filename format")
-        except (ValueError, IndexError):
-            raise HTTPException(status_code=400, detail="Invalid filename format")
-    
-    elif file_type == "documents":
-        # Extract entity ID from filename (format: document_{entity_id}_{uuid}.pdf)
-        try:
-            parts = filename.split('_')
-            if len(parts) >= 3:
-                entity_id = int(parts[2])  # document_{entity_id}_{uuid}
-                
-                # For now, implement basic access control for documents
-                # Allow trainers to access all documents, clients only their own
-                if current_user.role == UserRole.TRAINER:
-                    return FileResponse(file_path)
-                elif current_user.role == UserRole.CLIENT:
-                    # Extract client ID from filename and check if it matches current user
-                    if str(current_user.id) in filename:
-                        return FileResponse(file_path)
-                    else:
-                        raise HTTPException(status_code=403, detail="Access denied")
-                else:
-                    raise HTTPException(status_code=403, detail="Access denied")
-            else:
-                raise HTTPException(status_code=400, detail="Invalid filename format")
-        except (ValueError, IndexError):
-            raise HTTPException(status_code=400, detail="Invalid filename format")
-    
-    elif file_type == "thumbnails":
-        # Thumbnails follow the same access control as their parent files
-        # Extract the original file type and entity ID from thumbnail filename
-        try:
-            parts = filename.split('_')
-            if len(parts) >= 4:
-                original_type = parts[0]  # meal_photo, profile_photo, etc.
-                entity_id = int(parts[1])  # entity_id
-                
-                # Apply the same access control logic based on original type
-                if original_type == "meal_photo":
-                    # Basic access control for meal photo thumbnails
-                    if current_user.role == UserRole.TRAINER:
-                        return FileResponse(file_path)
-                    elif current_user.role == UserRole.CLIENT:
-                        if str(current_user.id) in filename:
-                            return FileResponse(file_path)
-                        else:
-                            raise HTTPException(status_code=403, detail="Access denied")
-                    else:
-                        raise HTTPException(status_code=403, detail="Access denied")
-                
-                elif original_type == "profile_photo":
-                    if current_user.id == entity_id or current_user.role == UserRole.TRAINER:
-                        return FileResponse(file_path)
-                    else:
-                        raise HTTPException(status_code=403, detail="Access denied")
-                
-                else:
-                    raise HTTPException(status_code=400, detail="Invalid thumbnail type")
-            else:
-                raise HTTPException(status_code=400, detail="Invalid filename format")
-        except (ValueError, IndexError):
-            raise HTTPException(status_code=400, detail="Invalid filename format")
-    
-    # Default deny
-    raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path, headers={"Cache-Control": "private, max-age=3600"})
+
 
 @router.delete("/media/{file_type}/{filename}")
 async def delete_media_file(
@@ -339,50 +181,24 @@ async def delete_media_file(
     db: Session = Depends(get_db),
     file_service: FileService = Depends(get_file_service)
 ):
-    """
-    Delete media files with access control.
-    """
-    
-    # Validate file type
+    """Delete a media file: its owner, the owner's trainer, or an admin. Exercise images: their creator or an admin."""
     allowed_types = ["meal_photos", "profile_photos", "progress_photos", "documents", "exercise_images"]
     if file_type not in allowed_types:
-        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: {allowed_types}")
-    
-    # Use persistent path for Railway, fallback to local for dev
-    persistent_base = os.getenv("PERSISTENT_PATH", "/app/persistent")
-    upload_dir = os.getenv("UPLOAD_DIR", os.path.join(persistent_base, "uploads"))
-    
-    # Try multiple possible locations
-    possible_paths = [
-        os.path.join(upload_dir, file_type, filename),  # Railway persistent
-        f"{persistent_base}/uploads/{file_type}/{filename}",  # Alternative persistent path
-        f"uploads/{file_type}/{filename}",  # Local dev
-        f"/app/uploads/{file_type}/{filename}",  # Legacy path
-    ]
-    
-    file_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            file_path = path
-            break
-    
-    if not file_path:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    if file_type == "exercise_images":
+        from app.models.workout import Exercise
+        ex = db.query(Exercise).filter(Exercise.image_path.like(f"%{filename}")).first() if _re.match(r"^[\w.-]+$", filename) else None
+        ok = is_admin(current_user) or (ex is not None and ex.created_by == current_user.id)
+    else:
+        ok = _can_use_media(db, current_user, file_type, filename, write=True)
+    if not ok:
         raise HTTPException(status_code=404, detail="File not found")
-    
-    # Apply the same access control logic as serve_media_file
-    # (This is a simplified version - you might want to extract this logic into a shared function)
-    
-    try:
-        # Delete file and all its processed versions
-        success = await file_service.delete_file(file_path)
-        
-        if success:
-            return {"message": "File deleted successfully"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to delete file")
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting file: {str(e)}")
+    path = _media_path(file_service, file_type, filename)
+    if not path:
+        raise HTTPException(status_code=404, detail="File not found")
+    if not await file_service.delete_file(path):
+        raise HTTPException(status_code=500, detail="Failed to delete file")
+    return {"message": "File deleted successfully"}
 
 @router.get("/debug/paths")
 async def debug_file_paths(
@@ -391,8 +207,7 @@ async def debug_file_paths(
 ):
     """Debug endpoint to check file paths and locations - Admin only in production"""
     # Only allow in development or for admins
-    environment = os.getenv("ENVIRONMENT", "development")
-    if environment == "production" and current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.ADMIN:  # audit 2026-11 (L-01): server paths and file names are admin-only
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Admin only."
@@ -464,7 +279,7 @@ async def get_media_stats(
     Get media storage statistics (admin/trainer only).
     """
     
-    if current_user.role != UserRole.TRAINER:
+    if current_user.role != UserRole.ADMIN:  # storage of every tenant (audit 2026-11, L-01)
         raise HTTPException(status_code=403, detail="Access denied")
     
     try:
@@ -510,4 +325,92 @@ async def get_media_stats(
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting media stats: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Error getting media stats: {str(e)}")
+
+
+# ---------------------------------------------------------------- profile photos (avatars)
+# Every user can set their own photo. Files get an unguessable name and are served without auth so that
+# <img> tags (portal, chat, public-site bubble) can show them; nothing else about the user is exposed.
+AVATAR_MAX_BYTES = 8 * 1024 * 1024
+AVATAR_SIZE = 512
+AVATAR_NAME_RE = r"^[0-9]+_[0-9a-f]{32}\.webp$"
+
+
+def _avatar_dir() -> str:
+    path = os.path.join(FileService().base_upload_path, "avatars")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _remove_avatar_file(path: Optional[str]) -> None:
+    """Delete a previous avatar file, only if it really lives in the avatars folder."""
+    if not path:
+        return
+    folder = os.path.abspath(_avatar_dir())
+    target = os.path.abspath(path)
+    if os.path.dirname(target) == folder and os.path.exists(target):
+        try:
+            os.remove(target)
+        except OSError:
+            pass
+
+
+@router.post("/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set the signed-in user's profile photo. The image is squared, resized to 512 px and stored as WebP."""
+    import io
+    import uuid
+    from PIL import Image, ImageOps
+    from app.models.user import User
+
+    raw = await file.read(AVATAR_MAX_BYTES + 1)
+    if len(raw) > AVATAR_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Image too large (8 MB max)")
+    try:
+        img = Image.open(io.BytesIO(raw))
+        img = ImageOps.exif_transpose(img).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Not a valid image")
+    img = ImageOps.fit(img, (AVATAR_SIZE, AVATAR_SIZE), Image.LANCZOS)
+
+    name = f"{current_user.id}_{uuid.uuid4().hex}.webp"
+    path = os.path.join(_avatar_dir(), name)
+    img.save(path, "WEBP", quality=82, method=4)
+
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    old = user.avatar_path
+    user.avatar_path = path
+    user.avatar_url = f"/api/files/avatars/{name}"
+    db.commit()
+    _remove_avatar_file(old)
+    return {"avatar_url": user.avatar_url}
+
+
+@router.delete("/avatar")
+async def delete_avatar(current_user: UserResponse = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.models.user import User
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if user:
+        _remove_avatar_file(user.avatar_path)
+        user.avatar_path = None
+        user.avatar_url = None
+        db.commit()
+    return {"avatar_url": None}
+
+
+@router.get("/avatars/{filename}")
+async def serve_avatar(filename: str):
+    import re
+    if not re.match(AVATAR_NAME_RE, filename):
+        raise HTTPException(status_code=404, detail="Not found")
+    path = os.path.join(_avatar_dir(), filename)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Not found")
+    # The name changes on every upload, so a given file never changes
+    return FileResponse(path, media_type="image/webp", headers={"Cache-Control": "public, max-age=31536000, immutable"}) 

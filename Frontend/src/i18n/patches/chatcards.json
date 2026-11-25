@@ -1,0 +1,392 @@
+{
+  "en": {
+    "chatCards": {
+      "request": "Exercise request",
+      "accept": "Add to plan",
+      "alternative": "Alternative",
+      "decline": "Not now",
+      "pickAlternative": "Pick an easier or harder option",
+      "day": "Plan day",
+      "chooseDay": "Choose a day",
+      "addToDay": "Add to this day",
+      "cancel": "Cancel",
+      "noPlan": "This client has no active training plan yet.",
+      "inDay": "In: {{day}}",
+      "status": {
+        "accepted": "Added",
+        "declined": "Not now",
+        "alternative": "Alternative added"
+      },
+      "reply": {
+        "accept": "Added to your plan",
+        "decline": "Not for now",
+        "alternative": "Try this instead"
+      },
+      "msg": {
+        "accept": "Done! I added {{name}} to {{day}}",
+        "decline": "Let's keep {{name}} for later — your current plan already covers it.",
+        "alternative": "Good idea! Let's do {{name}} instead — I added it to {{day}}."
+      },
+      "menu": {
+        "label": "Weekly menu",
+        "meals_one": "{{count}} meal a day",
+        "meals_other": "{{count}} meals a day",
+        "review": "Review and approve",
+        "waiting": "Waiting for the client's approval",
+        "approved": "Menu approved",
+        "approvedShort": "Approved",
+        "reviewHelp": "Go through each meal: keep your coach's pick or choose an alternative, then approve.",
+        "prev": "Previous meal",
+        "approveMeal": "Approve this meal",
+        "confirm": "Confirm my menu",
+        "progress": "{{done}} of {{total}} meals approved",
+        "step": "Meal {{n}} of {{total}}",
+        "coachPick": "Coach's pick",
+        "portion": "portion",
+        "acceptMsg": "I approved the menu “{{name}}”",
+        "sendButton": "Send a weekly menu",
+        "sendTitle": "Send a weekly menu",
+        "sendHelp": "{{name}} reviews it meal by meal in the chat and picks alternatives; once approved it becomes their meal plan.",
+        "sendTo": "Send to {{name}}",
+        "sendMsg": "Here is your weekly menu “{{name}}”. Go through each meal, pick what you prefer and approve"
+      },
+      "details": "Exercise details",
+      "noDetails": "No more details for this exercise.",
+      "intake": {
+        "label": "Nutrition form",
+        "title": "Your food preferences",
+        "cardSub": "2 minutes, then you get a personal menu",
+        "open": "Fill in the form",
+        "help": "So your menu fits your taste, your goal and your routine.",
+        "submit": "Send and build my menu",
+        "sent": "Sent! Your menu is on its way",
+        "goal": "Your goal",
+        "goals": {
+          "lose": "Lose weight",
+          "gain": "Gain weight / muscle",
+          "maintain": "Maintain",
+          "recomp": "Recomposition"
+        },
+        "diet": "Special diet",
+        "diets": {
+          "kosher": "Kosher",
+          "vegetarian": "Vegetarian",
+          "vegan": "Vegan",
+          "pescatarian": "Pescatarian",
+          "gluten_free": "Gluten-free",
+          "lactose_free": "Lactose-free"
+        },
+        "allergies": "Allergies",
+        "allergiesPh": "e.g. peanuts, sesame",
+        "dislikes": "Foods you don't eat",
+        "dislikesPh": "e.g. tuna, eggplant",
+        "likes": "Foods you love",
+        "likesPh": "e.g. eggs, rice, salmon",
+        "perMeal": "What do you like at each meal?",
+        "slots": {
+          "breakfast": "Breakfast",
+          "lunch": "Lunch",
+          "dinner": "Dinner",
+          "snack": "Snack"
+        },
+        "mealPh": {
+          "breakfast": "e.g. omelette and bread, yogurt and granola",
+          "lunch": "e.g. chicken and rice",
+          "dinner": "e.g. something light, salad and tuna",
+          "snack": "e.g. fruit, protein bar"
+        },
+        "body": "About you (to compute the amounts)",
+        "sex": "Sex",
+        "sexes": {
+          "female": "Female",
+          "male": "Male"
+        },
+        "age": "Age",
+        "height": "Height (cm)",
+        "weight": "Weight (kg)",
+        "activity": "How active are you?",
+        "activities": {
+          "low": "A little",
+          "moderate": "Moderately",
+          "high": "Very"
+        },
+        "notes": "Anything else your coach should know?",
+        "answered": "I filled in the nutrition form",
+        "answeredShort": "Sent",
+        "building": "The menu is being built and will be sent automatically.",
+        "waiting": "Waiting for the client",
+        "menuLabel": "Personal menu",
+        "menuSub": "{{kcal}} kcal a day · {{meals}} meals",
+        "openMenu": "View and choose",
+        "menuHelp": "Daily target: {{kcal}} kcal, {{p}} g protein. Replace a whole meal or a single product, then confirm.",
+        "slotTarget": "About {{kcal}} kcal · {{count}} options",
+        "swapMeal": "Another meal",
+        "swapItem": "Replace {{name}}",
+        "confirm": "Confirm menu",
+        "confirmed": "Menu confirmed and added to your nutrition plan",
+        "sendTitle": "Preferences form + AI menu",
+        "sendHelp": "{{name}} fills in a short form, and the AI builds and sends a menu with 4-5 options per meal from your foods."
+      }
+    }
+  },
+  "he": {
+    "chatCards": {
+      "request": "בקשת תרגיל",
+      "accept": "הוסף לתוכנית",
+      "alternative": "חלופה",
+      "decline": "לא עכשיו",
+      "pickAlternative": "בחר חלופה קלה או קשה יותר",
+      "day": "יום בתוכנית",
+      "chooseDay": "בחר יום",
+      "addToDay": "הוסף ליום הזה",
+      "cancel": "ביטול",
+      "noPlan": "למתאמן אין עדיין תוכנית אימון פעילה.",
+      "inDay": "ב: {{day}}",
+      "status": {
+        "accepted": "נוסף",
+        "declined": "לא עכשיו",
+        "alternative": "נוספה חלופה"
+      },
+      "reply": {
+        "accept": "נוסף לתוכנית שלך",
+        "decline": "לא כרגע",
+        "alternative": "נסה את זה במקום"
+      },
+      "msg": {
+        "accept": "בוצע! הוספתי את {{name}} ל{{day}}",
+        "decline": "נשאיר את {{name}} להמשך — התוכנית הנוכחית כבר מכסה את זה.",
+        "alternative": "רעיון טוב! נעשה במקום זה {{name}} — הוספתי ל{{day}}."
+      },
+      "menu": {
+        "label": "תפריט שבועי",
+        "meals_one": "ארוחה אחת ביום",
+        "meals_other": "{{count}} ארוחות ביום",
+        "review": "לעבור ולאשר",
+        "waiting": "ממתין לאישור המתאמן",
+        "approved": "התפריט אושר",
+        "approvedShort": "אושר",
+        "reviewHelp": "עברו על כל ארוחה: השאירו את בחירת המאמן או בחרו חלופה, ואשרו.",
+        "prev": "הארוחה הקודמת",
+        "approveMeal": "אישור הארוחה",
+        "confirm": "אישור התפריט שלי",
+        "progress": "{{done}} מתוך {{total}} ארוחות אושרו",
+        "step": "ארוחה {{n}} מתוך {{total}}",
+        "coachPick": "בחירת המאמן",
+        "portion": "מנה",
+        "acceptMsg": "אישרתי את התפריט “{{name}}”",
+        "sendButton": "שליחת תפריט שבועי",
+        "sendTitle": "שליחת תפריט שבועי",
+        "sendHelp": "{{name}} יעבור עליו ארוחה אחר ארוחה בצ׳אט ויבחר חלופות; אחרי האישור הוא יהפוך לתפריט שלו.",
+        "sendTo": "שליחה ל-{{name}}",
+        "sendMsg": "הנה התפריט השבועי שלך “{{name}}”. עבור על כל ארוחה, בחר מה שאתה מעדיף ואשר"
+      },
+      "details": "פרטי התרגיל",
+      "noDetails": "אין פרטים נוספים על התרגיל הזה.",
+      "intake": {
+        "label": "שאלון תזונה",
+        "title": "העדפות האוכל שלך",
+        "cardSub": "2 דקות, ואז מקבלים תפריט אישי",
+        "open": "מלא/י את השאלון",
+        "help": "ככה התפריט יתאים בדיוק לטעם, למטרה ולאורח החיים שלך.",
+        "submit": "שליחה ובניית תפריט",
+        "sent": "נשלח! התפריט שלך בהכנה",
+        "goal": "מה המטרה?",
+        "goals": {
+          "lose": "ירידה במשקל",
+          "gain": "עלייה במשקל / מסה",
+          "maintain": "שמירה",
+          "recomp": "חיטוב (שריר במקום שומן)"
+        },
+        "diet": "תזונה מיוחדת",
+        "diets": {
+          "kosher": "כשר",
+          "vegetarian": "צמחוני",
+          "vegan": "טבעוני",
+          "pescatarian": "צמחוני + דגים",
+          "gluten_free": "ללא גלוטן",
+          "lactose_free": "ללא לקטוז"
+        },
+        "allergies": "אלרגיות",
+        "allergiesPh": "למשל: בוטנים, שומשום",
+        "dislikes": "מה את/ה לא אוכל/ת",
+        "dislikesPh": "למשל: טונה, חציל",
+        "likes": "מה את/ה הכי אוהב/ת",
+        "likesPh": "למשל: ביצים, אורז, סלמון",
+        "perMeal": "מה בא לך בכל ארוחה?",
+        "slots": {
+          "breakfast": "ארוחת בוקר",
+          "lunch": "ארוחת צהריים",
+          "dinner": "ארוחת ערב",
+          "snack": "נשנוש"
+        },
+        "mealPh": {
+          "breakfast": "למשל: חביתה ולחם, יוגורט וגרנולה",
+          "lunch": "למשל: עוף ואורז",
+          "dinner": "למשל: משהו קליל, סלט וטונה",
+          "snack": "למשל: פרי, חטיף חלבון"
+        },
+        "body": "קצת עליך (לחישוב הכמויות)",
+        "sex": "מין",
+        "sexes": {
+          "female": "אישה",
+          "male": "גבר"
+        },
+        "age": "גיל",
+        "height": "גובה (ס״מ)",
+        "weight": "משקל (ק״ג)",
+        "activity": "כמה את/ה פעיל/ה?",
+        "activities": {
+          "low": "מעט",
+          "moderate": "בינוני",
+          "high": "הרבה"
+        },
+        "notes": "עוד משהו שחשוב שהמאמן ידע?",
+        "answered": "מילאתי את שאלון התזונה",
+        "answeredShort": "נשלח",
+        "building": "התפריט נבנה עכשיו ויישלח אוטומטית.",
+        "waiting": "מחכה למתאמן/ת",
+        "menuLabel": "תפריט אישי",
+        "menuSub": "{{kcal}} קלוריות ביום · {{meals}} ארוחות",
+        "openMenu": "צפייה ובחירה",
+        "menuHelp": "יעד יומי: {{kcal}} קלוריות, {{p}} גרם חלבון. אפשר להחליף ארוחה שלמה או מוצר בודד, ואז לאשר.",
+        "slotTarget": "כ-{{kcal}} קלוריות · {{count}} אפשרויות",
+        "swapMeal": "ארוחה אחרת",
+        "swapItem": "החלפת {{name}}",
+        "confirm": "אישור התפריט",
+        "confirmed": "התפריט אושר ונכנס לתוכנית התזונה שלך",
+        "sendTitle": "שאלון העדפות + תפריט AI",
+        "sendHelp": "{{name}} ממלא/ת שאלון קצר, וה-AI בונה ושולח תפריט עם 4-5 אפשרויות לכל ארוחה מהמזונות שלך."
+      }
+    }
+  },
+  "fr": {
+    "chatCards": {
+      "request": "Demande d'exercice",
+      "accept": "Ajouter au plan",
+      "alternative": "Alternative",
+      "decline": "Pas maintenant",
+      "pickAlternative": "Choisissez une option plus facile ou plus dure",
+      "day": "Jour du plan",
+      "chooseDay": "Choisir un jour",
+      "addToDay": "Ajouter à ce jour",
+      "cancel": "Annuler",
+      "noPlan": "Ce client n'a pas encore de plan d'entraînement actif.",
+      "inDay": "Dans : {{day}}",
+      "status": {
+        "accepted": "Ajouté",
+        "declined": "Pas maintenant",
+        "alternative": "Alternative ajoutée"
+      },
+      "reply": {
+        "accept": "Ajouté à votre plan",
+        "decline": "Pas pour l'instant",
+        "alternative": "Essayez plutôt ceci"
+      },
+      "msg": {
+        "accept": "C'est fait ! J'ai ajouté {{name}} à {{day}}",
+        "decline": "Gardons {{name}} pour plus tard — votre plan actuel le couvre déjà.",
+        "alternative": "Bonne idée ! Faisons plutôt {{name}} — je l'ai ajouté à {{day}}."
+      },
+      "menu": {
+        "label": "Menu de la semaine",
+        "meals_one": "{{count}} repas par jour",
+        "meals_other": "{{count}} repas par jour",
+        "review": "Parcourir et valider",
+        "waiting": "En attente de la validation du client",
+        "approved": "Menu validé",
+        "approvedShort": "Validé",
+        "reviewHelp": "Parcourez chaque repas : gardez le choix du coach ou prenez une alternative, puis validez.",
+        "prev": "Repas précédent",
+        "approveMeal": "Valider ce repas",
+        "confirm": "Valider mon menu",
+        "progress": "{{done}} repas sur {{total}} validés",
+        "step": "Repas {{n}} sur {{total}}",
+        "coachPick": "Choix du coach",
+        "portion": "portion",
+        "acceptMsg": "J'ai validé le menu « {{name}} »",
+        "sendButton": "Envoyer un menu de la semaine",
+        "sendTitle": "Envoyer un menu de la semaine",
+        "sendHelp": "{{name}} le parcourt repas par repas dans le chat et choisit des alternatives ; une fois validé, il devient son plan alimentaire.",
+        "sendTo": "Envoyer à {{name}}",
+        "sendMsg": "Voici votre menu de la semaine « {{name}} ». Parcourez chaque repas, choisissez ce que vous préférez et validez"
+      },
+      "details": "Détails de l’exercice",
+      "noDetails": "Pas d’autres détails pour cet exercice.",
+      "intake": {
+        "label": "Questionnaire nutrition",
+        "title": "Tes préférences alimentaires",
+        "cardSub": "2 minutes, puis un menu personnel",
+        "open": "Remplir le questionnaire",
+        "help": "Pour que ton menu colle à tes goûts, ton objectif et ton rythme.",
+        "submit": "Envoyer et créer mon menu",
+        "sent": "Envoyé ! Ton menu arrive",
+        "goal": "Ton objectif",
+        "goals": {
+          "lose": "Perdre du poids",
+          "gain": "Prendre du poids / du muscle",
+          "maintain": "Maintenir",
+          "recomp": "Recomposition"
+        },
+        "diet": "Régime particulier",
+        "diets": {
+          "kosher": "Casher",
+          "vegetarian": "Végétarien",
+          "vegan": "Végan",
+          "pescatarian": "Pescétarien",
+          "gluten_free": "Sans gluten",
+          "lactose_free": "Sans lactose"
+        },
+        "allergies": "Allergies",
+        "allergiesPh": "ex. arachides, sésame",
+        "dislikes": "Ce que tu ne manges pas",
+        "dislikesPh": "ex. thon, aubergine",
+        "likes": "Ce que tu adores",
+        "likesPh": "ex. œufs, riz, saumon",
+        "perMeal": "Qu'aimes-tu à chaque repas ?",
+        "slots": {
+          "breakfast": "Petit-déjeuner",
+          "lunch": "Déjeuner",
+          "dinner": "Dîner",
+          "snack": "Collation"
+        },
+        "mealPh": {
+          "breakfast": "ex. omelette et pain, yaourt et granola",
+          "lunch": "ex. poulet et riz",
+          "dinner": "ex. léger, salade et thon",
+          "snack": "ex. fruit, barre protéinée"
+        },
+        "body": "À propos de toi (pour les quantités)",
+        "sex": "Sexe",
+        "sexes": {
+          "female": "Femme",
+          "male": "Homme"
+        },
+        "age": "Âge",
+        "height": "Taille (cm)",
+        "weight": "Poids (kg)",
+        "activity": "Ton niveau d'activité ?",
+        "activities": {
+          "low": "Faible",
+          "moderate": "Moyen",
+          "high": "Élevé"
+        },
+        "notes": "Autre chose à dire à ton coach ?",
+        "answered": "J'ai rempli le questionnaire nutrition",
+        "answeredShort": "Envoyé",
+        "building": "Le menu est en préparation et sera envoyé automatiquement.",
+        "waiting": "En attente du client",
+        "menuLabel": "Menu personnel",
+        "menuSub": "{{kcal}} kcal par jour · {{meals}} repas",
+        "openMenu": "Voir et choisir",
+        "menuHelp": "Objectif : {{kcal}} kcal, {{p}} g de protéines. Remplace un repas ou un produit, puis confirme.",
+        "slotTarget": "Environ {{kcal}} kcal · {{count}} options",
+        "swapMeal": "Autre repas",
+        "swapItem": "Remplacer {{name}}",
+        "confirm": "Confirmer le menu",
+        "confirmed": "Menu confirmé et ajouté à ton plan nutrition",
+        "sendTitle": "Questionnaire + menu IA",
+        "sendHelp": "{{name}} remplit un court questionnaire, puis l'IA crée et envoie un menu de 4-5 options par repas avec tes aliments."
+      }
+    }
+  }
+}

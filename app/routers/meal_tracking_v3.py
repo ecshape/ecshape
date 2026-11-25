@@ -12,10 +12,12 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from app.services.live import queue_trainer_refresh
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
+from app.auth.access import require_trainer_of, can_access_client
 from app.auth.utils import get_current_user
 from app.schemas.auth import UserResponse, UserRole
 from app.models.user import User
@@ -98,11 +100,15 @@ def get_food_catalog(
     """
     v3 catalog endpoint used for swap selection.
     """
+    from app.services.ecshape_table import ensure_for_trainer
+
     query = db.query(MealBank)
 
     if macro_type is not None:
         query = query.filter(MealBank.macro_type == macro_type)
 
+    if current_user.role == UserRole.TRAINER:
+        ensure_for_trainer(db, current_user.id)
     if current_user.role in {UserRole.TRAINER, UserRole.ADMIN} and include_public:
         query = query.filter((MealBank.is_public == True) | (MealBank.created_by == current_user.id))  # noqa
     elif current_user.role == UserRole.CLIENT and include_public:
@@ -115,6 +121,9 @@ def get_food_catalog(
         )
         if active_plan:
             trainer_id = active_plan.trainer_id
+        if trainer_id is None:
+            trainer_id = getattr(db.query(User).filter(User.id == current_user.id).first(), "trainer_id", None)
+        ensure_for_trainer(db, trainer_id)
         if trainer_id is not None:
             query = query.filter((MealBank.is_public == True) | (MealBank.created_by == trainer_id))  # noqa
         else:
@@ -142,6 +151,10 @@ def get_food_catalog(
                 is_public=item.is_public,
                 created_by=item.created_by,
                 macro_type=item.macro_type,
+                image_url=getattr(item, "image_url", None),
+                source=getattr(item, "source", None),
+                source_id=getattr(item, "source_id", None),
+                food_group=getattr(item, "food_group", None),
             )
         )
     return payload
@@ -158,6 +171,7 @@ def create_or_update_complete_plan(
 
     Backed by V2 tables using the existing V2 complete-plan creation semantics.
     """
+    require_trainer_of(db, current_user, plan_data.client_id)  # audit 2026-11, F-04
     if current_user.role not in {UserRole.TRAINER, UserRole.ADMIN}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only trainers can create meal plans")
 
@@ -545,12 +559,18 @@ def get_v3_day_view(
             target_day=target_day,
             meal_plan=None,
         )
+        free = (
+            db.query(ClientMealChoice)
+            .filter(ClientMealChoice.client_id == target_client_id, ClientMealChoice.date >= start_of_day, ClientMealChoice.date < end_of_day)
+            .order_by(ClientMealChoice.date.desc())
+            .all()
+        )
         return V3DayViewResponse(
             date=target_day.date().isoformat(),
             meal_plan=None,
             slots=[],
             daily_macros=daily_macros,
-            choices=[],
+            choices=[ClientMealChoiceResponse.model_validate(c) for c in free],
         )
 
     # Load raw choices for the day.
@@ -624,7 +644,12 @@ def get_v3_meal_completions(
                 .first()
             )
             if not plan_exists:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+                # A trainer's own client without an active meal plan simply has no completions (was a 403 on every
+                # dashboard load, A2A studio F9); other trainers' clients stay forbidden.
+                own = db.query(User).filter(User.id == target_client_id, User.trainer_id == current_user.id).first()
+                if not own:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+                return []
 
     target_date = _parse_v3_date_to_day(date) if date else datetime.utcnow()
     normalized_date = _normalize_completion_datetime_to_day(target_date)
@@ -645,6 +670,7 @@ def get_v3_meal_completions(
 @router.post("/completions", response_model=MealCompletionStatusResponse)
 def upsert_v3_meal_completion(
     completion_data: MealCompletionStatusCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -693,6 +719,7 @@ def upsert_v3_meal_completion(
         existing_status.completed_at = completed_at
         db.commit()
         db.refresh(existing_status)
+        queue_trainer_refresh(background_tasks, db, target_client_id, "meal")  # live trainer refresh (r2 R2)
         return MealCompletionStatusResponse.model_validate(existing_status)
 
     new_status = MealCompletionStatus(
@@ -706,12 +733,14 @@ def upsert_v3_meal_completion(
     db.add(new_status)
     db.commit()
     db.refresh(new_status)
+    queue_trainer_refresh(background_tasks, db, target_client_id, "meal")  # live trainer refresh (r2 R2)
     return MealCompletionStatusResponse.model_validate(new_status)
 
 
 @router.post("/logs", response_model=ClientMealChoiceResponse, status_code=status.HTTP_201_CREATED)
 def create_v3_log(
     payload: V3MealLogCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -750,6 +779,7 @@ def create_v3_log(
     db.commit()
     db.refresh(choice)
 
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live trainer refresh (r2 R2)
     return ClientMealChoiceResponse.model_validate(choice)
 
 
@@ -757,9 +787,13 @@ def create_v3_log(
 def update_v3_log(
     choice_id: int,
     choice_data: ClientMealChoiceUpdate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _c = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
+    if _c and not can_access_client(db, current_user, _c.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     if current_user.role == UserRole.CLIENT:
         choice = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
         if not choice:
@@ -771,6 +805,8 @@ def update_v3_log(
             setattr(choice, field, value)
 
         db.commit()
+
+        queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
         db.refresh(choice)
         return ClientMealChoiceResponse.model_validate(choice)
 
@@ -783,6 +819,8 @@ def update_v3_log(
         setattr(choice, field, value)
 
     db.commit()
+
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
     db.refresh(choice)
     return ClientMealChoiceResponse.model_validate(choice)
 
@@ -790,9 +828,13 @@ def update_v3_log(
 @router.delete("/logs/{choice_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_v3_log(
     choice_id: int,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _c = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
+    if _c and not can_access_client(db, current_user, _c.client_id):
+        raise HTTPException(status_code=404, detail="Meal choice not found")
     choice = db.query(ClientMealChoice).filter(ClientMealChoice.id == choice_id).first()
     if not choice:
         raise HTTPException(status_code=404, detail="Meal choice not found")
@@ -802,5 +844,6 @@ def delete_v3_log(
 
     db.delete(choice)
     db.commit()
+    queue_trainer_refresh(background_tasks, db, current_user.id, "meal")  # live (r3 N5)
     return None
 

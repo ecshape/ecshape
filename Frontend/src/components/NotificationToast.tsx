@@ -47,14 +47,14 @@ const getStyles = (type: Notification['type']) => {
     case 'info':
       return {
         container: 'bg-blue-50 border-blue-200 text-blue-800',
-        icon: 'text-blue-600',
-        closeButton: 'text-blue-600 hover:bg-blue-100'
+        icon: 'text-primary',
+        closeButton: 'text-primary hover:bg-blue-100'
       };
     default:
       return {
-        container: 'bg-gray-50 border-gray-200 text-gray-800',
-        icon: 'text-gray-600',
-        closeButton: 'text-gray-600 hover:bg-gray-100'
+        container: 'bg-card border-border text-foreground',
+        icon: 'text-muted-foreground',
+        closeButton: 'text-muted-foreground hover:bg-muted'
       };
   }
 };
@@ -70,8 +70,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
     <div
       className={cn(
         'flex items-start gap-3 p-4 rounded-lg border shadow-lg max-w-sm w-full',
-        'transform transition-all duration-300 ease-in-out',
-        'animate-in slide-in-from-right-full',
+        'animate-in fade-in-0 slide-in-from-bottom-1 duration-med',
         styles.container
       )}
     >

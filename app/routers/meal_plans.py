@@ -4,6 +4,46 @@ from typing import List, Optional
 from datetime import date
 from app.database import get_db
 from app.services.meal_plan_service import MealPlanService
+from app.auth.access import require_trainer_of, require_plan_access, require_client_access, is_client, is_trainer, not_found
+from app.models.nutrition import MealPlan as _MPlan, MealEntry as _MEntry, MealComponent as _MComp, MealUpload as _MUpload
+
+
+# ---- tenant guards (audit 2026-11, F-04)
+def _plan_guard(svc, user, plan_id, write=False):
+    p = svc.db.query(_MPlan).filter(_MPlan.id == plan_id).first()
+    if not p:
+        raise not_found("Meal plan not found")
+    require_plan_access(svc.db, user, p.trainer_id, p.client_id, write=write, detail="Meal plan not found")
+    return p
+
+
+def _entry_guard(svc, user, entry_id, write=False):
+    e = svc.db.query(_MEntry).filter(_MEntry.id == entry_id).first()
+    if not e:
+        raise not_found("Meal entry not found")
+    _plan_guard(svc, user, e.meal_plan_id, write)
+    return e
+
+
+def _component_guard(svc, user, component_id, write=False):
+    c = svc.db.query(_MComp).filter(_MComp.id == component_id).first()
+    if not c:
+        raise not_found("Meal component not found")
+    _entry_guard(svc, user, c.meal_entry_id, write)
+    return c
+
+
+def _upload_guard(svc, user, upload_id, write=False):
+    u = svc.db.query(_MUpload).filter(_MUpload.id == upload_id).first()
+    if not u:
+        raise not_found("Meal upload not found")
+    if is_client(user):
+        if u.client_id != user.id:
+            raise not_found("Meal upload not found")
+    else:
+        require_client_access(svc.db, user, u.client_id, detail="Meal upload not found")
+    return u
+
 from app.schemas.nutrition import (
     MealPlanCreate, MealPlanUpdate, MealPlanResponse, MealPlanFilter,
     MealEntryCreate, MealEntryUpdate, MealEntryResponse,
@@ -34,6 +74,7 @@ async def create_meal_plan(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Create a new meal plan for a client."""
+    require_trainer_of(meal_plan_service.db, current_user, meal_plan_data.client_id)
     if current_user.role != UserRole.TRAINER:
         raise HTTPException(status_code=403, detail="Only trainers can create meal plans")
     
@@ -53,6 +94,10 @@ async def get_meal_plans(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get meal plans with filtering and pagination."""
+    if is_client(current_user):
+        client_id = current_user.id
+    elif is_trainer(current_user):
+        trainer_id = current_user.id
     filter_params = MealPlanFilter(
         trainer_id=trainer_id,
         client_id=client_id,
@@ -73,6 +118,7 @@ async def get_meal_plan(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get a specific meal plan by ID."""
+    _plan_guard(meal_plan_service, current_user, meal_plan_id)
     meal_plan = meal_plan_service.get_meal_plan(meal_plan_id)
     if not meal_plan:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -86,6 +132,7 @@ async def get_complete_meal_plan(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get a complete meal plan with uploads."""
+    _plan_guard(meal_plan_service, current_user, meal_plan_id)
     meal_plan = meal_plan_service.get_complete_meal_plan(meal_plan_id)
     if not meal_plan:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -100,6 +147,7 @@ async def update_meal_plan(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Update a meal plan."""
+    _plan_guard(meal_plan_service, current_user, meal_plan_id, write=True)
     meal_plan = meal_plan_service.update_meal_plan(meal_plan_id, meal_plan_data)
     if not meal_plan:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -113,6 +161,7 @@ async def delete_meal_plan(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Delete a meal plan."""
+    _plan_guard(meal_plan_service, current_user, meal_plan_id, write=True)
     success = meal_plan_service.delete_meal_plan(meal_plan_id)
     if not success:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -128,6 +177,7 @@ async def create_meal_entry(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Create a new meal entry for a meal plan."""
+    _plan_guard(meal_plan_service, current_user, meal_plan_id, write=True)
     if current_user.role != UserRole.TRAINER:
         raise HTTPException(status_code=403, detail="Only trainers can create meal entries")
     
@@ -141,6 +191,7 @@ async def get_meal_entry(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get a specific meal entry by ID."""
+    _entry_guard(meal_plan_service, current_user, meal_entry_id)
     meal_entry = meal_plan_service.get_meal_entry(meal_entry_id)
     if not meal_entry:
         raise HTTPException(status_code=404, detail="Meal entry not found")
@@ -155,6 +206,7 @@ async def update_meal_entry(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Update a meal entry."""
+    _entry_guard(meal_plan_service, current_user, meal_entry_id, write=True)
     meal_entry = meal_plan_service.update_meal_entry(meal_entry_id, meal_entry_data)
     if not meal_entry:
         raise HTTPException(status_code=404, detail="Meal entry not found")
@@ -168,6 +220,7 @@ async def delete_meal_entry(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Delete a meal entry."""
+    _entry_guard(meal_plan_service, current_user, meal_entry_id, write=True)
     success = meal_plan_service.delete_meal_entry(meal_entry_id)
     if not success:
         raise HTTPException(status_code=404, detail="Meal entry not found")
@@ -183,6 +236,7 @@ async def create_meal_component(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Create a new meal component for a meal entry."""
+    _entry_guard(meal_plan_service, current_user, meal_entry_id, write=True)
     if current_user.role != UserRole.TRAINER:
         raise HTTPException(status_code=403, detail="Only trainers can create meal components")
     
@@ -196,6 +250,7 @@ async def get_meal_component(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get a specific meal component by ID."""
+    _component_guard(meal_plan_service, current_user, meal_component_id)
     meal_component = meal_plan_service.get_meal_component(meal_component_id)
     if not meal_component:
         raise HTTPException(status_code=404, detail="Meal component not found")
@@ -210,6 +265,7 @@ async def update_meal_component(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Update a meal component."""
+    _component_guard(meal_plan_service, current_user, meal_component_id, write=True)
     meal_component = meal_plan_service.update_meal_component(meal_component_id, meal_component_data)
     if not meal_component:
         raise HTTPException(status_code=404, detail="Meal component not found")
@@ -223,6 +279,7 @@ async def delete_meal_component(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Delete a meal component."""
+    _component_guard(meal_plan_service, current_user, meal_component_id, write=True)
     success = meal_plan_service.delete_meal_component(meal_component_id)
     if not success:
         raise HTTPException(status_code=404, detail="Meal component not found")
@@ -238,6 +295,8 @@ async def create_meal_upload(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Create a new meal upload with optional image."""
+    if is_client(current_user):
+        _entry_guard(meal_plan_service, current_user, meal_upload_data.meal_entry_id)
     if current_user.role != UserRole.CLIENT:
         raise HTTPException(status_code=403, detail="Only clients can upload meal photos")
     
@@ -253,6 +312,8 @@ async def upload_meal_photo(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Upload a photo for a specific meal entry."""
+    if is_client(current_user):
+        _entry_guard(meal_plan_service, current_user, meal_entry_id)
     if current_user.role != UserRole.CLIENT:
         raise HTTPException(status_code=403, detail="Only clients can upload meal photos")
     
@@ -271,6 +332,7 @@ async def get_meal_upload(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get a specific meal upload by ID."""
+    _upload_guard(meal_plan_service, current_user, meal_upload_id)
     meal_upload = meal_plan_service.get_meal_upload(meal_upload_id)
     if not meal_upload:
         raise HTTPException(status_code=404, detail="Meal upload not found")
@@ -285,6 +347,7 @@ async def update_meal_upload(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Update a meal upload."""
+    _upload_guard(meal_plan_service, current_user, meal_upload_id, write=True)
     meal_upload = meal_plan_service.update_meal_upload(meal_upload_id, meal_upload_data)
     if not meal_upload:
         raise HTTPException(status_code=404, detail="Meal upload not found")
@@ -298,6 +361,7 @@ async def delete_meal_upload(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Delete a meal upload."""
+    _upload_guard(meal_plan_service, current_user, meal_upload_id, write=True)
     success = meal_plan_service.delete_meal_upload(meal_upload_id)
     if not success:
         raise HTTPException(status_code=404, detail="Meal upload not found")
@@ -313,6 +377,7 @@ async def get_meal_plan_summary(
     meal_plan_service: MealPlanService = Depends(get_meal_plan_service)
 ):
     """Get meal plan summary for a specific client and date."""
+    require_client_access(meal_plan_service.db, current_user, client_id)
     # Check permissions
     if current_user.role == UserRole.CLIENT and current_user.id != client_id:
         raise HTTPException(status_code=403, detail="Access denied")

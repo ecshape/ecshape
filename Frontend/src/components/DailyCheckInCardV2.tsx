@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EcSpinner } from '@/components/brand/EcLoader';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,7 +100,7 @@ export const DailyCheckInCardV2: React.FC = () => {
     return (
       <Card className="bg-gradient-to-br from-card to-secondary border-border/50 shadow-xl">
         <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">{t('common.loading')}</div>
+          <div className="flex justify-center py-2"><EcSpinner className="h-8 w-8" label={t('common.loading')} /></div>
         </CardContent>
       </Card>
     );

@@ -20,8 +20,8 @@ def create_user(db: Session, user: UserCreate, trainer_id: Optional[int] = None)
         )
 
     db_user = User(
-        username=user.username,
-        email=user.email,
+        username=user.username.strip(),
+        email=user.email.strip(),
         hashed_password=get_password_hash(user.password),
         full_name=user.full_name,
         role=user.role,
@@ -40,10 +40,9 @@ def authenticate_user(db: Session, username_or_email: str, password: str) -> Opt
     """Username for everyone; email only for admins (backward compatibility). Constant work whatever the outcome:
     an unknown account still costs one bcrypt verification (ASVS 2.2.1 / user enumeration by timing)."""
     user = get_user_by_username(db, username_or_email)
-    if not user:
+    if not user and "@" in (username_or_email or ""):
+        # QA #145: trainees often type the email the coach entered for them; every role may sign in with it
         user = get_user_by_email(db, username_or_email)
-        if user and normalize_role(user.role).value != "ADMIN":
-            user = None
     if not user:
         burn_password_check()
         return None

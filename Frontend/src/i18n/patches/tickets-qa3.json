@@ -141,6 +141,10 @@
         "done": "הגעת ליעד המים 💧",
         "saveError": "לא הצלחנו לשמור את המים. נסו שוב.",
         "l": "ל׳"
+      },
+      "user": {
+        "hint": "נוצר אוטומטית מהשם, אפשר לשנות. המתאמן יתחבר איתו.",
+        "auto": "יצירת שם משתמש מהשם"
       }
     }
   },
@@ -286,6 +290,10 @@
         "done": "Water goal reached 💧",
         "saveError": "Couldn’t save your water. Try again.",
         "l": "L"
+      },
+      "user": {
+        "hint": "Made from the name automatically; you can change it. The trainee signs in with it.",
+        "auto": "Make the username from the name"
       }
     }
   },
@@ -431,6 +439,10 @@
         "done": "Objectif d’eau atteint 💧",
         "saveError": "Impossible d’enregistrer l’eau. Réessayez.",
         "l": "L"
+      },
+      "user": {
+        "hint": "Créé automatiquement à partir du nom, modifiable. Le client se connecte avec.",
+        "auto": "Créer l’identifiant à partir du nom"
       }
     }
   }

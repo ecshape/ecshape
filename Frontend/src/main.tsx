@@ -5,10 +5,12 @@ import './index.css'
 import './i18n/extraLangs'
 import { installEcMotion } from './lib/ecMotion'
 import { installAutoDir } from './lib/autoDir'
+import { installMailHints } from './lib/mailHints'
 import { installPillGuard } from './lib/pillGuard'
 
 installEcMotion()
 installAutoDir();
+installMailHints();
 installPillGuard(); // the selected label can never vanish into the liquid pill (QA #89/#95/#97, see lib/pillGuard.ts)
 
 // After a new deploy, an open tab may ask for script files that no longer exist:

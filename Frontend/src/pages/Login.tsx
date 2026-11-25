@@ -64,7 +64,7 @@ const Login = () => {
     setError('');
 
     try {
-      const loggedInUser = await login(username, password);
+      const loggedInUser = await login(username.trim(), password);
       if (loggedInUser) {
         // Redirect to appropriate dashboard based on user role
         if (loggedInUser.role === 'ADMIN') {
@@ -120,6 +120,9 @@ const Login = () => {
                     id="username"
                     type="text"
                     autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="h-14 ps-12 text-base"

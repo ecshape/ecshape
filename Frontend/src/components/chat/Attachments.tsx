@@ -3,6 +3,7 @@
  * or the trainee. Photos and voice notes are uploaded to /v2/chat/media and served only to the two people of the
  * conversation; exercises and foods travel as small cards in the message.
  */
+import { seedLibraryI18n, withLang } from '@/lib/knownTranslations';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -148,9 +149,9 @@ const ExerciseShareCard: React.FC<{ ex: ShareExercise; own: boolean }> = ({ ex, 
       const qs = new URLSearchParams();
       if (ex.library_id) qs.set('library_id', ex.library_id);
       qs.set('name', ex.name);
-      const r = await fetch(`${API_BASE}/exercise-library/item?${qs}`, { headers: token() ? { Authorization: `Bearer ${token()}` } : {} });
+      const r = await fetch(`${API_BASE}/exercise-library/item?${withLang(qs)}`, { headers: token() ? { Authorization: `Bearer ${token()}` } : {} });
       if (!r.ok) throw new Error(String(r.status));
-      return (await r.json()) as LibraryExercise;
+      return seedLibraryI18n((await r.json()) as LibraryExercise);
     },
     enabled: open, staleTime: 10 * 60_000, retry: false,
   });

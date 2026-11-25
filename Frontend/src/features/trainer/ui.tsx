@@ -68,6 +68,9 @@ export function useLiquid(ref: React.RefObject<HTMLElement>, activeKey: string |
         return { y: target.y, h: target.h, x: left, w: Math.max(target.w, end - left) };
       };
       setBox({ ...from, phase: 'jump' });
+      // QA #144: animation frames can stall (phone scrolling, low-power mode, background tab) and the pill stayed on
+      // the old tab. A plain timer always lands it on the selected one.
+      timers.push(window.setTimeout(() => setBox({ ...target, phase: 'settle', arrived: true }), 420));
       timers.push(window.requestAnimationFrame(() => {
         timers.push(window.requestAnimationFrame(() => {
           setBox({ ...stretchBox(), phase: 'stretch' });

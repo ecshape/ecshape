@@ -1,3 +1,4 @@
+import { seedLibraryI18n, withLang } from '@/lib/knownTranslations';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import '@/i18n/ticketsStudio';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -589,7 +590,7 @@ const SwapPicker: React.FC<{ ex: WorkoutExercise; current: Swap | null; onPick: 
       const m = info?.primary_muscles?.[0] || info?.muscle_group;
       if (m) qs.set('muscle', m.toLowerCase());
       if (info?.equipment) qs.set('equipment', info.equipment);
-      return api<{ items: LibraryExercise[] }>(`/exercise-library/similar?${qs}`);
+      return api<{ items: LibraryExercise[] }>(`/exercise-library/similar?${withLang(qs)}`).then(seedLibraryI18n);
     },
   });
   return (

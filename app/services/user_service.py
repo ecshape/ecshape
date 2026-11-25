@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.models.user import User, TrainerProfile, ClientProfile
@@ -17,12 +18,17 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
     return db.query(User).filter(User.id == user_id).first()
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    """Get user by email."""
-    return db.query(User).filter(User.email == email).first()
+    """Get user by email (exact first, then ignoring case and surrounding spaces)."""
+    email = (email or "").strip()
+    return db.query(User).filter(User.email == email).first() or \
+        db.query(User).filter(func.lower(User.email) == email.lower()).first()
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
-    """Get user by username."""
-    return db.query(User).filter(User.username == username).first()
+    """Get user by username. QA #145: phones capitalise the first letter and autofill adds spaces, so an exact
+    match wins, then one ignoring case and surrounding spaces."""
+    username = (username or "").strip()
+    return db.query(User).filter(User.username == username).first() or \
+        db.query(User).filter(func.lower(User.username) == username.lower()).first()
 
 def get_all_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
     """Get all users with pagination."""

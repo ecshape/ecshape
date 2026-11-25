@@ -2,9 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/ticketsStudio';
+import '@/i18n/ticketsQa3';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Activity, ArrowUpRight, BookOpen, ClipboardCheck, Dumbbell, Eye, EyeOff, MessageCircle, Pencil, Plus,
+  Activity, ArrowUpRight, BookOpen, ClipboardCheck, Dumbbell, Eye, EyeOff, MessageCircle, Pencil, Plus, Wand2,
   Search, Sparkles, TrendingUp, UserPlus, Users, UtensilsCrossed, Zap,
 } from 'lucide-react';
 import Layout from '../components/Layout';
@@ -505,16 +506,33 @@ export const ProgressDialogBody: React.FC<{ client: TrainerClient }> = ({ client
   return <ClientWeightProgress clientId={String(client.id)} progressEntries={q.data ?? []} onProgressUpdate={() => q.refetch()} isTrainer />;
 };
 
+/** QA #141: "Dani Cohen" -> dani.cohen, "דני כהן" -> dni.khn, "Élodie" -> elodie (latin letters, digits, dots). */
+const HE: Record<string, string> = {
+  א: 'a', ב: 'b', ג: 'g', ד: 'd', ה: 'h', ו: 'v', ז: 'z', ח: 'h', ט: 't', י: 'i', כ: 'k', ך: 'k', ל: 'l', מ: 'm', ם: 'm',
+  נ: 'n', ן: 'n', ס: 's', ע: 'a', פ: 'p', ף: 'f', צ: 'tz', ץ: 'tz', ק: 'k', ר: 'r', ש: 'sh', ת: 't',
+};
+export const usernameFrom = (name: string) =>
+  name
+    .normalize('NFD').replace(/[\u0300-\u036f\u0591-\u05c7]/g, '')
+    .replace(/[\u05d0-\u05ea]/g, (c) => HE[c] ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.+|\.+$/g, '')
+    .slice(0, 40);
+
 const PasswordInput: React.FC<{ id: string; value: string; onChange: (v: string) => void }> = ({ id, value, onChange }) => {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
   return (
-    <div className="relative">
-      <input id={id} type={show ? 'text' : 'password'} className="tp-input pe-12" value={value} onChange={(e) => onChange(e.target.value)} required autoComplete="new-password" />
+    <div className="relative" dir="ltr">
+      {/* QA #143: .tp-input's own padding beat `pe-12`, so the text ran under the eye; the toggle keeps focus in the field */}
+      <input id={id} type={show ? 'text' : 'password'} className="tp-input" style={{ paddingInlineEnd: '3.25rem' }} value={value} onChange={(e) => onChange(e.target.value)} required autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false} dir="ltr" />
       <button
         type="button"
-        className="absolute end-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-foreground/5"
+        className="absolute end-1 top-1/2 z-[1] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-foreground/5"
+        onPointerDown={(e) => e.preventDefault()}
         onClick={() => setShow((v) => !v)}
+        aria-pressed={show}
         aria-label={show ? t('trainer.common.hidePassword') : t('trainer.common.showPassword')}
       >
         {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -529,6 +547,9 @@ export const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const set = (k: keyof typeof emptyForm) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  // QA #141: the username follows the name (dani.cohen) until the coach types their own; the button brings it back
+  const [userEdited, setUserEdited] = useState(false);
+  const setName = (v: string) => setForm((f) => ({ ...f, full_name: v, username: userEdited ? f.username : usernameFrom(v) }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -543,7 +564,7 @@ export const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
       const res = await fetch(`${API_BASE_URL}/auth/register/client`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: form.username, email: form.email, full_name: form.full_name, password: form.password, role: 'CLIENT' }),
+        body: JSON.stringify({ username: form.username.trim(), email: form.email.trim(), full_name: form.full_name, password: form.password, role: 'CLIENT' }),
       });
       if (!res.ok) {
         setError(await readError(res, t('trainerDashboard.failedToRegisterClient'), t));
@@ -557,6 +578,7 @@ export const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
       }
       onOpenChange(false);
       setForm(emptyForm);
+      setUserEdited(false);
       onDone();
     } catch (err) {
       setError(`${t('trainerDashboard.unexpectedError')}: ${err instanceof Error ? err.message : String(err)}`);
@@ -583,11 +605,37 @@ export const AddClientSheet: React.FC<{ open: boolean; onOpenChange: (o: boolean
     >
       <form id="tr-add-client" onSubmit={submit} className="space-y-4 pb-2 pt-2">
         <Field label={t('trainerDashboard.fullName')} htmlFor="ac-name">
-          <input id="ac-name" className="tp-input" value={form.full_name} onChange={(e) => set('full_name')(e.target.value)} required autoComplete="off" />
+          <input id="ac-name" className="tp-input" value={form.full_name} onChange={(e) => setName(e.target.value)} required autoComplete="off" />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('trainerDashboard.username')} htmlFor="ac-user">
-            <input id="ac-user" className="tp-input" value={form.username} onChange={(e) => set('username')(e.target.value)} required autoComplete="off" dir="ltr" />
+          <Field label={t('trainerDashboard.username')} htmlFor="ac-user" hint={t('qa7.user.hint')}>
+            <div className="relative" dir="ltr">
+              <input
+                id="ac-user"
+                className="tp-input"
+                style={{ paddingInlineEnd: '3.25rem' }}
+                value={form.username}
+                onChange={(e) => { setUserEdited(true); set('username')(e.target.value.replace(/\s+/g, '')); }}
+                required
+                minLength={2}
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                dir="ltr"
+              />
+              <button
+                type="button"
+                className="absolute end-1 top-1/2 z-[1] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-foreground/5 disabled:opacity-40"
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => { setUserEdited(false); set('username')(usernameFrom(form.full_name)); }}
+                disabled={!form.full_name.trim()}
+                aria-label={t('qa7.user.auto')}
+                title={t('qa7.user.auto')}
+              >
+                <Wand2 className="h-[18px] w-[18px]" />
+              </button>
+            </div>
           </Field>
           <Field label={t('trainerDashboard.email')} htmlFor="ac-email">
             <input id="ac-email" type="email" className="tp-input" value={form.email} onChange={(e) => set('email')(e.target.value)} required autoComplete="off" dir="ltr" />

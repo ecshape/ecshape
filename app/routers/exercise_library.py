@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-from app.services import food_translate
+from app.services import food_translate, library_i18n
 
 from app.auth.utils import get_current_user
 from app.database import get_db
@@ -179,7 +179,7 @@ def search_library(
         res.sort(key=lambda e: (not e["name"].lower().startswith(_lead(words)), len(e["name"])))
     imported = _imported_ids(db, user.id)
     page = [{**_public(e), "imported": e["id"] in imported} for e in res[offset: offset + limit]]
-    return {"total": len(res), "items": page}
+    return {"total": len(res), "items": library_i18n.attach(db, page, lang)}
 
 
 @router.get("/browse")
@@ -188,7 +188,9 @@ def browse_library(
     muscle: Optional[str] = None,
     offset: int = Query(0, ge=0),
     limit: int = Query(48, ge=1, le=200),
+    lang: Optional[str] = None,
     user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Read-only browse of the built-in library for any signed-in user (trainee app "Explore")."""
     words = _query_words(q)
@@ -201,7 +203,7 @@ def browse_library(
         res.append(e)
     if words:
         res.sort(key=lambda e: (not e["name"].lower().startswith(_lead(words)), len(e["name"])))
-    return {"total": len(res), "items": [_public(e) for e in res[offset: offset + limit]]}
+    return {"total": len(res), "items": library_i18n.attach(db, [_public(e) for e in res[offset: offset + limit]], lang)}
 
 
 
@@ -209,7 +211,9 @@ def browse_library(
 def library_item(
     library_id: Optional[str] = None,
     name: Optional[str] = None,
+    lang: Optional[str] = None,
     user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """One built-in library exercise, by id or exact name (chat exercise cards open its details, QA #70)."""
     lib = _library()
@@ -219,7 +223,7 @@ def library_item(
         e = next((x for x in lib if x["name"].lower() == n), None)
     if e is None:
         raise HTTPException(status_code=404, detail="Exercise not found")
-    return _public(e)
+    return library_i18n.attach(db, [_public(e)], lang)[0]
 
 def _similarity(src: Dict, e: Dict) -> float:
     """How well `e` can stand in for `src`: same target muscle first, then movement type, equipment and level."""
@@ -249,7 +253,9 @@ def similar_exercises(
     muscle: Optional[str] = None,
     equipment: Optional[str] = None,
     limit: int = Query(8, ge=1, le=24),
+    lang: Optional[str] = None,
     user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Exercises that resemble the given one (for swapping during a workout). Any signed-in user."""
     lib = _library()
@@ -269,7 +275,7 @@ def similar_exercises(
         if sc > 0:
             scored.append((sc, e))
     scored.sort(key=lambda t: (-t[0], len(t[1]["name"])))
-    return {"items": [_public(e) for _, e in scored[:limit]]}
+    return {"items": library_i18n.attach(db, [_public(e) for _, e in scored[:limit]], lang)}
 
 
 def _imported_ids(db: Session, user_id: int) -> set:

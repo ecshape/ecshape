@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { knownTranslation } from '@/lib/knownTranslations';
 import { api } from './api';
 
 /**
@@ -62,7 +63,9 @@ export function useLibTextState(text: string | null | undefined, opts: { src?: S
   const lang = (i18n.language || 'en').slice(0, 2);
   const src = opts.src ?? 'auto';
   const raw = text ?? '';
-  const on = (opts.enabled ?? true) && needsTranslation(raw, lang);
+  // QA #140: translated once on the server and sent with the exercise: shown at once, no request
+  const known = knownTranslation(lang, raw);
+  const on = (opts.enabled ?? true) && !known && needsTranslation(raw, lang);
   const q = useQuery({
     queryKey: ['libtext', lang, src, raw],
     queryFn: () => translateOne(raw, lang, src),
@@ -71,7 +74,7 @@ export function useLibTextState(text: string | null | undefined, opts: { src?: S
     gcTime: 60 * 60_000,
     retry: false,
   });
-  return { text: on && q.data ? q.data : raw, pending: on && q.isLoading };
+  return { text: known ?? (on && q.data ? q.data : raw), pending: on && q.isLoading };
 }
 
 /** Many texts at once (instruction steps…), same batching and cache. */
@@ -84,8 +87,9 @@ export function useLibTextsState(texts: string[], opts: { src?: Src; enabled?: b
   const { i18n } = useTranslation();
   const lang = (i18n.language || 'en').slice(0, 2);
   const src = opts.src ?? 'auto';
-  const todo = texts.filter((t) => needsTranslation(t, lang));
+  const todo = texts.filter((t) => needsTranslation(t, lang) && !knownTranslation(lang, t));
   const on = (opts.enabled ?? true) && todo.length > 0;
+  const withKnown = (list: string[]) => list.map((t) => knownTranslation(lang, t) ?? t);
   const q = useQuery({
     queryKey: ['libtexts', lang, src, todo],
     queryFn: () => Promise.all(todo.map((t) => translateOne(t, lang, src))),
@@ -94,10 +98,10 @@ export function useLibTextsState(texts: string[], opts: { src?: Src; enabled?: b
     gcTime: 60 * 60_000,
     retry: false,
   });
-  if (!on) return { texts, pending: false, translated: true };
-  if (!q.data) return { texts, pending: q.isLoading, translated: false };
+  if (!on) return { texts: withKnown(texts), pending: false, translated: true };
+  if (!q.data) return { texts: withKnown(texts), pending: q.isLoading, translated: false };
   const map = new Map(todo.map((t, i) => [t, q.data![i]]));
-  return { texts: texts.map((t) => map.get(t) ?? t), pending: false, translated: todo.every((t) => map.get(t) !== t) };
+  return { texts: texts.map((t) => map.get(t) ?? knownTranslation(lang, t) ?? t), pending: false, translated: todo.every((t) => map.get(t) !== t) };
 }
 
 /**

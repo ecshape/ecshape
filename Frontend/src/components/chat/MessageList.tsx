@@ -109,15 +109,19 @@ const MessageList: React.FC<Props> = ({
   // the thread (and its content node) only exists once loading / error placeholders are gone
   const showsThread = !(loading && messages.length === 0) && !(error && messages.length === 0);
 
-  // Images and cards grow after load: stay pinned to the bottom if the reader was there
+  // Images and cards grow after load: stay pinned to the bottom if the reader was there.
+  // QA #139: the thread itself also gets shorter after the first paint (composer, tab bar, keyboard); the newest
+  // message then sat under the composer. Watching the scroll box as well keeps the last message in view.
   useEffect(() => {
     const content = contentRef.current;
+    const box = scrollRef.current;
     if (!content || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(() => {
       if (atBottom.current) scrollToBottom(false);
       if (scrollRef.current) prev.current.height = scrollRef.current.scrollHeight;
     });
     ro.observe(content);
+    if (box) ro.observe(box);
     return () => ro.disconnect();
   }, [scrollToBottom, conversationKey, showsThread]);
 

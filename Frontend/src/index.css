@@ -426,3 +426,15 @@ html[dir="ltr"] [data-autodir]:placeholder-shown { direction: ltr; }
 /* QA #85: Arabic text uses Noto Sans Arabic (Heebo / Karantina have no Arabic letters); Latin / Hebrew keep their fonts. */
 html[lang="ar"] body, html[lang="ar"] .ec-site { font-family: 'Heebo', 'Noto Sans Arabic', system-ui, sans-serif; }
 html[lang="ar"] .ec-site { --f-display: 'Karantina', 'Noto Sans Arabic', system-ui, sans-serif; --f-body: 'Heebo', 'Noto Sans Arabic', system-ui, sans-serif; }
+
+/* QA #142: email domain shortcuts under every email field (lib/mailHints.ts) */
+.ec-mail-hints { z-index: 2147483000; display: flex; gap: .375rem; overflow-x: auto; scrollbar-width: none; padding: 2px 0; pointer-events: auto; }
+.ec-mail-hints[hidden], .ec-mail-hints button[hidden] { display: none; }
+.ec-mail-hints::-webkit-scrollbar { display: none; }
+.ec-mail-hints button {
+  flex: none; border-radius: 9999px; padding: .35rem .7rem; font-size: .8rem; font-weight: 600; line-height: 1.2;
+  color: hsl(var(--foreground)); background: hsl(var(--popover)); box-shadow: inset 0 0 0 1px hsl(var(--border)), 0 6px 16px -10px rgb(0 0 0 / .5);
+  transition: background-color .15s ease, color .15s ease;
+}
+.ec-mail-hints button:hover { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+input[data-mail-hints][aria-invalid="true"] { box-shadow: inset 0 0 0 2px hsl(0 84% 60% / .85) !important; }

@@ -1,3 +1,4 @@
+import { seedLibraryI18n, withLang } from '@/lib/knownTranslations';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -71,7 +72,7 @@ export const ExerciseCardView: React.FC<{ m: ChatMessage; own: boolean; onReplie
       const qs = new URLSearchParams({ limit: '6' });
       if (ex?.library_id) qs.set('library_id', ex.library_id);
       if (ex?.name) qs.set('name', ex.name);
-      return call<{ items: LibraryExercise[] }>(`/exercise-library/similar?${qs}`);
+      return call<{ items: LibraryExercise[] }>(`/exercise-library/similar?${withLang(qs)}`).then(seedLibraryI18n);
     },
     enabled: mode === 'alternative',
     staleTime: 10 * 60_000,
@@ -84,7 +85,7 @@ export const ExerciseCardView: React.FC<{ m: ChatMessage; own: boolean; onReplie
       const qs = new URLSearchParams();
       if (info?.library_id) qs.set('library_id', info.library_id);
       if (info?.name) qs.set('name', info.name);
-      return call<LibraryExercise>(`/exercise-library/item?${qs}`);
+      return call<LibraryExercise>(`/exercise-library/item?${withLang(qs)}`).then(seedLibraryI18n);
     },
     enabled: !!info,
     staleTime: 10 * 60_000,

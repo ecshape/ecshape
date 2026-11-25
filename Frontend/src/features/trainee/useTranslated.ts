@@ -1,6 +1,7 @@
 import { useQueries, type QueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
+import { knownTranslation } from '@/lib/knownTranslations';
 
 const HEBREW = /[֐-׿]/;
 const CHUNK = 40;
@@ -15,7 +16,8 @@ const CHUNK = 40;
  */
 function plan(texts: string[], lang: string, enabled: boolean, src: 'en' | 'auto') {
   const clean = texts.map((t) => t ?? '');
-  const needs = (t: string) => !!t.trim() && !(lang === 'he' && HEBREW.test(t));
+  // QA #140: texts whose translation came with the data (library exercises) never go to the translator
+  const needs = (t: string) => !!t.trim() && !(lang === 'he' && HEBREW.test(t)) && !(src === 'en' && knownTranslation(lang, t));
   const todo = Array.from(new Set(clean.filter(needs)));
   const on = enabled && (lang !== 'en' || src === 'auto') && todo.length > 0;
   const chunks: string[][] = [];
@@ -57,7 +59,7 @@ export function useTranslatedTexts(texts: string[], enabled = true, src: 'en' | 
     const d = qs[ci]?.data;
     if (d) chunk.forEach((t, i) => { if (d.texts[i]) map.set(t, d.texts[i]); });
   });
-  const out = clean.map((t) => map.get(t) ?? t);
+  const out = clean.map((t) => map.get(t) ?? (src === 'en' ? knownTranslation(lang, t) : undefined) ?? t);
   return {
     texts: out,
     translated: !on || qs.every((q) => !!q.data?.translated),

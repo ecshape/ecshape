@@ -1,3 +1,4 @@
+import { appLang, seedLibraryI18n } from '@/lib/knownTranslations';
 import React, { useEffect } from 'react';
 import { isRtlLang } from '@/lib/utils';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -109,14 +110,16 @@ export function usePlansAll() {
 }
 
 export function useLibraryBrowse(q: string, muscle: string) {
-  return useInfiniteQuery({
-    queryKey: ['trainee', 'library', q, muscle],
+  const lang = appLang();
+  const r = useInfiniteQuery({
+    queryKey: ['trainee', 'library', q, muscle, lang],
     initialPageParam: 0,
     staleTime: 10 * 60_000,
     queryFn: ({ pageParam }) => {
       const qs = new URLSearchParams({ offset: String(pageParam), limit: '24' });
       if (q.trim()) qs.set('q', q.trim());
       if (muscle) qs.set('muscle', muscle);
+      qs.set('lang', lang);
       return api<{ total: number; items: LibraryExercise[] }>(`/exercise-library/browse?${qs}`);
     },
     getNextPageParam: (last, pages) => {
@@ -124,6 +127,9 @@ export function useLibraryBrowse(q: string, muscle: string) {
       return n < last.total ? n : undefined;
     },
   });
+  // QA #140: the steps/names came translated with the page: shown at once in the sheet (also after a reload)
+  r.data?.pages.forEach((p) => seedLibraryI18n(p));
+  return r;
 }
 
 /** workout_exercise_id -> exercise row, across all plans. */

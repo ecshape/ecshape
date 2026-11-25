@@ -314,6 +314,13 @@ async def lifespan(app: FastAPI):
             logger.warning(f"Food bank photo refresh skipped: {e}")
     import threading as _threading
     _threading.Thread(target=_ecshape_table, name="ecshape-table", daemon=True).start()
+    # QA #140: translate the exercise library to Hebrew + French once, into the DB (background, idempotent)
+    try:
+        from app.database import SessionLocal as _SL
+        from app.services.library_i18n import start_background as _lib_i18n
+        _lib_i18n(_SL)
+    except Exception as e:
+        logger.warning(f"Library translation warm-up skipped: {e}")
 
     # ecshape-dev only (DEV_DEMO_SEED=1): load fictional demo data into an empty database
     from app.dev_seed import run_if_enabled as run_dev_seed

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/api';
+import { appLang, seedLibraryI18n } from '@/lib/knownTranslations';
 
 export interface LibraryExercise {
   id: string;
@@ -18,6 +19,8 @@ export interface LibraryExercise {
   name_en?: string;
   license_author?: string | null;
   source_url?: string;
+  /** QA #140: the name and steps in the asked app language, translated once on the server (null: not yet). */
+  i18n?: { lang: string; name: string | null; instructions: (string | null)[] };
 }
 
 export type LibrarySource = 'library' | 'wger';
@@ -62,7 +65,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
   });
   if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail || res.statusText);
-  return res.json();
+  return seedLibraryI18n(await res.json());
 }
 
 export const exerciseLibrary = {
@@ -71,6 +74,7 @@ export const exerciseLibrary = {
   search: (p: { q?: string; muscle?: string; equipment?: string; level?: string; source?: LibrarySource; lang?: string; offset?: number; limit?: number }) => {
     const qs = new URLSearchParams();
     Object.entries(p).forEach(([k, v]) => v !== undefined && v !== '' && qs.set(k, String(v)));
+    if (!qs.has('lang')) qs.set('lang', appLang());
     return call<{ total: number; items: LibraryExercise[]; catalog_total?: number }>(`?${qs}`);
   },
   importIds: (ids: string[], lang?: string) =>

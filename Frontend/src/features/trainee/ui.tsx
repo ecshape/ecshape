@@ -8,7 +8,7 @@ import { fmtNum, prefersReducedMotion } from './format';
 
 /** Page container: phone-first gutters, comfortable max width on desktop. */
 export const Screen: React.FC<{ children: React.ReactNode; className?: string; wide?: boolean }> = ({ children, className, wide }) => (
-  <div className={cn('tp-screen mx-auto w-full px-4 pb-10 pt-5 sm:px-6 lg:px-10 lg:pt-10', wide ? 'max-w-6xl' : 'max-w-5xl', className)}>{children}</div>
+  <div className={cn('tp-screen mx-auto w-full px-4 pb-10 pt-5 sm:px-6 lg:px-10 lg:pt-10', wide ? 'max-w-6xl xl:max-w-7xl' : 'max-w-5xl xl:max-w-6xl', className)}>{children}</div>
 );
 
 export const ScreenHeader: React.FC<{ eyebrow?: React.ReactNode; title: React.ReactNode; accent?: React.ReactNode; actions?: React.ReactNode; className?: string }> = ({

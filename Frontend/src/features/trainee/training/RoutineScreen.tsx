@@ -66,7 +66,7 @@ const RoutineScreen: React.FC<{ dayId: number }> = ({ dayId }) => {
   return (
     <>
       <div className="tr-sessionbar border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5 sm:px-6">
+        <div className="mx-auto flex max-w-3xl items-center xl:max-w-5xl gap-3 px-4 py-2.5 sm:px-6">
           <button type="button" onClick={() => navigate('/training')} className="tp-icon-btn tp-press" aria-label={t('trainee.common.back')}>
             <Back className="h-5 w-5" />
           </button>
@@ -77,7 +77,7 @@ const RoutineScreen: React.FC<{ dayId: number }> = ({ dayId }) => {
         </div>
       </div>
 
-      <div className="tp-screen mx-auto w-full max-w-3xl px-4 pb-32 pt-5 sm:px-6 lg:pt-8">
+      <div className="tp-screen mx-auto w-full max-w-3xl px-4 xl:max-w-5xl pb-32 pt-5 sm:px-6 lg:pt-8">
         <p className="tp-label tp-rise" dir="auto">{day.workout_plan_name}</p>
         <h1 className="tp-title tp-rise mt-2 break-words text-[3.2rem] sm:text-7xl" style={{ ['--i' as string]: 1 }} dir="auto">{day.name}</h1>
 

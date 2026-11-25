@@ -213,7 +213,7 @@ export const SessionDetail: React.FC<{ sessionId: number }> = ({ sessionId }) =>
 
   const bar = (title?: string) => (
     <div className="tr-sessionbar border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5 sm:px-6">
+      <div className="mx-auto flex max-w-3xl items-center xl:max-w-5xl gap-3 px-4 py-2.5 sm:px-6">
         <button type="button" onClick={() => navigate('/training/history')} className="tp-icon-btn tp-press" aria-label={t('trainee.common.back')}><Back className="h-5 w-5" /></button>
         <p className="min-w-0 flex-1 truncate text-center font-semibold" dir="auto">{title}</p>
         <span className="w-11" />
@@ -246,7 +246,7 @@ export const SessionDetail: React.FC<{ sessionId: number }> = ({ sessionId }) =>
   return (
     <>
       {bar(dayName)}
-      <div className="tp-screen mx-auto w-full max-w-3xl px-4 pb-16 pt-5 sm:px-6 lg:pt-8">
+      <div className="tp-screen mx-auto w-full max-w-3xl px-4 xl:max-w-5xl pb-16 pt-5 sm:px-6 lg:pt-8">
         <p className="tp-label tp-rise">{fmtDate(s.started_at, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         <h1 className="tp-title tp-rise mt-2 break-words text-[3rem] sm:text-6xl" style={{ ['--i' as string]: 1 }} dir="auto">{dayName || tt('history.session')}</h1>
 

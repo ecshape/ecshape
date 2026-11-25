@@ -68,13 +68,15 @@ const TrainerShell: React.FC<{
         widest = Math.max(widest, r.getBoundingClientRect().width);
       });
       // side padding (.85rem x2) + the scroll gutter, rounded up
-      const need = Math.ceil(widest + 2 * 13.6 + 8);
-      side.style.setProperty('--tr-rail-w', `${Math.max(74, need)}px`);
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const need = Math.ceil(widest + 2 * 0.85 * rem + 8);
+      side.style.setProperty('--tr-rail-w', `${Math.max(4.625 * rem, need)}px`);
     };
     fit();
     void document.fonts?.ready.then(fit);
     const t = window.setTimeout(fit, 300);
-    return () => window.clearTimeout(t);
+    window.addEventListener('resize', fit); // the root size follows the viewport on wide screens
+    return () => { window.clearTimeout(t); window.removeEventListener('resize', fit); };
   }, [collapsed, i18n.language, groups]);
 
   const all = groups.flatMap((g) => g.items);

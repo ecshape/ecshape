@@ -2,8 +2,8 @@
    Logical properties only (RTL first). Motion: transform / opacity / clip-path / CSS vars, never layout. */
 
 .tr-root, body:has(.tr-shell, .tp-shell) :is(.tp-sheet, .tr-xs-panel) {
-  --tr-side-w: 268px;
-  --tr-rail-w: 74px; /* QA #82: icons sit at the same spot (.85rem in) collapsed or not, so folding the menu moves nothing sideways */
+  --tr-side-w: 16.75rem; /* 268px at 16px; rem so it grows with the wide-screen scale */
+  --tr-rail-w: 4.625rem; /* QA #82: icons sit at the same spot (.85rem in) collapsed or not, so folding the menu moves nothing sideways */
   --tr-bar-h: 4.25rem;
   --tr-grad: linear-gradient(135deg, #F59532 0%, #E8652A 55%, #D8361E 100%);
   /* Pill contract: the liquid pill and the label sitting on it are ONE pair. Change them together, never apart. */

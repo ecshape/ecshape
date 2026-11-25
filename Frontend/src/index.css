@@ -118,6 +118,15 @@
     max-width: 100vw;
   }
 
+  /* Wide screens: the portal (trainer + trainee) scales up with the viewport instead of
+     sitting small in the middle. Everything is rem-based, so text, spacing, cards, the
+     sidebar and the page max-widths grow together: 16px up to 1440px wide, 20px from ~2170px. */
+  @media (min-width: 1440px) {
+    html.ec-portal-on {
+      font-size: clamp(1rem, calc(1rem + (100vw - 1440px) * 0.0055), 1.25rem);
+    }
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Heebo', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;

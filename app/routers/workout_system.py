@@ -590,6 +590,13 @@ def get_workout_plans(
                             "exercise": {
                                 "id": ex.exercise.id,
                                 "name": ex.exercise.name,
+                                # QA #146: the trainer's exercise panel reads these; without them every exercise
+                                # showed "no instructions"
+                                "description": ex.exercise.description,
+                                "instructions": ex.exercise.instructions,
+                                "equipment_needed": ex.exercise.equipment_needed,
+                                "video_url": ex.exercise.video_url,
+                                "category": ex.exercise.category,
                                 "muscle_group": ex.exercise.muscle_group,
                                 "image_path": ex.exercise.image_path,
                                 "library_id": getattr(ex.exercise, "library_id", None),

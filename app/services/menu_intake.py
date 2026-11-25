@@ -38,15 +38,15 @@ SLOT_NAMES = {
 }
 TEXTS = {
     "he": {
-        "intake": "היי! כדי שאבנה לך תפריט שמתאים בדיוק לך, מלא/י את שאלון ההעדפות 🍽️",
+        "intake": "היי! כדי שאבנה לך תפריט שמתאים בדיוק לך, מלא/י את שאלון ההעדפות.",
         "menu": "התפריט שלך מוכן! 4-5 אפשרויות לכל ארוחה, בכמויות שמתאימות למטרה שלך. אפשר להחליף ארוחה או מוצר ואז לאשר.",
-        "answered": "מילאתי את שאלון ההעדפות",
+        "answered": "מילאתי את שאלון ההעדפות.",
         "failed": "קיבלתי את התשובות שלך, אבנה לך את התפריט בקרוב.",
         "plan": "תפריט אישי",
         "option": "אפשרות",
     },
     "en": {
-        "intake": "Hi! So I can build a menu that fits you exactly, please fill in your food preferences 🍽️",
+        "intake": "Hi! So I can build a menu that fits you exactly, please fill in your food preferences.",
         "menu": "Your menu is ready! 4-5 options for every meal, in amounts that fit your goal. Swap a meal or a product, then confirm.",
         "answered": "I filled in my food preferences",
         "failed": "Got your answers, I'll build your menu soon.",
@@ -54,7 +54,7 @@ TEXTS = {
         "option": "Option",
     },
     "fr": {
-        "intake": "Salut ! Pour te préparer un menu sur mesure, remplis tes préférences alimentaires 🍽️",
+        "intake": "Salut ! Pour te préparer un menu sur mesure, remplis tes préférences alimentaires.",
         "menu": "Ton menu est prêt ! 4-5 options par repas, en quantités adaptées à ton objectif. Remplace un repas ou un produit, puis confirme.",
         "answered": "J'ai rempli mes préférences alimentaires",
         "failed": "J'ai reçu tes réponses, je te prépare ton menu bientôt.",

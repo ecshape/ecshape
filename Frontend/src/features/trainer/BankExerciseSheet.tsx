@@ -100,7 +100,7 @@ export const BankExerciseSheet: React.FC<{
                   <section>
                     <h3 className="tp-label mb-2.5">{t('tt.bank.instructions')}</h3>
                     {steps.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">{t('banks.exercise.noInstructions')}</p>
+                      <p className="text-sm text-muted-foreground">{t('banks.exercise.noInstructionsYet')}</p>
                     ) : (
                       <LibSteps steps={steps} />
                     )}

@@ -4,7 +4,7 @@
       "keywords": ["plan", "תוכנית"],
       "match": "contains",
       "media_ids": [],
-      "public_reply": ["Sent you a DM! 📩", "Check your DMs 🙌"],
+      "public_reply": ["Sent you a DM!", "Check your DMs!"],
       "dm_text": "Hey! Here's the link you asked for: https://landing.ecshape.com"
     }
   ]

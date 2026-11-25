@@ -84,7 +84,7 @@
     },
     "meals": {
       "favorites": {
-        "tapHeart": "tap ♥ on a food below.",
+        "tapHeart": "tap the heart on a food below.",
         "filter": "Filter"
       }
     },
@@ -180,7 +180,7 @@
     },
     "meals": {
       "favorites": {
-        "tapHeart": "הקישו ♥ על מזון למטה.",
+        "tapHeart": "הקישו על הלב של מזון למטה.",
         "filter": "סינון"
       }
     },
@@ -276,7 +276,7 @@
     },
     "meals": {
       "favorites": {
-        "tapHeart": "touchez ♥ sur un aliment ci-dessous.",
+        "tapHeart": "touchez le cœur d’un aliment ci-dessous.",
         "filter": "Filtrer"
       }
     },

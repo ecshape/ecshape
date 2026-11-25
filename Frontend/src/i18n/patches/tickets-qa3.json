@@ -138,7 +138,7 @@
         "remove": "הורדת חצי ליטר",
         "goal": "יעד {{goal}} ל׳",
         "left": "נשארו {{left}} ל׳",
-        "done": "הגעת ליעד המים 💧",
+        "done": "הגעת ליעד המים",
         "saveError": "לא הצלחנו לשמור את המים. נסו שוב.",
         "l": "ל׳"
       },
@@ -287,7 +287,7 @@
         "remove": "Remove half a litre",
         "goal": "Goal {{goal}} L",
         "left": "{{left}} L to go",
-        "done": "Water goal reached 💧",
+        "done": "Water goal reached",
         "saveError": "Couldn’t save your water. Try again.",
         "l": "L"
       },
@@ -436,7 +436,7 @@
         "remove": "Retirer un demi-litre",
         "goal": "Objectif {{goal}} L",
         "left": "Encore {{left}} L",
-        "done": "Objectif d’eau atteint 💧",
+        "done": "Objectif d’eau atteint",
         "saveError": "Impossible d’enregistrer l’eau. Réessayez.",
         "l": "L"
       },

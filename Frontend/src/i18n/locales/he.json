@@ -2938,7 +2938,8 @@
       "error": "לא הצלחנו לטעון את התרגילים. נסו שוב.",
       "wgerCredit": "נתונים: wger.de (CC-BY-SA)",
       "viewOnWger": "צפייה ב-wger",
-      "noInstructions": "אין הוראות ביצוע לתרגיל הזה ב-wger."
+      "noInstructions": "אין הוראות ביצוע לתרגיל הזה ב-wger.",
+      "noInstructionsYet": "עדיין אין הוראות ביצוע לתרגיל הזה."
     }
   },
   "trainee": {

@@ -228,7 +228,7 @@ const ClientFavoritesPage: React.FC = () => {
                   {slotFavorites.length === 0 ? (
                     <div className="flex items-center gap-3 rounded-[1.25rem] border border-dashed border-primary/40 bg-primary/[.05] p-4">
                       <span className="grid h-11 w-11 flex-none place-items-center rounded-2xl bg-primary/15 text-primary"><Sparkles className="h-5 w-5" /></span>
-                      <p className="text-sm text-muted-foreground">{t("meals.favorites.empty", "No favorites yet for this meal")} — {t("meals.favorites.tapHeart", "tap ♥ on a food below.")}</p>
+                      <p className="text-sm text-muted-foreground">{t("meals.favorites.empty", "No favorites yet for this meal")} — {t("meals.favorites.tapHeart", "tap the heart on a food below.")}</p>
                     </div>
                   ) : (
                     <div className="tp-scroll-x -mx-1 flex gap-2.5 px-1 pb-1">

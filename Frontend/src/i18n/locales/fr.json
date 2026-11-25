@@ -2938,7 +2938,8 @@
       "error": "Impossible de charger les exercices. Réessayez.",
       "wgerCredit": "Données : wger.de (CC-BY-SA)",
       "viewOnWger": "Voir sur wger",
-      "noInstructions": "wger ne fournit pas d'instructions pour cet exercice."
+      "noInstructions": "wger ne fournit pas d'instructions pour cet exercice.",
+      "noInstructionsYet": "Pas encore d'instructions pour cet exercice."
     }
   },
   "trainee": {

@@ -2930,7 +2930,8 @@
       "error": "The exercises could not be loaded. Please try again.",
       "wgerCredit": "Data: wger.de (CC-BY-SA)",
       "viewOnWger": "View on wger",
-      "noInstructions": "wger has no instructions for this exercise."
+      "noInstructions": "wger has no instructions for this exercise.",
+      "noInstructionsYet": "No instructions for this exercise yet."
     }
   },
   "trainee": {

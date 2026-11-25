@@ -34,7 +34,7 @@ const WaterCard: React.FC<{ className?: string; style?: React.CSSProperties }> =
   const change = (delta: number) => {
     if (delta < 0 && ml <= 0) return;
     if (delta > 0) setSplash((n) => n + 1);
-    if (delta > 0 && ml < goal && ml + delta >= goal) toast.success(t('qa7.water.done'));
+    if (delta > 0 && ml < goal && ml + delta >= goal) toast.success(t('qa7.water.done'), { icon: <Droplets className="h-4 w-4 text-sky-500" /> });
     // optimistic: the bottle fills at once; each tap is sent as +/- step (additive on the server), undone only if refused
     const bump = (d: number) => qc.setQueryData<Water>(key, (prev) => ({ day, goal_ml: goal, step_ml: step, ...prev, ml: Math.max(0, Math.min(10000, (prev?.ml ?? 0) + d)) }));
     void qc.cancelQueries({ queryKey: key });

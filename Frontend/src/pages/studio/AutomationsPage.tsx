@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Activity, AlertCircle, Bell, BellRing, CheckCircle2, CheckSquare, Copy, FlaskConical, Link2, Mail, MessageCircle,
+  Activity, AlertCircle, Bell, BellRing, Check, CheckCircle2, CheckSquare, Copy, FlaskConical, Link2, Mail, MessageCircle,
   Pencil, Play, Plug, Plus, Search, Send, Trash2, Users, Zap,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -533,7 +533,7 @@ const AudienceNode: React.FC<{ a: Automation; clients: { id: number; full_name: 
                 <li key={c.id}>
                   <button type="button" onClick={() => setIds(on ? ids.filter((x) => x !== c.id) : [...ids, c.id])}
                     className={cn('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-sm', on ? 'bg-primary/10 text-primary' : 'hover:bg-muted/60')}>
-                    <span className={cn('grid h-4 w-4 place-items-center rounded border text-[10px]', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>{on && '✓'}</span>
+                    <span className={cn('grid h-4 w-4 place-items-center rounded border text-[10px]', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>{on && <Check className="h-3 w-3" strokeWidth={3} />}</span>
                     <span className="truncate" dir="auto">{c.full_name || c.username}</span>
                   </button>
                 </li>
